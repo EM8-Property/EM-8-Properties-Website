@@ -181,7 +181,7 @@ Confirmed real, from EM8's brand reference: $100M+ AUM, 1,350+ units managed, 75
 ## 10. Assumptions
 
 1. **Offerings are marketed under Rule 506(c)**, with Agora performing accreditation verification. The exemption is elected per offering on its Form D, so `publiclyOffered` is a per-property toggle — a 506(b) raise can never appear publicly by accident. *Hunter has reviewed this and considers a site disclaimer sufficient; recorded as his decision.*
-2. **Sanity's current free-tier user limit** accommodates the editing team, or EM8 accepts the seat cost. Requires verification before build.
+2. ~~Sanity's free-tier user limit accommodates the editing team.~~ **Confirmed 2026-08-28** — Sanity stays, seat count is not a constraint.
 3. Kinzie and Advantage consent to being named publicly.
 4. English is the primary language; Hebrew is additive.
 
@@ -193,9 +193,9 @@ Confirmed real, from EM8's brand reference: $100M+ AUM, 1,350+ units managed, 75
 - **LP testimonials are available.** They become a content type and appear on `/` and `/investors`. Attributed by name and role wherever the investor permits it — an anonymous testimonial persuades nobody. Written consent required before publishing any investor's name.
 - **Deal-level multiples are public** on `/track-record`. This is the strongest asset on the page and directly serves the transparency the strategy session called essential to investor trust. Every figure carries the realized/targeted distinction; no forward-looking number is stated as a promise.
 
-**Still open:**
+- **Sanity is confirmed as the CMS.** Seat count is not a constraint.
 
-- Sanity's current free-tier user limit versus the number of editors (§10.2). The only input that could still change the CMS decision.
+**Still open:** none. Design is settled.
 
 ## 12. Out of scope
 
