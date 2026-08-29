@@ -87,7 +87,9 @@ Hebrew copy requires a native speaker. Placeholder Hebrew in mockups is illustra
 
 ## 4. Content model (Sanity)
 
-**Singletons:** `siteSettings` (nav, footer, Agora portal URL, default share image), `pullQuote`.
+**Singletons:** `siteSettings` (nav, footer, Agora portal URL, default share image).
+
+*(`pullQuote` was removed — it existed only to hold the Buffett quote, which is out per §11.)*
 
 **Collections:**
 
