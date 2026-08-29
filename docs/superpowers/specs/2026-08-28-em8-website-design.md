@@ -71,7 +71,7 @@ Hebrew copy requires a native speaker. Placeholder Hebrew in mockups is illustra
 | `/` | Narrative scroll: hero → stats → four success factors → insights → portfolio → partners → CTA |
 | `/portfolio` | Filterable index by asset class and status |
 | `/portfolio/[slug]` | Individual asset: gallery, business plan, facts rail, map, related writing |
-| `/track-record` | Realized deals, *Acquired → Executed → Exited* |
+| `/track-record` | Index of realized deals, *Acquired → Executed → Exited*. Links to canonical property pages — it is a **view**, not a second set of pages. |
 | `/insights` | Single feed, announcements and essays, category filter |
 | `/insights/[slug]` | Article. **The LinkedIn-linkable URL.** |
 | `/investors` | Agora login + how an investment works + Keep in Touch |
@@ -101,6 +101,10 @@ Hebrew copy requires a native speaker. Placeholder Hebrew in mockups is illustra
 ### Two structural decisions
 
 **Track record and portfolio share the `property` type.** A sold asset is a property with `status: sold` and `dealStory` filled in. No re-entry, no drift between two records.
+
+**Every property has exactly one canonical URL — `/portfolio/[slug]` — regardless of status.** `/track-record` filters and presents sold assets but links back to those same pages. A realized deal never exists at two addresses; duplicate URLs for one asset would split its search ranking and double the editing surface.
+
+**`publiclyOffered`** gates only the offering block: target returns, "Enter the deal room," and the offering's appearance in any current-opportunity module. The property's descriptive content stays public either way.
 
 **Metra walking distance is a first-class field**, not prose. It renders on every card and every property page, turning the TOD claim into a repeated fact.
 
@@ -143,7 +147,17 @@ Rejected: posting directly to Agora (an outage silently swallows leads) and link
 - **TypeScript strict** + Sanity typegen
 - **Lighthouse budget in CI** — performance is a stated goal and the old site's specific failure
 
-## 8. Launch blockers
+## 8. Delivery phasing and launch blockers
+
+This is a large scope for one uninterrupted build. Sequence it so something real is visible early rather than eight weeks of silence:
+
+**Phase 1 — English site, live.** Schema, content migration, all ten routes, both forms, deploy to Railway. Cut over from the current site. This alone is a complete replacement and every stated goal except Hebrew.
+
+**Phase 2 — Hebrew.** Localized fields, RTL, language switch. Built on logical properties from Phase 1, so this is additive rather than a rewrite. Deferring it is safe; designing as though it will never come is not.
+
+**Phase 3 — Refinement.** Real photography swapped in, LP testimonials if available, insights backlog written.
+
+### Launch blockers
 
 1. **Railway account must be an EM8-owned team**, not personal. Building on a personal account and transferring later is acceptable; launching on one is not — it rebuilds the exact trap this project exists to escape.
 2. **GitHub org needs a company contact email and a second owner.**
