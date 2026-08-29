@@ -96,6 +96,7 @@ Hebrew copy requires a native speaker. Placeholder Hebrew in mockups is illustra
 - **`teamMember`** — name, title, bio, photo, optional LinkedIn.
 - **`focusCard`** — the four success factors.
 - **`post`** — title, slug, date, category, excerpt, hero image, body, optional `relatedProperty`.
+- **`testimonial`** — quote, attributed name, role or descriptor (e.g. "Private Equity Consultant"), optional investor-since year, order, `featured`. Renders on `/` and `/investors`.
 - **`lead`** — Keep in Touch and site submissions. Write-only from the site.
 
 ### Two structural decisions
@@ -184,11 +185,17 @@ Confirmed real, from EM8's brand reference: $100M+ AUM, 1,350+ units managed, 75
 3. Kinzie and Advantage consent to being named publicly.
 4. English is the primary language; Hebrew is additive.
 
-## 11. Open questions
+## 11. Resolved and open
 
-- Reinstate the Warren Buffett quote? Dropped in favour of real LP testimonials, which two of the four reference sites use effectively.
-- Are LP testimonials available? Currently the largest missing credibility element versus the reference sites.
-- Does `/track-record` show deal-level multiples publicly, or aggregate only?
+**Resolved 2026-08-28:**
+
+- **Buffett quote is out permanently.** Replaced by attributed LP testimonials. A borrowed quote from someone with no relationship to the firm reads thin next to a real investor saying something specific.
+- **LP testimonials are available.** They become a content type and appear on `/` and `/investors`. Attributed by name and role wherever the investor permits it — an anonymous testimonial persuades nobody. Written consent required before publishing any investor's name.
+- **Deal-level multiples are public** on `/track-record`. This is the strongest asset on the page and directly serves the transparency the strategy session called essential to investor trust. Every figure carries the realized/targeted distinction; no forward-looking number is stated as a promise.
+
+**Still open:**
+
+- Sanity's current free-tier user limit versus the number of editors (§10.2). The only input that could still change the CMS decision.
 
 ## 12. Out of scope
 
