@@ -130,7 +130,9 @@ Sanity → GROQ at build → static pages. Publish fires a webhook that revalida
 2. Email the team immediately
 3. Confirm to the user
 
-**No Agora API** on the current subscription. Kathy exports a CSV in Agora's import format from the Studio. If API access is added later, the push slots in behind step 1 with no change to the form.
+**No Agora API** on the current subscription. **Revised 2026-08-29:** email is the working channel — each submission emails Hunter, who assembles the Agora import sheet from those emails himself. The in-CMS CSV export is descoped.
+
+The `lead` document is still written, and that is deliberate: it costs nothing, it is already in the schema, and it is the only thing standing between a spam-filtered notification and a permanently lost investor. Email is the workflow; the record is the safety net.
 
 Rejected: posting directly to Agora (an outage silently swallows leads) and linking out to Agora's own form (loses drop-offs, can't be bilingual or branded).
 
@@ -162,8 +164,8 @@ This is a large scope for one uninterrupted build. Sequence it so something real
 
 ### Launch blockers
 
-1. **Railway account must be an EM8-owned team**, not personal. Building on a personal account and transferring later is acceptable; launching on one is not — it rebuilds the exact trap this project exists to escape.
-2. **GitHub org needs a company contact email and a second owner.**
+1. **Railway account must be an EM8-owned team**, not personal. **Accepted 2026-08-29:** Hunter will build on his personal Railway account and transfer once the site works. The transfer remains a blocker on *launch*, not on development — launching on a personal account rebuilds the exact trap this project exists to escape.
+2. **GitHub org needs a company contact email and a second owner.** **Accepted risk 2026-08-29:** no second owner for now. The org therefore has a single point of failure; if that account is lost or leaves, EM8 loses access to its own website source. Revisit before launch.
 3. **Every placeholder figure replaced** (see §9).
 4. **Hebrew copy reviewed by a native speaker.**
 5. **Real photography** — or launch with the slots filled by the best existing images and swap after the shoot.

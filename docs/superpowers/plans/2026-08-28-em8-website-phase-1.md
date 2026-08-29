@@ -2808,9 +2808,9 @@ git commit -m "feat: add homepage composed from the TOD thesis"
 
 ---
 
-### Task 14: Agora CSV export
+### Task 14: Agora CSV export — DESCOPED 2026-08-29
 
-Turns the manual spreadsheet workflow into one click, since the subscription has no API.
+> **Skip this task.** Hunter will assemble the Agora import sheet from the notification emails instead. The `lead` document is still written by Task 10 as a durable record; only the in-CMS export route is dropped. Kept here so the decision is visible rather than silently absent.
 
 **Files:**
 - Create: `src/lib/agoraCsv.ts`, `src/app/api/leads/export/route.ts`
