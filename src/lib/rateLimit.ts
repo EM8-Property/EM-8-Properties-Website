@@ -20,10 +20,33 @@ const MAX_TRACKED_KEYS = 10_000
 
 const buckets = new Map<string, Bucket>()
 
+/**
+ * A ceiling across all callers combined.
+ *
+ * Per-key limiting can always be diluted — by a botnet, or by any weakness in deriving
+ * the key from proxy headers. This bounds total damage regardless of how many distinct
+ * keys an attacker can present: at worst they burn the global budget for the hour, and
+ * the CMS and the mail account survive it.
+ */
+const GLOBAL_WINDOW_MS = 3_600_000
+const GLOBAL_LIMIT = 100
+let globalBucket: Bucket = { count: 0, resetAt: 0 }
+
 export function rateLimit(
   key: string,
   now: number = Date.now(),
 ): { allowed: boolean; retryAfterSeconds: number } {
+  if (now >= globalBucket.resetAt) {
+    globalBucket = { count: 0, resetAt: now + GLOBAL_WINDOW_MS }
+  }
+  globalBucket.count += 1
+  if (globalBucket.count > GLOBAL_LIMIT) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((globalBucket.resetAt - now) / 1000)),
+    }
+  }
+
   const existing = buckets.get(key)
 
   if (!existing || now >= existing.resetAt) {
@@ -48,4 +71,5 @@ export function rateLimit(
 /** Test seam. */
 export function resetRateLimits(): void {
   buckets.clear()
+  globalBucket = { count: 0, resetAt: 0 }
 }

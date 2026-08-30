@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { Eyebrow } from '@/components/ui/Eyebrow'
-import { Chip } from '@/components/ui/Chip'
+import { Chip, CHIP_COLORS } from '@/components/ui/Chip'
 import { StatBand } from '@/components/ui/StatBand'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Card } from '@/components/ui/Card'
@@ -28,8 +28,16 @@ describe('Eyebrow', () => {
 
 describe('Chip', () => {
   it('colours a sold chip with the neutral status colour', () => {
+    // Asserted against CHIP_COLORS rather than a literal hex. The previous version
+    // hardcoded rgb(96, 125, 139), which pinned a fill measuring 4.37:1 against its own
+    // white text — so the test actively defended a contrast failure.
+    // tests/unit/chipContrast.test.ts holds every fill to 4.5:1.
     const { container } = render(<Chip kind="sold" />)
-    expect((container.firstChild as HTMLElement).style.backgroundColor).toBe('rgb(96, 125, 139)')
+    const expected = CHIP_COLORS.sold!
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(expected.slice(i, i + 2), 16))
+    expect((container.firstChild as HTMLElement).style.backgroundColor).toBe(
+      `rgb(${r}, ${g}, ${b})`,
+    )
   })
 
   it('renders a readable label rather than the raw slug', () => {

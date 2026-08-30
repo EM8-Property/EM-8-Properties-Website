@@ -22,11 +22,30 @@ export type LeadInput = {
 export type EmailSender = { send(msg: { subject: string; body: string }): Promise<void> }
 type CreateFn = (doc: Record<string, unknown>) => Promise<{ _id: string }>
 
-/** Name of the hidden field a human never sees and a naive bot always fills. */
-export const HONEYPOT_FIELD = 'company'
+/**
+ * Name of the hidden field a person never sees and a naive bot fills.
+ *
+ * Deliberately NOT "company", "name", "phone", or anything else a password manager
+ * recognises. `autocomplete="off"` is widely ignored by 1Password, Bitwarden, and
+ * LastPass for organisation-type fields, and "company" is among the most commonly
+ * autofilled names there is — so a real investor with a password manager could have had
+ * their submission silently discarded. Given the site exists to capture investor
+ * contacts, a false positive here is worse than the spam it prevents.
+ */
+export const HONEYPOT_FIELD = 'contact_ref_2'
 
 const MAX_SHORT = 200
+const MAX_EMAIL = 254
 const MAX_MESSAGE = 5000
+
+/**
+ * Ceiling on the raw request body.
+ *
+ * App Router route handlers have no default body-size limit — `bodySizeLimit` applies to
+ * Server Actions only — so without this a single request can stream arbitrary megabytes
+ * into JSON.parse before any field-level cap is reached.
+ */
+export const MAX_BODY_BYTES = 20_000
 
 function str(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined
@@ -70,12 +89,18 @@ export function parseLead(input: unknown): LeadInput {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new LeadValidationError('Valid email required')
   }
+  // 254 is the maximum length of an email address per RFC 5321.
+  if (email.length > MAX_EMAIL) throw new LeadValidationError('Email is too long')
 
   const message = str(v.message)
   if (message && message.length > MAX_MESSAGE) {
     throw new LeadValidationError('Message is too long')
   }
+  // firstName is included here, not just the optional fields. It is required and was
+  // previously unbounded, so a multi-megabyte value would have gone straight into a
+  // Sanity document and into the notification email body.
   for (const [label, value] of [
+    ['First name', firstName],
     ['Last name', str(v.lastName)],
     ['Phone', str(v.phone)],
     ['Investor type', str(v.investorType)],

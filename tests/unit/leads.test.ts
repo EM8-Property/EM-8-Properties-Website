@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
-import { parseLead, submitLead, LeadValidationError, LeadSpamError } from '@/lib/leads'
+import {
+  parseLead,
+  submitLead,
+  LeadValidationError,
+  LeadSpamError,
+  HONEYPOT_FIELD,
+} from '@/lib/leads'
 
 const valid = {
   source: 'keep-in-touch',
@@ -65,11 +71,34 @@ describe('parseLead', () => {
 
   // --- B3: spam ------------------------------------------------------------------
   it('rejects a submission that filled the honeypot', () => {
-    expect(() => parseLead({ ...valid, company: 'buy-cheap-pills' })).toThrow(LeadSpamError)
+    expect(() => parseLead({ ...valid, [HONEYPOT_FIELD]: 'buy-cheap-pills' })).toThrow(
+      LeadSpamError,
+    )
+  })
+
+  it('does not use a honeypot name a password manager would autofill', () => {
+    // "company" is among the most commonly autofilled field names there is, and
+    // autocomplete="off" is widely ignored for organisation fields. A false positive
+    // here silently discards a real investor — the exact outcome capture-first exists
+    // to prevent.
+    expect(['company', 'organization', 'name', 'phone', 'address', 'email']).not.toContain(
+      HONEYPOT_FIELD,
+    )
   })
 
   it('caps free text so the endpoint cannot be used as storage', () => {
     expect(() => parseLead({ ...valid, message: 'x'.repeat(6000) })).toThrow(LeadValidationError)
+  })
+
+  it('caps the required fields too, not just the optional ones', () => {
+    // firstName is required and was previously unbounded, so a multi-megabyte value
+    // would have gone straight into a Sanity document and the notification email.
+    expect(() => parseLead({ ...valid, firstName: 'x'.repeat(500) })).toThrow(
+      LeadValidationError,
+    )
+    expect(() =>
+      parseLead({ ...valid, email: `${'x'.repeat(250)}@example.com` }),
+    ).toThrow(LeadValidationError)
   })
 })
 

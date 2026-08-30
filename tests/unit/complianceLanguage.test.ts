@@ -1,64 +1,38 @@
 import { describe, it, expect } from 'vitest'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join } from 'node:path'
+import { readSourceProse, stripComments } from '../shared/sourceScan'
+import { SPEC_9_PLACEHOLDERS } from '../shared/placeholders'
 
 /**
- * Scans the source for promissory return language.
+ * Scans the source for promissory return language and for figures spec §9 invented.
  *
- * The plan's only guard on this was inside the content-integrity suite, which reads
- * Sanity documents. But a great deal of investor-facing prose is hardcoded in TSX — the
+ * The plan guarded both only inside the content-integrity suite, which reads Sanity
+ * documents. But a great deal of investor-facing prose is hardcoded in TSX — the
  * Investors "how an investment works" steps, the Partners cards, the FactRail offering
- * block — and none of it is in the CMS. A compliance rule enforced only over documents
- * leaves the copy most likely to be written by a developer completely uncovered.
+ * block, the homepage hero — and none of it is in the CMS. Rules enforced only over
+ * documents leave exactly the copy a developer writes completely uncovered.
  *
- * Permitted register: targeted, projected, underwritten, estimated, pro forma.
+ * Permitted register for returns: targeted, projected, underwritten, estimated, pro forma.
  */
 const BANNED = [
-  /\bguaranteed\b/i,
+  /\bguarantee(s|d)?\b/i,
   /\bwill return\b/i,
-  /\bassured returns?\b/i,
+  /\bassured\b/i,
   /\brisk[- ]free\b/i,
   /\bno risk\b/i,
   /\bcan't lose\b/i,
   /\bsafe investment\b/i,
 ]
 
-function sourceFiles(dir: string, acc: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry)
-    if (statSync(full).isDirectory()) {
-      sourceFiles(full, acc)
-    } else if (/\.(ts|tsx)$/.test(entry) && !entry.endsWith('types.generated.ts')) {
-      acc.push(full)
-    }
-  }
-  return acc
-}
-
-/**
- * Removes comments before scanning.
- *
- * The rule is about prose a visitor can read, and a comment cannot ship. Several
- * components document this very policy by naming the forbidden words in order to forbid
- * them — scanning comments would flag the documentation of the rule as a violation of it.
- *
- * `//` is only treated as a comment when it does not follow a colon, so URLs survive.
- */
-function stripComments(source: string): string {
-  return source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1')
-}
-
 describe('return language in source', () => {
-  const files = sourceFiles('src')
+  const sources = readSourceProse()
 
   it('finds source files to scan', () => {
-    expect(files.length).toBeGreaterThan(20)
+    expect(sources.length).toBeGreaterThan(20)
   })
 
   it('uses no promissory return language anywhere in src/', () => {
     const offenders: string[] = []
-    for (const file of files) {
-      const text = stripComments(readFileSync(file, 'utf8'))
+    for (const { file, text } of sources) {
       for (const pattern of BANNED) {
         const match = text.match(pattern)
         if (match) offenders.push(`${file}: "${match[0]}"`)
@@ -68,7 +42,7 @@ describe('return language in source', () => {
   })
 
   it('actually detects a violation, so a green result means something', () => {
-    // A scanner that cannot fail is decoration. This proves the patterns match real copy.
+    // A scanner that cannot fail is decoration.
     const sample = stripComments(`
       // guaranteed — this is a comment and must be ignored
       export const Copy = () => <p>This investment is guaranteed to succeed.</p>
@@ -82,5 +56,34 @@ describe('return language in source', () => {
       export const Copy = () => <p>Targeted returns are underwritten conservatively.</p>
     `)
     expect(BANNED.some((p) => p.test(sample))).toBe(false)
+  })
+})
+
+describe('spec §9 placeholder figures in source', () => {
+  const sources = readSourceProse()
+
+  it('ships none of the figures spec §9 invented', () => {
+    // The content gate checks Sanity documents. This checks the hardcoded marketing copy
+    // the content gate cannot see — which, per plan revision D4, is where the Partners
+    // cards, the Investors steps, and the homepage hero actually live.
+    const offenders: string[] = []
+    for (const { file, text } of sources) {
+      for (const { pattern, note } of SPEC_9_PLACEHOLDERS) {
+        if (pattern.test(text)) offenders.push(`${file}: ${note}`)
+      }
+    }
+    expect(offenders, `placeholder figures in source:\n  ${offenders.join('\n  ')}`).toEqual([])
+  })
+
+  it('actually detects a placeholder, so a green result means something', () => {
+    const sample = stripComments(`export const Copy = () => <p>We returned 2.1x on that deal.</p>`)
+    expect(SPEC_9_PLACEHOLDERS.some(({ pattern }) => pattern.test(sample))).toBe(true)
+  })
+
+  it('does not flag the figures spec §9 confirms are real', () => {
+    // 1.79x and 36.2% are genuine and are the most LP-relevant proof EM8 owns. If a
+    // pattern ever starts matching these, the pattern is wrong, not the copy.
+    const real = '$100M+ AUM, 1,350+ units managed, 750+ units sold, 1.79x realized, 36.2% annual'
+    expect(SPEC_9_PLACEHOLDERS.some(({ pattern }) => pattern.test(real))).toBe(false)
   })
 })

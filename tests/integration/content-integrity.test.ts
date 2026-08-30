@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { createClient } from 'next-sanity'
-import { SPEC_9_PLACEHOLDERS } from './placeholders'
+import { SPEC_9_PLACEHOLDERS } from '../shared/placeholders'
 
 /**
  * Runs against the live dataset, so it is excluded from `npm test` and run with

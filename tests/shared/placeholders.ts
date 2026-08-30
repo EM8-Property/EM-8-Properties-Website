@@ -17,6 +17,17 @@ export const SPEC_9_PLACEHOLDERS: Placeholder[] = [
   { pattern: /\b2\.1x\b/i, note: 'Burbank equity multiple — invented (spec §9)' },
   { pattern: /\b1\.7x\b/i, note: 'Embassy equity multiple — invented (spec §9)' },
 
+  // Spec §9 says "Burbank 2.1x and 2019 exit; Embassy 1.7x and 2021 exit" — the exit
+  // years are invented too, and dealStory.exitYear is a rendered field.
+  { pattern: /\bexit(?:ed)?\D{0,12}\b(?:2019|2021)\b/i, note: 'Burbank/Embassy exit year — invented (spec §9)' },
+  { pattern: /"exitYear"\s*:\s*(?:2019|2021)\b/, note: 'Burbank/Embassy exitYear — invented (spec §9)' },
+
+  // "Boulevard target multiple/IRR/cash-on-cash/hold" — every forward-looking figure on
+  // that deal was invented. Any of these appearing alongside a percentage or multiple is
+  // a figure that has to be confirmed before it ships.
+  { pattern: /\bcash[- ]on[- ]cash\b/i, note: 'Boulevard cash-on-cash — invented (spec §9)' },
+  { pattern: /\btarget(?:ed)?\s+(?:IRR|multiple)\b/i, note: 'Boulevard target IRR/multiple — invented (spec §9)' },
+
   // Municipal stats. "0 zoning litigations" is called out in the spec as powerful if
   // true and a liability if not, so it must be verified rather than merely retyped.
   { pattern: /\bzoning litigation/i, note: '"0 zoning litigations" — unverified (spec §9)' },

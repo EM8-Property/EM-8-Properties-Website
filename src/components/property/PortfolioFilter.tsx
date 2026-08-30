@@ -2,22 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import { PropertyCard, type PropertyCardData } from './PropertyCard'
-
-const ASSET_CLASS_LABELS: Record<string, string> = {
-  multifamily: 'Multifamily',
-  'mixed-use': 'Mixed-Use',
-  townhomes: 'Townhomes',
-  industrial: 'Industrial',
-  senior: 'Senior Living',
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  stabilized: 'Stabilized',
-  'lease-up': 'In Lease-Up',
-  'under-construction': 'Under Construction',
-  'renovation-complete': 'Renovation Complete',
-  sold: 'Sold',
-}
+// Single definition, next to the slugs these describe — see schema/property.ts.
+import { ASSET_CLASS_LABELS, STATUS_LABELS } from '@/sanity/schema/property'
 
 function FilterRow({
   label,

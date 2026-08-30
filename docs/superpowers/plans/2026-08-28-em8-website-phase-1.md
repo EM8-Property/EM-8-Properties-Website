@@ -96,6 +96,48 @@ E2E coverage added beyond the plan's six: the portfolio filter narrows and expos
 
 CI also runs `eslint` — which the plan omitted, despite the logical-properties rule being the thing that decides whether Phase 2 is additive or a rewrite.
 
+### R11 — Code review findings (2026-08-30, pre-merge)
+
+An independent review of the whole diff found issues the plan could not have caught, because none of them were in its scope. Fixed unless noted.
+
+**C1 — investor PII was world-readable. Confirmed by probe, and the one item still open.**
+
+The `production` dataset is `aclMode: "public"`. `sanityClient` carries no token, so unauthenticated reads succeed — verified: `count(*[_type=="lead"])` returns HTTP 200 to an anonymous caller. `lead` documents hold investor names, emails, phone numbers, check sizes, free-text messages, and the 506(c) accreditation flag, and both `NEXT_PUBLIC_SANITY_PROJECT_ID` and `NEXT_PUBLIC_SANITY_DATASET` ship in the client bundle by design. Anyone viewing source could dump the investor list.
+
+Zero leads exist today only because the form has never been submitted. Neither the spec nor this plan ever mentions dataset visibility — this was missed at design time, not accepted.
+
+The code is now ready for the fix: `sanity/client.ts` is `server-only` and uses `SANITY_API_READ_TOKEN` when present, and `sanity/image.ts` was rebuilt from plain config so it no longer drags the read client into the browser bundle — which would otherwise have turned "add a read token" into "ship a Sanity token to every visitor."
+
+**Still required, and it is a Sanity dashboard change, not a code change:** switch `production` to private and set `SANITY_API_READ_TOKEN` in `.env.local`, Railway, and CI. Do this before the form is reachable by anyone.
+
+**C2 — every LinkedIn share card pointed at `localhost`.** No `metadataBase` was set anywhere. `opengraph-image.tsx` is a file-convention image, so Next resolves its URL against `metadataBase`, falling back through `VERCEL_*` (absent on Railway) to `http://localhost:3000`. Every article on the site's highest-leverage surface would have advertised an unreachable image. Now set from `siteUrl()`.
+
+**I1 — the logical-properties rule was blind to how this codebase writes classes.** It required a `className` ancestor, so `const inputClass = '…'` (LeadForm), `const button = (a) => [...].join(' ')` (both filters), and `const base`/`const style` (Button) all sailed past — the prevailing pattern, uncovered. Broadened to all string literals and template elements in `src/`, plus inline-style physical properties. Verified against a probe: catches the variable form, the helper form, `sm:` variants, and `marginLeft`/`textAlign:'left'`; still clean on `rounded-lg`, `border-rule`, `last:border-e-0`, `start-0`.
+
+**I2 — the §9 gate could not see the copy most likely to break it.** It scanned Sanity documents only, while revision D4 records that the Partners cards, Investors steps, and homepage hero live in TSX. Now scanned in source too, sharing one denylist. Added the exit years and Boulevard's target returns, which §9 lists and the denylist had missed. Added `.github/workflows/content-gate.yml` so the launch blocker runs on a schedule rather than when someone remembers to type it.
+
+**I3 — the rate limiter was bypassable with one header.** It keyed on the *left-most* `X-Forwarded-For` entry, which is client-supplied; a random value per request bought a fresh bucket every time. Now the right-most (proxy-appended) entry, plus a global hourly ceiling so per-key dilution cannot uncap total damage.
+
+**I4 — the honeypot could have silently swallowed real investors.** The field was named `company`, one of the most commonly autofilled names there is, and `autocomplete="off"` is widely ignored by password managers for organisation fields. A false positive discards the submission *and* the safety net while telling the sender "someone will be in touch" — inverting the entire capture-first rationale. Renamed to `contact_ref_2`, hidden with `display:none` (which extensions respect far more reliably), and now logged server-side so a non-zero rate is discoverable.
+
+**I6 — `firstName` and `email` were the two fields the length cap forgot**, and route handlers have no default body-size limit (`bodySizeLimit` is Server Actions only). Both capped; body limited to 20KB before parsing.
+
+**I7 — every chip fill failed contrast.** Measured: 2.16:1 (industrial) to 4.37:1 (sold), all below 4.5:1, on 8px white text, rendered on every card and property header. Unlike the teal buttons these colours appear nowhere in the spec — an implementation invention with no design decision to defer to. Repalletted to 5.07–7.40:1, text raised to 10px, and `chipContrast.test.ts` now holds every fill to 4.5:1 so the palette is self-guarding.
+
+**I8 — `useCdn: true` undercut the revalidation webhook.** Sanity's CDN serves cached responses for ~60s after a mutation, so a publish would purge the tag, re-fetch a stale document, and re-cache it — the editor sees nothing change. Now `false`; Next's Data Cache is the cache layer.
+
+**I9 — a missing `siteSettings` locked you out of `/studio`.** The guard lived in the root layout, and `/studio` rendered inside it, so the one tool that could create the missing document was the one page that would not open. Content routes moved into a `(site)` route group carrying the guard and the chrome; the root layout is now bare, so `/studio` and the API routes render without it. Added `global-error.tsx`, since an error boundary cannot catch a throw from the layout above it.
+
+**Minors fixed:** label maps consolidated into `schema/property.ts` (they were duplicated across three files, so adding an asset class meant three edits); `FactRail`'s deal-room CTA is a `Link` rather than a raw anchor; compliance patterns widened to catch "guarantee"/"guarantees"/"assured"; the source scanner resolves `src/` absolutely rather than from the working directory; `FactRail`'s right-hand column no longer keeps a dangling border.
+
+**Pushed back on one.** The review suggested `import 'server-only'` in `src/lib/revalidate.ts` as a one-line boundary marker. It is not one line — that package throws outside a React Server context, so it makes the module unimportable from Vitest and takes all six of its tests with it, including the ones proving the check fails closed. The file holds no secret, reads its env at call time, is imported only by a route handler, and Next never inlines a non-`NEXT_PUBLIC_` variable into a client bundle. Declined, with the reasoning recorded in the file.
+
+**Open, needing a decision:**
+
+- **C1's dataset flip** — see above. The only genuinely blocking item.
+- `partners/page.tsx` ships `Deal Size: $10M – $50M`. Not in spec §9, so not a constraint breach, but it is an invented-looking figure in hardcoded TSX with nothing gating it. Confirm it or move it to the CMS.
+- `ci.yml` reads `secrets.SANITY_PROJECT_ID` on `push`/`pull_request`. Secrets are unavailable to fork PRs, so the build step fails for outside contributors — which matters as soon as spec §8's second-owner blocker is addressed.
+
 ### R6 — Noted, deliberately not changed
 
 - **D2 — teal contrast at point of use.** The palette constants are tested, but nothing stops `text-teal` on 11px text, which is the actual failure mode. A reliable lint rule would need to correlate colour and font-size utilities across a `className` string; not worth the complexity now. Guarded by review instead.

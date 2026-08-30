@@ -26,6 +26,11 @@ const LOGICAL_PROPERTIES_MESSAGE =
   "start-/end- not left-/right-, text-start/text-end not text-left/text-right, " +
   "border-s/border-e not border-l/border-r. Phase 2 mirrors this layout for Hebrew.";
 
+const PHYSICAL_STYLE_MESSAGE =
+  "Use logical CSS properties in inline styles: marginInlineStart/End, " +
+  "paddingInlineStart/End, borderInlineStart/End, insetInlineStart/End, and " +
+  "textAlign: 'start'|'end'. Phase 2 mirrors this layout for Hebrew.";
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -34,13 +39,36 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-syntax": [
         "error",
+        // Not scoped to className attributes.
+        //
+        // The earlier version required a `JSXAttribute[name.name='className']` ancestor,
+        // which made it blind to exactly how this codebase actually writes classes:
+        // `const inputClass = '...'` in LeadForm, the `const button = (isActive) =>
+        // [...].join(' ')` helpers in PortfolioFilter and InsightsFilter, `const base` /
+        // `const style` in Button. Every one of those would have sailed past it. The
+        // rule that decides whether Phase 2 is additive or a rewrite cannot have a hole
+        // shaped like the prevailing pattern.
+        //
+        // Cost: prose containing "left" or "right" in a string may trip it. That is a
+        // one-line eslint-disable, and cheap against a Phase 2 rewrite.
         {
-          selector: `JSXAttribute[name.name='className'] Literal[value=/${PHYSICAL_DIRECTION}/]`,
+          selector: `Literal[value=/${PHYSICAL_DIRECTION}/]`,
           message: LOGICAL_PROPERTIES_MESSAGE,
         },
         {
-          selector: `JSXAttribute[name.name='className'] TemplateElement[value.raw=/${PHYSICAL_DIRECTION}/]`,
+          selector: `TemplateElement[value.raw=/${PHYSICAL_DIRECTION}/]`,
           message: LOGICAL_PROPERTIES_MESSAGE,
+        },
+        // Inline styles bypass Tailwind entirely, so they need their own guard.
+        {
+          selector:
+            "JSXAttribute[name.name='style'] Property[key.name=/^(marginLeft|marginRight|paddingLeft|paddingRight|borderLeft|borderRight|left|right)$/]",
+          message: PHYSICAL_STYLE_MESSAGE,
+        },
+        {
+          selector:
+            "JSXAttribute[name.name='style'] Property[key.name='textAlign'][value.value=/^(left|right)$/]",
+          message: PHYSICAL_STYLE_MESSAGE,
         },
       ],
     },

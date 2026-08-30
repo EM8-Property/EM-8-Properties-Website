@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 
 type Props = {
@@ -9,9 +10,12 @@ type Props = {
   publiclyOffered?: boolean | null
 }
 
+// `even:border-e-0` clears the trailing border on the right-hand column of the 2-column
+// grid. `last:border-e-0` alone only cleared the final cell, leaving a dangling border
+// down the whole right edge.
 function Fact({ figure, label }: { figure: string; label: string }) {
   return (
-    <div className="border-b border-e border-rule p-4 last:border-e-0">
+    <div className="border-b border-e border-rule p-4 even:border-e-0 last:border-e-0">
       <div className="text-xl font-bold tracking-tight text-ink">{figure}</div>
       <div className="mt-1 text-[8px] font-semibold uppercase tracking-[0.15em] text-ink-secondary">
         {label}
@@ -50,12 +54,13 @@ export function FactRail({ property: p }: { property: Props }) {
             Offering materials are available to verified accredited investors through our
             portal.
           </p>
-          <a
+          {/* Link, not a raw anchor — an internal href on <a> forces a full reload. */}
+          <Link
             href="/investors"
             className="mt-3 block rounded-control bg-teal px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wide text-white"
           >
             Enter the deal room
-          </a>
+          </Link>
         </div>
       )}
     </aside>

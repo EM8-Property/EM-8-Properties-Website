@@ -89,10 +89,15 @@ export function LeadForm({
         screen reader never announces it — a person cannot fill this in, while a bot that
         fills every field will. The server answers a filled honeypot with a success
         response rather than an error, so the bot learns nothing.
+
+        `display: none` is set as an inline style rather than relying on opacity/size
+        utilities: password managers and fill-everything extensions skip display:none far
+        more reliably than a visually-hidden-but-rendered field, and a false positive here
+        silently discards a real investor.
       */}
-      <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden opacity-0">
+      <div aria-hidden="true" style={{ display: 'none' }}>
         <label>
-          Company
+          Reference
           <input type="text" name={HONEYPOT_FIELD} tabIndex={-1} autoComplete="off" />
         </label>
       </div>

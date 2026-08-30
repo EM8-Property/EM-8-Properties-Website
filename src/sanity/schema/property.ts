@@ -4,6 +4,29 @@ export const ASSET_CLASSES = ['multifamily', 'mixed-use', 'townhomes', 'industri
 export const STATUSES = ['stabilized', 'lease-up', 'under-construction', 'renovation-complete', 'sold'] as const
 
 /**
+ * Human-readable labels, defined next to the slugs they describe.
+ *
+ * These previously lived in three places — Chip, PortfolioFilter, and the schema's own
+ * slug arrays — so adding an asset class meant editing three files, and forgetting one
+ * left a raw slug rendered on the site. One definition, imported everywhere.
+ */
+export const ASSET_CLASS_LABELS: Record<string, string> = {
+  multifamily: 'Multifamily',
+  'mixed-use': 'Mixed-Use',
+  townhomes: 'Townhomes',
+  industrial: 'Industrial',
+  senior: 'Senior Living',
+}
+
+export const STATUS_LABELS: Record<string, string> = {
+  stabilized: 'Stabilized',
+  'lease-up': 'In Lease-Up',
+  'under-construction': 'Under Construction',
+  'renovation-complete': 'Renovation Complete',
+  sold: 'Sold',
+}
+
+/**
  * One document per asset, at one canonical URL: /portfolio/[slug], regardless of status.
  * /track-record is a filtered view over `status == "sold"`, never a second set of pages —
  * duplicate URLs for one asset would split its search ranking and double the editing surface.
