@@ -111,7 +111,7 @@ export function LeadForm({
       <button
         type="submit"
         disabled={status === 'sending'}
-        className="rounded-control bg-teal px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white disabled:opacity-60"
+        className="rounded-control bg-teal px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-ink disabled:opacity-60"
       >
         {status === 'sending' ? 'Sending…' : submitLabel}
       </button>

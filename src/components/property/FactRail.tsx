@@ -57,7 +57,7 @@ export function FactRail({ property: p }: { property: Props }) {
           {/* Link, not a raw anchor — an internal href on <a> forces a full reload. */}
           <Link
             href="/investors"
-            className="mt-3 block rounded-control bg-teal px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wide text-white"
+            className="mt-3 block rounded-control bg-teal px-4 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wide text-ink"
           >
             Enter the deal room
           </Link>

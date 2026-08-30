@@ -16,7 +16,7 @@ export default function PropertyNotFound() {
       </p>
       <Link
         href="/portfolio"
-        className="mt-6 inline-block rounded-control bg-teal px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white"
+        className="mt-6 inline-block rounded-control bg-teal px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-ink"
       >
         View the portfolio
       </Link>

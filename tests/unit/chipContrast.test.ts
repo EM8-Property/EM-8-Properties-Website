@@ -51,3 +51,14 @@ describe('chip fills', () => {
     expect(Object.values(CHIP_COLORS)).not.toContain(palette.teal)
   })
 })
+
+describe('teal-filled controls', () => {
+  it('carries ink text on the accent teal, not white', () => {
+    // Every primary call to action sits on #4ABDB5. White on it is 2.27:1 — worse than
+    // the accent-teal-text case spec §2.3 forbids, and Lighthouse failed the site's
+    // accessibility score on exactly this. Ink on the same fill is 7.66:1, so the accent
+    // colour itself is unchanged and only the text colour moved.
+    expect(contrastRatio(palette.ink, palette.teal)).toBeGreaterThanOrEqual(4.5)
+    expect(contrastRatio('#FFFFFF', palette.teal)).toBeLessThan(4.5)
+  })
+})
