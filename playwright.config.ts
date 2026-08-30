@@ -24,7 +24,10 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: 'npm run build && npm start',
+          // CI builds explicitly in its own step, so rebuilding here would double the
+          // slowest part of the run. Locally there is no such step, so build first —
+          // otherwise a fresh checkout would serve a .next that does not exist.
+          command: process.env.CI ? 'npm start' : 'npm run build && npm start',
           url: 'http://localhost:3000',
           reuseExistingServer: !process.env.CI,
           timeout: 180_000,

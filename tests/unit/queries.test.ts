@@ -29,6 +29,21 @@ describe('GROQ queries', () => {
     expect(TESTIMONIALS_QUERY).toContain('consentOnRecord == true')
   })
 
+  it('fetches the retail unit count everywhere the residential one is fetched', () => {
+    // A card showing "90 units" for a 90-residential + 3-retail asset is the exact
+    // ambiguity the split fields exist to remove. Selecting one without the other puts
+    // it straight back.
+    for (const q of [ALL_PROPERTIES_QUERY, PROPERTY_BY_SLUG_QUERY, SOLD_PROPERTIES_QUERY]) {
+      expect(q).toContain('unitCount')
+      expect(q).toContain('retailUnitCount')
+    }
+  })
+
+  it('fetches Walk Score and Transit Score for the property page', () => {
+    expect(PROPERTY_BY_SLUG_QUERY).toContain('walkScore')
+    expect(PROPERTY_BY_SLUG_QUERY).toContain('transitScore')
+  })
+
   it('track record does not create a second set of property URLs', () => {
     // /track-record is a view over sold properties. It selects the same slug the
     // canonical /portfolio/[slug] page uses; it must not invent a parallel path.

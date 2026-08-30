@@ -20,7 +20,7 @@ import { defineQuery } from 'next-sanity'
 export const ALL_PROPERTIES_QUERY = defineQuery(`
   *[_type == "property"] | order(order asc) {
     _id, title, "slug": slug.current, assetClass, status, city, state,
-    metraStation, walkMinutes, unitCount, yearBuilt, cardBlurb,
+    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
     "image": gallery[0]
   }
 `)
@@ -28,9 +28,9 @@ export const ALL_PROPERTIES_QUERY = defineQuery(`
 export const PROPERTY_BY_SLUG_QUERY = defineQuery(`
   *[_type == "property" && slug.current == $slug][0] {
     _id, title, "slug": slug.current, assetClass, status, city, state,
-    metraStation, walkMinutes, unitCount, yearBuilt, cardBlurb,
+    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
     "image": gallery[0],
-    squareFeet, yearRenovated, overview, businessPlan,
+    squareFeet, yearRenovated, walkScore, transitScore, overview, businessPlan,
     gallery, coordinates, dealStory, publiclyOffered,
     "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {
       title, "slug": slug.current, publishedAt
@@ -50,7 +50,7 @@ export const PROPERTY_SLUGS_QUERY = defineQuery(
 export const SOLD_PROPERTIES_QUERY = defineQuery(`
   *[_type == "property" && status == "sold"] | order(dealStory.exitYear desc) {
     _id, title, "slug": slug.current, assetClass, status, city, state,
-    metraStation, walkMinutes, unitCount, yearBuilt, cardBlurb,
+    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
     "image": gallery[0],
     dealStory
   }
@@ -65,7 +65,7 @@ export const ALL_POSTS_QUERY = defineQuery(`
 export const POST_BY_SLUG_QUERY = defineQuery(`
   *[_type == "post" && slug.current == $slug][0] {
     title, "slug": slug.current, publishedAt, category, excerpt, heroImage, body,
-    relatedProperty-> { title, "slug": slug.current, city, unitCount, walkMinutes, "image": gallery[0] }
+    relatedProperty-> { title, "slug": slug.current, city, unitCount, retailUnitCount, walkMinutes, "image": gallery[0] }
   }
 `)
 

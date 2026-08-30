@@ -55,3 +55,15 @@ describe('PropertyCard', () => {
     expect(container.innerHTML).not.toMatch(PHYSICAL)
   })
 })
+
+describe('PropertyCard unit mix', () => {
+  it('states residential and retail separately on a mixed-use card', () => {
+    render(<PropertyCard property={{ ...base, unitCount: 90, retailUnitCount: 3 }} />)
+    expect(screen.getByText(/90 Residential · 3 Retail/)).toBeDefined()
+  })
+
+  it('still reads "Units" for a purely residential asset', () => {
+    render(<PropertyCard property={{ ...base, unitCount: 40, retailUnitCount: null }} />)
+    expect(screen.getByText(/40 Units/)).toBeDefined()
+  })
+})

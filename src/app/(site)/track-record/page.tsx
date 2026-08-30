@@ -8,6 +8,7 @@ import type {
   HERO_STATS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
+import { formatUnits } from '@/lib/format'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { StatBand } from '@/components/ui/StatBand'
 import { DealStory } from '@/components/property/DealStory'
@@ -85,7 +86,7 @@ export default async function TrackRecordPage() {
                   </Link>
                   <p className="mt-1 text-[11px] font-medium text-ink-secondary">
                     {p.city}, {p.state}
-                    {p.unitCount ? ` · ${p.unitCount} Units` : ''}
+                    {formatUnits(p.unitCount, p.retailUnitCount) ? ` · ${formatUnits(p.unitCount, p.retailUnitCount)}` : ''}
                   </p>
                 </div>
                 <Chip kind="sold" />

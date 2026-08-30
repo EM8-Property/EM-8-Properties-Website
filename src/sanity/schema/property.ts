@@ -54,8 +54,39 @@ export const property = defineType({
       type: 'number',
       validation: (r) => r.min(0).max(60),
     }),
-    defineField({ name: 'unitCount', title: 'Units', type: 'number' }),
+    // Residential and retail counts are separate fields, not one total.
+    //
+    // The live site published residential units; the internal June 2026 portfolio sheet
+    // published residential + retail combined. That is the entire reason the two sources
+    // disagreed on three properties (66/71, 90/93, 29/31) — not a data error. Storing one
+    // "units" number would re-encode that ambiguity and guarantee the argument recurs.
+    defineField({ name: 'unitCount', title: 'Residential units', type: 'number' }),
+    defineField({
+      name: 'retailUnitCount',
+      title: 'Retail units',
+      type: 'number',
+      description: 'Street-level retail suites. Leave empty for a purely residential asset.',
+      validation: (r) => r.min(0),
+    }),
     defineField({ name: 'squareFeet', type: 'number' }),
+
+    // Walk Score and Transit Score are third-party measures on a fixed 0-100 scale.
+    // Bounded here so a mistyped value cannot render as a nonsense score next to the
+    // Metra fact it is meant to corroborate.
+    defineField({
+      name: 'walkScore',
+      title: 'Walk Score',
+      type: 'number',
+      description: 'From walkscore.com. Displaying it requires their attribution and a link back.',
+      validation: (r) => r.min(0).max(100),
+    }),
+    defineField({
+      name: 'transitScore',
+      title: 'Transit Score',
+      type: 'number',
+      description: 'From walkscore.com. Displaying it requires their attribution and a link back.',
+      validation: (r) => r.min(0).max(100),
+    }),
     defineField({ name: 'yearBuilt', type: 'number' }),
     defineField({ name: 'yearRenovated', type: 'number' }),
     defineField({

@@ -51,6 +51,30 @@ describe('property schema', () => {
     expect(field(property, 'walkMinutes').type).toBe('number')
   })
 
+  it('counts residential and retail units separately', () => {
+    // The live site published residential units while the internal portfolio sheet
+    // published residential + retail as one total, which is why the two disagreed by
+    // exactly the retail count on three properties. Splitting the fields is what stops
+    // that ambiguity being re-encoded into the CMS.
+    expect(field(property, 'unitCount').title).toMatch(/residential/i)
+    expect(field(property, 'retailUnitCount')).toBeDefined()
+    expect(field(property, 'retailUnitCount').type).toBe('number')
+    expect(captureValidation(field(property, 'retailUnitCount').validation)).toContainEqual({
+      method: 'min',
+      arg: 0,
+    })
+  })
+
+  it('bounds Walk Score and Transit Score to the 0-100 scale they are defined on', () => {
+    for (const name of ['walkScore', 'transitScore']) {
+      expect(field(property, name), `${name} is missing`).toBeDefined()
+      expect(field(property, name).type).toBe('number')
+      const calls = captureValidation(field(property, name).validation)
+      expect(calls, `${name} lower bound`).toContainEqual({ method: 'min', arg: 0 })
+      expect(calls, `${name} upper bound`).toContainEqual({ method: 'max', arg: 100 })
+    }
+  })
+
   it('caps the card blurb so it cannot overrun the card', () => {
     const calls = captureValidation(field(property, 'cardBlurb').validation)
     expect(calls).toContainEqual({ method: 'max', arg: 180 })

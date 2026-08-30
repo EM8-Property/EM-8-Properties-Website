@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typegen": "sanity schema extract --path=schema.json && sanity typegen generate",
+    "typegen": "sanity schema extract --path=schema.json --force && sanity typegen generate",
     "test:content": "vitest run --config vitest.content.config.mts",
     "test:e2e": "playwright test",
     "lighthouse": "bash scripts/lighthouse.sh"

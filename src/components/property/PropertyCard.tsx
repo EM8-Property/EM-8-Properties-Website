@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Chip } from '@/components/ui/Chip'
 import { urlForImage } from '@/sanity/image'
-import { formatWalk } from '@/lib/format'
+import { formatWalk, formatUnits } from '@/lib/format'
 
 export type PropertyCardData = {
   title: string
@@ -13,6 +13,7 @@ export type PropertyCardData = {
   city: string
   state: string
   unitCount?: number | null
+  retailUnitCount?: number | null
   cardBlurb?: string | null
   walkMinutes?: number | null
   metraStation?: string | null
@@ -21,6 +22,7 @@ export type PropertyCardData = {
 
 export function PropertyCard({ property: p }: { property: PropertyCardData }) {
   const walk = formatWalk(p.walkMinutes ?? undefined, p.metraStation ?? undefined)
+  const units = formatUnits(p.unitCount, p.retailUnitCount)
   return (
     <Card>
       {/* Always /portfolio/[slug], whatever the status. A sold asset is shown on
@@ -47,7 +49,7 @@ export function PropertyCard({ property: p }: { property: PropertyCardData }) {
           </h3>
           <p className="mt-1 text-[11px] font-medium text-ink-secondary">
             {p.city}, {p.state}
-            {p.unitCount ? ` · ${p.unitCount} Units` : ''}
+            {units ? ` · ${units}` : ''}
           </p>
           {walk && (
             <p className="mt-2 inline-block rounded-chip bg-teal/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-teal-text">

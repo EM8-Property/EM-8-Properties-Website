@@ -3,10 +3,13 @@ import { Eyebrow } from '@/components/ui/Eyebrow'
 
 type Props = {
   unitCount?: number | null
+  retailUnitCount?: number | null
   yearBuilt?: number | null
   squareFeet?: number | null
   walkMinutes?: number | null
   metraStation?: string | null
+  walkScore?: number | null
+  transitScore?: number | null
   publiclyOffered?: boolean | null
 }
 
@@ -26,16 +29,30 @@ function Fact({ figure, label }: { figure: string; label: string }) {
 
 export function FactRail({ property: p }: { property: Props }) {
   const hasWalk = p.walkMinutes !== undefined && p.walkMinutes !== null && !!p.metraStation
+  const hasRetail = p.retailUnitCount != null && p.retailUnitCount > 0
 
   return (
     <aside>
       <div className="grid grid-cols-2 rounded-card border border-rule">
-        {p.unitCount != null && <Fact figure={String(p.unitCount)} label="Units" />}
+        {p.unitCount != null && (
+          <Fact
+            figure={String(p.unitCount)}
+            label={hasRetail ? 'Residential Units' : 'Units'}
+          />
+        )}
+        {hasRetail && <Fact figure={String(p.retailUnitCount)} label="Retail Units" />}
         {p.yearBuilt != null && <Fact figure={String(p.yearBuilt)} label="Built" />}
         {hasWalk && <Fact figure={`${p.walkMinutes} min`} label="Walk to Metra" />}
         {p.squareFeet != null && (
           <Fact figure={p.squareFeet.toLocaleString('en-US')} label="Square Feet" />
         )}
+        {/*
+          Explicit null/undefined checks, not truthiness: a Walk Score of 0 is a real
+          measurement and a very different claim from "we don't know it". Truthiness
+          would silently hide the worst score and show nothing instead.
+        */}
+        {p.walkScore != null && <Fact figure={String(p.walkScore)} label="Walk Score" />}
+        {p.transitScore != null && <Fact figure={String(p.transitScore)} label="Transit Score" />}
       </div>
 
       {/*

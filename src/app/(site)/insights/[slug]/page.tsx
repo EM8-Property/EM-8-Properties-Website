@@ -9,6 +9,7 @@ import type {
   POST_SLUGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
+import { formatUnits } from '@/lib/format'
 import { formatCategory, formatDate } from '@/components/insights/PostCard'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 
@@ -89,7 +90,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             </Link>
             <p className="text-[11px] text-ink-secondary">
               {post.relatedProperty.city}
-              {post.relatedProperty.unitCount ? ` · ${post.relatedProperty.unitCount} Units` : ''}
+              {formatUnits(post.relatedProperty.unitCount, post.relatedProperty.retailUnitCount) ? ` · ${formatUnits(post.relatedProperty.unitCount, post.relatedProperty.retailUnitCount)}` : ''}
             </p>
           </div>
         </div>
