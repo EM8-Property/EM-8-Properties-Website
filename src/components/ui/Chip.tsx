@@ -1,4 +1,4 @@
-import { ASSET_CLASS_LABELS, STATUS_LABELS } from '@/sanity/schema/property'
+import { ASSET_CLASS_LABELS, STATUS_LABELS } from '@/lib/propertyTaxonomy'
 
 /**
  * Chip fills, all measured at 4.5:1 or better against the white text they carry.

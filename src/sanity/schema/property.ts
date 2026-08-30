@@ -1,30 +1,11 @@
 import { defineType, defineField } from 'sanity'
 
-export const ASSET_CLASSES = ['multifamily', 'mixed-use', 'townhomes', 'industrial', 'senior'] as const
-export const STATUSES = ['stabilized', 'lease-up', 'under-construction', 'renovation-complete', 'sold'] as const
+// The vocabulary lives in src/lib/propertyTaxonomy.ts, which imports nothing. Components
+// need the labels too, and this file imports the `sanity` package — so exporting them
+// from here would drag the whole Studio library into the RSC graph and break the build.
+import { ASSET_CLASSES, STATUSES } from '@/lib/propertyTaxonomy'
 
-/**
- * Human-readable labels, defined next to the slugs they describe.
- *
- * These previously lived in three places — Chip, PortfolioFilter, and the schema's own
- * slug arrays — so adding an asset class meant editing three files, and forgetting one
- * left a raw slug rendered on the site. One definition, imported everywhere.
- */
-export const ASSET_CLASS_LABELS: Record<string, string> = {
-  multifamily: 'Multifamily',
-  'mixed-use': 'Mixed-Use',
-  townhomes: 'Townhomes',
-  industrial: 'Industrial',
-  senior: 'Senior Living',
-}
-
-export const STATUS_LABELS: Record<string, string> = {
-  stabilized: 'Stabilized',
-  'lease-up': 'In Lease-Up',
-  'under-construction': 'Under Construction',
-  'renovation-complete': 'Renovation Complete',
-  sold: 'Sold',
-}
+export { ASSET_CLASSES, STATUSES }
 
 /**
  * One document per asset, at one canonical URL: /portfolio/[slug], regardless of status.

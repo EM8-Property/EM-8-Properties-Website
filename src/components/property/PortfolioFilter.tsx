@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import { PropertyCard, type PropertyCardData } from './PropertyCard'
-// Single definition, next to the slugs these describe — see schema/property.ts.
-import { ASSET_CLASS_LABELS, STATUS_LABELS } from '@/sanity/schema/property'
+// Single definition, shared with the Sanity schema. Imported from lib/ rather than from
+// schema/property.ts, which pulls in the sanity package.
+import { ASSET_CLASS_LABELS, STATUS_LABELS } from '@/lib/propertyTaxonomy'
 
 function FilterRow({
   label,
