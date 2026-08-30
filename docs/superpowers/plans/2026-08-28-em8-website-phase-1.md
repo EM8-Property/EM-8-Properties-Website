@@ -810,7 +810,7 @@ One place for all GROQ. Generated types mean a renamed field breaks the build in
 - Consumes: schema from Task 2.
 - Produces: `sanityClient`, `urlForImage(source): ImageUrlBuilder`, and named query constants `ALL_PROPERTIES_QUERY`, `PROPERTY_BY_SLUG_QUERY`, `SOLD_PROPERTIES_QUERY`, `ALL_POSTS_QUERY`, `POST_BY_SLUG_QUERY`, `TEAM_QUERY`, `HERO_STATS_QUERY`, `FOCUS_CARDS_QUERY`, `TESTIMONIALS_QUERY`, `SITE_SETTINGS_QUERY`. Also `fetchSanity<T>(query, params?): Promise<T>`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // tests/unit/queries.test.ts
@@ -850,12 +850,12 @@ describe('urlForImage', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch them fail**
+- [x] **Step 2: Run and watch them fail**
 
 Run: `npm test tests/unit/queries.test.ts tests/unit/image.test.ts`
 Expected: FAIL — modules not found.
 
-- [ ] **Step 3: Implement the client and image builder**
+- [x] **Step 3: Implement the client and image builder**
 
 ```ts
 // src/sanity/client.ts
@@ -885,7 +885,7 @@ export function urlForImage(source: unknown) {
 }
 ```
 
-- [ ] **Step 4: Implement the queries**
+- [x] **Step 4: Implement the queries**
 
 ```ts
 // src/sanity/queries.ts
@@ -949,21 +949,56 @@ export const SITE_SETTINGS_QUERY = `*[_type == "siteSettings"][0] { agoraPortalU
 
 Note the testimonials query filters on `consentOnRecord` — an investor's name cannot reach the site without it.
 
+**Amended 2026-08-30 (R8-A).** Every query must be wrapped in `defineQuery` from `next-sanity`, and its fields inlined rather than spliced in from a shared `PROPERTY_CARD_FIELDS` constant.
+
+This is not style. `sanity typegen` discovers queries only when they are declared with `defineQuery`, and it resolves each one by parsing the literal — a `${FIELDS}` interpolation leaves it unable to infer the shape. Written as the plan originally had them, typegen reports **`0 queries and 21 schema types`** and emits schema types alone. It exits zero and looks like it worked.
+
+That silently removes the guarantee this task exists for. Spec §4 asks that "a renamed field fails the build with a clear message rather than rendering an empty section" — which requires *query result* types, not just schema types. With `defineQuery` the same run reports `12 queries and 21 schema types` and emits `ALL_PROPERTIES_QUERY_RESULT` and friends, plus a `SanityQueries` type map registered against `@sanity/client`.
+
+The cost of inlining is duplicated field lists across the property queries. That is the deliberate trade: a constant that saves nine lines is not worth disabling the type safety the CMS choice was justified on.
+
 - [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/queries.test.ts tests/unit/image.test.ts`
 Expected: PASS, 4 tests.
 
-- [ ] **Step 6: Generate types**
+- [x] **Step 6: Generate types**
 
 ```bash
-npx sanity@latest schema extract --path=schema.json
-npx sanity@latest typegen generate
+npm run typegen
 ```
 
 Add to `package.json`: `"typegen": "sanity schema extract --path=schema.json && sanity typegen generate"`.
 
-- [ ] **Step 7: Commit**
+**Amended 2026-08-30 (R8-B).** Add `sanity-typegen.json` so the output lands somewhere importable through the `@/` alias, instead of `sanity.types.ts` at the repo root:
+
+```json
+{
+  "path": "./src/**/*.{ts,tsx}",
+  "schema": "./schema.json",
+  "generates": "./src/sanity/types.generated.ts",
+  "overloadClientMethods": true
+}
+```
+
+Pages import result types from `@/sanity/types.generated` rather than hand-writing shapes — that is what makes a schema rename a compile error. `schema.json` is a build artifact and is gitignored; `src/sanity/types.generated.ts` is committed, because CI typechecks before it would ever run typegen.
+
+**Re-run `npm run typegen` after every schema change**, and redeploy the hosted Studio with it.
+
+- [x] **Step 7: Add the revalidation webhook** *(added 2026-08-30, R4/C3)*
+
+The plan tagged every `fetchSanity` request `['sanity']` and its architecture section promised "publish fires a webhook that revalidates, live in about a minute" — but no `/api/revalidate` route existed anywhere in the original sixteen tasks. The tags were dead code and Task 16 quietly substituted a full Railway redeploy, which is minutes rather than seconds and burns build minutes on a typo fix.
+
+`src/lib/revalidate.ts` holds the auth check, split out so it is testable without Next's request plumbing; `src/app/api/revalidate/route.ts` is the handler. It **fails closed** — an unset `SANITY_REVALIDATE_SECRET` returns 500 rather than allowing anyone to force a re-render of every page — and compares the secret in constant time.
+
+Two notes:
+
+- Next 16 changed the signature to `revalidateTag(tag, profile)`; the profile argument is now required. `'max'` purges entries regardless of age, which is what a publish webhook wants.
+- Add `SANITY_REVALIDATE_SECRET` to `.env.local` and to Railway. Generate it with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+
+Configure the Sanity webhook at Task 16, once there is a deployed URL to point it at: POST to `https://<host>/api/revalidate` with header `x-revalidate-secret`.
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -990,7 +1025,7 @@ The shared vocabulary every page uses. Building these once is what keeps the sit
   - `<StatBand stats: { figure: string; label: string }[]>`
   - `<Card>` wrapper with the 12px radius and rule border
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```tsx
 // tests/unit/ui.test.tsx
@@ -1035,7 +1070,7 @@ describe('StatBand', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch them fail**
+- [x] **Step 2: Run and watch them fail**
 
 Run: `npm test tests/unit/ui.test.tsx`
 Expected: FAIL — components not found.
@@ -1313,7 +1348,7 @@ git commit -m "feat: add site header and footer shell"
 - Consumes: `ALL_PROPERTIES_QUERY`, `urlForImage`, `Chip`, `Card`.
 - Produces: `formatWalk(minutes?: number, station?: string): string | null`; `<PropertyCard property={PropertyCardData} />` where `PropertyCardData = { title, slug, assetClass, status, city, state, unitCount, walkMinutes, metraStation, cardBlurb, image }`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // tests/unit/format.test.ts
@@ -1371,7 +1406,7 @@ describe('PropertyCard', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch them fail**
+- [x] **Step 2: Run and watch them fail**
 
 Run: `npm test tests/unit/format.test.ts tests/unit/propertyCard.test.tsx`
 Expected: FAIL — modules not found.
@@ -2146,7 +2181,7 @@ Capture-first. The Sanity write is the source of truth; email is best-effort. A 
 - Consumes: schema `lead` from Task 2.
 - Produces: `parseLead(input: unknown): LeadInput` (throws `LeadValidationError`), `submitLead(input, deps): Promise<{ id: string; emailed: boolean }>`, `EmailSender = { send(msg): Promise<void> }`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // tests/unit/leads.test.ts
@@ -2194,7 +2229,7 @@ describe('submitLead', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch them fail**
+- [x] **Step 2: Run and watch them fail**
 
 Run: `npm test tests/unit/leads.test.ts`
 Expected: FAIL — `@/lib/leads` not found.

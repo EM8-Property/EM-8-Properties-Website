@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typegen": "sanity schema extract --path=schema.json && sanity typegen generate"
   },
   "dependencies": {
     "@sanity/image-url": "^2.1.1",
