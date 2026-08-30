@@ -21,3 +21,6 @@ next-env.d.ts
 
 # sanity typegen artifact
 schema.json
+
+# local dev server log
+dev.log

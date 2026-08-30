@@ -66,6 +66,22 @@ Consequent scaffold changes, all verified against `create-next-app@16.3.3 --help
 - **D5 — `scripts/seed.ts`** is listed under Task 15's Files but no step ever writes it. Removed from the file list.
 - **D6 — `LEAD_EXPORT_TOKEN`** is still required by Task 16 Step 7, orphaned by Task 14's descoping. Removed.
 
+### R7 — Found during implementation, not during the audit
+
+These four surfaced only by running the code. Recorded because the plan is the handover artifact, and each would otherwise cost a successor the same hour.
+
+| # | Issue | Where | Resolution |
+|---|---|---|---|
+| R7-A | **`options: { maxLength: N }` is not a real Sanity option on string or text fields** — it exists only on `SlugOptions`, and TypeScript rejects it outright. The plan set it on `cardBlurb`, `excerpt`, and `bio`, *and* asserted it in three tests. So the plan tested a decorative property while the mechanism that actually enforces the cap went untested. | Task 2 | Removed the inert option. The cap is `validation: (r) => r.max(n)`, which is also what drives the Studio's live character counter — the guardrail spec §4 actually asks for. Tests now run the validation callback against a recording stand-in for `Rule` and assert the chain, so they verify enforcement rather than shape. |
+| R7-B | **The Studio 500s without `'use client'` in `sanity.config.ts`.** Next pulls `sanity` into the RSC graph, where `swr` resolves to its `react-server` build, which has no default export. | Task 2 | Directive added as the first statement. See Task 2 Step 7. |
+| R7-C | **`siteSettings` was a singleton in name only.** Nothing stopped an editor creating a second one, which `[0]` would silently ignore. | Task 2 | Pinned to a fixed document id via a custom structure; removed from the "create new" menu. |
+| R7-D | **A new Sanity project trusts no origins**, so the Studio stops at "Connect this Studio to your project" no matter how correct the code is. The plan never mentions CORS. | Task 2, again at Task 16 | `npx sanity cors add <origin> --credentials`, once per origin. |
+
+Two further notes for a successor:
+
+- **Do not use Next 16's generated global types** (`LayoutProps`, `PageProps`) in this project. They exist only after `.next/types` is produced by a build, so they fail `tsc --noEmit` on a clean checkout — including in CI, which typechecks before it builds. Type route props explicitly.
+- **The plan's stated test counts are unreliable.** Task 2 claims "PASS, 8 tests" for a file containing nine `it` blocks. Trust the runner, not the prose.
+
 ### R6 — Noted, deliberately not changed
 
 - **D2 — teal contrast at point of use.** The palette constants are tested, but nothing stops `text-teal` on 11px text, which is the actual failure mode. A reliable lint rule would need to correlate colour and font-size utilities across a `className` string; not worth the complexity now. Guarded by review instead.
@@ -351,13 +367,13 @@ The content backbone. Every guardrail from spec §4 lives here — this is where
 - Consumes: nothing.
 - Produces: `schemaTypes: SchemaTypeDefinition[]`. Document type names: `property`, `post`, `teamMember`, `heroStat`, `focusCard`, `testimonial`, `lead`, `siteSettings`. Property field names relied on by later tasks: `title`, `slug`, `assetClass`, `status`, `city`, `state`, `coordinates`, `metraStation`, `walkMinutes`, `unitCount`, `yearBuilt`, `cardBlurb`, `overview`, `businessPlan`, `gallery`, `dealStory`, `publiclyOffered`, `order`, `featured`.
 
-- [ ] **Step 1: Install Sanity**
+- [x] **Step 1: Install Sanity**
 
 ```bash
 npm install sanity next-sanity @sanity/vision @sanity/image-url styled-components
 ```
 
-- [ ] **Step 2: Write the failing schema tests**
+- [x] **Step 2: Write the failing schema tests**
 
 ```ts
 // tests/unit/schema.test.ts
@@ -419,12 +435,12 @@ describe('schema completeness', () => {
 })
 ```
 
-- [ ] **Step 3: Run and watch it fail**
+- [x] **Step 3: Run and watch it fail**
 
 Run: `npm test tests/unit/schema.test.ts`
 Expected: FAIL — cannot resolve `@/sanity/schema`.
 
-- [ ] **Step 4: Implement the property schema**
+- [x] **Step 4: Implement the property schema**
 
 ```ts
 // src/sanity/schema/property.ts
@@ -509,7 +525,7 @@ export const property = defineType({
 })
 ```
 
-- [ ] **Step 5: Implement the remaining schemas**
+- [x] **Step 5: Implement the remaining schemas**
 
 ```ts
 // src/sanity/schema/teamMember.ts
@@ -677,7 +693,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
 Run: `npm test tests/unit/schema.test.ts`
 Expected: PASS, 8 tests.
 
-- [ ] **Step 7: Configure Sanity and embed the Studio**
+- [x] **Step 7: Configure Sanity and embed the Studio**
 
 Create the project at sanity.io/manage under an EM8-owned organisation, then put the IDs in `.env.local`:
 
@@ -688,19 +704,46 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 ```ts
 // sanity.config.ts
+'use client'
+
 import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './src/sanity/schema'
+
+const SINGLETONS = ['siteSettings'] as const
 
 export default defineConfig({
   basePath: '/studio',
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   schema: { types: schemaTypes },
-  plugins: [structureTool(), visionTool()],
+  plugins: [
+    structureTool({
+      structure: (S) =>
+        S.list().title('Content').items([
+          S.listItem().title('Site settings').id('siteSettings')
+            .child(S.document().schemaType('siteSettings').documentId('siteSettings')),
+          S.divider(),
+          ...S.documentTypeListItems().filter(
+            (item) => !SINGLETONS.includes(item.getId() as (typeof SINGLETONS)[number]),
+          ),
+        ]),
+    }),
+    visionTool(),
+  ],
+  document: {
+    newDocumentOptions: (prev) =>
+      prev.filter((t) => !SINGLETONS.includes(t.templateId as (typeof SINGLETONS)[number])),
+  },
 })
 ```
+
+**Amended 2026-08-30 (R7-B, R7-C).** Two changes, both found by running it:
+
+**`'use client'` is mandatory and must be the first statement.** Without it the Studio returns HTTP 500. Next pulls the whole `sanity` package into the React Server Component graph, where `swr` resolves via its `react-server` export condition to a build with no default export — while Sanity does `import useSWR from "swr"`. The failure reads `Export default doesn't exist in target module`, names `swr`, and gives ten import traces, none of which point at anything you wrote. Sanity's own embedding guide requires the directive; the original plan omitted it.
+
+**`siteSettings` is pinned as a singleton.** Spec §4 calls it a singleton but nothing enforced that. The default Studio lets an editor create a second `siteSettings` document, and `SITE_SETTINGS_QUERY` takes `[0]` — so edits would land in a document the site never reads, with no error anywhere. The custom structure binds it to one known id and drops it from the global "create new" menu.
 
 ```tsx
 // src/app/studio/[[...tool]]/page.tsx
@@ -715,10 +758,18 @@ export default function StudioPage() {
 }
 ```
 
-- [ ] **Step 8: Verify the Studio loads**
+- [ ] **Step 8: Register the CORS origin, then verify the Studio loads**
 
-Run: `npm run dev`, open `http://localhost:3000/studio`.
-Expected: Studio renders with all eight document types in the sidebar. Create one property and confirm the deal-story fields stay hidden until status is set to `sold`.
+**Added 2026-08-30 (R7-D).** The original step went straight to "open the Studio and create a property". It cannot: a new Sanity project trusts no origins, so the Studio boots and then stops on its own *"Connect this Studio to your project"* screen. This is project configuration, not code, and it is invisible until you run it.
+
+```bash
+npx sanity cors add http://localhost:3000 --credentials
+```
+
+Add the deployed Railway origin the same way at Task 16, and the production domain at cutover. Each origin must be registered separately.
+
+Then run: `npm run dev`, open `http://localhost:3000/studio`.
+Expected: Studio renders with all eight document types in the sidebar, and `Site settings` pinned above a divider as a singleton. Create one property and confirm the deal-story fields stay hidden until status is set to `sold`.
 
 - [ ] **Step 9: Commit**
 
@@ -1123,7 +1174,7 @@ describe('SiteHeader', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch it fail**
+- [x] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/header.test.tsx`
 Expected: FAIL — `SiteHeader` not found.
@@ -1457,7 +1508,7 @@ describe('FactRail', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch it fail**
+- [x] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/factRail.test.tsx`
 Expected: FAIL — `FactRail` not found.
@@ -1694,7 +1745,7 @@ describe('DealStory', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch it fail**
+- [x] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/dealStory.test.tsx`
 Expected: FAIL — `DealStory` not found.
@@ -1866,7 +1917,7 @@ describe('PostCard', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch it fail**
+- [x] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/postCard.test.tsx`
 Expected: FAIL — `PostCard` not found.
@@ -2343,7 +2394,7 @@ describe('LeadForm', () => {
 npm install -D @testing-library/user-event @testing-library/jest-dom
 ```
 
-- [ ] **Step 2: Run and watch it fail**
+- [x] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/leadForm.test.tsx`
 Expected: FAIL — `LeadForm` not found.
@@ -2481,7 +2532,7 @@ describe('Testimonials', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch it fail**
+- [x] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/testimonials.test.tsx`
 Expected: FAIL — `Testimonials` not found.
@@ -2806,7 +2857,7 @@ describe('HomeHero', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch it fail**
+- [x] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/homepage.test.tsx`
 Expected: FAIL — `HomeHero` is not exported.
@@ -2964,7 +3015,7 @@ describe('toAgoraCsv', () => {
 })
 ```
 
-- [ ] **Step 2: Run and watch it fail**
+- [x] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/agoraCsv.test.ts`
 Expected: FAIL — `@/lib/agoraCsv` not found.
@@ -3098,7 +3149,7 @@ This test hits the live dataset over the network, so it must not run in the defa
 "test:content": "vitest run --dir tests/integration"
 ```
 
-- [ ] **Step 3: Run and watch it fail**
+- [x] **Step 3: Run and watch it fail**
 
 Run: `npm run test:content`
 Expected: FAIL — the dataset is empty or still carries placeholders.
