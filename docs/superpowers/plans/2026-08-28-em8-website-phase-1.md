@@ -789,7 +789,7 @@ Three things this surfaced:
 
 The project sits under organization `oova3mdub` rather than a personal account, which is the Sanity half of spec §8's ownership blocker. The Railway half is still open.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add -A
@@ -998,7 +998,7 @@ Two notes:
 
 Configure the Sanity webhook at Task 16, once there is a deployed URL to point it at: POST to `https://<host>/api/revalidate` with header `x-revalidate-secret`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -1075,7 +1075,7 @@ describe('StatBand', () => {
 Run: `npm test tests/unit/ui.test.tsx`
 Expected: FAIL — components not found.
 
-- [ ] **Step 3: Implement the primitives**
+- [x] **Step 3: Implement the primitives**
 
 ```tsx
 // src/components/ui/Eyebrow.tsx
@@ -1182,7 +1182,7 @@ export function Card({ children, className = '' }: { children: React.ReactNode; 
 Run: `npm test tests/unit/ui.test.tsx`
 Expected: PASS, 4 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -1232,7 +1232,7 @@ describe('SiteHeader', () => {
 Run: `npm test tests/unit/header.test.tsx`
 Expected: FAIL — `SiteHeader` not found.
 
-- [ ] **Step 3: Implement the header and footer**
+- [x] **Step 3: Implement the header and footer**
 
 ```tsx
 // src/components/layout/SiteHeader.tsx
@@ -1289,7 +1289,7 @@ export function SiteFooter({ disclaimer }: { disclaimer: string }) {
 }
 ```
 
-- [ ] **Step 4: Wire them into the root layout**
+- [x] **Step 4: Wire them into the root layout**
 
 ```tsx
 // src/app/layout.tsx
@@ -1323,12 +1323,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 The thrown error is deliberate: missing required content fails loudly rather than rendering a broken shell.
 
+**Note 2026-08-30 (R9) — this task makes the build depend on content.**
+
+From here on, `npm run build` fails until a `siteSettings` document exists with `agoraPortalUrl` and `disclaimer` set. That is the design working, not a defect — but the plan sequences content entry at Task 15, ten tasks later, and never says that build verification goes dark in between. Confirmed by running it:
+
+```
+Error: siteSettings is missing or incomplete. Publish a siteSettings document
+in the Studio with agoraPortalUrl and disclaimer set
+```
+
+Two consequences worth planning around:
+
+- Tasks 6–13 are verified by unit test and typecheck only. `npm run build` is not a usable gate again until `siteSettings` is published.
+- The three required fields cannot be invented by a developer. `agoraPortalUrl` is EM8's real Agora tenant, and `disclaimer` is securities language for a site marketing 506(c) offerings. Publishing this one document early — before its Task 15 slot — unblocks build verification for everything after it, and is worth doing out of order.
+
+The error message names the missing document, the two fields, and the Studio URL, so whoever hits it can act without reading this plan.
+
 - [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/header.test.tsx`
 Expected: PASS, 2 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -1348,7 +1364,7 @@ git commit -m "feat: add site header and footer shell"
 - Consumes: `ALL_PROPERTIES_QUERY`, `urlForImage`, `Chip`, `Card`.
 - Produces: `formatWalk(minutes?: number, station?: string): string | null`; `<PropertyCard property={PropertyCardData} />` where `PropertyCardData = { title, slug, assetClass, status, city, state, unitCount, walkMinutes, metraStation, cardBlurb, image }`.
 
-- [x] **Step 1: Write the failing tests**
+- [ ] **Step 1: Write the failing tests**
 
 ```ts
 // tests/unit/format.test.ts
@@ -1406,7 +1422,7 @@ describe('PropertyCard', () => {
 })
 ```
 
-- [x] **Step 2: Run and watch them fail**
+- [ ] **Step 2: Run and watch them fail**
 
 Run: `npm test tests/unit/format.test.ts tests/unit/propertyCard.test.tsx`
 Expected: FAIL — modules not found.
@@ -1504,7 +1520,7 @@ export default async function PortfolioPage() {
 }
 ```
 
-- [x] **Step 6: Run the tests and confirm they pass**
+- [ ] **Step 6: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/format.test.ts tests/unit/propertyCard.test.tsx`
 Expected: PASS, 7 tests.
@@ -1531,7 +1547,7 @@ The route that didn't exist before, and the reason for the whole rebuild.
 - Consumes: `PROPERTY_BY_SLUG_QUERY`, `PROPERTY_SLUGS_QUERY`, `urlForImage`.
 - Produces: `<FactRail property={PropertyDetail} />`, `<PropertyMap lat, lng, title />`.
 
-- [x] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/factRail.test.tsx
@@ -1561,7 +1577,7 @@ describe('FactRail', () => {
 })
 ```
 
-- [x] **Step 2: Run and watch it fail**
+- [ ] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/factRail.test.tsx`
 Expected: FAIL — `FactRail` not found.
@@ -1745,7 +1761,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 }
 ```
 
-- [x] **Step 6: Run the tests and confirm they pass**
+- [ ] **Step 6: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/factRail.test.tsx`
 Expected: PASS, 3 tests.
@@ -1771,7 +1787,7 @@ A view over sold properties. It creates no new URLs.
 - Consumes: `SOLD_PROPERTIES_QUERY`.
 - Produces: `<DealStory story={{ acquired, executed, exited, equityMultiple, exitYear }} />`.
 
-- [x] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/dealStory.test.tsx
@@ -1798,7 +1814,7 @@ describe('DealStory', () => {
 })
 ```
 
-- [x] **Step 2: Run and watch it fail**
+- [ ] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/dealStory.test.tsx`
 Expected: FAIL — `DealStory` not found.
@@ -1911,7 +1927,7 @@ export default async function TrackRecordPage() {
 }
 ```
 
-- [x] **Step 5: Run the tests and confirm they pass**
+- [ ] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/dealStory.test.tsx`
 Expected: PASS, 2 tests.
@@ -1936,7 +1952,7 @@ git commit -m "feat: add track record as a view over sold properties"
 - Consumes: `ALL_POSTS_QUERY`, `POST_BY_SLUG_QUERY`, `POST_SLUGS_QUERY`.
 - Produces: `<PostCard post={{ title, slug, publishedAt, category, excerpt, heroImage }} />`, `formatCategory(slug: string): string`.
 
-- [x] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/postCard.test.tsx
@@ -1970,7 +1986,7 @@ describe('PostCard', () => {
 })
 ```
 
-- [x] **Step 2: Run and watch it fail**
+- [ ] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/postCard.test.tsx`
 Expected: FAIL — `PostCard` not found.
@@ -2150,7 +2166,7 @@ export default async function OgImage({ params }: { params: { slug: string } }) 
 }
 ```
 
-- [x] **Step 6: Run the tests and confirm they pass**
+- [ ] **Step 6: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/postCard.test.tsx`
 Expected: PASS, 3 tests.
@@ -2181,7 +2197,7 @@ Capture-first. The Sanity write is the source of truth; email is best-effort. A 
 - Consumes: schema `lead` from Task 2.
 - Produces: `parseLead(input: unknown): LeadInput` (throws `LeadValidationError`), `submitLead(input, deps): Promise<{ id: string; emailed: boolean }>`, `EmailSender = { send(msg): Promise<void> }`.
 
-- [x] **Step 1: Write the failing tests**
+- [ ] **Step 1: Write the failing tests**
 
 ```ts
 // tests/unit/leads.test.ts
@@ -2229,7 +2245,7 @@ describe('submitLead', () => {
 })
 ```
 
-- [x] **Step 2: Run and watch them fail**
+- [ ] **Step 2: Run and watch them fail**
 
 Run: `npm test tests/unit/leads.test.ts`
 Expected: FAIL — `@/lib/leads` not found.
@@ -2360,7 +2376,7 @@ export async function POST(request: Request) {
 
 Add to `.env.local`: `SANITY_API_WRITE_TOKEN`, `RESEND_API_KEY`, `LEAD_NOTIFICATION_EMAIL`. **Never** prefix these with `NEXT_PUBLIC_` — that would ship them to the browser.
 
-- [x] **Step 5: Run the tests and confirm they pass**
+- [ ] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/leads.test.ts`
 Expected: PASS, 6 tests.
@@ -2384,7 +2400,7 @@ git commit -m "feat: add capture-first lead pipeline"
 - Consumes: `POST /api/lead` from Task 10.
 - Produces: `<LeadForm source: 'keep-in-touch' | 'site-submission' fields: FieldSpec[] submitLabel: string />`.
 
-- [x] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/leadForm.test.tsx
@@ -2447,7 +2463,7 @@ describe('LeadForm', () => {
 npm install -D @testing-library/user-event @testing-library/jest-dom
 ```
 
-- [x] **Step 2: Run and watch it fail**
+- [ ] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/leadForm.test.tsx`
 Expected: FAIL — `LeadForm` not found.
@@ -2533,7 +2549,7 @@ export function LeadForm({ source, fields, submitLabel }: {
 }
 ```
 
-- [x] **Step 4: Run the tests and confirm they pass**
+- [ ] **Step 4: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/leadForm.test.tsx`
 Expected: PASS, 3 tests.
@@ -2560,7 +2576,7 @@ Three content pages that consume everything built so far.
 - Consumes: `LeadForm`, `TEAM_QUERY`, `FOCUS_CARDS_QUERY`, `TESTIMONIALS_QUERY`, `SITE_SETTINGS_QUERY`.
 - Produces: `<Testimonials items={{ quote, attribution, descriptor, investorSince }[]} />`.
 
-- [x] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/testimonials.test.tsx
@@ -2585,7 +2601,7 @@ describe('Testimonials', () => {
 })
 ```
 
-- [x] **Step 2: Run and watch it fail**
+- [ ] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/testimonials.test.tsx`
 Expected: FAIL — `Testimonials` not found.
@@ -2861,7 +2877,7 @@ export default async function AboutPage() {
 
 Square portraits with Sanity's hotspot cropping — the circular-crop problem from the old guide cannot recur.
 
-- [x] **Step 7: Run the tests and confirm they pass**
+- [ ] **Step 7: Run the tests and confirm they pass**
 
 Run: `npm test`
 Expected: PASS, all suites.
@@ -2887,7 +2903,7 @@ Built last, because it composes components every other task produced.
 - Consumes: every component and query built so far.
 - Produces: nothing downstream.
 
-- [x] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/homepage.test.tsx
@@ -2910,7 +2926,7 @@ describe('HomeHero', () => {
 })
 ```
 
-- [x] **Step 2: Run and watch it fail**
+- [ ] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/homepage.test.tsx`
 Expected: FAIL — `HomeHero` is not exported.
@@ -3007,7 +3023,7 @@ export default async function HomePage() {
 }
 ```
 
-- [x] **Step 4: Run the tests and confirm they pass**
+- [ ] **Step 4: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/homepage.test.tsx`
 Expected: PASS, 2 tests.
@@ -3033,7 +3049,7 @@ git commit -m "feat: add homepage composed from the TOD thesis"
 - Consumes: `lead` documents from Task 10.
 - Produces: `toAgoraCsv(leads: LeadRecord[]): string`.
 
-- [x] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test**
 
 ```ts
 // tests/unit/agoraCsv.test.ts
@@ -3068,7 +3084,7 @@ describe('toAgoraCsv', () => {
 })
 ```
 
-- [x] **Step 2: Run and watch it fail**
+- [ ] **Step 2: Run and watch it fail**
 
 Run: `npm test tests/unit/agoraCsv.test.ts`
 Expected: FAIL — `@/lib/agoraCsv` not found.
@@ -3129,7 +3145,7 @@ export async function GET(request: Request) {
 
 Add `LEAD_EXPORT_TOKEN` to the environment. The route is token-gated because it returns personal data — never leave it open.
 
-- [x] **Step 5: Run the tests and confirm they pass**
+- [ ] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/agoraCsv.test.ts`
 Expected: PASS, 4 tests.
@@ -3202,7 +3218,7 @@ This test hits the live dataset over the network, so it must not run in the defa
 "test:content": "vitest run --dir tests/integration"
 ```
 
-- [x] **Step 3: Run and watch it fail**
+- [ ] **Step 3: Run and watch it fail**
 
 Run: `npm run test:content`
 Expected: FAIL — the dataset is empty or still carries placeholders.
