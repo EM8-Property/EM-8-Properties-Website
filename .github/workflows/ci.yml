@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      # Only the public Sanity identifiers. The build prerenders every route, so it needs
+      # to reach Sanity — but nothing here requires the write token, the Resend key, or
+      # the revalidate secret, and none of them belong in CI.
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: production
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Typecheck runs before the build on purpose, so a type error fails fast. This is
+      # also why route props are typed explicitly rather than with Next's generated
+      # globals — those only exist after a build has produced .next/types.
+      - run: npx tsc --noEmit
+      - run: npx eslint .
+      - run: npm test
+
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+      - name: Lighthouse budget
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: http://localhost:3000/
+          budgetPath: ./lighthouse-budget.json
+          startServerCommand: npm start
+          # The 800KB image budget is the guardrail against the old site's central
+          # failure: 10-20MB camera originals. It fails the build long before anyone
+          # ships one.
+# Note: `npm test` runs only tests/unit. The content-integrity suite
+# (`npm run test:content`) reads the live dataset and is run deliberately before a
+# content release, not on every push.

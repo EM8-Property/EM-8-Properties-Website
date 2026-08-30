@@ -1,0 +1,7 @@
+Keeps public/ in the repository while it is empty.
+
+Git does not track empty directories, so without this file a fresh clone — which is
+exactly what Railway builds from — has no public/ at all, and the Dockerfile's
+`COPY --from=builder /app/public ./public` fails the build.
+
+Delete this once real static assets land here.

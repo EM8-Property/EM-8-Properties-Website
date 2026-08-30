@@ -82,6 +82,20 @@ Two further notes for a successor:
 - **Do not use Next 16's generated global types** (`LayoutProps`, `PageProps`) in this project. They exist only after `.next/types` is produced by a build, so they fail `tsc --noEmit` on a clean checkout — including in CI, which typechecks before it builds. Type route props explicitly.
 - **The plan's stated test counts are unreliable.** Task 2 claims "PASS, 8 tests" for a file containing nine `it` blocks. Trust the runner, not the prose.
 
+### R10 — Deployment and CI corrections (Task 16)
+
+| # | Issue | Resolution |
+|---|---|---|
+| A4 | **The Dockerfile could not have built.** `next build` prerenders every route, which runs GROQ against Sanity at build time, but the Dockerfile passed no environment — the build dies with "Configuration must contain `projectId`". | `ARG`/`ENV` for the three `NEXT_PUBLIC_*` values. Only those: a build arg is recoverable from image history, so the write token, Resend key, and revalidate secret stay runtime-only. |
+| R10-A | **`public/` does not survive a clone.** Git does not track empty directories, and after deleting the Vercel template SVGs the folder is empty — so on Railway's fresh clone `COPY --from=builder /app/public ./public` fails. A second reason the image could never have been produced. | `public/.gitkeep`, explaining itself. |
+| R10-B | **`playwright.config.ts` hardcoded `localhost` while Step 8 instructed running the suite against the Railway URL.** It also started a `webServer` unconditionally, so pointing it at a deployed site was not actually possible. | `E2E_BASE_URL` selects the target and suppresses the local server when set. |
+| B4 | **CI wrote real leads to production.** The "Keep in Touch" E2E test submitted against the live endpoint, writing a `lead` document to the production dataset and firing a real Resend notification to the team on every push — polluting the investor list with test rows and training everyone to ignore the alert that exists to catch actual investors. | The request is intercepted with `page.route`, asserting the posted payload and returning a synthetic success. The server path is covered by unit tests. |
+| R10-C | Container ran as root (the `node:alpine` default) and pinned Node 20. | Non-root `nextjs` user; Node 22 LTS. |
+
+E2E coverage added beyond the plan's six: the portfolio filter narrows and exposes `aria-pressed`; `/track-record` links only to canonical `/portfolio/[slug]` URLs and exposes none of its own; `robots.txt` and `sitemap.xml` serve; and `/api/revalidate` refuses an unauthenticated purge.
+
+CI also runs `eslint` — which the plan omitted, despite the logical-properties rule being the thing that decides whether Phase 2 is additive or a rewrite.
+
 ### R6 — Noted, deliberately not changed
 
 - **D2 — teal contrast at point of use.** The palette constants are tested, but nothing stops `text-teal` on 11px text, which is the actual failure mode. A reliable lint rule would need to correlate colour and font-size utilities across a `className` string; not worth the complexity now. Guarded by review instead.
