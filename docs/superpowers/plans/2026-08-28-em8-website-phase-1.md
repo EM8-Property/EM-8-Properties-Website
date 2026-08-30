@@ -771,6 +771,10 @@ Add the deployed Railway origin the same way at Task 16, and the production doma
 Then run: `npm run dev`, open `http://localhost:3000/studio`.
 Expected: Studio renders with all eight document types in the sidebar, and `Site settings` pinned above a divider as a singleton. Create one property and confirm the deal-story fields stay hidden until status is set to `sold`.
 
+**Status 2026-08-30.** Verified automatically: the route serves HTTP 200 on a cleared `.next` cache with zero bundler errors, the CORS origin is registered (`sanity cors list` shows `http://localhost:3000`), and the Studio boots to Sanity's login provider chooser. All eight document types are asserted as registered by `tests/unit/schema.test.ts`, and the deal-story conditional is asserted directly — `hidden({ parent: { status: 'stabilized' } })` is `true`, `'sold'` is `false` — so that guardrail is covered by test regardless of the Studio walkthrough.
+
+Outstanding and **owned by a human**: signing in to Sanity and clicking through the Studio once. That confirms the sidebar and singleton render as intended, which no automated check here covers.
+
 - [ ] **Step 9: Commit**
 
 ```bash
