@@ -7,3 +7,17 @@ build/
 .superpowers/
 .DS_Store
 *.log
+
+# next.js / typescript build artifacts
+next-env.d.ts
+*.tsbuildinfo
+
+# test output
+/coverage
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+
+# sanity typegen artifact
+schema.json

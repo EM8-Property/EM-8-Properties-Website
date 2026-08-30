@@ -6,9 +6,73 @@
 
 **Architecture:** Next.js App Router statically generates every page from Sanity at build time, revalidating on a publish webhook. Sanity Studio is embedded at `/studio` on EM8's own domain. Both forms write a `lead` document to Sanity first and send email second, so a mail outage never loses a lead. All layout uses CSS logical properties so Phase 2 (Hebrew/RTL) is additive rather than a rewrite.
 
-**Tech Stack:** Next.js 15 (App Router), TypeScript (strict), Tailwind CSS v4, Sanity v3 (`next-sanity`), Vitest + Testing Library, Playwright, Resend, Railway.
+**Tech Stack:** Next.js 16 (App Router), TypeScript (strict), Tailwind CSS v4, Sanity v6 (`next-sanity` v13), Vitest + Testing Library, Playwright, Resend, Railway. *(Revised 2026-08-30 — see Revisions R1.)*
 
 **Spec:** `docs/superpowers/specs/2026-08-28-em8-website-design.md`
+
+## Revisions — 2026-08-30 plan audit
+
+Before implementation began, this plan was audited against the spec, against internal consistency, and against the current state of its dependencies. Fifteen issues were found; four were confirmed by execution rather than inspection. Each is recorded here with its resolution. Task bodies below are amended in place as each task is reached; this section is the record of *why*.
+
+### R1 — Stack versions had aged out (resolved: build on current)
+
+The plan specified Next.js 15 + Sanity v3, but Step 1 of Task 1 also said `create-next-app@latest`. Those now contradict each other: `latest` is Next 16.3.3, Sanity is 6.11.0, and `next-sanity@13` *requires* `next ^16` and `sanity ^5 || ^6`. The plan's literal pairing tops out at `next-sanity@9.12.3`, three majors behind.
+
+**Decision:** build on Next 16 + Sanity 6 + `next-sanity` 13 + React 19. The architecture is unchanged — App Router, embedded `/studio`, GROQ-at-build, typegen. Only version numbers and the small API deltas move. Rationale is the spec's own §2.1: this rebuild exists because the last site was stranded on an inaccessible, unmaintainable stack. Launching a new one already three majors behind repeats the mistake.
+
+Consequent scaffold changes, all verified against `create-next-app@16.3.3 --help`:
+- `--no-turbopack` no longer exists (Turbopack is the default bundler; the only opt-out is `--rspack`). Flag dropped.
+- The scaffold directory cannot be named `.em8-scaffold` — npm naming rules forbid a leading period. Used `em8-scaffold`.
+- Scaffolded with `--skip-install`, then installed once after the move. Copying a populated `node_modules` between directories on Windows is slow and failure-prone.
+- Next 16's scaffold emits `AGENTS.md` and `CLAUDE.md`. Both kept — a future developer picking this up is an explicit spec goal.
+
+### R2 — Confirmed defects (fix in the task where each lands)
+
+| # | Defect | Where | Resolution |
+|---|---|---|---|
+| A1 | `createClient` throws `Configuration must contain \`projectId\`` when env is unset, so any unit test importing a module that transitively builds the Sanity client dies at import. Breaks `image.test.ts`, `propertyCard.test.tsx`, `postCard.test.tsx`, `homepage.test.tsx`. **Verified by execution.** | Task 1 config, surfaces in Tasks 3/6/9/13 | Vitest `test.env` supplies dummy Sanity vars. Fixed in Task 1. |
+| A2 | `toHaveTextContent` (jest-dom) is used in Task 11 but no `setupFiles` ever registers the matchers. | Task 1 config, surfaces in Task 11 | `tests/setup.ts` imports `@testing-library/jest-dom/vitest`; wired via `setupFiles`. Fixed in Task 1. |
+| A3 | `formatDate` omits `timeZone`, so `2026-08-12T00:00:00Z` renders as **Aug 11, 2026** in `America/Chicago` — the author's own timezone — while the test asserts Aug 12. **Verified by execution.** | Task 9 | Pass `timeZone: 'UTC'`. |
+| A4 | The Dockerfile passes no build-time env, but `next build` runs `generateStaticParams`, which fetches GROQ and needs `NEXT_PUBLIC_SANITY_PROJECT_ID` at build time. Deploy fails. | Task 16 | `ARG`/`ENV` for both `NEXT_PUBLIC_*` vars. |
+| A5 | An E2E test asserts `meta[property="og:title"]` on an insights article, but that route's `generateMetadata` sets only `title`/`description`, and Next does not synthesize `og:title`. | Task 9 / Task 16 | Add `openGraph` to the insights metadata. |
+| A6 | `opengraph-image.tsx` types `params` as a sync object while its sibling `generateMetadata` correctly uses `Promise<{slug}>`. Next 15+ passes a Promise. | Task 9 | Await `params`. |
+| A7 | `await import('leaflet/dist/leaflet.css')` inside `useEffect` is not a supported bundler path, and Leaflet's default marker icons are separately known to break under bundlers. | Task 7 | Verify concretely at Task 7; expect a static CSS import plus an explicit icon fix. |
+
+### R3 — Security and compliance (fix in the task where each lands)
+
+| # | Issue | Where | Resolution |
+|---|---|---|---|
+| B1 | **Mass assignment → document-type forgery.** `parseLead` validates three fields then returns the raw request body; `submitLead` spreads it *after* `_type`, so `{"_type":"siteSettings",...}` writes a `siteSettings` document with the write token. The site reads `*[_type=="siteSettings"][0]` for `agoraPortalUrl` — the Investor Login destination. An attacker can repoint the investor login at a phishing host. | Task 10 | Whitelist fields explicitly; never spread untrusted input into a document. |
+| B2 | `accreditedConfirmed` is declared `boolean` in the schema, but `FormData` yields the string `"on"` for a checked box and `parseLead` never validates it. This field is the 506(c) artifact. | Tasks 10, 11 | Coerce to a real boolean; validate server-side. |
+| B3 | No spam protection on a public endpoint that writes to the CMS and sends email. | Tasks 10, 11 | Honeypot field plus basic rate limiting. |
+| B4 | The Playwright "Keep in Touch" test submits against the live dataset, writing real lead documents and firing a real Resend email to the notification address on every CI push. | Task 16 | Route E2E submissions away from production data and email. |
+| B5 | **The placeholder gate does not gate spec §9.** It greps for `Lorem / TODO / TBD / placeholder / example.com` — none of which match `2.1x`, `1.7x`, `0 zoning litigations`, `5 municipalities`, `90 units entitled`, `4 suites`, `6,200 SF`, or any invented Metra walk time. Every figure §9 forbids would ship green. | Task 15 | Hard-code §9's figures as an explicit denylist the content test rejects. |
+| B6 | The promissory-language check scans only `property` and `post` documents — not `siteSettings`/`focusCard`/`testimonial`, and not the hardcoded copy in TSX, which is where most prose actually lives. | Task 15 | Extend to all document types and add a source-level check. |
+
+### R4 — Specified in the spec, absent from the plan (scope decisions)
+
+| # | Gap | Decision |
+|---|---|---|
+| C1 | `/portfolio` filter by asset class and status (spec §3). Task 6 renders a plain grid. | **In Phase 1.** Client-side filter over already-fetched data — no new queries, no routing. |
+| C2 | `/insights` category filter (spec §3, and this plan's own file structure line). Task 9 renders a plain grid. | **In Phase 1.** Same approach as C1. |
+| C3 | **No revalidation webhook.** The architecture promises publish → webhook → live in ~1 min, and `fetchSanity` tags every request `['sanity']` — but no `/api/revalidate` route exists anywhere, so the tags are dead code and Task 16 silently substitutes a full Railway redeploy. | **In Phase 1, done early.** Without it every content correction during Task 15 costs a full rebuild. |
+| C4 | No `sitemap.ts` / `robots.ts`, on a site whose blog exists to be linked and ranked. | **In Phase 1.** Small, and it serves a stated goal. |
+| C5 | Spec §6 asks for `error.tsx`/`not-found.tsx` per route segment; Task 16 ships root-only. | **Partially.** Root `error.tsx` + `not-found.tsx`, plus `not-found.tsx` on the two dynamic segments where a stale slug is the realistic 404. Six near-identical boundaries is ceremony. |
+
+### R5 — Improvements adopted
+
+- **D1 — Logical properties enforced repo-wide.** The rule was enforced by a single assertion inside `StatBand`'s test; nothing stopped `ml-4` in the other ~20 components. This is the constraint that makes Phase 2 cheap, so it gets an ESLint rule covering every file, not one test. Added in Task 1.
+- **D3 — `StatBand` responsive columns.** It emitted N inline grid columns with no breakpoint; five stats on a 375px viewport gives ~75px columns. Fixed in Task 4.
+- **D5 — `scripts/seed.ts`** is listed under Task 15's Files but no step ever writes it. Removed from the file list.
+- **D6 — `LEAD_EXPORT_TOKEN`** is still required by Task 16 Step 7, orphaned by Task 14's descoping. Removed.
+
+### R6 — Noted, deliberately not changed
+
+- **D2 — teal contrast at point of use.** The palette constants are tested, but nothing stops `text-teal` on 11px text, which is the actual failure mode. A reliable lint rule would need to correlate colour and font-size utilities across a `className` string; not worth the complexity now. Guarded by review instead.
+- **D4 — hardcoded marketing copy.** The Partners cards, the Investors "how an investment works" steps, and the homepage hero live in TSX, not Sanity. This is not the `constants.ts` fallback pattern the spec forbids — there is no shadow copy of CMS content — but it does mean the team cannot edit its own investor-facing copy without a developer. Recorded as a conscious Phase 1 tradeoff; revisit in Phase 3.
+- **D7 — Node version drift.** Dockerfile and CI pin Node 20; the development machine runs Node 24. Both satisfy Next 16's floor. Left alone.
+
+---
 
 ## Global Constraints
 
@@ -87,25 +151,33 @@ Establishes the project and encodes the contrast rule as an executable test, so 
 - Consumes: nothing.
 - Produces: `palette` — a frozen object with keys `ground`, `panel`, `ink`, `inkSecondary`, `rule`, `teal`, `tealText`, each a `#RRGGBB` string. `contrastRatio(hex1: string, hex2: string): number`.
 
-- [ ] **Step 1: Scaffold the project**
+- [x] **Step 1: Scaffold the project**
 
 The repo is **not empty** — it already holds `README.md`, `.gitignore`, and `docs/`. `create-next-app` refuses to scaffold into a directory with conflicting files, so scaffold into a temp directory and move the result in:
 
 ```bash
-npx create-next-app@latest .em8-scaffold \
+npx create-next-app@16.3.3 em8-scaffold \
   --typescript --tailwind --app --src-dir --use-npm \
-  --import-alias "@/*" --eslint --no-turbopack
+  --import-alias "@/*" --eslint --disable-git --skip-install --yes
 
-# move everything except the scaffold's own git and README
-cd .em8-scaffold && rm -rf .git README.md .gitignore && cd ..
-cp -r .em8-scaffold/. . && rm -rf .em8-scaffold
+# move everything except the scaffold's own README and .gitignore
+rm -f em8-scaffold/README.md em8-scaffold/.gitignore
+cp -r em8-scaffold/. . && rm -rf em8-scaffold
 
 npm install -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/jest-dom
 ```
 
 `--import-alias "@/*"` is required — every import in this plan uses `@/`, and the default without it would break all of them.
 
-- [ ] **Step 2: Configure Vitest**
+**Amended 2026-08-30 (R1).** Four changes from the original command, each forced:
+- Pinned to `@16.3.3` rather than `@latest`, so this plan stays reproducible as `latest` moves again.
+- `--no-turbopack` was removed — the flag no longer exists in Next 16, where Turbopack is the default bundler.
+- The target is `em8-scaffold`, not `.em8-scaffold`: npm naming rules reject a leading period and `create-next-app` refuses to run.
+- `--skip-install` plus a single `npm install` after the move, instead of copying a populated `node_modules` across directories.
+
+Then merge the Next-specific ignores (`next-env.d.ts`, `*.tsbuildinfo`, `/coverage`, Playwright output, `schema.json`) into the repo's existing `.gitignore`, and set `package.json`'s `name` to `em8-website`.
+
+- [x] **Step 2: Configure Vitest**
 
 ```ts
 // vitest.config.ts
@@ -115,14 +187,35 @@ import path from 'node:path'
 
 export default defineConfig({
   plugins: [react()],
-  test: { environment: 'jsdom', globals: true, include: ['tests/**/*.test.{ts,tsx}'] },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['tests/**/*.test.{ts,tsx}'],
+    setupFiles: ['./tests/setup.ts'],
+    // A1: `createClient` throws "Configuration must contain `projectId`" when these are
+    // unset, which kills any test importing a module that builds the Sanity client at
+    // module scope. These are dummies — no unit test may reach the network.
+    env: {
+      NEXT_PUBLIC_SANITY_PROJECT_ID: 'test-project',
+      NEXT_PUBLIC_SANITY_DATASET: 'test',
+    },
+  },
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
 })
 ```
 
-Add to `package.json` scripts: `"test": "vitest run"`, `"test:watch": "vitest"`.
+```ts
+// tests/setup.ts
+// A2: registers toHaveTextContent and the rest of the jest-dom matchers, which
+// Task 11 asserts against. Without this, those matchers do not exist.
+import '@testing-library/jest-dom/vitest'
+```
 
-- [ ] **Step 3: Write the failing test**
+Add to `package.json` scripts: `"test": "vitest run --dir tests/unit"`, `"test:watch": "vitest --dir tests/unit"`. Scoping to `tests/unit` from the start keeps Task 15's networked content suite out of the default run.
+
+**Amended 2026-08-30 (A1, A2).** The original config had neither `env` nor `setupFiles`. Both were load-bearing and both were missing: without `env`, four of the plan's thirteen test files fail at import; without `setupFiles`, Task 11's assertions reference matchers that were never registered.
+
+- [x] **Step 3: Write the failing test**
 
 ```ts
 // tests/unit/tokens.test.ts
@@ -149,12 +242,12 @@ describe('brand palette', () => {
 })
 ```
 
-- [ ] **Step 4: Run it and watch it fail**
+- [x] **Step 4: Run it and watch it fail**
 
 Run: `npm test`
 Expected: FAIL — `Failed to resolve import "@/lib/tokens"`.
 
-- [ ] **Step 5: Implement the tokens**
+- [x] **Step 5: Implement the tokens**
 
 ```ts
 // src/lib/tokens.ts
@@ -186,12 +279,12 @@ export function contrastRatio(a: string, b: string): number {
 }
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `npm test`
 Expected: PASS, 4 tests.
 
-- [ ] **Step 7: Wire the tokens into Tailwind**
+- [x] **Step 7: Wire the tokens into Tailwind**
 
 ```css
 /* src/app/globals.css */
@@ -205,21 +298,37 @@ Expected: PASS, 4 tests.
   --color-rule: #D8D8D4;
   --color-teal: #4ABDB5;
   --color-teal-text: #2C7A74;
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Oswald', sans-serif;
   --radius-chip: 4px;
   --radius-control: 8px;
   --radius-card: 12px;
 }
 
+/* `inline` so these resolve against the next/font variables set on <html> at runtime. */
+@theme inline {
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-oswald), sans-serif;
+}
+
 body { background: var(--color-ground); color: var(--color-ink); }
 ```
 
-- [ ] **Step 8: Enable strict TypeScript**
+**Amended 2026-08-30.** Two changes. Fonts moved into a separate `@theme inline` block referencing the `next/font` CSS variables — the original `'Inter', system-ui` names a family that `next/font` never registers globally, so it would have silently fallen through to `system-ui`. And the scaffold's `prefers-color-scheme` block was deleted rather than kept: spec §2.3 chose a light ground and accepted losing the dark LinkedIn match, so an automatic dark mode would reintroduce exactly the split that decision settled.
+
+- [x] **Step 8: Enable strict TypeScript**
 
 In `tsconfig.json`, confirm `"strict": true` and add `"noUncheckedIndexedAccess": true`.
 
-- [ ] **Step 9: Commit**
+**Note (2026-08-30).** Next 16 scaffolds `layout.tsx` using its generated global `LayoutProps<'/'>`. That type only exists once `.next/types` has been produced by a build, so it fails `tsc --noEmit` on a clean checkout — including in CI, which typechecks *before* building. Type route and layout props explicitly throughout this project; do not use the generated globals.
+
+- [x] **Step 9: Enforce logical properties in the linter** *(added 2026-08-30, R5/D1)*
+
+The original plan enforced the logical-properties rule with a single assertion inside `StatBand`'s test. That leaves ~20 other components unguarded, and this is the constraint that decides whether Phase 2 is additive or a rewrite. Add a `no-restricted-syntax` rule to `eslint.config.mjs` matching physical-direction utilities inside `className` — `ml-`/`mr-`/`pl-`/`pr-`/`left-`/`right-`/`border-l`/`border-r`/`rounded-l`/`rounded-r`/`text-left`/`text-right` — allowing variant prefixes (`sm:`, `hover:`) and negative values.
+
+Verified against a probe file: catches all six violation forms including `sm:pl-6` and a template literal, and does not false-positive on `rounded-lg`, `prose`, `px-5`, `last:border-e-0`, or `start-0`.
+
+Known gap: the rule is scoped to `className` attributes, so class strings assembled in intermediate variables (as `Button.tsx` does) are not covered. Review catches those.
+
+- [x] **Step 10: Commit**
 
 ```bash
 git add -A
@@ -563,7 +672,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
 ]
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/schema.test.ts`
 Expected: PASS, 8 tests.
@@ -771,7 +880,7 @@ export const SITE_SETTINGS_QUERY = `*[_type == "siteSettings"][0] { agoraPortalU
 
 Note the testimonials query filters on `consentOnRecord` — an investor's name cannot reach the site without it.
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/queries.test.ts tests/unit/image.test.ts`
 Expected: PASS, 4 tests.
@@ -964,7 +1073,7 @@ export function Card({ children, className = '' }: { children: React.ReactNode; 
 }
 ```
 
-- [ ] **Step 4: Run the tests and confirm they pass**
+- [x] **Step 4: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/ui.test.tsx`
 Expected: PASS, 4 tests.
@@ -989,7 +1098,7 @@ git commit -m "feat: add UI primitives with logical-property layout"
 - Consumes: `SITE_SETTINGS_QUERY`, `fetchSanity` from Task 3; `Button` from Task 4.
 - Produces: `<SiteHeader agoraUrl: string />`, `<SiteFooter disclaimer: string />`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/header.test.tsx
@@ -1110,7 +1219,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 The thrown error is deliberate: missing required content fails loudly rather than rendering a broken shell.
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/header.test.tsx`
 Expected: PASS, 2 tests.
@@ -1291,7 +1400,7 @@ export default async function PortfolioPage() {
 }
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/format.test.ts tests/unit/propertyCard.test.tsx`
 Expected: PASS, 7 tests.
@@ -1318,7 +1427,7 @@ The route that didn't exist before, and the reason for the whole rebuild.
 - Consumes: `PROPERTY_BY_SLUG_QUERY`, `PROPERTY_SLUGS_QUERY`, `urlForImage`.
 - Produces: `<FactRail property={PropertyDetail} />`, `<PropertyMap lat, lng, title />`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/factRail.test.tsx
@@ -1532,7 +1641,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 }
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/factRail.test.tsx`
 Expected: PASS, 3 tests.
@@ -1558,7 +1667,7 @@ A view over sold properties. It creates no new URLs.
 - Consumes: `SOLD_PROPERTIES_QUERY`.
 - Produces: `<DealStory story={{ acquired, executed, exited, equityMultiple, exitYear }} />`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/dealStory.test.tsx
@@ -1698,7 +1807,7 @@ export default async function TrackRecordPage() {
 }
 ```
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/dealStory.test.tsx`
 Expected: PASS, 2 tests.
@@ -1723,7 +1832,7 @@ git commit -m "feat: add track record as a view over sold properties"
 - Consumes: `ALL_POSTS_QUERY`, `POST_BY_SLUG_QUERY`, `POST_SLUGS_QUERY`.
 - Produces: `<PostCard post={{ title, slug, publishedAt, category, excerpt, heroImage }} />`, `formatCategory(slug: string): string`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/postCard.test.tsx
@@ -1937,7 +2046,7 @@ export default async function OgImage({ params }: { params: { slug: string } }) 
 }
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/postCard.test.tsx`
 Expected: PASS, 3 tests.
@@ -2147,7 +2256,7 @@ export async function POST(request: Request) {
 
 Add to `.env.local`: `SANITY_API_WRITE_TOKEN`, `RESEND_API_KEY`, `LEAD_NOTIFICATION_EMAIL`. **Never** prefix these with `NEXT_PUBLIC_` — that would ship them to the browser.
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/leads.test.ts`
 Expected: PASS, 6 tests.
@@ -2171,7 +2280,7 @@ git commit -m "feat: add capture-first lead pipeline"
 - Consumes: `POST /api/lead` from Task 10.
 - Produces: `<LeadForm source: 'keep-in-touch' | 'site-submission' fields: FieldSpec[] submitLabel: string />`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/leadForm.test.tsx
@@ -2320,7 +2429,7 @@ export function LeadForm({ source, fields, submitLabel }: {
 }
 ```
 
-- [ ] **Step 4: Run the tests and confirm they pass**
+- [x] **Step 4: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/leadForm.test.tsx`
 Expected: PASS, 3 tests.
@@ -2347,7 +2456,7 @@ Three content pages that consume everything built so far.
 - Consumes: `LeadForm`, `TEAM_QUERY`, `FOCUS_CARDS_QUERY`, `TESTIMONIALS_QUERY`, `SITE_SETTINGS_QUERY`.
 - Produces: `<Testimonials items={{ quote, attribution, descriptor, investorSince }[]} />`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/testimonials.test.tsx
@@ -2648,7 +2757,7 @@ export default async function AboutPage() {
 
 Square portraits with Sanity's hotspot cropping — the circular-crop problem from the old guide cannot recur.
 
-- [ ] **Step 7: Run the tests and confirm they pass**
+- [x] **Step 7: Run the tests and confirm they pass**
 
 Run: `npm test`
 Expected: PASS, all suites.
@@ -2674,7 +2783,7 @@ Built last, because it composes components every other task produced.
 - Consumes: every component and query built so far.
 - Produces: nothing downstream.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 // tests/unit/homepage.test.tsx
@@ -2794,7 +2903,7 @@ export default async function HomePage() {
 }
 ```
 
-- [ ] **Step 4: Run the tests and confirm they pass**
+- [x] **Step 4: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/homepage.test.tsx`
 Expected: PASS, 2 tests.
@@ -2820,7 +2929,7 @@ git commit -m "feat: add homepage composed from the TOD thesis"
 - Consumes: `lead` documents from Task 10.
 - Produces: `toAgoraCsv(leads: LeadRecord[]): string`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // tests/unit/agoraCsv.test.ts
@@ -2916,7 +3025,7 @@ export async function GET(request: Request) {
 
 Add `LEAD_EXPORT_TOKEN` to the environment. The route is token-gated because it returns personal data — never leave it open.
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `npm test tests/unit/agoraCsv.test.ts`
 Expected: PASS, 4 tests.
