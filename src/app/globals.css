@@ -35,3 +35,19 @@ body {
   background: var(--color-ground);
   color: var(--color-ink);
 }
+
+/*
+ * Property map basemap.
+ *
+ * OpenStreetMap's default tiles are far more saturated than the light institutional
+ * ground this site uses, and a full-colour map beside muted type reads as an embedded
+ * widget rather than part of the page. Desaturating and lifting them in CSS gets the
+ * quiet basemap the design wants from a tile source that needs no API key — CARTO's
+ * light theme now watermarks every tile unless you hold one.
+ *
+ * The teal marker is drawn by Leaflet as a vector and sits above this layer, so it keeps
+ * its brand colour while the map behind it recedes.
+ */
+.em8-basemap {
+  filter: grayscale(0.85) contrast(0.92) brightness(1.06);
+}

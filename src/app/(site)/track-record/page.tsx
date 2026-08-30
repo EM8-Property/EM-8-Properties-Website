@@ -55,9 +55,15 @@ export default async function TrackRecordPage() {
           </p>
         )}
         {sold.map((p) => (
+          // The two-column grid is applied only when there is an image to fill the first
+          // column. Applied unconditionally, a property with no gallery put its entire
+          // deal story into the narrow 0.85fr column and left the wide one empty —
+          // which is exactly the state every property is in before photography lands.
           <div
             key={p.slug}
-            className="overflow-hidden rounded-card border border-rule sm:grid sm:grid-cols-[0.85fr_2fr]"
+            className={`overflow-hidden rounded-card border border-rule ${
+              p.image ? 'sm:grid sm:grid-cols-[0.85fr_2fr]' : ''
+            }`}
           >
             {p.image && (
               <Image

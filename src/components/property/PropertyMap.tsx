@@ -35,10 +35,17 @@ export function PropertyMap({
         scrollWheelZoom: false,
       }).setView([lat, lng], 15)
 
-      // Light CARTO tiles. The old site used `dark_all`, which would fight the light
-      // ground the spec chose.
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors © CARTO',
+      // OpenStreetMap tiles, desaturated in CSS to the light institutional treatment.
+      //
+      // CARTO's light_all basemap was the original choice, and it still returns HTTP 200
+      // — but the PNGs now come back stamped "KEY REQUIRED" across every tile, which is
+      // invisible to any status-code check and only shows up by looking at the map. OSM
+      // serves unwatermarked without a key or an account, and the filter below gets it to
+      // the same muted register rather than the default saturated OSM look.
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+        className: 'em8-basemap',
       }).addTo(map)
 
       // A vector marker in brand teal rather than Leaflet's default pin. The default
