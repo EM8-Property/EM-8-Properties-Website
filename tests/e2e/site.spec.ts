@@ -5,9 +5,25 @@ test('homepage leads with the purpose', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/choose to live in/i)
 })
 
+/*
+ * Three tests below need real content in the CMS.
+ *
+ * They skip — visibly, with a reason — rather than fail when the dataset has no
+ * properties or posts. A test that fails for "content not entered yet" is noise, and
+ * noise trains people to ignore red; a test that silently passes with no data is worse,
+ * because it reports success for something it never checked. Skipping says exactly what
+ * happened.
+ *
+ * These become live checks the moment Task 15's content migration lands. If they are
+ * still skipping at cutover, that is itself the finding.
+ */
+
 test('a portfolio card opens its canonical property page', async ({ page }) => {
   await page.goto('/portfolio')
-  await page.locator('a[href^="/portfolio/"]').first().click()
+  const cards = page.locator('a[href^="/portfolio/"]')
+  test.skip((await cards.count()) === 0, 'no properties published yet — enter content (Task 15)')
+
+  await cards.first().click()
   await expect(page).toHaveURL(/\/portfolio\/[a-z0-9-]+$/)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 })
@@ -15,6 +31,8 @@ test('a portfolio card opens its canonical property page', async ({ page }) => {
 test('the portfolio filter narrows the grid', async ({ page }) => {
   await page.goto('/portfolio')
   const before = await page.locator('a[href^="/portfolio/"]').count()
+  test.skip(before === 0, 'no properties published yet — enter content (Task 15)')
+
   const firstType = page
     .getByRole('button', { name: /^(Multifamily|Mixed-Use|Townhomes)$/ })
     .first()
@@ -25,10 +43,18 @@ test('the portfolio filter narrows the grid', async ({ page }) => {
 
 test('an insights article resolves and carries share metadata', async ({ page }) => {
   await page.goto('/insights')
-  await page.locator('a[href^="/insights/"]').first().click()
+  const articles = page.locator('a[href^="/insights/"]')
+  test.skip((await articles.count()) === 0, 'no posts published yet — enter content (Task 15)')
+
+  await articles.first().click()
   await expect(page).toHaveURL(/\/insights\/[a-z0-9-]+$/)
   // og:title is not synthesised from <title> by Next — this asserts it is set explicitly.
   await expect(page.locator('meta[property="og:title"]')).toHaveCount(1)
+  // metadataBase must resolve the generated share card to an absolute, non-localhost URL.
+  await expect(page.locator('meta[property="og:image"]').first()).toHaveAttribute(
+    'content',
+    /^https?:\/\/(?!localhost)/,
+  )
 })
 
 test('track record links back to canonical property URLs, not its own', async ({ page }) => {

@@ -20,6 +20,10 @@ export default defineConfig({
     env: {
       NEXT_PUBLIC_SANITY_PROJECT_ID: env.NEXT_PUBLIC_SANITY_PROJECT_ID,
       NEXT_PUBLIC_SANITY_DATASET: env.NEXT_PUBLIC_SANITY_DATASET,
+      // Required since the dataset went private — without it every query returns empty
+      // and the gate reports "no placeholders found", which is the most dangerous way
+      // for this particular suite to be wrong.
+      SANITY_API_READ_TOKEN: env.SANITY_API_READ_TOKEN,
     },
   },
   resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },

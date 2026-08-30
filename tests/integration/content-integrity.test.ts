@@ -15,7 +15,22 @@ const client = createClient({
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   apiVersion: '2026-01-01',
   useCdn: false,
+  token: process.env.SANITY_API_READ_TOKEN,
 })
+
+/**
+ * A tokenless client cannot be constructed against a private dataset in a way that
+ * proves anything, so the exposure check below uses a raw fetch instead.
+ */
+async function anonymousQuery(groq: string): Promise<{ status: number; count: number }> {
+  const url = new URL(
+    `https://${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}.api.sanity.io/v2026-01-01/data/query/${process.env.NEXT_PUBLIC_SANITY_DATASET}`,
+  )
+  url.searchParams.set('query', groq)
+  const res = await fetch(url)
+  const body = (await res.json().catch(() => ({}))) as { result?: unknown[] }
+  return { status: res.status, count: Array.isArray(body.result) ? body.result.length : 0 }
+}
 
 const CONTENT_TYPES = '["property","post","teamMember","focusCard","testimonial","heroStat","siteSettings"]'
 
@@ -81,6 +96,23 @@ describe('published content', () => {
     ]) {
       expect(blob, `found promissory language "${banned}"`).not.toContain(banned)
     }
+  })
+
+  it('does not expose investor PII to anonymous callers', async () => {
+    // Regression guard for the C1 finding: the dataset was created public, so anyone
+    // holding the project id — which ships in the client bundle by design — could read
+    // every lead document: names, emails, phones, check sizes, and the 506(c)
+    // accreditation flag. If someone flips the dataset back to public, this fails.
+    const leads = await anonymousQuery('*[_type=="lead"]')
+    expect(leads.count, 'lead documents are readable without a token').toBe(0)
+
+    // And prove the check has teeth: content that definitely exists must also be
+    // invisible anonymously. Otherwise a zero above could just mean "no leads yet".
+    const settings = await anonymousQuery('*[_type=="siteSettings"]')
+    expect(
+      settings.count,
+      'the dataset is readable without a token — it is public, and leads will be exposed the moment one is submitted',
+    ).toBe(0)
   })
 
   it('has the siteSettings singleton the build requires', async () => {

@@ -30,3 +30,7 @@ dist/
 
 # sanity cli local cache
 .sanity/
+
+# lighthouse report output
+lh.json
+start.log

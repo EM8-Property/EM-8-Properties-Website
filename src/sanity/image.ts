@@ -1,4 +1,5 @@
-import imageUrlBuilder from '@sanity/image-url'
+// Named export: the default export is deprecated and warns four times per build.
+import { createImageUrlBuilder } from '@sanity/image-url'
 
 /**
  * Built from plain config rather than from `sanityClient`.
@@ -12,7 +13,7 @@ import imageUrlBuilder from '@sanity/image-url'
  *
  * Only the two NEXT_PUBLIC_ identifiers are used, and both are non-secret by design.
  */
-const builder = imageUrlBuilder({
+const builder = createImageUrlBuilder({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
 })
