@@ -14,7 +14,15 @@ import { schemaTypes } from './src/sanity/schema'
 const SINGLETONS = ['siteSettings'] as const
 
 export default defineConfig({
-  basePath: '/studio',
+  // '/studio' for the Studio embedded in this Next app; '/' for the Sanity-hosted Studio
+  // at em-8-properties.sanity.studio, which serves from its own root. One config, both
+  // targets, no forked copy to drift out of sync.
+  //
+  // This is a boolean flag rather than the basePath itself on purpose: passing a bare "/"
+  // through an environment variable is mangled by Git Bash's MSYS path translation on
+  // Windows, which rewrites it to "C:/Program Files/Git/" and fails the schema deploy
+  // with a message that blames the workspace config rather than the shell.
+  basePath: process.env.SANITY_STUDIO_HOSTED === 'true' ? '/' : '/studio',
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   schema: { types: schemaTypes },

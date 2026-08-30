@@ -52,6 +52,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // ESLint's flat config does not read .gitignore, so build output has to be listed
+    // here as well. `dist/` is the Sanity Studio bundle produced by scripts/deploy-studio.sh
+    // and `.sanity/` its local runtime cache — linting either floods the run with errors
+    // from minified vendor code and fails CI.
+    "dist/**",
+    ".sanity/**",
   ]),
 ]);
 

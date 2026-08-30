@@ -24,3 +24,9 @@ schema.json
 
 # local dev server log
 dev.log
+
+# sanity studio build output
+dist/
+
+# sanity cli local cache
+.sanity/

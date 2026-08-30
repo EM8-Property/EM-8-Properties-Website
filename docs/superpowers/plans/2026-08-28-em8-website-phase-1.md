@@ -775,6 +775,20 @@ Expected: Studio renders with all eight document types in the sidebar, and `Site
 
 Outstanding and **owned by a human**: signing in to Sanity and clicking through the Studio once. That confirms the sidebar and singleton render as intended, which no automated check here covers.
 
+**Added 2026-08-30 — a second, hosted Studio.** `localhost:3000/studio` only exists while a developer is running `npm run dev`, which makes it useless for the person who actually enters the content. The Studio is therefore also deployed to Sanity's own hosting:
+
+**https://em-8-properties.sanity.studio** — run `bash scripts/deploy-studio.sh`.
+
+Same project, same `production` dataset, same schema, two front doors. **Redeploy that script whenever anything in `src/sanity/schema/` changes**, or editors will be filling in a stale set of fields while the site expects new ones. This does not replace the embedded `/studio` route, which still ships on EM8's own domain as spec §3 requires.
+
+Three things this surfaced:
+
+- `basePath` cannot be a constant. The embedded Studio needs `/studio`; the hosted one serves from its own root and needs `/`. `sanity.config.ts` now picks between them from `SANITY_STUDIO_HOSTED`.
+- That flag is a **boolean, not the path itself**, on purpose. Passing a bare `/` through an environment variable in Git Bash triggers MSYS path translation, which rewrites it to `C:/Program Files/Git/`. The resulting failure — `All workspace basePath's must start with a leading /` — blames the workspace config and gives no hint that the shell rewrote the value.
+- `em8-properties` was already taken globally. Hostnames are unique across all of Sanity and availability is only checked at deploy time, so `--dry-run` cannot tell you a name is free. The hostname is `em-8-properties`, matching the em-8.com domain.
+
+The project sits under organization `oova3mdub` rather than a personal account, which is the Sanity half of spec §8's ownership blocker. The Railway half is still open.
+
 - [ ] **Step 9: Commit**
 
 ```bash
