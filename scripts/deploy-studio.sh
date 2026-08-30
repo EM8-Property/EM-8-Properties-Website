@@ -40,6 +40,16 @@ export SANITY_AUTH_TOKEN="${SANITY_API_WRITE_TOKEN:?SANITY_API_WRITE_TOKEN is em
 # "/" in an env var to "C:/Program Files/Git/" and breaks the schema deploy.
 export SANITY_STUDIO_HOSTED=true
 
+# Re-exported under the SANITY_STUDIO_ prefix, which is the ONLY prefix the Sanity CLI
+# inlines into the built bundle. NEXT_PUBLIC_ is a Next convention and means nothing here:
+# without these two lines the hosted Studio builds and deploys successfully, then dies in
+# the browser with "Configuration must contain `projectId`".
+#
+# `sanity deploy` prints the variables it inlined. If SANITY_STUDIO_PROJECT_ID is missing
+# from that list, the deploy is broken no matter what the success message says.
+export SANITY_STUDIO_PROJECT_ID="${NEXT_PUBLIC_SANITY_PROJECT_ID:?NEXT_PUBLIC_SANITY_PROJECT_ID is empty}"
+export SANITY_STUDIO_DATASET="${NEXT_PUBLIC_SANITY_DATASET:?NEXT_PUBLIC_SANITY_DATASET is empty}"
+
 STUDIO_HOSTNAME="${STUDIO_HOSTNAME:-em-8-properties}"
 
 echo "Deploying to https://${STUDIO_HOSTNAME}.sanity.studio"

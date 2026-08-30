@@ -23,8 +23,20 @@ export default defineConfig({
   // Windows, which rewrites it to "C:/Program Files/Git/" and fails the schema deploy
   // with a message that blames the workspace config rather than the shell.
   basePath: process.env.SANITY_STUDIO_HOSTED === 'true' ? '/' : '/studio',
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
+
+  // Two names for each value, and both are needed — this file is built by two different
+  // bundlers that inline different prefixes.
+  //
+  //   Next    inlines NEXT_PUBLIC_*     -> serves the embedded /studio route
+  //   Sanity  inlines SANITY_STUDIO_*   -> builds the hosted em-8-properties.sanity.studio
+  //
+  // The Sanity CLI knows nothing about NEXT_PUBLIC_, so reading only that name compiled
+  // `projectId` to undefined in the hosted bundle and the Studio died on load with
+  // "Configuration must contain `projectId`" — while the embedded route kept working,
+  // which is exactly what makes this easy to miss. `sanity deploy` prints the variables
+  // it inlined; if SANITY_STUDIO_PROJECT_ID is not in that list, the deploy is broken.
+  projectId: process.env.SANITY_STUDIO_PROJECT_ID ?? process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+  dataset: process.env.SANITY_STUDIO_DATASET ?? process.env.NEXT_PUBLIC_SANITY_DATASET!,
   schema: { types: schemaTypes },
   plugins: [
     structureTool({
