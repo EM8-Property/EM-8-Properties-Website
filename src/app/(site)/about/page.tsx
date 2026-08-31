@@ -89,7 +89,15 @@ export default async function AboutPage() {
             <section key={group} className="border-t border-rule bg-panel">
               <div className="mx-auto max-w-[1200px] px-6 py-14">
                 <SectionHeading eyebrow={eyebrow} title={title} />
-                <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {/*
+                  items-start, so a card is only as tall as its own content.
+
+                  Grid items stretch to the tallest in the row by default, which was fine
+                  when every bio was one line. Beside a full board biography it left 325px
+                  of empty space inside a bordered card — around forty per cent of it
+                  blank, which reads as a rendering fault rather than a short bio.
+                */}
+                <div className="mt-8 grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {byGroup(group).map((m) => (
                     <Card key={m._id}>
                       {/*
