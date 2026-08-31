@@ -127,6 +127,7 @@ export const SITE_SETTINGS_QUERY = defineQuery(
  */
 export const HOME_PAGE_QUERY = defineQuery(`
   *[_id == "homePage"][0] {
+    seo { title, description },
     hero { eyebrow, title, titleAccent, titleSuffix, intro,
            primaryCta { label, href }, secondaryCta { label, href } },
     factorsHeading { eyebrow, title, intro },
@@ -147,6 +148,7 @@ export const HOME_PAGE_QUERY = defineQuery(`
 
 export const ABOUT_PAGE_QUERY = defineQuery(`
   *[_id == "aboutPage"][0] {
+    seo { title, description },
     hero { eyebrow, title, titleAccent, titleSuffix, intro },
     factorsHeading { eyebrow, title, intro },
     leadershipTitle,
@@ -156,6 +158,7 @@ export const ABOUT_PAGE_QUERY = defineQuery(`
 
 export const PARTNERS_PAGE_QUERY = defineQuery(`
   *[_id == "partnersPage"][0] {
+    seo { title, description },
     heading { eyebrow, title, intro },
     partners[] { eyebrow, title, body },
     submissionHeading { eyebrow, title, intro },
@@ -167,6 +170,7 @@ export const PARTNERS_PAGE_QUERY = defineQuery(`
 
 export const INVESTORS_PAGE_QUERY = defineQuery(`
   *[_id == "investorsPage"][0] {
+    seo { title, description },
     heading { eyebrow, title, intro },
     loginLabel,
     stepsTitle,
@@ -174,5 +178,31 @@ export const INVESTORS_PAGE_QUERY = defineQuery(`
     keepInTouchHeading { eyebrow, title, intro },
     submitLabel,
     testimonialsHeading { eyebrow, title, intro }
+  }
+`)
+
+/**
+ * The three routes whose only stored copy is their search title and description.
+ *
+ * Written out separately rather than built from a shared string: typegen only discovers
+ * queries declared literally inside `defineQuery` and cannot resolve an interpolated
+ * fragment — it silently reports "0 queries" and the type safety this CMS was chosen for
+ * disappears. Three near-identical queries is the price of that guarantee.
+ */
+export const PORTFOLIO_PAGE_QUERY = defineQuery(`
+  *[_id == "portfolioPage"][0] {
+    seo { title, description }
+  }
+`)
+
+export const INSIGHTS_PAGE_QUERY = defineQuery(`
+  *[_id == "insightsPage"][0] {
+    seo { title, description }
+  }
+`)
+
+export const TRACK_RECORD_PAGE_QUERY = defineQuery(`
+  *[_id == "trackRecordPage"][0] {
+    seo { title, description }
   }
 `)

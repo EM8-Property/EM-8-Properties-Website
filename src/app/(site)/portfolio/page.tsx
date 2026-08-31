@@ -1,17 +1,24 @@
-import { pageMetadata } from '@/lib/seo'
+import type { Metadata } from 'next'
+import { seoMetadata } from '@/lib/pageSeo'
 import { fetchSanity } from '@/sanity/client'
-import { ALL_PROPERTIES_QUERY } from '@/sanity/queries'
-import type { ALL_PROPERTIES_QUERY_RESULT } from '@/sanity/types.generated'
+import { ALL_PROPERTIES_QUERY, PORTFOLIO_PAGE_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
+import type { ALL_PROPERTIES_QUERY_RESULT, PORTFOLIO_PAGE_QUERY_RESULT, SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
 import { PortfolioFilter } from '@/components/property/PortfolioFilter'
 import type { PropertyCardData } from '@/components/property/PropertyCard'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 
-export const metadata = pageMetadata({
-  title: 'Portfolio',
-  description:
-    'Multifamily and mixed-use assets across the Chicago MSA and southern Wisconsin.',
-  path: '/portfolio',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  const [copy, settings] = await Promise.all([
+    fetchSanity<PORTFOLIO_PAGE_QUERY_RESULT>(PORTFOLIO_PAGE_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
+  return seoMetadata({
+    seo: copy?.seo,
+    path: '/portfolio',
+    documentName: 'portfolioPage',
+    shareImage: settings?.defaultShareImage,
+  })
+}
 
 export default async function PortfolioPage() {
   const properties = await fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY)

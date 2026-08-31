@@ -1,11 +1,13 @@
-import { pageMetadata } from '@/lib/seo'
+import type { Metadata } from 'next'
+import { seoMetadata } from '@/lib/pageSeo'
 import Image from 'next/image'
 import { fetchSanity } from '@/sanity/client'
-import { TEAM_QUERY, FOCUS_CARDS_QUERY, ABOUT_PAGE_QUERY } from '@/sanity/queries'
+import { TEAM_QUERY, FOCUS_CARDS_QUERY, ABOUT_PAGE_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type {
   TEAM_QUERY_RESULT,
   FOCUS_CARDS_QUERY_RESULT,
   ABOUT_PAGE_QUERY_RESULT,
+  SITE_SETTINGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
 import { SectionHeading } from '@/components/ui/SectionHeading'
@@ -14,12 +16,18 @@ import { Card } from '@/components/ui/Card'
 import { TEAM_GROUP_LABELS } from '@/lib/teamGroups'
 import { TeamBio } from '@/components/about/TeamBio'
 
-export const metadata = pageMetadata({
-  title: 'About',
-  description:
-    'Creating communities people choose to live in. Transit-oriented development in suburban Chicago.',
-  path: '/about',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  const [copy, settings] = await Promise.all([
+    fetchSanity<ABOUT_PAGE_QUERY_RESULT>(ABOUT_PAGE_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
+  return seoMetadata({
+    seo: copy?.seo,
+    path: '/about',
+    documentName: 'aboutPage',
+    shareImage: settings?.defaultShareImage,
+  })
+}
 
 export default async function AboutPage() {
   const [team, factors, copy] = await Promise.all([

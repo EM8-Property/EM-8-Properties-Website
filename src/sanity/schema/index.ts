@@ -7,8 +7,26 @@ import { focusCard } from './focusCard'
 import { testimonial } from './testimonial'
 import { lead } from './lead'
 import { siteSettings } from './siteSettings'
-import { ctaLink, headingBlock, heroBlock, labelledCard, stepItem, factItem } from './pageBlocks'
-import { homePage, aboutPage, partnersPage, investorsPage, ctaBand, popupBlock } from './pages'
+import {
+  ctaLink,
+  headingBlock,
+  heroBlock,
+  labelledCard,
+  stepItem,
+  factItem,
+  seoBlock,
+} from './pageBlocks'
+import {
+  homePage,
+  aboutPage,
+  partnersPage,
+  investorsPage,
+  portfolioPage,
+  insightsPage,
+  trackRecordPage,
+  ctaBand,
+  popupBlock,
+} from './pages'
 
 // No `pullQuote`: it existed only to hold the Buffett quote, which is out permanently.
 export const schemaTypes: SchemaTypeDefinition[] = [
@@ -27,12 +45,16 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   aboutPage,
   partnersPage,
   investorsPage,
+  portfolioPage,
+  insightsPage,
+  trackRecordPage,
   ctaLink,
   headingBlock,
   heroBlock,
   labelledCard,
   stepItem,
   factItem,
+  seoBlock,
   ctaBand,
   popupBlock,
 ]
@@ -49,4 +71,7 @@ export const SINGLETON_TYPES = [
   'aboutPage',
   'partnersPage',
   'investorsPage',
+  'portfolioPage',
+  'insightsPage',
+  'trackRecordPage',
 ] as const

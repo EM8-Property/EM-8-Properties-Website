@@ -1,11 +1,14 @@
-import { pageMetadata } from '@/lib/seo'
+import type { Metadata } from 'next'
+import { seoMetadata } from '@/lib/pageSeo'
 import Link from 'next/link'
 import Image from 'next/image'
 import { fetchSanity } from '@/sanity/client'
-import { SOLD_PROPERTIES_QUERY, HERO_STATS_QUERY } from '@/sanity/queries'
+import { SOLD_PROPERTIES_QUERY, HERO_STATS_QUERY, TRACK_RECORD_PAGE_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type {
   SOLD_PROPERTIES_QUERY_RESULT,
   HERO_STATS_QUERY_RESULT,
+  TRACK_RECORD_PAGE_QUERY_RESULT,
+  SITE_SETTINGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
 import { formatUnits } from '@/lib/format'
@@ -14,12 +17,18 @@ import { StatBand } from '@/components/ui/StatBand'
 import { DealStory } from '@/components/property/DealStory'
 import { Chip } from '@/components/ui/Chip'
 
-export const metadata = pageMetadata({
-  title: 'Track Record',
-  description:
-    'Realized results across the Chicago MSA: what we paid, what we did, what we exited at.',
-  path: '/track-record',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  const [copy, settings] = await Promise.all([
+    fetchSanity<TRACK_RECORD_PAGE_QUERY_RESULT>(TRACK_RECORD_PAGE_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
+  return seoMetadata({
+    seo: copy?.seo,
+    path: '/track-record',
+    documentName: 'trackRecordPage',
+    shareImage: settings?.defaultShareImage,
+  })
+}
 
 /**
  * A view over sold properties. It creates no URLs of its own: every card links back to

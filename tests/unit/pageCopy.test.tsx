@@ -27,8 +27,20 @@ describe('page copy schema', () => {
   it('keeps every page singleton out of the create-new menu', () => {
     // A second homePage would be silently ignored by the query, so an editor's work would
     // land in a document the site never reads.
-    expect(SINGLETON_TYPES).toContain('siteSettings')
-    expect(SINGLETON_TYPES.length).toBe(5)
+    //
+    // Named rather than counted. This asserted a length of 5, and when three page
+    // documents were added it failed with "expected 8 to be 5" — which says a number
+    // changed, not which type arrived or whether it was pinned. The list says both.
+    expect([...SINGLETON_TYPES].sort()).toEqual([
+      'aboutPage',
+      'homePage',
+      'insightsPage',
+      'investorsPage',
+      'partnersPage',
+      'portfolioPage',
+      'siteSettings',
+      'trackRecordPage',
+    ])
   })
 })
 

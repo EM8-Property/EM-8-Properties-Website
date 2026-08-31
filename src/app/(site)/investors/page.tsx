@@ -1,4 +1,5 @@
-import { pageMetadata } from '@/lib/seo'
+import type { Metadata } from 'next'
+import { seoMetadata } from '@/lib/pageSeo'
 import { fetchSanity } from '@/sanity/client'
 import {
   SITE_SETTINGS_QUERY,
@@ -15,12 +16,18 @@ import { Testimonials } from '@/components/ui/Testimonials'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 
-export const metadata = pageMetadata({
-  title: 'Investors',
-  description:
-    'We work with accredited investors, family offices, and joint-venture partners across the Chicago MSA.',
-  path: '/investors',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  const [copy, settings] = await Promise.all([
+    fetchSanity<INVESTORS_PAGE_QUERY_RESULT>(INVESTORS_PAGE_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
+  return seoMetadata({
+    seo: copy?.seo,
+    path: '/investors',
+    documentName: 'investorsPage',
+    shareImage: settings?.defaultShareImage,
+  })
+}
 
 const FIELDS: FieldSpec[] = [
   { name: 'firstName', label: 'First name', type: 'text', required: true },
