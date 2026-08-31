@@ -67,12 +67,39 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
 
+      # Started here rather than via the action's startServerCommand, on a different
+      # port from the one Playwright uses.
+      #
+      # Lighthouse previously failed with CHROME_INTERSTITIAL_ERROR: the action starts
+      # the server and navigates without waiting for it to listen, and it was racing
+      # Playwright's webServer teardown for port 3000. Chrome loaded
+      # chrome-error://chromewebdata/ and every audit threw, which reads as "the site is
+      # broken" rather than "nothing was serving".
+      #
+      # Polling for a real 200 makes readiness explicit, and a server that never comes up
+      # now fails with that sentence instead of a wall of audit exceptions.
+      - name: Start production server for Lighthouse
+        run: |
+          # nohup so the server survives this step's shell, and a logfile so a startup
+          # failure is readable instead of silent.
+          nohup env PORT=3001 npm start > /tmp/next-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3001/ > /dev/null; then
+              echo "server ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::production server never served a 200 on port 3001 within 60s"
+          echo "--- server log ---"
+          cat /tmp/next-server.log || true
+          exit 1
+
       - name: Lighthouse budget
         uses: treosh/lighthouse-ci-action@v11
         with:
-          urls: http://localhost:3000/
+          urls: http://localhost:3001/
           budgetPath: ./lighthouse-budget.json
-          startServerCommand: npm start
           # The 800KB image budget is the guardrail against the old site's central
           # failure: 10-20MB camera originals. It fails the build long before anyone
           # ships one.
