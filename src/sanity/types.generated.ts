@@ -83,7 +83,8 @@ export type Lead = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  source?: "keep-in-touch" | "site-submission" | "newsletter";
+  source?:
+    "keep-in-touch" | "site-submission" | "newsletter" | "homepage-popup";
   firstName?: string;
   lastName?: string;
   email?: string;

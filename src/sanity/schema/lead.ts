@@ -1,4 +1,5 @@
 import { defineType, defineField } from 'sanity'
+import { LEAD_SOURCES } from '../../lib/leads'
 
 /**
  * Written by the site, never edited in the Studio — hence readOnly throughout.
@@ -14,7 +15,7 @@ export const lead = defineType({
     defineField({
       name: 'source',
       type: 'string',
-      options: { list: ['keep-in-touch', 'site-submission', 'newsletter'] },
+      options: { list: [...LEAD_SOURCES] },
       readOnly: true,
     }),
     defineField({ name: 'firstName', type: 'string', readOnly: true }),

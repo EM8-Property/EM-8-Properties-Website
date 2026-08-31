@@ -40,9 +40,12 @@ function writeDismissed(): void {
   }
 }
 
+const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
 export function InvestorPopup() {
   const [open, setOpen] = useState(false)
   const closeRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (readDismissed()) return
@@ -65,6 +68,48 @@ export function InvestorPopup() {
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
 
+  /*
+   * Lock the page behind the overlay.
+   *
+   * Without this the background scrolls under the scrim on a wheel or a swipe, which
+   * reads as the page having come apart. Restoring the previous value rather than
+   * clearing it means this cannot stomp on an overflow set by anything else.
+   */
+  useEffect(() => {
+    if (!open) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [open])
+
+  /*
+   * Keep Tab inside the dialog.
+   *
+   * `aria-modal="true"` tells assistive tech the rest of the page is inert, but it does
+   * nothing to the tab order — so without this a keyboard user tabs straight past the
+   * form into a page they cannot see behind the scrim, and the modality the attribute
+   * advertises is a lie. React's onKeyDown is used rather than a document listener so
+   * the handler cannot outlive the dialog.
+   */
+  function trapTab(e: React.KeyboardEvent) {
+    if (e.key !== 'Tab' || !dialogRef.current) return
+    const items = [...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
+    if (items.length === 0) return
+    const first = items[0]!
+    const last = items[items.length - 1]!
+    const active = document.activeElement
+
+    if (e.shiftKey && (active === first || !dialogRef.current.contains(active))) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+
   if (!open) return null
 
   return (
@@ -83,9 +128,11 @@ export function InvestorPopup() {
       />
 
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="investor-popup-title"
+        onKeyDown={trapTab}
         className="relative w-full max-w-md rounded-card border border-rule bg-white p-6 shadow-lg"
       >
         <button
@@ -116,7 +163,7 @@ export function InvestorPopup() {
 
         <div className="mt-5">
           <LeadForm
-            source="keep-in-touch"
+            source="homepage-popup"
             submitLabel="Keep me posted"
             successMessage="Thank you — you are on the list, and we will be in touch when something fits."
             fields={[

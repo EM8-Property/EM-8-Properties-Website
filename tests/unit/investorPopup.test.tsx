@@ -103,3 +103,58 @@ describe('InvestorPopup', () => {
     vi.useRealTimers()
   })
 })
+
+/**
+ * A dialog that sets aria-modal="true" is telling assistive tech that the rest of the
+ * page is inert. If a keyboard user can Tab out of it into a live page, that claim is
+ * false, and they end up interacting with content they cannot see behind a scrim.
+ */
+/**
+ * A dialog that sets aria-modal="true" tells assistive tech the rest of the page is
+ * inert. If a keyboard user can Tab out of it into a live page, that claim is false and
+ * they end up interacting with content hidden behind a scrim.
+ */
+describe('InvestorPopup — modality', () => {
+  it('wraps focus back to the start when tabbing past the last control', async () => {
+    vi.useFakeTimers()
+    render(<InvestorPopup />)
+    await openIt()
+    const dialog = screen.getByRole('dialog')
+    const focusable = [
+      ...dialog.querySelectorAll<HTMLElement>('button, [href], input, select, textarea'),
+    ]
+    expect(focusable.length).toBeGreaterThan(1)
+
+    const last = focusable[focusable.length - 1]!
+    last.focus()
+    expect(document.activeElement).toBe(last)
+    fireEvent.keyDown(dialog, { key: 'Tab' })
+    expect(document.activeElement, 'Tab escaped the dialog').toBe(focusable[0])
+    vi.useRealTimers()
+  })
+
+  it('wraps backwards too, so Shift+Tab from the first control stays inside', async () => {
+    vi.useFakeTimers()
+    render(<InvestorPopup />)
+    await openIt()
+    const dialog = screen.getByRole('dialog')
+    const focusable = [
+      ...dialog.querySelectorAll<HTMLElement>('button, [href], input, select, textarea'),
+    ]
+    focusable[0]!.focus()
+    fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(focusable[focusable.length - 1])
+    vi.useRealTimers()
+  })
+
+  it('locks the page behind it from scrolling, and releases it again', async () => {
+    vi.useFakeTimers()
+    const { unmount } = render(<InvestorPopup />)
+    await openIt()
+    expect(document.body.style.overflow).toBe('hidden')
+    fireEvent.click(screen.getByRole('button', { name: /close/i }))
+    expect(document.body.style.overflow).not.toBe('hidden')
+    unmount()
+    vi.useRealTimers()
+  })
+})
