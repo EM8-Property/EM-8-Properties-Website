@@ -120,6 +120,54 @@ export const property = defineType({
         'Only enable for offerings filed under Rule 506(c). Hides target returns and the deal room when off.',
       initialValue: false,
     }),
+    /**
+     * Spec §4: publiclyOffered "gates only the offering block: target returns, 'Enter the
+     * deal room,' and the offering's appearance in any current-opportunity module."
+     *
+     * The toggle shipped without the block, because the only candidate at the time was
+     * Boulevard, whose target returns could not be sourced. Nothing here is
+     * optional-by-accident: every figure is entered from a real OM or left empty, and the
+     * block collapses entirely when the offering is not public, so a 506(b) raise cannot
+     * be generally solicited by forgetting to clear a field.
+     *
+     * Return language is constrained by the compliance rule — targeted, projected,
+     * underwritten, estimated, pro forma. Never guaranteed or will return.
+     */
+    defineField({
+      name: 'offering',
+      title: 'Current offering',
+      type: 'object',
+      hidden: ({ parent }) =>
+        (parent as { publiclyOffered?: boolean } | undefined)?.publiclyOffered !== true,
+      fields: [
+        defineField({
+          name: 'summary',
+          title: 'Offering summary',
+          type: 'text',
+          rows: 3,
+          validation: (r) => r.max(400),
+        }),
+        defineField({
+          name: 'targetIrr',
+          title: 'Targeted levered IRR',
+          type: 'string',
+          description: 'As underwritten, base case only. For example: 17.7%',
+        }),
+        defineField({
+          name: 'targetEquityMultiple',
+          title: 'Targeted equity multiple',
+          type: 'string',
+          description: 'As underwritten. For example: 2.2x',
+        }),
+        defineField({ name: 'targetHoldYears', title: 'Target hold (years)', type: 'number' }),
+        defineField({
+          name: 'dealRoomUrl',
+          title: 'Deal room URL',
+          type: 'url',
+          description: 'Agora offering link. Accreditation is verified there, not here.',
+        }),
+      ],
+    }),
     defineField({ name: 'featured', type: 'boolean', initialValue: false }),
     defineField({ name: 'order', type: 'number', initialValue: 100 }),
   ],

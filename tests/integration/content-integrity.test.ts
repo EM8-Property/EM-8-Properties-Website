@@ -34,9 +34,20 @@ async function anonymousQuery(groq: string): Promise<{ status: number; count: nu
 
 const CONTENT_TYPES = '["property","post","teamMember","focusCard","testimonial","heroStat","siteSettings"]'
 
+/**
+ * Restricts every check below to *published* documents.
+ *
+ * Sanity returns drafts to a tokened client, and a draft cannot reach the site: the
+ * published document is what renders. Without this, an editor part-way through writing
+ * anything — a testimonial whose consent box is not yet ticked, an article still being
+ * drafted — fails the release gate for content no visitor can ever see. The gate must
+ * mean "what is live is clean", not "nobody is mid-edit".
+ */
+const PUBLISHED = '!(_id in path("drafts.**"))'
+
 describe('published content', () => {
   it('has no lorem-ipsum style scaffolding', async () => {
-    const docs = await client.fetch<unknown[]>(`*[_type in ${CONTENT_TYPES}]`)
+    const docs = await client.fetch<unknown[]>(`*[_type in ${CONTENT_TYPES} && ${PUBLISHED}]`)
     const blob = JSON.stringify(docs)
     for (const p of ['Lorem', 'TODO', 'TBD', 'placeholder', 'example.com', 'Fill in']) {
       expect(blob, `found scaffolding text "${p}"`).not.toContain(p)
@@ -46,7 +57,7 @@ describe('published content', () => {
   it('ships none of the figures spec §9 invented during design', async () => {
     // The original gate searched only for words like "Lorem" and would have passed with
     // every one of these live on the site.
-    const docs = await client.fetch<unknown[]>(`*[_type in ${CONTENT_TYPES}]`)
+    const docs = await client.fetch<unknown[]>(`*[_type in ${CONTENT_TYPES} && ${PUBLISHED}]`)
     const blob = JSON.stringify(docs)
 
     const found = SPEC_9_PLACEHOLDERS.filter(({ pattern }) => pattern.test(blob)).map(
@@ -57,7 +68,7 @@ describe('published content', () => {
 
   it('gives every property a slug and coordinates', async () => {
     const broken = await client.fetch<{ title?: string }[]>(
-      `*[_type == "property" && (!defined(slug.current) || !defined(coordinates))]{ title }`,
+      `*[_type == "property" && ${PUBLISHED} && (!defined(slug.current) || !defined(coordinates))]{ title }`,
     )
     expect(broken, `properties missing slug or coordinates: ${JSON.stringify(broken)}`).toHaveLength(0)
   })
@@ -66,7 +77,7 @@ describe('published content', () => {
     // Spec §9 lists the walk times as invented. A station named without a time — or a
     // time without a station — is a half-migrated record, not a real fact.
     const half = await client.fetch<{ title?: string }[]>(
-      `*[_type == "property" && (
+      `*[_type == "property" && ${PUBLISHED} && (
           (defined(metraStation) && !defined(walkMinutes)) ||
           (defined(walkMinutes) && !defined(metraStation))
         )]{ title }`,
@@ -76,7 +87,7 @@ describe('published content', () => {
 
   it('publishes no testimonial without recorded consent', async () => {
     const unconsented = await client.fetch<unknown[]>(
-      `*[_type == "testimonial" && consentOnRecord != true]`,
+      `*[_type == "testimonial" && ${PUBLISHED} && consentOnRecord != true]`,
     )
     expect(unconsented).toHaveLength(0)
   })
@@ -84,7 +95,7 @@ describe('published content', () => {
   it('uses no promissory return language in any document', async () => {
     // Broadened from the plan's property-and-post-only check: a disclaimer, a focus card,
     // or a testimonial quote can carry the same compliance problem.
-    const docs = await client.fetch<unknown[]>(`*[_type in ${CONTENT_TYPES}]`)
+    const docs = await client.fetch<unknown[]>(`*[_type in ${CONTENT_TYPES} && ${PUBLISHED}]`)
     const blob = JSON.stringify(docs).toLowerCase()
     for (const banned of [
       'guaranteed return',
@@ -117,7 +128,7 @@ describe('published content', () => {
 
   it('has the siteSettings singleton the build requires', async () => {
     const settings = await client.fetch<{ agoraPortalUrl?: string; disclaimer?: string }[]>(
-      `*[_type == "siteSettings"]{ agoraPortalUrl, disclaimer }`,
+      `*[_type == "siteSettings" && ${PUBLISHED}]{ agoraPortalUrl, disclaimer }`,
     )
     expect(settings, 'siteSettings must exist exactly once').toHaveLength(1)
     expect(settings[0]?.agoraPortalUrl).toBeTruthy()

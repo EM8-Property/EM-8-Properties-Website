@@ -17,10 +17,12 @@ export const ASSET_CLASSES = [
   'mixed-use',
   'townhomes',
   'industrial',
+  'retail',
   'senior',
 ] as const
 
 export const STATUSES = [
+  'under-contract',
   'stabilized',
   'lease-up',
   'under-construction',
@@ -36,10 +38,14 @@ export const ASSET_CLASS_LABELS: Record<string, string> = {
   'mixed-use': 'Mixed-Use',
   townhomes: 'Townhomes',
   industrial: 'Industrial',
+  retail: 'Retail',
   senior: 'Senior Living',
 }
 
 export const STATUS_LABELS: Record<string, string> = {
+  // An asset under contract is not yet owned. Showing it as stabilized would state that
+  // EM8 owns something it does not.
+  'under-contract': 'Under Contract',
   stabilized: 'Stabilized',
   'lease-up': 'In Lease-Up',
   'under-construction': 'Under Construction',

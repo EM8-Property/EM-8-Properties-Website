@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { CHIP_COLORS, CHIP_FALLBACK_COLOR } from '@/components/ui/Chip'
+import { ASSET_CLASSES, STATUSES } from '@/lib/propertyTaxonomy'
 import { palette, contrastRatio } from '@/lib/tokens'
 
 /**
@@ -13,18 +14,13 @@ import { palette, contrastRatio } from '@/lib/tokens'
  */
 describe('chip fills', () => {
   it('has a colour for every kind the schema can produce', () => {
-    for (const kind of [
-      'multifamily',
-      'mixed-use',
-      'townhomes',
-      'industrial',
-      'senior',
-      'stabilized',
-      'lease-up',
-      'under-construction',
-      'renovation-complete',
-      'sold',
-    ]) {
+    // Derived from the taxonomy, not from a copy of it.
+    //
+    // This list used to be ten hardcoded strings, so adding `retail` and
+    // `under-contract` to ASSET_CLASSES/STATUSES left both without a fill and this test
+    // still passed. Both silently fell back to the grey used for `sold` — so the one
+    // live offering on the site wore the same chip colour as a disposed asset.
+    for (const kind of [...ASSET_CLASSES, ...STATUSES]) {
       expect(CHIP_COLORS[kind], `no colour for "${kind}"`).toBeDefined()
     }
   })

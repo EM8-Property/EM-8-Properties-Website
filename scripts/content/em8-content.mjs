@@ -319,6 +319,68 @@ export const PROPERTIES = [
       exitYear: 2023,
     },
   },
+  /**
+   * Antioch Shopping Plaza — the one live offering.
+   *
+   * SOURCE: "Antioch_Shopping_Plaza_OM.pdf" (Drive, July 2026). Every figure below is
+   * read from that document. Nothing here is estimated and nothing is rounded to look
+   * better.
+   *
+   * DELIBERATELY ABSENT, because the OM is marked confidential and proprietary and this
+   * is a public page: the rent roll and tenant names, the executed LOI and its terms, the
+   * seller-financing and refinance terms, the sponsor/LP economic split, and the equity
+   * requirement. What remains is the headline underwriting an investor needs to decide
+   * whether to ask for the OM at all — which is what a 506(c) page is for.
+   *
+   * STATUS is `under-contract`, not `stabilized`. The OM targets a 2026-09-01 close.
+   * Presenting it as stabilized would state that EM8 owns an asset it does not yet own.
+   *
+   * NO METRA FACT. Antioch is on the North Central Service and the OM notes the
+   * connection, but no walking time has been measured to this address, and spec §9 lists
+   * invented walk times as a launch blocker. A station without a confirmed time is a
+   * half-fact, so both fields are omitted rather than guessed.
+   *
+   * NO PHOTOGRAPHY. The only images are embedded in the OM deck. Upload them in the
+   * Studio; the card and the page both degrade to a plain panel until then.
+   */
+  {
+    _id: 'property-antioch-shopping-plaza',
+    // The live offering. Only honoured when the document is created; once it exists the
+    // Studio value wins, so withdrawing it there is permanent.
+    publiclyOffered: true,
+    slug: 'antioch-shopping-plaza',
+    title: 'Antioch Shopping Plaza',
+    assetClass: 'retail',
+    status: 'under-contract',
+    city: 'Antioch',
+    state: 'IL',
+    // US Census geocoder, 460 Orchard St, Antioch, IL 60002.
+    coordinates: { lat: 42.479085, lng: -88.09984 },
+    retailUnitCount: 12,
+    squareFeet: 87762,
+    yearBuilt: 1965,
+    order: 85,
+    cardBlurb:
+      'An 87,762-square-foot open-air retail center on Orchard Street, bought at $51 a square foot with half the building empty and the anchor space dark.',
+    overview: [
+      'Antioch Shopping Plaza is an 87,762-square-foot open-air retail center at 460–510 Orchard Street, built in 1965 and sitting on 5.9 acres with 306 parking spaces in the middle of downtown Antioch.',
+      'Half the building is empty by floor area, including a 33,540-square-foot former grocery anchor the previous owner could not re-let. That vacancy is the reason the basis is $51 a square foot against an estimated replacement cost near $120.',
+      'Downtown Antioch anchors the Chain of Lakes retail corridor and is connected to Chicago by Metra. The village has its own TIF district and is investing in the corridor, and EM8 is already building Main & Orchard next door.',
+    ],
+    businessPlan: [
+      'The anchor is the whole thesis. We subdivide the 33,540-square-foot former grocery into ten right-sized bays of roughly 2,850 square feet each, which is the format that actually leases in a suburban strip: service retail, food and drink, fitness, and medical.',
+      'Alongside that, a million dollars of capital goes into demising walls and storefronts, mechanical and electrical repair, a resurfaced lot, and new signage and paint. Most of it is leasing cost rather than cosmetics.',
+      'In-place rent averages just over $7 a square foot against a stabilized target near $11, so the upside is in re-letting space that is either empty or badly under-rented rather than in raising rents on sitting tenants. Occupancy is underwritten to 90% by year three.',
+      'Longer term, the parcel sits beside our Main & Orchard development, and the two together are worth more than either alone. Holding to redevelop stays an option rather than a requirement, because the stabilized centre pays its own way.',
+    ],
+    offering: {
+      summary:
+        'A value-add retail acquisition in downtown Antioch: buy at a discounted basis driven by vacancy, subdivide and re-let the dark anchor, and stabilize at 90% occupancy. Underwritten over a seven-year hold with a refinance in year two.',
+      targetIrr: '17.7%',
+      targetEquityMultiple: '2.2x',
+      targetHoldYears: 7,
+    },
+  },
 ]
 
 /**
@@ -416,3 +478,101 @@ export const TEAM = [
     order: 60,
   },
 ]
+
+/**
+ * Two starter articles, written to be edited.
+ *
+ * The insights feed is the mechanism behind spec §3's "reputation brings capital to us",
+ * and it was empty — while sitting in the main navigation and behind the homepage hero's
+ * own "Read our thinking" button. So the first thing a curious reader did was land on
+ * nothing.
+ *
+ * These exist to be rewritten, not admired. Every claim in them is restated from copy
+ * EM8 has already approved — the four focus cards, the hero, and the property overviews
+ * already in this file. They introduce no new position, and deliberately contain no
+ * statistic at all: spec §9 lists the three original article bodies as invented, and the
+ * fastest way to reintroduce that problem is to write a number into a sample post.
+ *
+ * Review the voice before the team sees them.
+ */
+export const POSTS = [
+  {
+    _id: 'post-start-with-the-platform',
+    slug: 'we-start-with-the-platform',
+    title: 'We start with the platform, not the parcel',
+    category: 'market',
+    publishedAt: '2026-08-30T12:00:00Z',
+    excerpt:
+      'Proximity to a station is the one thing about a site nobody can copy, undercut, or build next door to you later. So it is where we start rather than where we finish.',
+    body: [
+      'Most site searches begin with the land: what is for sale, what it costs, what can be put on it. We start one step earlier, with what is already there and cannot be moved.',
+      'A Metra platform is the clearest version of that. It is fixed infrastructure, paid for long ago by somebody else, and no competitor can add one next to their own site to catch up with you. The same is true of a park, a school, or a downtown block that people already walk. Buying proximity to those things is cheaper and more honest than trying to manufacture an amenity that substitutes for them.',
+      'This is why walking distance to the station appears on every property page as a fact rather than a phrase in a paragraph. It is either true of a building or it is not, and it should be as easy to check as the year it was built.',
+      'The discipline it imposes is mostly about what we turn down. A site that prices well but sits a long drive from anything is a site where the entire investment case rests on our own execution. Where the location does part of the work, our execution has something to compound against.',
+    ],
+  },
+  {
+    _id: 'post-what-a-village-wants-built',
+    slug: 'finding-out-what-a-village-wants-built',
+    title: 'Finding out what a village wants built',
+    category: 'municipal-partnership',
+    publishedAt: '2026-08-30T12:00:00Z',
+    excerpt:
+      'The cheapest entitlement is the one where the community already wanted what you are proposing. That means asking before drawing, which is slower at the start and faster everywhere after.',
+    body: [
+      'There are two ways to approach a village. One is to decide what you want to build, draw it, and then spend a year explaining why the community should accept it. The other is to find out what the community has been trying to get built, and then work out whether there is a project in it for us.',
+      'We do the second one. It is slower at the beginning, and it is the reason our entitlement periods tend to be quieter than the schedule assumed.',
+      'A municipality is not a counterparty in a single transaction. It is a partner we expect to be in front of again with the next site, and the one after that. A developer who wins a contested approval and then leaves has spent goodwill that the next applicant has to rebuild. We would rather still be able to pick up the phone.',
+      'In practice this means the early conversations are about the village comprehensive plan, the parts of the corridor that have sat empty, and what previous applicants got wrong. By the time there is a drawing, most of the disagreement has already happened, in a room, before anyone had money in the ground.',
+    ],
+  },
+]
+
+/**
+ * Two starter testimonials, written as DRAFTS and left without consent.
+ *
+ * Both gates matter and they are not the same gate:
+ *
+ *   - `consentOnRecord: false` means TESTIMONIALS_QUERY will never return them, so they
+ *     cannot appear on the site. Spec §11 requires written consent before publishing any
+ *     investor's name, and these are not real investors.
+ *   - written as drafts (`drafts.` id prefix) so the release gate, which now only
+ *     inspects published documents, does not see an unconsented testimonial in the
+ *     dataset at all.
+ *
+ * They are for practising the edit, and for showing what the field wants. Replace the
+ * quote and attribution with a real investor's words, tick the consent box once the
+ * written permission is actually on file, and publish. The homepage and /investors
+ * sections appear on their own the moment one consented testimonial exists.
+ */
+export const TESTIMONIALS = [
+  {
+    _id: 'testimonial-sample-1',
+    quote:
+      'Replace this with something a real investor said, in their words. The specific sentence is what persuades — how quickly a question got answered, what happened when something went wrong, what the reporting is actually like to read.',
+    attribution: 'Sample entry — replace with a real name',
+    descriptor: 'Role or descriptor, e.g. Private Equity Consultant',
+    consentOnRecord: false,
+    order: 10,
+  },
+  {
+    _id: 'testimonial-sample-2',
+    quote:
+      'A second sample. Keep quotes to two or three sentences: the ones that work name a moment rather than an adjective, and an anonymous quote persuades nobody, so the name and the written consent have to arrive together.',
+    attribution: 'Sample entry — replace with a real name',
+    descriptor: 'Role or descriptor, e.g. Family Office Principal',
+    investorSince: 2019,
+    consentOnRecord: false,
+    order: 20,
+  },
+]
+
+/**
+ * The singleton. `contactEmail` moved from hunter@ to info@ so the address on the site
+ * belongs to the company rather than a person, and it now actually renders — the footer
+ * queried this field and then displayed nothing.
+ */
+export const SITE_SETTINGS = {
+  contactEmail: 'info@em-8.com',
+  bookACallUrl: 'https://calendar.app.google/mJNPKxULTGh8NMTq9',
+}

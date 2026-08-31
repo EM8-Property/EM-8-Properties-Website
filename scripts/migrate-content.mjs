@@ -24,6 +24,9 @@ import {
   HERO_STATS,
   FOCUS_CARDS,
   TEAM,
+  POSTS,
+  TESTIMONIALS,
+  SITE_SETTINGS,
   oldImage,
   portable,
 } from './content/em8-content.mjs'
@@ -109,10 +112,17 @@ async function buildDocuments() {
 
   // publiclyOffered is the one field an editor is expected to change and that this
   // script would otherwise clobber on every run.
-  const existingOffered = new Map(
-    (
-      (await query('*[_type=="property" && publiclyOffered == true]{_id}')) ?? []
-    ).map((d) => [d._id, true]),
+  //
+  // Two cases, and they must not be conflated. For a property already in the dataset the
+  // stored value wins outright, so turning an offering *off* in the Studio survives the
+  // next migration — re-reading a payload default there would silently re-solicit a raise
+  // an editor had deliberately withdrawn. Only a property that does not exist yet takes
+  // its default from the payload, which is how Antioch arrives already public.
+  const existing = new Map(
+    ((await query('*[_type=="property"]{_id, publiclyOffered}')) ?? []).map((d) => [
+      d._id,
+      d.publiclyOffered === true,
+    ]),
   )
 
   for (const p of PROPERTIES) {
@@ -134,7 +144,7 @@ async function buildDocuments() {
       // the whole document. Hard-coding false here would silently revert a 506(c)
       // offering an editor had deliberately enabled in the Studio. New documents default
       // to false: never public without an explicit per-property decision.
-      publiclyOffered: existingOffered.get(p._id) ?? false,
+      publiclyOffered: existing.has(p._id) ? existing.get(p._id) : Boolean(p.publiclyOffered),
     }
 
     if (p.metraStation) doc.metraStation = p.metraStation
@@ -147,6 +157,10 @@ async function buildDocuments() {
     if (p.overview) doc.overview = portable(p.overview)
     if (p.businessPlan) doc.businessPlan = portable(p.businessPlan)
     if (p.dealStory) doc.dealStory = p.dealStory
+    // Only ever written alongside publiclyOffered, which is preserved from the dataset
+    // above rather than reset — so the figures can sit ready while the offering stays
+    // private until someone deliberately turns it on.
+    if (p.offering) doc.offering = p.offering
 
     if (p.image) {
       const assetId = APPLY ? await uploadImage(p.image) : await checkImage(p.image)
@@ -171,6 +185,48 @@ async function buildDocuments() {
       doc.photo = imageField(assetId, `${m.name}, ${m.role}, EM8 Properties`)
     }
     docs.push(doc)
+  }
+
+  for (const post of POSTS) {
+    console.log(`  post      ${post.title}`)
+    docs.push({
+      _id: post._id,
+      _type: 'post',
+      title: post.title,
+      slug: { _type: 'slug', current: post.slug },
+      publishedAt: post.publishedAt,
+      category: post.category,
+      excerpt: post.excerpt,
+      body: portable(post.body),
+    })
+  }
+
+  /**
+   * Testimonials are written as DRAFTS, on purpose.
+   *
+   * These are samples to practise editing against, not investors. Spec §11 requires
+   * written consent before publishing any investor's name, so `consentOnRecord` stays
+   * false — which TESTIMONIALS_QUERY already filters on, so they cannot render either
+   * way. The draft prefix is the second layer: the release gate inspects published
+   * documents only, so a sample never has to be explained to it.
+   *
+   * To use one: replace the quote and attribution with the real investor's words, tick
+   * the consent box once the written permission is genuinely on file, and publish. The
+   * homepage and /investors sections appear by themselves once a consented one exists.
+   */
+  for (const t of TESTIMONIALS) {
+    console.log(`  draft     testimonial ${t.attribution}`)
+    docs.push({
+      _id: `drafts.${t._id}`,
+      _type: 'testimonial',
+      quote: t.quote,
+      attribution: t.attribution,
+      descriptor: t.descriptor,
+      ...(t.investorSince !== undefined ? { investorSince: t.investorSince } : {}),
+      consentOnRecord: t.consentOnRecord,
+      featured: false,
+      order: t.order,
+    })
   }
 
   for (const s of HERO_STATS) {
@@ -213,6 +269,25 @@ async function main() {
     body: JSON.stringify({ mutations: docs.map((doc) => ({ createOrReplace: doc })) }),
   })
   if (!res.ok) throw new Error(`mutate failed ${res.status}: ${await res.text()}`)
+
+  /**
+   * siteSettings is PATCHED rather than replaced.
+   *
+   * The singleton also holds the disclaimer and the Agora portal URL — the disclaimer is
+   * pending securities counsel and the portal URL is the Investor Login destination.
+   * createOrReplace would drop both, so only the two fields this migration owns are set.
+   */
+  const settingsRes = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: [{ patch: { id: 'siteSettings', set: SITE_SETTINGS } }],
+    }),
+  })
+  if (!settingsRes.ok) {
+    throw new Error(`siteSettings patch failed ${settingsRes.status}: ${await settingsRes.text()}`)
+  }
+  console.log(`Patched siteSettings: ${Object.keys(SITE_SETTINGS).join(', ')}`)
   const body = await res.json()
   console.log(`\nWrote ${body.results?.length ?? 0} documents.`)
   console.log('Next: npm run test:content, then npm run build.')

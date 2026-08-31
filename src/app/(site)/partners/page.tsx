@@ -58,6 +58,7 @@ export default function PartnersPage() {
         eyebrow="Partners"
         title="One accountable team, start to finish"
         intro="Most developers assemble a new cast for every project, then spend the job managing the seams. We use the same builder and the same manager across the portfolio, so nobody gets to point at somebody else."
+        level={1}
       />
 
       <div className="mt-8 grid gap-5 sm:grid-cols-3">

@@ -17,11 +17,13 @@ export const CHIP_COLORS: Record<string, string> = {
   'mixed-use': '#01579B',
   townhomes: '#2E7D32',
   industrial: '#A64B00',
+  retail: '#6A1B9A',
   senior: '#455A64',
   stabilized: '#2C7A74',
   'lease-up': '#2C7A74',
   'under-construction': '#01579B',
   'renovation-complete': '#2E7D32',
+  'under-contract': '#8C5000',
   sold: '#455A64',
 }
 

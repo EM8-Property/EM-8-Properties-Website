@@ -13,6 +13,10 @@ import { FactRail } from '@/components/property/FactRail'
 import { PropertyMap } from '@/components/property/PropertyMap'
 import { Chip } from '@/components/ui/Chip'
 import { Eyebrow } from '@/components/ui/Eyebrow'
+import { OfferingBlock } from '@/components/property/OfferingBlock'
+import { CtaBand } from '@/components/ui/CtaBand'
+import { SITE_SETTINGS_QUERY } from '@/sanity/queries'
+import type { SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
 
 export async function generateStaticParams() {
   const slugs = await fetchSanity<PROPERTY_SLUGS_QUERY_RESULT>(PROPERTY_SLUGS_QUERY)
@@ -37,7 +41,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 /** The canonical URL for an asset, whatever its status. /track-record links back here. */
 export default async function PropertyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const p = await fetchSanity<PROPERTY_BY_SLUG_QUERY_RESULT>(PROPERTY_BY_SLUG_QUERY, { slug })
+  const [p, settings] = await Promise.all([
+    fetchSanity<PROPERTY_BY_SLUG_QUERY_RESULT>(PROPERTY_BY_SLUG_QUERY, { slug }),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
   if (!p) notFound()
 
   const hero = p.gallery?.[0]
@@ -84,6 +91,8 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
             </>
           )}
 
+          <OfferingBlock offering={p.offering} publiclyOffered={p.publiclyOffered} />
+
           {/*
             Both coordinates are checked explicitly. Sanity types a geopoint's lat and lng
             as optional, so a partially-filled point would otherwise reach Leaflet as
@@ -124,6 +133,13 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
           )}
         </div>
       </div>
+
+      {/*
+        Property pages previously carried no outbound link at all — the only anchor on one
+        was Leaflet’s attribution — despite being the likeliest arrival point from search
+        and LinkedIn.
+      */}
+      <CtaBand bookACallUrl={settings?.bookACallUrl} />
     </article>
   )
 }

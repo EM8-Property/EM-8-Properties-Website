@@ -38,6 +38,7 @@ export default async function TrackRecordPage() {
           eyebrow="Track Record"
           title="Realized results, not projections"
           intro="Every deal we've taken full cycle, with what we paid, what we did, and what we exited at."
+          level={1}
         />
       </div>
 

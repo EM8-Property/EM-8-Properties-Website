@@ -14,7 +14,7 @@ export const lead = defineType({
     defineField({
       name: 'source',
       type: 'string',
-      options: { list: ['keep-in-touch', 'site-submission'] },
+      options: { list: ['keep-in-touch', 'site-submission', 'newsletter'] },
       readOnly: true,
     }),
     defineField({ name: 'firstName', type: 'string', readOnly: true }),

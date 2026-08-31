@@ -73,6 +73,7 @@ export default async function InvestorsPage() {
             eyebrow="Investors"
             title="We work with investors who can wait"
             intro="We work with accredited investors, family offices, and joint-venture partners on transit-oriented multifamily and mixed-use around Chicago."
+            level={1}
           />
           {settings?.agoraPortalUrl && (
             <a

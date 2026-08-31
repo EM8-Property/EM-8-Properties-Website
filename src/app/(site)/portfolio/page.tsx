@@ -26,6 +26,7 @@ export default async function PortfolioPage() {
         eyebrow="Portfolio"
         title="Assets across the Chicago MSA"
         intro="Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves."
+        level={1}
       />
       <div className="mt-8">
         <PortfolioFilter properties={properties as PropertyCardData[]} />
