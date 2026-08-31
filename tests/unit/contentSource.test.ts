@@ -84,9 +84,9 @@ describe('migration payload — structure', () => {
     }
   })
 
-  it('caps every team bio at the schema limit of 200 characters', () => {
+  it('caps every team bio at the schema limit of 1500 characters', () => {
     for (const m of TEAM as { name: string; bio: string }[]) {
-      expect(m.bio.length, `${m.name} bio is ${m.bio.length} chars`).toBeLessThanOrEqual(200)
+      expect(m.bio.length, `${m.name} bio is ${m.bio.length} chars`).toBeLessThanOrEqual(1500)
     }
   })
 

@@ -481,7 +481,42 @@ export const TEAM = [
     image: 'dcd95a7cc062b57e832a1a50c85c1997e5dcb58c-400x400.jpg',
     order: 60,
   },
+  /**
+   * Board members, supplied by Hunter on 2026-08-31 and used verbatim.
+   *
+   * Both come from Aurum, and both biographies describe their Aurum role rather than an
+   * EM8 one — that is how they were given and nothing has been rewritten to imply
+   * otherwise. `role` reads "Board Member" because no title was supplied; confirm it.
+   *
+   * No photography for either. The card falls back to a plain panel until one is uploaded
+   * in the Studio.
+   */
+  {
+    _id: 'teamMember-nir-dror',
+    name: 'Nir Dror',
+    role: 'Board Member',
+    group: 'partner-board',
+    order: 20,
+    bio: [
+      'Nir Dror joined Aurum Ventures in 2013. Nir brings with him over 10 years of experience in finance, including investment banking and private equity experience. Nir is actively involved in due diligence, value assessment, financial engineering, transactions and M&A activities. Nir works closely with the portfolio companies on all financial issues.',
+      'Prior to joining Aurum, Nir served as the Chief Investment Officer at Origo Investments, a $350mm investment fund. Previously, Nir worked as an associate at Barclays Capital (formerly Lehman Brothers) where he was responsible for global transactions such as M&As, debt restructuring, and IPOs.',
+      'Nir holds a Bachelor degree in Law and Accounting from Tel Aviv University, Master degree in Commercial Law from Tel Aviv University and an MBA (cum laude) from the Michigan Ross School of Business.',
+    ].join('\n\n'),
+  },
+  {
+    _id: 'teamMember-ilan-lior',
+    name: 'Ilan Lior',
+    role: 'Board Member',
+    group: 'partner-board',
+    order: 30,
+    bio: [
+      'Ilan Lior joined Aurum in 2014. He handles all legal matters relating to the Aurum group of companies, the various investment transactions and supports the portfolio companies on various legal issues.',
+      'Prior to joining Aurum, Ilan was a partner in a boutique law firm where he headed the corporate and commercial practice group and advised clients on issues such as corporate financing and restructurings, joint ventures and M&A activities. He also worked extensively on matters of licensing agreements, purchase agreements and arrangements relating to intellectual property.',
+      'In his work, Ilan has specialized in cross-border cases and represented a wide range of clients ranging from start-ups and other privately held companies, public enterprises, municipal bodies and governmental agencies, with special expertise in international infrastructure tenders.',
+    ].join('\n\n'),
+  },
 ]
+
 
 /**
  * Two starter articles, written to be edited.

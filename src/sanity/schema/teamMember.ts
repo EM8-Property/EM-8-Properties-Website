@@ -10,8 +10,13 @@ export const teamMember = defineType({
     defineField({
       name: 'bio',
       type: 'text',
-      rows: 3,
-      validation: (r) => r.max(200),
+      rows: 6,
+      // 200 was sized for a one-line staff bio. A board member's is a career — prior
+      // firms, transactions, degrees, usually across several paragraphs — and the old cap
+      // made those simply unenterable: Sanity rejects the document, so it surfaces as an
+      // editor unable to save rather than as anything a test would catch. Still capped, so
+      // the field cannot quietly become a CV dumping ground.
+      validation: (r) => r.max(1500),
     }),
     defineField({
       // Hotspot cropping is what stops a square crop from decapitating a portrait —
