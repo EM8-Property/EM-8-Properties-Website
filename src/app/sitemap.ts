@@ -23,7 +23,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${base}/`, changeFrequency: 'monthly', priority: 1 },
+    // `${base}` and not `${base}/`. Next resolves the homepage's canonical to the bare
+    // origin, and a sitemap entry that does not string-match the canonical it points at
+    // is a standard SEO-audit finding — harmless in practice, since Google normalises an
+    // empty path, but there is no reason to publish the two in different forms.
+    { url: base, changeFrequency: 'monthly', priority: 1 },
     { url: `${base}/portfolio`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/track-record`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/insights`, changeFrequency: 'weekly', priority: 0.8 },

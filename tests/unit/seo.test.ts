@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { stripComments } from '../shared/sourceScan'
 import { pageMetadata, pageTitle, SITE_NAME } from '@/lib/seo'
 
 describe('pageTitle', () => {
@@ -59,7 +60,24 @@ describe('pageMetadata', () => {
 
   it('gives the twitter block an image too, or the card degrades to the small variant', () => {
     // With no image Next emits `twitter:card = summary`, which renders as a bare link.
-    expect(meta.twitter).toMatchObject({ images: ['/share-card'] })
+    // The full descriptor, not a bare path, so `twitter:image:alt` is emitted as well.
+    expect(meta.twitter).toMatchObject({
+      images: [{ url: '/share-card', width: 1200, height: 630, alt: 'EM8 Properties' }],
+    })
+  })
+
+  it('omits the image entirely when a page supplies its own card', () => {
+    // `/insights/[slug]` has a per-article `opengraph-image`, and naming an image here
+    // would override that file with the generic card. An empty array would not do —
+    // that is an explicit "no image", which is the bug this change fixed elsewhere.
+    const own = pageMetadata({
+      title: 'X',
+      description: 'Y',
+      path: '/insights/x',
+      image: null,
+    })
+    expect(own.openGraph).not.toHaveProperty('images')
+    expect(own.twitter).not.toHaveProperty('images')
   })
 })
 
@@ -67,8 +85,13 @@ describe('pageMetadata', () => {
  * A page shipping without a canonical is invisible to every other test: the build passes,
  * lint passes, and Lighthouse does not audit for one. This is the guard, and it is why
  * `pageMetadata` exists as a single helper rather than seven hand-written blocks.
+ *
+ * The assertion is on the canonical's *value*, not its presence. A page copy-pasted from
+ * another and left pointing at the original's path is the failure mode that matters:
+ * a canonical aimed at the wrong URL is worse than none at all, because it asks Google to
+ * drop the page entirely. Checking only that the file mentions a canonical cannot see it.
  */
-describe('every content route declares a canonical', () => {
+describe('every content route declares its own canonical', () => {
   const siteDir = resolve(__dirname, '../../src/app/(site)')
 
   /** Every `page.tsx` under the (site) group, at any depth. */
@@ -82,21 +105,44 @@ describe('every content route declares a canonical', () => {
     return found
   }
 
-  const files = pageFiles(siteDir)
+  /** `(site)/about/page.tsx` → `/about`; `(site)/page.tsx` → `/`. */
+  function routeOf(file: string): string {
+    const rel = file.slice(siteDir.length + 1).replace(/\\/g, '/')
+    const dir = rel.replace(/\/?page\.tsx$/, '')
+    return dir === '' ? '/' : `/${dir}`
+  }
 
-  it('finds every page, so the assertion below is not vacuous', () => {
-    // Nine routes today: home, about, insights, insights/[slug], investors, partners,
-    // portfolio, portfolio/[slug], track-record.
-    expect(files.length).toBe(9)
+  const routes = pageFiles(siteDir).map((file) => ({ file, route: routeOf(file) }))
+
+  it('covers every route, so the assertions below cannot go vacuous', () => {
+    // Named rather than counted: `expected 10 to be 9` does not say which route appeared.
+    expect(routes.map((r) => r.route).sort()).toEqual([
+      '/',
+      '/about',
+      '/insights',
+      '/insights/[slug]',
+      '/investors',
+      '/partners',
+      '/portfolio',
+      '/portfolio/[slug]',
+      '/track-record',
+    ])
   })
 
-  it.each(files.map((f) => [f.slice(siteDir.length + 1).replace(/\\/g, '/'), f]))(
-    '%s',
-    (_label, file) => {
-      const source = readFileSync(file, 'utf8')
-      const declaresCanonical =
-        source.includes('pageMetadata(') || /alternates:\s*\{\s*canonical/.test(source)
-      expect(declaresCanonical).toBe(true)
-    },
-  )
+  it.each(routes.map((r) => [r.route, r.file]))('%s', (route, file) => {
+    // Comments stripped: the prose in these files discusses canonicals and paths at
+    // length, and a match inside a comment would pass for a page that declares none.
+    const source = stripComments(readFileSync(file, 'utf8'))
+
+    if (route.includes('[slug]')) {
+      // A dynamic route must interpolate the slug rather than hardcode a path, or every
+      // article would claim to be a duplicate of one of them.
+      const segment = route.replace('/[slug]', '')
+      expect(source).toMatch(
+        new RegExp(`path:\\s*\`${segment}/\\$\\{slug\\}\`|canonical:\\s*\`${segment}/\\$\\{slug\\}\``),
+      )
+    } else {
+      expect(source).toMatch(new RegExp(`path:\\s*'${route}'`))
+    }
+  })
 })

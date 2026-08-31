@@ -1,6 +1,12 @@
 import { ImageResponse } from 'next/og'
+import { ShareCardFrame, SHARE_CARD_SIZE } from '@/components/seo/shareCardFrame'
 
-export const size = { width: 1200, height: 630 }
+/**
+ * Prerendered into a file at build time rather than running satori and resvg on every
+ * cold request. The card has no per-request input, this is a static-first site, and it
+ * means the wasm binaries are not on the serving path at all.
+ */
+export const dynamic = 'force-static'
 
 /**
  * The default share card, at a fixed URL every page can point at.
@@ -10,8 +16,7 @@ export const size = { width: 1200, height: 630 }
  * `/` and on no other route. The convention applies to the segment holding the file, and
  * `(site)` is a route group whose own page is the homepage — the six sibling routes
  * inherited nothing, so they were still shipping with no `og:image` after the change
- * meant to give them one. Nothing in the build, the tests, lint or a typecheck would have
- * said so.
+ * meant to give them one. Nothing in the build, the tests, lint or a typecheck said so.
  *
  * A route handler has a URL that is known in advance, so `pageMetadata` can name it
  * directly and every page gets the same card from one implementation. The per-article card
@@ -22,48 +27,14 @@ export const size = { width: 1200, height: 630 }
  * unset and read by nothing today, and wiring it needs these pages to become async, which
  * is the CMS-metadata change. Generating the card means the gap cannot reopen silently in
  * the meantime.
+ *
+ * Note there is no `size`/`contentType`/`alt` export here. Those are config exports of the
+ * image *file* conventions; a route handler ignores them, and under the webpack type
+ * plugin an excess export fails the route-handler type check outright.
  */
 export function GET() {
   return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          background: '#FFFFFF',
-          padding: 72,
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            fontSize: 26,
-            fontWeight: 700,
-            letterSpacing: 2,
-            color: '#1A1A1A',
-          }}
-        >
-          EM8&nbsp;<span style={{ color: '#2C7A74' }}>PROPERTIES</span>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            fontSize: 54,
-            fontWeight: 700,
-            lineHeight: 1.15,
-            color: '#1A1A1A',
-            maxWidth: 900,
-          }}
-        >
-          Transit-oriented development in suburban Chicago
-        </div>
-        {/* Teal as a fill, which is what the accent is for. */}
-        <div style={{ height: 8, width: 160, background: '#4ABDB5' }} />
-      </div>
-    ),
-    size,
+    <ShareCardFrame headline="Transit-oriented development in suburban Chicago" />,
+    SHARE_CARD_SIZE,
   )
 }

@@ -20,9 +20,15 @@ import { SITE_NAME } from './seo'
 type OrganizationJsonLd = {
   '@context': string
   '@type': 'Organization'
+  '@id': string
   name: string
   url: string
   email?: string
+}
+
+/** Stable identifier so the Article's publisher refers to this node instead of restating it. */
+export function organizationId(siteUrl: string): string {
+  return `${siteUrl}/#organization`
 }
 
 export function organizationJsonLd({
@@ -35,6 +41,7 @@ export function organizationJsonLd({
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
+    '@id': organizationId(siteUrl),
     name: SITE_NAME,
     url: siteUrl,
     // Every other Organization property a crawler might want — postal address, logo,
@@ -45,17 +52,19 @@ export function organizationJsonLd({
   }
 }
 
-type Publisher = { '@type': 'Organization'; name: string }
+/** A reference to the Organization node the layout already emits, not a second copy of it. */
+type Attribution = { '@id': string }
 
 type ArticleJsonLd = {
   '@context': string
   '@type': 'Article'
   headline: string
   mainEntityOfPage: { '@type': 'WebPage'; '@id': string }
-  author: Publisher
-  publisher: Publisher
+  author: Attribution
+  publisher: Attribution
   description?: string
   datePublished?: string
+  image?: string
 }
 
 export function articleJsonLd({
@@ -64,6 +73,7 @@ export function articleJsonLd({
   title,
   description,
   publishedAt,
+  image,
 }: {
   siteUrl: string
   /** Root-relative path; resolved here, since a relative `@id` is meaningless. */
@@ -71,8 +81,12 @@ export function articleJsonLd({
   title: string
   description?: string | null
   publishedAt?: string | null
+  /** Absolute URL. Google lists `image` as recommended on Article. */
+  image?: string | null
 }): ArticleJsonLd {
-  const attribution: Publisher = { '@type': 'Organization', name: SITE_NAME }
+  // Refers to the Organization the site layout emits on this same page rather than
+  // repeating its fields, so the two are one graph instead of two unlinked nodes.
+  const attribution: Attribution = { '@id': organizationId(siteUrl) }
 
   return {
     '@context': 'https://schema.org',
@@ -86,5 +100,6 @@ export function articleJsonLd({
     publisher: attribution,
     ...(description ? { description } : {}),
     ...(publishedAt ? { datePublished: publishedAt } : {}),
+    ...(image ? { image } : {}),
   }
 }

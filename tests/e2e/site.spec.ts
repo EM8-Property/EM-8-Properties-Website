@@ -123,3 +123,83 @@ test('the revalidate endpoint refuses an unauthenticated purge', async ({ reques
   const res = await request.post('/api/revalidate')
   expect([401, 500]).toContain(res.status())
 })
+
+/**
+ * The whole Open Graph story for seven of nine routes hangs on one route handler. Unit
+ * tests can assert its URL is *named*; only a request can prove it resolves.
+ *
+ * This is the check that would have caught the first attempt at this feature, where
+ * `(site)/opengraph-image.tsx` produced a card for the homepage alone and every other
+ * route silently kept shipping without one.
+ */
+test('the default share card renders', async ({ request }) => {
+  const res = await request.get('/share-card')
+  expect(res.status()).toBe(200)
+  expect(res.headers()['content-type']).toContain('image/png')
+  expect((await res.body()).byteLength).toBeGreaterThan(1000)
+})
+
+test('every content route declares the canonical it should, and a large card', async ({
+  page,
+  baseURL,
+}) => {
+  const routes = [
+    '/',
+    '/about',
+    '/insights',
+    '/investors',
+    '/partners',
+    '/portfolio',
+    '/track-record',
+  ]
+
+  const origins = new Set<string>()
+
+  for (const route of routes) {
+    await page.goto(route)
+
+    // Asserted on the rendered document, not on the source. A canonical pointing at the
+    // wrong URL is worse than none — it asks Google to drop the page — and the
+    // source-scanning unit test cannot see what Next actually emitted.
+    const canonical = await page.locator('link[rel="canonical"]').getAttribute('href')
+    expect(canonical, `canonical on ${route}`).toBeTruthy()
+    const url = new URL(canonical!)
+
+    // The path is what this test can know regardless of where it runs. The *origin* comes
+    // from `metadataBase`, which is baked at build time from NEXT_PUBLIC_SITE_URL — so
+    // against a local `npm start` with that unset it is the em-8.com fallback, not the
+    // localhost the suite is pointed at. Comparing full URLs would fail locally for a
+    // reason that is not a defect.
+    //
+    // `/` canonicalises to the bare origin, which is Next's own normalisation.
+    expect(url.pathname, `canonical path on ${route}`).toBe(route === '/' ? '/' : route)
+    expect(url.protocol, `canonical protocol on ${route}`).toBe('https:')
+    origins.add(url.origin)
+
+    const ogImage = await page
+      .locator('meta[property="og:image"]')
+      .first()
+      .getAttribute('content')
+    expect(ogImage, `og:image on ${route}`).toBeTruthy()
+
+    const twitterCard = await page
+      .locator('meta[name="twitter:card"]')
+      .getAttribute('content')
+    expect(twitterCard, `twitter:card on ${route}`).toBe('summary_large_image')
+  }
+
+  // Every page must agree on one origin. Two would mean some subset of the site is
+  // canonicalising itself onto a different host.
+  expect([...origins], 'canonical origins across the site').toHaveLength(1)
+
+  // Against a real deploy the origin must also BE that deploy. This is the assertion that
+  // catches the DNS-cutover failure: if NEXT_PUBLIC_SITE_URL is not moved off the Railway
+  // host, every page on em-8.com canonicalises to Railway and Google consolidates the
+  // site onto the wrong domain. Skipped for localhost, where the two legitimately differ.
+  const target = new URL(baseURL!)
+  if (target.hostname !== 'localhost' && target.hostname !== '127.0.0.1') {
+    expect([...origins][0], 'canonical origin must match the deployed host').toBe(
+      target.origin,
+    )
+  }
+})

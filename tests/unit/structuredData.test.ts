@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { organizationJsonLd, articleJsonLd } from '@/lib/structuredData'
+import { organizationJsonLd, articleJsonLd, organizationId } from '@/lib/structuredData'
 
 describe('organizationJsonLd', () => {
   const org = organizationJsonLd({
@@ -43,6 +43,7 @@ describe('articleJsonLd', () => {
     title: 'We start with the platform, not the parcel',
     description: 'Proximity to a station is the one thing nobody can copy.',
     publishedAt: '2026-08-30T12:00:00Z',
+    image: 'https://cdn.example/hero.jpg',
   })
 
   it('describes the article and who published it', () => {
@@ -50,8 +51,22 @@ describe('articleJsonLd', () => {
     expect(article.headline).toBe('We start with the platform, not the parcel')
     expect(article.description).toBe('Proximity to a station is the one thing nobody can copy.')
     expect(article.datePublished).toBe('2026-08-30T12:00:00Z')
-    expect(article.publisher).toEqual({ '@type': 'Organization', name: 'EM8 Properties' })
-    expect(article.author).toEqual({ '@type': 'Organization', name: 'EM8 Properties' })
+  })
+
+  it('refers to the Organization node rather than emitting a second copy of it', () => {
+    // The layout already emits Organization on this same page. Restating its fields here
+    // would leave two unlinked nodes describing the same firm; an @id reference makes it
+    // one graph.
+    const ref = { '@id': organizationId('https://em-8.com') }
+    expect(article.publisher).toEqual(ref)
+    expect(article.author).toEqual(ref)
+    expect(organizationJsonLd({ siteUrl: 'https://em-8.com', contactEmail: null })['@id']).toBe(
+      ref['@id'],
+    )
+  })
+
+  it('carries the hero image, which Google lists as recommended on Article', () => {
+    expect(article.image).toBe('https://cdn.example/hero.jpg')
   })
 
   it('points at the absolute canonical URL, not a relative path', () => {
@@ -69,6 +84,7 @@ describe('articleJsonLd', () => {
       title: 'X',
       description: null,
       publishedAt: null,
+      image: null,
     })
     expect(undated).not.toHaveProperty('datePublished')
     expect(undated).not.toHaveProperty('description')

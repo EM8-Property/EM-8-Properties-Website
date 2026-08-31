@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { SHARE_CARD_SIZE } from '@/components/seo/shareCardFrame'
 
 /**
  * Head metadata shared by every static content route.
@@ -25,10 +26,15 @@ export const SITE_NAME = 'EM8 Properties'
  */
 export const SHARE_CARD_PATH = '/share-card'
 
+/**
+ * Dimensions come from the card itself rather than being restated here. Two independent
+ * copies of 1200x630 would let the declared `og:image:width` quietly lie the day the card
+ * is redrawn at another aspect.
+ */
 export const SHARE_CARD = {
   url: SHARE_CARD_PATH,
-  width: 1200,
-  height: 630,
+  width: SHARE_CARD_SIZE.width,
+  height: SHARE_CARD_SIZE.height,
   alt: SITE_NAME,
 } as const
 
@@ -42,18 +48,38 @@ export function pageTitle(title: string): string {
   return title === SITE_NAME ? SITE_NAME : `${title} | ${SITE_NAME}`
 }
 
+/** A card image with the dimensions and alt text declared, not a bare URL. */
+export type ShareImage = {
+  url: string
+  width: number
+  height: number
+  alt: string
+}
+
 export function pageMetadata({
   title,
   description,
   path,
+  image = SHARE_CARD,
 }: {
   /** Page title without the site suffix — `pageTitle` adds it. */
   title: string
   description: string
   /** Root-relative path, resolved against `metadataBase` from the root layout. */
   path: string
+  /**
+   * The card for this page. Defaults to the generated one.
+   *
+   * Pass `null` when a file-convention `opengraph-image` should supply it instead —
+   * naming an image here would override that file with the generic card, which is the
+   * opposite of what a per-article card is for.
+   */
+  image?: ShareImage | null
 }): Metadata {
   const full = pageTitle(title)
+  // Omitted entirely rather than set to [], which is not a fallback but an explicit
+  // "no image" — the bug this change fixed on the one property with no photograph.
+  const images = image ? { images: [image] } : {}
 
   return {
     title: full,
@@ -68,16 +94,19 @@ export function pageMetadata({
       url: path,
       siteName: SITE_NAME,
       type: 'website',
-      images: [SHARE_CARD],
+      ...images,
     },
     // The image is repeated here deliberately. Without an image Next emits
     // `twitter:card = summary`, the small variant — which is what `/portfolio/antioch-
     // shopping-plaza` was serving, the one live offering, as a bare link.
+    //
+    // The full descriptor rather than the bare path, so `twitter:image:alt` is emitted
+    // too. A card image with no alt text is unlabelled to a screen reader.
     twitter: {
       card: 'summary_large_image',
       title: full,
       description,
-      images: [SHARE_CARD_PATH],
+      ...images,
     },
   }
 }

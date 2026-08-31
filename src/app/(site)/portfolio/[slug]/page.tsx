@@ -9,7 +9,7 @@ import type {
   PROPERTY_SLUGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
-import { SHARE_CARD, SHARE_CARD_PATH } from '@/lib/seo'
+import { pageMetadata, SHARE_CARD, SITE_NAME, type ShareImage } from '@/lib/seo'
 import { FactRail } from '@/components/property/FactRail'
 import { PropertyMap } from '@/components/property/PropertyMap'
 import { Chip } from '@/components/ui/Chip'
@@ -28,32 +28,37 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const p = await fetchSanity<PROPERTY_BY_SLUG_QUERY_RESULT>(PROPERTY_BY_SLUG_QUERY, { slug })
   if (!p) return {}
-  return {
-    title: `${p.title} | EM8 Properties`,
-    description: p.cardBlurb ?? undefined,
-    // The canonical URL for this asset whatever its status — non-negotiable #4. It was
-    // enforced architecturally (one route per property) but never declared to a crawler.
-    alternates: { canonical: `/portfolio/${slug}` },
-    openGraph: {
-      title: `${p.title} | EM8 Properties`,
-      description: p.cardBlurb ?? undefined,
-      // Falls back to the generated card rather than to nothing. This was `images: []`
-      // when a property had no photograph, and an empty array is not a fallback — it is
-      // an explicit "no image", so the page advertised no card at all. Measured on the
-      // build: /portfolio/antioch-shopping-plaza, the only live offering and the one
-      // property with an empty gallery, was serving `twitter:card = summary` with no
-      // image, which is the small variant LinkedIn renders as a bare link.
-      images: [p.image ? urlForImage(p.image).width(1200).height(630).url() : SHARE_CARD],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${p.title} | EM8 Properties`,
-      description: p.cardBlurb ?? undefined,
-      images: [
-        p.image ? urlForImage(p.image).width(1200).height(630).url() : SHARE_CARD_PATH,
-      ],
-    },
-  }
+
+  // Falls back to the generated card rather than to nothing. This was `images: []` when a
+  // property had no photograph, and an empty array is not a fallback — it is an explicit
+  // "no image", so the page advertised no card at all. Measured on the build:
+  // /portfolio/antioch-shopping-plaza, the only live offering and the one property with an
+  // empty gallery, was serving `twitter:card = summary`, the small variant that renders as
+  // a bare link.
+  //
+  // The descriptor carries width/height/alt, which the bare URL string did not, so a
+  // property with real photography now declares its dimensions like every other page.
+  const image: ShareImage = p.image
+    ? {
+        url: urlForImage(p.image).width(SHARE_CARD.width).height(SHARE_CARD.height).url(),
+        width: SHARE_CARD.width,
+        height: SHARE_CARD.height,
+        alt: p.title ?? SITE_NAME,
+      }
+    : SHARE_CARD
+
+  // Composed from the shared helper rather than restating a subset of it. Hand-rolling
+  // this block is how the two routes that exist to be shared ended up without `og:url`
+  // and `og:site_name` — `og:url` is the field the social graph uses as the *identity* of
+  // a shared object, so without it a share carrying ?utm_source=… is keyed separately
+  // from the clean URL and the reactions split across two objects. That is the same
+  // problem the canonical solves for Google.
+  return pageMetadata({
+    title: p.title ?? '',
+    description: p.cardBlurb ?? '',
+    path: `/portfolio/${slug}`,
+    image,
+  })
 }
 
 /** The canonical URL for an asset, whatever its status. /track-record links back here. */

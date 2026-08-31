@@ -14,6 +14,7 @@ import { formatCategory, formatDate } from '@/components/insights/PostCard'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { articleJsonLd } from '@/lib/structuredData'
+import { pageMetadata } from '@/lib/seo'
 import { siteUrl } from '@/lib/siteUrl'
 
 export async function generateStaticParams() {
@@ -26,23 +27,31 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await fetchSanity<POST_BY_SLUG_QUERY_RESULT>(POST_BY_SLUG_QUERY, { slug })
   if (!post) return {}
 
-  const title = `${post.title} | EM8 Properties`
+  // Composed from the shared helper, which supplies the canonical, `og:url` and
+  // `og:site_name`. Hand-rolling this block is how this route — the one that exists to be
+  // linked from LinkedIn — ended up without the two fields the social graph uses to
+  // identify a shared object, so a share carrying a tracking parameter was keyed
+  // separately from the clean URL.
+  //
+  // `type` and `publishedTime` override the helper's `type: 'website'`: this is an
+  // article, and the published date is the one piece of Open Graph a feed reader wants.
+  //
+  // `image: null` on purpose. The per-article card at `opengraph-image.tsx` is a file
+  // convention, and naming an image here would override it with the generic card.
+  const base = pageMetadata({
+    title: post.title ?? '',
+    description: post.excerpt ?? '',
+    path: `/insights/${slug}`,
+    image: null,
+  })
+
   return {
-    title,
-    description: post.excerpt ?? undefined,
-    // The LinkedIn-linkable URL, so it is the one that most needs to claim itself as
-    // canonical rather than let a tracking-parameter variant compete with it.
-    alternates: { canonical: `/insights/${slug}` },
-    // This is the LinkedIn-linkable URL, so the Open Graph block is the point of the
-    // page, not decoration. Next does not synthesise og:title from `title` — without
-    // this, a shared link renders with no card title at all.
+    ...base,
     openGraph: {
-      title,
-      description: post.excerpt ?? undefined,
+      ...base.openGraph,
       type: 'article',
       publishedTime: post.publishedAt ?? undefined,
     },
-    twitter: { card: 'summary_large_image', title, description: post.excerpt ?? undefined },
   }
 }
 
@@ -66,6 +75,11 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           title: post.title ?? '',
           description: post.excerpt,
           publishedAt: post.publishedAt,
+          // The hero image, not the generated card: the card's URL is build-hashed and
+          // cannot be constructed from here. `heroImage` is already in the query.
+          image: post.heroImage
+            ? urlForImage(post.heroImage).width(1200).height(630).url()
+            : null,
         })}
       />
       <p className="text-[11px] font-medium text-ink-secondary">
