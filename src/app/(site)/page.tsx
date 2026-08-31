@@ -7,6 +7,7 @@ import {
   TESTIMONIALS_QUERY,
   CURRENT_OFFERINGS_QUERY,
   SITE_SETTINGS_QUERY,
+  HOME_PAGE_QUERY,
 } from '@/sanity/queries'
 import type {
   HERO_STATS_QUERY_RESULT,
@@ -16,6 +17,7 @@ import type {
   TESTIMONIALS_QUERY_RESULT,
   CURRENT_OFFERINGS_QUERY_RESULT,
   SITE_SETTINGS_QUERY_RESULT,
+  HOME_PAGE_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { HomeHero } from '@/components/home/HomeHero'
 import { StatBand } from '@/components/ui/StatBand'
@@ -29,19 +31,31 @@ import { InvestorPopup } from '@/components/home/InvestorPopup'
 
 /** Narrative scroll: hero → stats → success factors → insights → portfolio → partners. */
 export default async function HomePage() {
-  const [stats, factors, posts, properties, testimonials, offerings, settings] = await Promise.all([
+  const [stats, factors, posts, properties, testimonials, offerings, settings, copy] =
+    await Promise.all([
     fetchSanity<HERO_STATS_QUERY_RESULT>(HERO_STATS_QUERY),
     fetchSanity<FOCUS_CARDS_QUERY_RESULT>(FOCUS_CARDS_QUERY),
     fetchSanity<ALL_POSTS_QUERY_RESULT>(ALL_POSTS_QUERY),
     fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY),
     fetchSanity<TESTIMONIALS_QUERY_RESULT>(TESTIMONIALS_QUERY),
     fetchSanity<CURRENT_OFFERINGS_QUERY_RESULT>(CURRENT_OFFERINGS_QUERY),
-    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
-  ])
+      fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+      fetchSanity<HOME_PAGE_QUERY_RESULT>(HOME_PAGE_QUERY),
+    ])
+
+  // Same rule as siteSettings: missing required content fails the build loudly rather than
+  // rendering a page with no headline. Silent fallback copy is the failure mode the old
+  // site's constants.ts created, and the reason this project forbids it.
+  if (!copy?.hero) {
+    throw new Error(
+      'The homePage document is missing or has no hero. Create it in the Studio under ' +
+        'Home page.',
+    )
+  }
 
   return (
     <>
-      <HomeHero />
+      <HomeHero hero={copy.hero} />
 
       {stats.length > 0 && (
         <StatBand
@@ -53,10 +67,7 @@ export default async function HomePage() {
 
       {factors.length > 0 && (
         <section className="mx-auto max-w-[1200px] px-6 py-14">
-          <SectionHeading
-            eyebrow="How We Operate"
-            title="Four things we refuse to compromise on"
-          />
+          <SectionHeading {...copy.factorsHeading!} />
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             {factors.map((f) => (
               // border-s, not border-l: this accent rule flips side in Hebrew.
@@ -74,10 +85,7 @@ export default async function HomePage() {
       {posts.length > 0 && (
         <section className="border-y border-rule bg-panel">
           <div className="mx-auto max-w-[1200px] px-6 py-14">
-            <SectionHeading
-              eyebrow="Insights"
-              title="What we've learned building next to the tracks"
-            />
+            <SectionHeading {...copy.insightsHeading!} />
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {posts.slice(0, 3).map((p) => (
                 <PostCard key={p.slug} post={p as PostData} />
@@ -91,18 +99,15 @@ export default async function HomePage() {
         <section className="mx-auto max-w-[1200px] px-6 py-14">
           {/* No asset count in the headline — it would drift the moment a property is
               added or sold in the Studio. */}
-          <SectionHeading
-            eyebrow="Portfolio"
-            title="Assets across the Chicago MSA, most within a walk of a station"
-          />
+          <SectionHeading {...copy.portfolioHeading!} />
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {properties.slice(0, 3).map((p) => (
               <PropertyCard key={p.slug} property={p as PropertyCardData} />
             ))}
           </div>
           <div className="mt-6">
-            <Button href="/portfolio" variant="secondary">
-              View All →
+            <Button href={copy.portfolioCta!.href!} variant="secondary">
+              {copy.portfolioCta!.label}
             </Button>
           </div>
         </section>
@@ -111,7 +116,7 @@ export default async function HomePage() {
       {testimonials.length > 0 && (
         <section className="border-t border-rule bg-panel">
           <div className="mx-auto max-w-[1200px] px-6 py-14">
-            <SectionHeading eyebrow="Our Investors" title="What our partners say" />
+            <SectionHeading {...copy.testimonialsHeading!} />
             <div className="mt-6">
               <Testimonials items={testimonials.slice(0, 3)} />
             </div>
@@ -127,11 +132,7 @@ export default async function HomePage() {
               filed under that exemption may not be generally solicited, so it must never
               appear here by default.
             */}
-            <SectionHeading
-              eyebrow="Open Now"
-              title="Currently accepting commitments"
-              intro="Offered to verified accredited investors. Accreditation is confirmed in the portal, not here."
-            />
+            <SectionHeading {...copy.offeringsHeading!} />
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {offerings.map((o) => (
                 <PropertyCard key={o.slug} property={o as PropertyCardData} />
@@ -149,26 +150,22 @@ export default async function HomePage() {
         out as served by nothing on the old site — had no route in from the homepage.
       */}
       <section className="mx-auto max-w-[1200px] px-6 py-14">
-        <SectionHeading
-          eyebrow="Partners"
-          title="One accountable team, start to finish"
-          intro="We use the same builder and the same manager across the portfolio, so nobody gets to point at somebody else. If you have land near a Metra station, we answer every enquiry."
-        />
+        <SectionHeading {...copy.partnersTeaser!} />
         <div className="mt-6">
-          <Button href="/partners" variant="secondary">
-            See our partners →
+          <Button href={copy.partnersTeaserCta!.href!} variant="secondary">
+            {copy.partnersTeaserCta!.label}
           </Button>
         </div>
       </section>
 
-      <CtaBand bookACallUrl={settings?.bookACallUrl} />
+      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={copy.ctaBand} />
 
       {/*
         Homepage only, and once per visitor. It waits before appearing, asks for a name and
         an email and nothing else, and a dismissal is remembered — an overlay that returns
         every visit trains people to close it unread, which costs more than it captures.
       */}
-      <InvestorPopup />
+      <InvestorPopup copy={copy.popup} />
     </>
   )
 }

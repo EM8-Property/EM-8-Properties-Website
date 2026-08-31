@@ -21,38 +21,47 @@ import { SectionHeading } from './SectionHeading'
  * `bookACallUrl` is optional content. When it is unset the band still works — a dead
  * button is worse than one door.
  */
+export type CtaBandCopy = {
+  heading?: { eyebrow?: string | null; title?: string | null; intro?: string | null } | null
+  submitLabel?: string | null
+  successMessage?: string | null
+  callTitle?: string | null
+  callBody?: string | null
+  callLabel?: string | null
+} | null
+
 export function CtaBand({
   bookACallUrl,
-  eyebrow = 'Get Started',
-  title = 'Tell us where to send what we find',
-  intro = 'We look at transit-adjacent multifamily, mixed-use, and retail across the Chicago MSA. Leave an address and we will share what we are working on, or book a call and ask us directly.',
+  copy,
 }: {
   bookACallUrl?: string | null
-  eyebrow?: string
-  title?: string
-  intro?: string
+  copy?: CtaBandCopy
 }) {
   return (
     <section className="border-t border-rule bg-panel">
       <div className="mx-auto max-w-[1200px] px-6 py-14">
-        <SectionHeading eyebrow={eyebrow} title={title} intro={intro} />
+        <SectionHeading {...(copy?.heading ?? {})} />
 
         <div className="mt-8 grid gap-8 md:grid-cols-2">
           <div>
             <LeadForm
               source="newsletter"
-              submitLabel="Keep me posted"
-              successMessage="Thank you — we have your address and will be in touch when something fits."
+              submitLabel={copy?.submitLabel ?? 'Keep me posted'}
+              successMessage={copy?.successMessage ?? undefined}
               fields={[{ name: 'email', label: 'Email address', type: 'email', required: true }]}
             />
           </div>
 
-          {bookACallUrl && (
+          {/*
+            Both the destination and the label are required. A link with an href and no
+            text is invisible to a screen reader and unlabelled to everyone else — worse
+            than the one door the email capture already provides.
+          */}
+          {bookACallUrl && copy?.callLabel && (
             <div className="border-t border-rule pt-6 md:border-s md:border-t-0 md:pt-0 md:ps-8">
-              <p className="text-sm font-semibold text-ink">Would rather talk it through?</p>
+              <p className="text-sm font-semibold text-ink">{copy?.callTitle}</p>
               <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
-                Book twenty minutes with us. No materials required, and no obligation on
-                either side.
+                {copy?.callBody}
               </p>
               {/*
                 An external scheduling host, so it opens in a new tab.
@@ -65,7 +74,7 @@ export function CtaBand({
                 rel="noopener noreferrer"
                 className="mt-4 inline-block rounded-control border border-rule px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-ink hover:border-teal"
               >
-                Book a call →
+                {copy?.callLabel}
               </a>
             </div>
           )}

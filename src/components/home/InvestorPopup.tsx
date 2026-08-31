@@ -42,16 +42,27 @@ function writeDismissed(): void {
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 
-export function InvestorPopup() {
+export type PopupCopy = {
+  enabled?: boolean | null
+  eyebrow?: string | null
+  title?: string | null
+  body?: string | null
+  submitLabel?: string | null
+  successMessage?: string | null
+} | null
+
+export function InvestorPopup({ copy }: { copy?: PopupCopy }) {
   const [open, setOpen] = useState(false)
   const closeRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    // `enabled: false` turns the overlay off from the Studio, no deploy required.
+    if (copy?.enabled === false) return
     if (readDismissed()) return
     const id = setTimeout(() => setOpen(true), DELAY_MS)
     return () => clearTimeout(id)
-  }, [])
+  }, [copy?.enabled])
 
   function dismiss() {
     setOpen(false)
@@ -148,24 +159,23 @@ export function InvestorPopup() {
         </button>
 
         <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-teal-text">
-          Keep In Touch
+          {copy?.eyebrow}
         </p>
         <h2
           id="investor-popup-title"
           className="mt-2 text-xl font-bold leading-tight tracking-tight text-ink"
         >
-          Want to see what we buy next?
+          {copy?.title}
         </h2>
         <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
-          We develop transit-oriented multifamily and mixed-use around Chicago. Leave your
-          details and we will let you know when something is open.
+          {copy?.body}
         </p>
 
         <div className="mt-5">
           <LeadForm
             source="homepage-popup"
-            submitLabel="Keep me posted"
-            successMessage="Thank you — you are on the list, and we will be in touch when something fits."
+            submitLabel={copy?.submitLabel ?? 'Keep me posted'}
+            successMessage={copy?.successMessage ?? undefined}
             fields={[
               { name: 'firstName', label: 'Name', type: 'text', required: true },
               { name: 'email', label: 'Email address', type: 'email', required: true },

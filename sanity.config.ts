@@ -9,9 +9,13 @@
 import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
-import { schemaTypes } from './src/sanity/schema'
+import { schemaTypes, SINGLETON_TYPES } from './src/sanity/schema'
 
-const SINGLETONS = ['siteSettings'] as const
+/**
+ * Every pinned singleton, shared with the schema module so the Studio structure and the
+ * schema cannot disagree about which documents are one-of-a-kind.
+ */
+const SINGLETONS = SINGLETON_TYPES
 
 export default defineConfig({
   // '/studio' for the Studio embedded in this Next app; '/' for the Sanity-hosted Studio
@@ -47,6 +51,21 @@ export default defineConfig({
         S.list()
           .title('Content')
           .items([
+            // Page copy first: it is what an editor reaches for most often.
+            ...(
+              [
+                ['homePage', 'Home page'],
+                ['aboutPage', 'About page'],
+                ['partnersPage', 'Partners page'],
+                ['investorsPage', 'Investors page'],
+              ] as const
+            ).map(([type, title]) =>
+              S.listItem()
+                .title(title)
+                .id(type)
+                .child(S.document().schemaType(type).documentId(type)),
+            ),
+            S.divider(),
             S.listItem()
               .title('Site settings')
               .id('siteSettings')

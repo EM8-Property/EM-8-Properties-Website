@@ -619,3 +619,175 @@ export const SITE_SETTINGS = {
   contactEmail: 'info@em-8.com',
   bookACallUrl: 'https://calendar.app.google/mJNPKxULTGh8NMTq9',
 }
+
+/**
+ * Page copy, moved out of TSX and into the CMS. Closes plan revision D4.
+ *
+ * Every string here is the copy that was already on the site, transcribed exactly — this
+ * is a move, not a rewrite, so the seeded site is byte-identical to the one before it.
+ * From here it is editable in the Studio without a developer, which is the whole point.
+ *
+ * The migration seeds these only when the document does not exist. Once an editor has
+ * touched a page, re-running the migration leaves it alone.
+ */
+export const PAGE_COPY = {
+  homePage: {
+    hero: {
+      eyebrow: 'Transit-Oriented Development · Suburban Chicago',
+      title: 'Creating communities people',
+      titleAccent: 'choose to live in',
+      titleSuffix: '.',
+      intro:
+        'We develop and operate multifamily and mixed-use housing within walking distance of Metra stations. We work with municipalities rather than around them.',
+      primaryCta: { label: 'View Portfolio →', href: '/portfolio' },
+      secondaryCta: { label: 'Read Our Thinking', href: '/insights' },
+    },
+    factorsHeading: {
+      eyebrow: 'How We Operate',
+      title: 'Four things we refuse to compromise on',
+    },
+    insightsHeading: {
+      eyebrow: 'Insights',
+      title: "What we've learned building next to the tracks",
+    },
+    portfolioHeading: {
+      eyebrow: 'Portfolio',
+      title: 'Assets across the Chicago MSA, most within a walk of a station',
+    },
+    offeringsHeading: {
+      eyebrow: 'Open Now',
+      title: 'Currently accepting commitments',
+      intro:
+        'Offered to verified accredited investors. Accreditation is confirmed in the portal, not here.',
+    },
+    testimonialsHeading: { eyebrow: 'Our Investors', title: 'What our partners say' },
+    partnersTeaser: {
+      eyebrow: 'Partners',
+      title: 'One accountable team, start to finish',
+      intro:
+        'We use the same builder and the same manager across the portfolio, so nobody gets to point at somebody else. If you have land near a Metra station, we answer every enquiry.',
+    },
+    partnersTeaserCta: { label: 'See our partners →', href: '/partners' },
+    portfolioCta: { label: 'View All →', href: '/portfolio' },
+    ctaBand: {
+      heading: {
+        eyebrow: 'Get Started',
+        title: 'Tell us where to send what we find',
+        intro:
+          'We look at transit-adjacent multifamily, mixed-use, and retail across the Chicago MSA. Leave an address and we will share what we are working on, or book a call and ask us directly.',
+      },
+      submitLabel: 'Keep me posted',
+      successMessage:
+        'Thank you — we have your address and will be in touch when something fits.',
+      callTitle: 'Would rather talk it through?',
+      callBody:
+        'Book twenty minutes with us. No materials required, and no obligation on either side.',
+      callLabel: 'Book a call →',
+    },
+    popup: {
+      enabled: true,
+      eyebrow: 'Keep In Touch',
+      title: 'Want to see what we buy next?',
+      body: 'We develop transit-oriented multifamily and mixed-use around Chicago. Leave your details and we will let you know when something is open.',
+      submitLabel: 'Keep me posted',
+      successMessage:
+        'Thank you — you are on the list, and we will be in touch when something fits.',
+    },
+  },
+
+  aboutPage: {
+    hero: {
+      eyebrow: 'Our Purpose',
+      title: 'Creating communities people',
+      titleAccent: 'choose to live in',
+      titleSuffix: '.',
+      intro:
+        'We develop, build, and operate housing in suburban Chicago where the infrastructure for a good life is already there: a train, a main street, green space, somewhere to buy groceries. Then we try to be the reason people stay.',
+    },
+    factorsHeading: {
+      eyebrow: 'How We Operate',
+      title: 'Four things we refuse to compromise on',
+    },
+    leadershipTitle: 'Operators and investors who know these suburbs',
+    boardTitle: 'The people we answer to',
+  },
+
+  partnersPage: {
+    heading: {
+      eyebrow: 'Partners',
+      title: 'One accountable team, start to finish',
+      intro:
+        'Most developers assemble a new cast for every project, then spend the job managing the seams. We use the same builder and the same manager across the portfolio, so nobody gets to point at somebody else.',
+    },
+    partners: [
+      {
+        eyebrow: 'Development & Capital',
+        title: 'EM8 Properties',
+        body: 'Site selection, entitlement, capital structure, and design direction. We stay the owner. We don’t merchant-build and walk away.',
+      },
+      {
+        eyebrow: 'Construction',
+        title: 'Kinzie',
+        body: 'Our builder across the portfolio. Involved early enough to price design decisions while they can still change.',
+      },
+      {
+        eyebrow: 'Property Management',
+        title: 'Advantage',
+        body: 'Day-to-day operations and resident experience. We walk every vacant unit, the grounds, and the amenities together each month.',
+      },
+    ],
+    submissionHeading: {
+      eyebrow: 'Bring Us A Site',
+      title: 'Have land near a Metra station?',
+      intro:
+        'We look at multifamily and mixed-use sites within walking distance of transit across the Chicago MSA and southern Wisconsin. Brokers, cities, owners: we answer every one.',
+    },
+    // Recorded in plan revision R11 as an invented-looking figure sitting in TSX with
+    // nothing gating it. Moving it here resolves that: it is now editable, and the content
+    // gate scans it along with everything else in the CMS.
+    facts: [
+      { label: 'Deal Size', value: '$10M – $50M' },
+      { label: 'Asset Types', value: 'Multifamily, Mixed-Use' },
+      { label: 'Geography', value: 'Chicago MSA, S. Wisconsin' },
+    ],
+    formTitle: 'Submit a site',
+    submitLabel: 'Send',
+  },
+
+  investorsPage: {
+    heading: {
+      eyebrow: 'Investors',
+      title: 'We work with investors who can wait',
+      intro:
+        'We work with accredited investors, family offices, and joint-venture partners on transit-oriented multifamily and mixed-use around Chicago.',
+    },
+    loginLabel: 'Investor Login →',
+    stepsTitle: 'How an investment works',
+    // Every step describes process, never outcome. No step states or implies a return.
+    steps: [
+      {
+        title: 'Verify and review',
+        body: 'Our portal verifies your accreditation. Then you get the full offering materials.',
+      },
+      {
+        title: 'Commit and fund',
+        body: 'Subscription documents and capital calls are handled in the portal.',
+      },
+      {
+        title: 'Hold and receive',
+        body: 'Quarterly reporting and distributions. Statements are there whenever you want them.',
+      },
+      {
+        title: 'Exit',
+        body: 'Refinance or sale, with proceeds distributed per the operating agreement.',
+      },
+    ],
+    keepInTouchHeading: {
+      eyebrow: 'Keep in touch',
+      title: 'Tell us what you’re looking for',
+      intro: 'We’ll add you to our investor list and reach out when something fits.',
+    },
+    submitLabel: 'Send',
+    testimonialsHeading: { eyebrow: 'Our Investors', title: 'What our partners say' },
+  },
+}

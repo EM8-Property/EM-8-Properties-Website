@@ -15,6 +15,141 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type PopupBlock = {
+  _type: "popupBlock";
+  enabled?: boolean;
+  eyebrow?: string;
+  title?: string;
+  body?: string;
+  submitLabel?: string;
+  successMessage?: string;
+};
+
+export type CtaBand = {
+  _type: "ctaBand";
+  heading?: HeadingBlock;
+  submitLabel?: string;
+  successMessage?: string;
+  callTitle?: string;
+  callBody?: string;
+  callLabel?: string;
+};
+
+export type FactItem = {
+  _type: "factItem";
+  label?: string;
+  value?: string;
+};
+
+export type StepItem = {
+  _type: "stepItem";
+  title?: string;
+  body?: string;
+};
+
+export type LabelledCard = {
+  _type: "labelledCard";
+  eyebrow?: string;
+  title?: string;
+  body?: string;
+};
+
+export type HeroBlock = {
+  _type: "heroBlock";
+  eyebrow?: string;
+  title?: string;
+  titleAccent?: string;
+  titleSuffix?: string;
+  intro?: string;
+  primaryCta?: CtaLink;
+  secondaryCta?: CtaLink;
+};
+
+export type HeadingBlock = {
+  _type: "headingBlock";
+  eyebrow?: string;
+  title?: string;
+  intro?: string;
+};
+
+export type CtaLink = {
+  _type: "ctaLink";
+  label?: string;
+  href?: string;
+};
+
+export type InvestorsPage = {
+  _id: string;
+  _type: "investorsPage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  heading?: HeadingBlock;
+  loginLabel?: string;
+  stepsTitle?: string;
+  steps?: Array<
+    {
+      _key: string;
+    } & StepItem
+  >;
+  keepInTouchHeading?: HeadingBlock;
+  submitLabel?: string;
+  testimonialsHeading?: HeadingBlock;
+};
+
+export type PartnersPage = {
+  _id: string;
+  _type: "partnersPage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  heading?: HeadingBlock;
+  partners?: Array<
+    {
+      _key: string;
+    } & LabelledCard
+  >;
+  submissionHeading?: HeadingBlock;
+  facts?: Array<
+    {
+      _key: string;
+    } & FactItem
+  >;
+  formTitle?: string;
+  submitLabel?: string;
+};
+
+export type AboutPage = {
+  _id: string;
+  _type: "aboutPage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  hero?: HeroBlock;
+  factorsHeading?: HeadingBlock;
+  leadershipTitle?: string;
+  boardTitle?: string;
+};
+
+export type HomePage = {
+  _id: string;
+  _type: "homePage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  hero?: HeroBlock;
+  factorsHeading?: HeadingBlock;
+  insightsHeading?: HeadingBlock;
+  portfolioHeading?: HeadingBlock;
+  offeringsHeading?: HeadingBlock;
+  testimonialsHeading?: HeadingBlock;
+  partnersTeaser?: HeadingBlock;
+  partnersTeaserCta?: CtaLink;
+  portfolioCta?: CtaLink;
+  ctaBand?: CtaBand;
+  popup?: PopupBlock;
+};
+
 export type SanityImageAssetReference = {
   _ref: string;
   _type: "reference";
@@ -416,6 +551,18 @@ export type SanityImageAsset = {
 };
 
 export type AllSanitySchemaTypes =
+  | PopupBlock
+  | CtaBand
+  | FactItem
+  | StepItem
+  | LabelledCard
+  | HeroBlock
+  | HeadingBlock
+  | CtaLink
+  | InvestorsPage
+  | PartnersPage
+  | AboutPage
+  | HomePage
   | SanityImageAssetReference
   | PropertyReference
   | SiteSettings
@@ -867,6 +1014,306 @@ export type SITE_SETTINGS_QUERY_RESULT = {
   }> | null;
 } | null;
 
+// Source: src/sanity/queries.ts
+// Variable: HOME_PAGE_QUERY
+// Query: *[_id == "homePage"][0] {    hero { eyebrow, title, titleAccent, titleSuffix, intro,           primaryCta { label, href }, secondaryCta { label, href } },    factorsHeading { eyebrow, title, intro },    insightsHeading { eyebrow, title, intro },    portfolioHeading { eyebrow, title, intro },    offeringsHeading { eyebrow, title, intro },    testimonialsHeading { eyebrow, title, intro },    partnersTeaser { eyebrow, title, intro },    partnersTeaserCta { label, href },    portfolioCta { label, href },    ctaBand {      heading { eyebrow, title, intro },      submitLabel, successMessage, callTitle, callBody, callLabel    },    popup { enabled, eyebrow, title, body, submitLabel, successMessage }  }
+export type HOME_PAGE_QUERY_RESULT =
+  | {
+      hero: null;
+      factorsHeading: null;
+      insightsHeading: null;
+      portfolioHeading: null;
+      offeringsHeading: null;
+      testimonialsHeading: null;
+      partnersTeaser: null;
+      partnersTeaserCta: null;
+      portfolioCta: null;
+      ctaBand: null;
+      popup: null;
+    }
+  | {
+      hero: null;
+      factorsHeading: null;
+      insightsHeading: null;
+      portfolioHeading: null;
+      offeringsHeading: null;
+      testimonialsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      partnersTeaser: null;
+      partnersTeaserCta: null;
+      portfolioCta: null;
+      ctaBand: null;
+      popup: null;
+    }
+  | {
+      hero: {
+        eyebrow: string | null;
+        title: string | null;
+        titleAccent: string | null;
+        titleSuffix: string | null;
+        intro: string | null;
+        primaryCta: {
+          label: string | null;
+          href: string | null;
+        } | null;
+        secondaryCta: {
+          label: string | null;
+          href: string | null;
+        } | null;
+      } | null;
+      factorsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      insightsHeading: null;
+      portfolioHeading: null;
+      offeringsHeading: null;
+      testimonialsHeading: null;
+      partnersTeaser: null;
+      partnersTeaserCta: null;
+      portfolioCta: null;
+      ctaBand: null;
+      popup: null;
+    }
+  | {
+      hero: {
+        eyebrow: string | null;
+        title: string | null;
+        titleAccent: string | null;
+        titleSuffix: string | null;
+        intro: string | null;
+        primaryCta: {
+          label: string | null;
+          href: string | null;
+        } | null;
+        secondaryCta: {
+          label: string | null;
+          href: string | null;
+        } | null;
+      } | null;
+      factorsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      insightsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      portfolioHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      offeringsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      testimonialsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      partnersTeaser: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      partnersTeaserCta: {
+        label: string | null;
+        href: string | null;
+      } | null;
+      portfolioCta: {
+        label: string | null;
+        href: string | null;
+      } | null;
+      ctaBand: {
+        heading: {
+          eyebrow: string | null;
+          title: string | null;
+          intro: string | null;
+        } | null;
+        submitLabel: string | null;
+        successMessage: string | null;
+        callTitle: string | null;
+        callBody: string | null;
+        callLabel: string | null;
+      } | null;
+      popup: {
+        enabled: boolean | null;
+        eyebrow: string | null;
+        title: string | null;
+        body: string | null;
+        submitLabel: string | null;
+        successMessage: string | null;
+      } | null;
+    }
+  | null;
+
+// Source: src/sanity/queries.ts
+// Variable: ABOUT_PAGE_QUERY
+// Query: *[_id == "aboutPage"][0] {    hero { eyebrow, title, titleAccent, titleSuffix, intro },    factorsHeading { eyebrow, title, intro },    leadershipTitle,    boardTitle  }
+export type ABOUT_PAGE_QUERY_RESULT =
+  | {
+      hero: null;
+      factorsHeading: null;
+      leadershipTitle: null;
+      boardTitle: null;
+    }
+  | {
+      hero: {
+        eyebrow: string | null;
+        title: string | null;
+        titleAccent: string | null;
+        titleSuffix: string | null;
+        intro: string | null;
+      } | null;
+      factorsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      leadershipTitle: null;
+      boardTitle: null;
+    }
+  | {
+      hero: {
+        eyebrow: string | null;
+        title: string | null;
+        titleAccent: string | null;
+        titleSuffix: string | null;
+        intro: string | null;
+      } | null;
+      factorsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      leadershipTitle: string | null;
+      boardTitle: string | null;
+    }
+  | null;
+
+// Source: src/sanity/queries.ts
+// Variable: PARTNERS_PAGE_QUERY
+// Query: *[_id == "partnersPage"][0] {    heading { eyebrow, title, intro },    partners[] { eyebrow, title, body },    submissionHeading { eyebrow, title, intro },    facts[] { label, value },    formTitle,    submitLabel  }
+export type PARTNERS_PAGE_QUERY_RESULT =
+  | {
+      heading: null;
+      partners: null;
+      submissionHeading: null;
+      facts: null;
+      formTitle: null;
+      submitLabel: null;
+    }
+  | {
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      partners: null;
+      submissionHeading: null;
+      facts: null;
+      formTitle: null;
+      submitLabel: string | null;
+    }
+  | {
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      partners: Array<{
+        eyebrow: string | null;
+        title: string | null;
+        body: string | null;
+      }> | null;
+      submissionHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      facts: Array<{
+        label: string | null;
+        value: string | null;
+      }> | null;
+      formTitle: string | null;
+      submitLabel: string | null;
+    }
+  | null;
+
+// Source: src/sanity/queries.ts
+// Variable: INVESTORS_PAGE_QUERY
+// Query: *[_id == "investorsPage"][0] {    heading { eyebrow, title, intro },    loginLabel,    stepsTitle,    steps[] { title, body },    keepInTouchHeading { eyebrow, title, intro },    submitLabel,    testimonialsHeading { eyebrow, title, intro }  }
+export type INVESTORS_PAGE_QUERY_RESULT =
+  | {
+      heading: null;
+      loginLabel: null;
+      stepsTitle: null;
+      steps: null;
+      keepInTouchHeading: null;
+      submitLabel: null;
+      testimonialsHeading: null;
+    }
+  | {
+      heading: null;
+      loginLabel: null;
+      stepsTitle: null;
+      steps: null;
+      keepInTouchHeading: null;
+      submitLabel: null;
+      testimonialsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+    }
+  | {
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      loginLabel: null;
+      stepsTitle: null;
+      steps: null;
+      keepInTouchHeading: null;
+      submitLabel: string | null;
+      testimonialsHeading: null;
+    }
+  | {
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      loginLabel: string | null;
+      stepsTitle: string | null;
+      steps: Array<{
+        title: string | null;
+        body: string | null;
+      }> | null;
+      keepInTouchHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      submitLabel: string | null;
+      testimonialsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+    }
+  | null;
+
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
@@ -884,5 +1331,9 @@ declare module "@sanity/client" {
     '\n  *[_type == "testimonial" && consentOnRecord == true] | order(order asc) {\n    _id, quote, attribution, descriptor, investorSince, featured\n  }\n': TESTIMONIALS_QUERY_RESULT;
     '\n  *[_type == "property" && publiclyOffered == true] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0], offering\n  }\n': CURRENT_OFFERINGS_QUERY_RESULT;
     '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
+    '\n  *[_id == "homePage"][0] {\n    hero { eyebrow, title, titleAccent, titleSuffix, intro,\n           primaryCta { label, href }, secondaryCta { label, href } },\n    factorsHeading { eyebrow, title, intro },\n    insightsHeading { eyebrow, title, intro },\n    portfolioHeading { eyebrow, title, intro },\n    offeringsHeading { eyebrow, title, intro },\n    testimonialsHeading { eyebrow, title, intro },\n    partnersTeaser { eyebrow, title, intro },\n    partnersTeaserCta { label, href },\n    portfolioCta { label, href },\n    ctaBand {\n      heading { eyebrow, title, intro },\n      submitLabel, successMessage, callTitle, callBody, callLabel\n    },\n    popup { enabled, eyebrow, title, body, submitLabel, successMessage }\n  }\n': HOME_PAGE_QUERY_RESULT;
+    '\n  *[_id == "aboutPage"][0] {\n    hero { eyebrow, title, titleAccent, titleSuffix, intro },\n    factorsHeading { eyebrow, title, intro },\n    leadershipTitle,\n    boardTitle\n  }\n': ABOUT_PAGE_QUERY_RESULT;
+    '\n  *[_id == "partnersPage"][0] {\n    heading { eyebrow, title, intro },\n    partners[] { eyebrow, title, body },\n    submissionHeading { eyebrow, title, intro },\n    facts[] { label, value },\n    formTitle,\n    submitLabel\n  }\n': PARTNERS_PAGE_QUERY_RESULT;
+    '\n  *[_id == "investorsPage"][0] {\n    heading { eyebrow, title, intro },\n    loginLabel,\n    stepsTitle,\n    steps[] { title, body },\n    keepInTouchHeading { eyebrow, title, intro },\n    submitLabel,\n    testimonialsHeading { eyebrow, title, intro }\n  }\n': INVESTORS_PAGE_QUERY_RESULT;
   }
 }

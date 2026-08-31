@@ -1,32 +1,52 @@
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Button } from '@/components/ui/Button'
 
+export type HeroCopy = {
+  eyebrow?: string | null
+  title?: string | null
+  titleAccent?: string | null
+  titleSuffix?: string | null
+  intro?: string | null
+  primaryCta?: { label?: string | null; href?: string | null } | null
+  secondaryCta?: { label?: string | null; href?: string | null } | null
+}
+
 /**
- * Lives here rather than being exported from app/page.tsx, as the plan had it, so the
- * homepage test can render it without importing the page module and dragging its whole
- * Sanity-fetching graph into a unit test.
+ * The page-opening block, driven entirely by CMS copy.
  *
- * The hero leads with purpose, not the balance sheet. The old site opened by saying
- * "we own $100M of buildings" — the proof band below states that; the headline does not
- * need to. No figure is hardcoded here at all, so nothing in the hero can drift from the
- * CMS or survive as an invented placeholder.
+ * It used to hold its words as literals, which plan revision D4 recorded as a conscious
+ * Phase 1 tradeoff — the team could not change its own headline without a developer.
+ *
+ * `titleAccent` arrives as its own field rather than as markup inside the title, so the
+ * teal stays a design token instead of a hex an editor might paste, and nobody has to
+ * write HTML in a text box to colour three words.
+ *
+ * No figure is hardcoded here, which was true before and stays true: nothing in the hero
+ * can drift from the CMS or survive as an invented placeholder.
  */
-export function HomeHero() {
+export function HomeHero({ hero }: { hero: HeroCopy }) {
   return (
     <div className="mx-auto max-w-[1200px] px-6 pb-10 pt-14">
-      <Eyebrow>Transit-Oriented Development · Suburban Chicago</Eyebrow>
+      {hero.eyebrow && <Eyebrow>{hero.eyebrow}</Eyebrow>}
       <h1 className="mt-4 max-w-[19ch] text-5xl font-bold leading-[1.08] tracking-tight text-ink">
-        Creating communities people <span className="text-teal-text">choose to live in</span>.
+        {hero.title}
+        {hero.titleAccent && <> <span className="text-teal-text">{hero.titleAccent}</span></>}
+        {hero.titleSuffix}
       </h1>
-      <p className="mt-5 max-w-[56ch] text-sm leading-relaxed text-ink-secondary">
-        We develop and operate multifamily and mixed-use housing within walking distance of
-        Metra stations. We work with municipalities rather than around them.
-      </p>
-      <div className="mt-6 flex gap-3">
-        <Button href="/portfolio">View Portfolio →</Button>
-        <Button href="/insights" variant="secondary">
-          Read Our Thinking
-        </Button>
+      {hero.intro && (
+        <p className="mt-5 max-w-[56ch] text-sm leading-relaxed text-ink-secondary">
+          {hero.intro}
+        </p>
+      )}
+      <div className="mt-6 flex flex-wrap gap-3">
+        {hero.primaryCta?.href && hero.primaryCta.label && (
+          <Button href={hero.primaryCta.href}>{hero.primaryCta.label}</Button>
+        )}
+        {hero.secondaryCta?.href && hero.secondaryCta.label && (
+          <Button href={hero.secondaryCta.href} variant="secondary">
+            {hero.secondaryCta.label}
+          </Button>
+        )}
       </div>
     </div>
   )
