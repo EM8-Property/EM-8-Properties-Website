@@ -38,7 +38,11 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
     env:
-      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.SANITY_PROJECT_ID }}
+      # A variable, not a secret: this value ships to every visitor in the client bundle
+      # as NEXT_PUBLIC_SANITY_PROJECT_ID, so it is public by design. Masking it as a
+      # secret only makes build logs harder to read — the id shows as *** exactly when
+      # you are trying to work out which project a failing build pointed at.
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
       NEXT_PUBLIC_SANITY_DATASET: production
       # Required, not optional: the dataset is private. Without this the build fails on
       # a missing siteSettings document — an error that names the content, not the

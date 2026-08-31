@@ -20,7 +20,11 @@ jobs:
   content:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.SANITY_PROJECT_ID }}
+      # A variable, not a secret: this value ships to every visitor in the client bundle
+      # as NEXT_PUBLIC_SANITY_PROJECT_ID, so it is public by design. Masking it as a
+      # secret only makes build logs harder to read — the id shows as *** exactly when
+      # you are trying to work out which project a failing build pointed at.
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
       NEXT_PUBLIC_SANITY_DATASET: production
       # Needed only once the dataset is private. Harmless while it is public.
       SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
