@@ -32,7 +32,19 @@ const INTERVAL_MS = 6000
  * A slide whose property reference is dangling is dropped rather than rendered: a large
  * clickable photograph that goes nowhere is worse than one fewer slide.
  */
-export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
+export function HeroCarousel({
+  slides,
+  fullScreen = false,
+}: {
+  slides: CarouselSlide[]
+  /**
+   * Fills the viewport instead of running as a banner. Used on the homepage only: the
+   * properties are the strongest asset EM8 has and the landing page should open on them.
+   * A full screen of photograph above /portfolio would push the actual portfolio below the
+   * fold on a page someone arrived at in order to read a list.
+   */
+  fullScreen?: boolean
+}) {
   const usable = useMemo(() => slides.filter((s) => s.slug), [slides])
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -50,7 +62,9 @@ export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="Featured properties"
-      className="relative h-[220px] w-full overflow-hidden bg-panel sm:h-[300px]"
+      className={`relative w-full overflow-hidden bg-panel ${
+        fullScreen ? 'h-[100svh]' : 'h-[220px] sm:h-[300px]'
+      }`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -89,10 +103,14 @@ export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
           >
             {loaded && (
               <Image
-                src={urlForImage(slide.image).width(1600).height(500).url()}
+                src={
+                  fullScreen
+                    ? urlForImage(slide.image).width(2000).height(1200).url()
+                    : urlForImage(slide.image).width(1600).height(500).url()
+                }
                 alt={(slide.image as { alt?: string })?.alt ?? slide.propertyTitle ?? ''}
-                width={1600}
-                height={500}
+                width={fullScreen ? 2000 : 1600}
+                height={fullScreen ? 1200 : 500}
                 priority={i === 0}
                 className="h-full w-full object-cover"
               />
@@ -108,6 +126,23 @@ export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
           </Link>
         )
       })}
+
+      {fullScreen && (
+        /*
+          A full screen of photograph has to say there is a page beneath it, or a visitor
+          can reasonably conclude that is the whole site. aria-hidden because it is a hint
+          for the eye — the content below is already in the document for everyone else.
+        */
+        <div
+          data-scroll-cue
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-16 flex justify-center"
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" className="animate-bounce text-white/90">
+            <path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+        </div>
+      )}
 
       {usable.length > 1 && (
         <div className="absolute bottom-4 end-6 flex gap-2">
