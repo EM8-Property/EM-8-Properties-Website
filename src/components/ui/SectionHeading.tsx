@@ -20,9 +20,13 @@ export function SectionHeading({
   intro,
   level = 2,
 }: {
-  eyebrow: string
-  title: string
-  intro?: string
+  // Nullable because these now arrive from the CMS, and typegen cannot see that the
+  // schema marks them required — it only knows the field may be absent on the document.
+  // The schema's `required()` is what enforces presence; this just means a half-filled
+  // draft renders a short heading instead of crashing the page.
+  eyebrow?: string | null
+  title?: string | null
+  intro?: string | null
   level?: 1 | 2
 }) {
   const Heading = level === 1 ? 'h1' : 'h2'

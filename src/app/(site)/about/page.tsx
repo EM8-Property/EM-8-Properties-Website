@@ -1,8 +1,12 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { fetchSanity } from '@/sanity/client'
-import { TEAM_QUERY, FOCUS_CARDS_QUERY } from '@/sanity/queries'
-import type { TEAM_QUERY_RESULT, FOCUS_CARDS_QUERY_RESULT } from '@/sanity/types.generated'
+import { TEAM_QUERY, FOCUS_CARDS_QUERY, ABOUT_PAGE_QUERY } from '@/sanity/queries'
+import type {
+  TEAM_QUERY_RESULT,
+  FOCUS_CARDS_QUERY_RESULT,
+  ABOUT_PAGE_QUERY_RESULT,
+} from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
@@ -16,28 +20,30 @@ export const metadata: Metadata = {
     'Creating communities people choose to live in. Transit-oriented development in suburban Chicago.',
 }
 
-/**
- * Order matters: leadership first, then the board. Declared once so the two sections
- * cannot drift apart in markup.
- */
-const GROUP_SECTIONS = [
-  {
-    group: 'leadership',
-    eyebrow: TEAM_GROUP_LABELS.leadership,
-    title: 'Operators and investors who know these suburbs',
-  },
-  {
-    group: 'partner-board',
-    eyebrow: TEAM_GROUP_LABELS['partner-board'],
-    title: 'The people we answer to',
-  },
-] as const
-
 export default async function AboutPage() {
-  const [team, factors] = await Promise.all([
+  const [team, factors, copy] = await Promise.all([
     fetchSanity<TEAM_QUERY_RESULT>(TEAM_QUERY),
     fetchSanity<FOCUS_CARDS_QUERY_RESULT>(FOCUS_CARDS_QUERY),
+    fetchSanity<ABOUT_PAGE_QUERY_RESULT>(ABOUT_PAGE_QUERY),
   ])
+
+  if (!copy?.hero) {
+    throw new Error(
+      'The aboutPage document is missing or has no hero. Create it in the Studio ' +
+        'under About page.',
+    )
+  }
+
+  // Order matters: leadership first, then the board. The titles are copy and come from
+  // the document; the group keys and their order are structure and do not.
+  const GROUP_SECTIONS = [
+    { group: 'leadership', eyebrow: TEAM_GROUP_LABELS.leadership, title: copy.leadershipTitle },
+    {
+      group: 'partner-board',
+      eyebrow: TEAM_GROUP_LABELS['partner-board'],
+      title: copy.boardTitle,
+    },
+  ] as const
 
   const byGroup = (g: string) =>
     team.filter((m) => (m.group ?? 'leadership') === g)
@@ -45,19 +51,21 @@ export default async function AboutPage() {
   return (
     <div>
       <div className="mx-auto max-w-[1200px] px-6 py-14">
-        <Eyebrow>Our Purpose</Eyebrow>
+        <Eyebrow>{copy.hero.eyebrow}</Eyebrow>
         <h1 className="mt-3 max-w-[19ch] text-4xl font-bold leading-tight tracking-tight text-ink">
-          Creating communities people <span className="text-teal-text">choose to live in</span>.
+          {copy.hero.title}
+          {copy.hero.titleAccent && (
+            <> <span className="text-teal-text">{copy.hero.titleAccent}</span></>
+          )}
+          {copy.hero.titleSuffix}
         </h1>
         <p className="mt-4 max-w-[60ch] text-sm leading-relaxed text-ink-secondary">
-          We develop, build, and operate housing in suburban Chicago where the
-          infrastructure for a good life is already there: a train, a main street, green
-          space, somewhere to buy groceries. Then we try to be the reason people stay.
+          {copy.hero.intro}
         </p>
       </div>
 
       <section className="mx-auto max-w-[1200px] px-6 py-10">
-        <SectionHeading eyebrow="How We Operate" title="Four things we refuse to compromise on" />
+        <SectionHeading {...copy.factorsHeading!} />
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
           {factors.map((f, i) => (
             <div key={f._id} className="flex gap-3">

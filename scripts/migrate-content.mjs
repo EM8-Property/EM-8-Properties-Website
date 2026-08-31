@@ -27,6 +27,7 @@ import {
   POSTS,
   TESTIMONIALS,
   SITE_SETTINGS,
+  PAGE_COPY,
   oldImage,
   portable,
 } from './content/em8-content.mjs'
@@ -118,6 +119,55 @@ const imageField = (assetId, alt) => ({
  * dataset, so nothing is uploaded and no photograph is invented. Sold assets are skipped:
  * this band is navigation toward what EM8 owns now.
  */
+/**
+ * Seeds the per-page copy documents, and only when a page does not already exist.
+ *
+ * The whole point of moving this copy into the CMS is that the team edits it. Rewriting
+ * these on every migration would silently discard that work, so an existing page document
+ * is left completely alone — this seeds the starting point once and then never touches it
+ * again.
+ *
+ * `_key` is added to every array item. Sanity accepts a write without them and the site
+ * renders fine; the Studio is where it breaks, with a "Missing keys" banner and reordering
+ * disabled. Nothing in the build, the tests, or Lighthouse sees that.
+ */
+function withKeys(items, prefix) {
+  return items.map((item, i) => ({ _key: `${prefix}-${i}`, ...item }))
+}
+
+async function seedPagesIfMissing(apply) {
+  const ids = Object.keys(PAGE_COPY)
+  const present = new Set(
+    (await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [],
+  )
+
+  const docs = []
+  for (const id of ids) {
+    if (present.has(id)) {
+      console.log(`  page      ${id} already exists — left untouched`)
+      continue
+    }
+    const copy = structuredClone(PAGE_COPY[id])
+    if (copy.partners) copy.partners = withKeys(copy.partners, 'partner')
+    if (copy.facts) copy.facts = withKeys(copy.facts, 'fact')
+    if (copy.steps) copy.steps = withKeys(copy.steps, 'step')
+    console.log(`  page      seeding ${id}`)
+    docs.push({ _id: id, _type: id, ...copy })
+  }
+
+  if (docs.length === 0 || !apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    // createIfNotExists rather than createOrReplace: belt and braces alongside the check
+    // above, so a race cannot clobber a page an editor created a moment ago.
+    body: JSON.stringify({ mutations: docs.map((doc) => ({ createIfNotExists: doc })) }),
+  })
+  if (!res.ok) throw new Error(`page seed failed ${res.status}: ${await res.text()}`)
+  console.log(`  page      seeded ${docs.length}`)
+}
+
 async function seedCarouselIfEmpty(apply) {
   const existing = await query('*[_id=="siteSettings"][0].heroCarousel')
   if (Array.isArray(existing) && existing.length > 0) {
@@ -328,6 +378,7 @@ async function main() {
 
   if (!APPLY) {
     await seedCarouselIfEmpty(false)
+    await seedPagesIfMissing(false)
     console.log('\nDry run complete. Nothing was written. Re-run with --apply.')
     return
   }
@@ -359,6 +410,7 @@ async function main() {
   console.log(`Patched siteSettings: ${Object.keys(SITE_SETTINGS).join(', ')}`)
 
   await seedCarouselIfEmpty(true)
+  await seedPagesIfMissing(true)
   const body = await res.json()
   console.log(`\nWrote ${body.results?.length ?? 0} documents.`)
   console.log('Next: npm run test:content, then npm run build.')

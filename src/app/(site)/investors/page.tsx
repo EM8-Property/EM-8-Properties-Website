@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
 import { fetchSanity } from '@/sanity/client'
-import { SITE_SETTINGS_QUERY, TESTIMONIALS_QUERY } from '@/sanity/queries'
+import {
+  SITE_SETTINGS_QUERY,
+  TESTIMONIALS_QUERY,
+  INVESTORS_PAGE_QUERY,
+} from '@/sanity/queries'
 import type {
   SITE_SETTINGS_QUERY_RESULT,
+  INVESTORS_PAGE_QUERY_RESULT,
   TESTIMONIALS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { LeadForm, type FieldSpec } from '@/components/forms/LeadForm'
@@ -15,23 +20,6 @@ export const metadata: Metadata = {
   description:
     'We work with accredited investors, family offices, and joint-venture partners across the Chicago MSA.',
 }
-
-/**
- * How an investment works. Every step describes process, never outcome — no step states
- * or implies a return.
- */
-const STEPS: [string, string][] = [
-  [
-    'Verify and review',
-    'Our portal verifies your accreditation. Then you get the full offering materials.',
-  ],
-  ['Commit and fund', 'Subscription documents and capital calls are handled in the portal.'],
-  [
-    'Hold and receive',
-    'Quarterly reporting and distributions. Statements are there whenever you want them.',
-  ],
-  ['Exit', 'Refinance or sale, with proceeds distributed per the operating agreement.'],
-]
 
 const FIELDS: FieldSpec[] = [
   { name: 'firstName', label: 'First name', type: 'text', required: true },
@@ -60,21 +48,24 @@ const FIELDS: FieldSpec[] = [
 ]
 
 export default async function InvestorsPage() {
-  const [settings, testimonials] = await Promise.all([
+  const [settings, testimonials, copy] = await Promise.all([
     fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
     fetchSanity<TESTIMONIALS_QUERY_RESULT>(TESTIMONIALS_QUERY),
+    fetchSanity<INVESTORS_PAGE_QUERY_RESULT>(INVESTORS_PAGE_QUERY),
   ])
+
+  if (!copy?.heading) {
+    throw new Error(
+      'The investorsPage document is missing. Create it in the Studio under ' +
+        'Investors page.',
+    )
+  }
 
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-14">
       <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
         <div>
-          <SectionHeading
-            eyebrow="Investors"
-            title="We work with investors who can wait"
-            intro="We work with accredited investors, family offices, and joint-venture partners on transit-oriented multifamily and mixed-use around Chicago."
-            level={1}
-          />
+          <SectionHeading {...copy.heading} level={1} />
           {settings?.agoraPortalUrl && (
             <a
               href={settings.agoraPortalUrl}
@@ -82,15 +73,15 @@ export default async function InvestorsPage() {
               rel="noopener noreferrer"
               className="mt-5 inline-block rounded-control bg-ink px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white"
             >
-              Investor Login →
+              {copy.loginLabel}
             </a>
           )}
 
           <h2 className="mt-10 text-lg font-bold tracking-tight text-ink">
-            How an investment works
+            {copy.stepsTitle}
           </h2>
           <ol className="mt-4 grid gap-3">
-            {STEPS.map(([title, body], i) => (
+            {(copy.steps ?? []).map(({ title, body }, i) => (
               <li key={title} className="flex gap-3">
                 <span className="flex size-5 shrink-0 items-center justify-center rounded-chip bg-teal-text text-[10px] font-bold text-white">
                   {i + 1}
@@ -107,20 +98,24 @@ export default async function InvestorsPage() {
         </div>
 
         <div className="rounded-card border border-rule bg-panel p-6">
-          <Eyebrow>Keep in touch</Eyebrow>
+          <Eyebrow>{copy.keepInTouchHeading!.eyebrow}</Eyebrow>
           <h2 className="mt-2 text-lg font-bold tracking-tight text-ink">
-            Tell us what you&rsquo;re looking for
+            {copy.keepInTouchHeading!.title}
           </h2>
           <p className="mb-4 mt-1.5 text-[11px] leading-relaxed text-ink-secondary">
-            We&rsquo;ll add you to our investor list and reach out when something fits.
+            {copy.keepInTouchHeading!.intro}
           </p>
-          <LeadForm source="keep-in-touch" fields={FIELDS} submitLabel="Send" />
+          <LeadForm
+            source="keep-in-touch"
+            fields={FIELDS}
+            submitLabel={copy.submitLabel ?? 'Send'}
+          />
         </div>
       </div>
 
       {testimonials.length > 0 && (
         <section className="mt-16">
-          <SectionHeading eyebrow="Our Investors" title="What our partners say" />
+          <SectionHeading {...copy.testimonialsHeading!} />
           <div className="mt-6">
             <Testimonials items={testimonials} />
           </div>

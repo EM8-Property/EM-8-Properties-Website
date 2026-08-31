@@ -117,3 +117,62 @@ export const SITE_SETTINGS_QUERY = defineQuery(
     heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }
   }`,
 )
+
+/**
+ * Per-page copy, closing plan revision D4.
+ *
+ * Each is a pinned singleton fetched by its fixed id rather than by `[0]` on a type. The
+ * Studio pins the same ids, so there is no second document for these to silently prefer.
+ * Fields are inlined here for the same typegen reason as everywhere else in this file.
+ */
+export const HOME_PAGE_QUERY = defineQuery(`
+  *[_id == "homePage"][0] {
+    hero { eyebrow, title, titleAccent, titleSuffix, intro,
+           primaryCta { label, href }, secondaryCta { label, href } },
+    factorsHeading { eyebrow, title, intro },
+    insightsHeading { eyebrow, title, intro },
+    portfolioHeading { eyebrow, title, intro },
+    offeringsHeading { eyebrow, title, intro },
+    testimonialsHeading { eyebrow, title, intro },
+    partnersTeaser { eyebrow, title, intro },
+    partnersTeaserCta { label, href },
+    portfolioCta { label, href },
+    ctaBand {
+      heading { eyebrow, title, intro },
+      submitLabel, successMessage, callTitle, callBody, callLabel
+    },
+    popup { enabled, eyebrow, title, body, submitLabel, successMessage }
+  }
+`)
+
+export const ABOUT_PAGE_QUERY = defineQuery(`
+  *[_id == "aboutPage"][0] {
+    hero { eyebrow, title, titleAccent, titleSuffix, intro },
+    factorsHeading { eyebrow, title, intro },
+    leadershipTitle,
+    boardTitle
+  }
+`)
+
+export const PARTNERS_PAGE_QUERY = defineQuery(`
+  *[_id == "partnersPage"][0] {
+    heading { eyebrow, title, intro },
+    partners[] { eyebrow, title, body },
+    submissionHeading { eyebrow, title, intro },
+    facts[] { label, value },
+    formTitle,
+    submitLabel
+  }
+`)
+
+export const INVESTORS_PAGE_QUERY = defineQuery(`
+  *[_id == "investorsPage"][0] {
+    heading { eyebrow, title, intro },
+    loginLabel,
+    stepsTitle,
+    steps[] { title, body },
+    keepInTouchHeading { eyebrow, title, intro },
+    submitLabel,
+    testimonialsHeading { eyebrow, title, intro }
+  }
+`)

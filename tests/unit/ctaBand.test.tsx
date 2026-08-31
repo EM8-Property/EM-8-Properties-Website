@@ -1,9 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { CtaBand } from '@/components/ui/CtaBand'
+import { PAGE_COPY } from '../../scripts/content/em8-content.mjs'
 
 const PHYSICAL = /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/
 const CAL = 'https://calendar.app.google/mJNPKxULTGh8NMTq9'
+
+/* eslint-disable @typescript-eslint/no-explicit-any -- plain ESM data module */
+// The copy that actually ships, not a fixture. It moved into the CMS, so a stand-in
+// would prove nothing about the live band.
+const copy = (PAGE_COPY as any).homePage.ctaBand
 
 /**
  * The homepage ran hero → stats → factors → portfolio and then stopped, straight into the
@@ -17,14 +23,14 @@ const CAL = 'https://calendar.app.google/mJNPKxULTGh8NMTq9'
  */
 describe('CtaBand', () => {
   it('captures an email address', () => {
-    render(<CtaBand bookACallUrl={CAL} />)
+    render(<CtaBand bookACallUrl={CAL} copy={copy} />)
     const input = document.querySelector('input[type="email"]') as HTMLInputElement
     expect(input).not.toBeNull()
     expect(input.required).toBe(true)
   })
 
   it('posts as a newsletter lead, the low-friction ask', () => {
-    render(<CtaBand bookACallUrl={CAL} />)
+    render(<CtaBand bookACallUrl={CAL} copy={copy} />)
     // The whole point of this band is that it does not demand a name, a check size, or an
     // accreditation declaration before someone will give an address.
     expect(document.querySelector('input[name="firstName"]')).toBeNull()
@@ -33,7 +39,7 @@ describe('CtaBand', () => {
   })
 
   it('offers the scheduling link, opening off-site safely', () => {
-    render(<CtaBand bookACallUrl={CAL} />)
+    render(<CtaBand bookACallUrl={CAL} copy={copy} />)
     const link = screen.getByRole('link', { name: /book a call/i })
     expect(link.getAttribute('href')).toBe(CAL)
     expect(link.getAttribute('target')).toBe('_blank')
@@ -43,18 +49,18 @@ describe('CtaBand', () => {
   it('degrades gracefully when no scheduling link is configured', () => {
     // bookACallUrl is optional content in Sanity. A missing one must not render a dead
     // button — the email capture still stands on its own.
-    render(<CtaBand />)
+    render(<CtaBand copy={copy} />)
     expect(screen.queryByRole('link', { name: /book a call/i })).toBeNull()
     expect(document.querySelector('input[type="email"]')).not.toBeNull()
   })
 
   it('makes no promise about returns', () => {
-    const { container } = render(<CtaBand bookACallUrl={CAL} />)
+    const { container } = render(<CtaBand bookACallUrl={CAL} copy={copy} />)
     expect(container.textContent).not.toMatch(/guarantee|will return|assured|risk-free/i)
   })
 
   it('uses no physical-direction utilities', () => {
-    const { container } = render(<CtaBand bookACallUrl={CAL} />)
+    const { container } = render(<CtaBand bookACallUrl={CAL} copy={copy} />)
     expect(container.innerHTML).not.toMatch(PHYSICAL)
   })
 })
