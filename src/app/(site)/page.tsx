@@ -27,6 +27,7 @@ import { PropertyCard, type PropertyCardData } from '@/components/property/Prope
 import { PostCard, type PostData } from '@/components/insights/PostCard'
 import { Testimonials } from '@/components/ui/Testimonials'
 import { CtaBand } from '@/components/ui/CtaBand'
+import { Band, alternatingTones } from '@/components/ui/Band'
 import { InvestorPopup } from '@/components/home/InvestorPopup'
 
 /** Narrative scroll: hero → stats → success factors → insights → portfolio → partners. */
@@ -53,20 +54,13 @@ export default async function HomePage() {
     )
   }
 
-  return (
-    <>
-      <HomeHero hero={copy.hero} />
-
-      {stats.length > 0 && (
-        <StatBand
-          stats={stats
-            .slice(0, 5)
-            .map((s) => ({ figure: s.figure ?? '', label: s.label ?? '' }))}
-        />
-      )}
-
-      {factors.length > 0 && (
-        <section className="mx-auto max-w-[1200px] px-6 py-14">
+  // Only the sections with something to show. Order is the narrative order spec §3 sets:
+  // factors → insights → portfolio → testimonials → open offerings → partners.
+  const bands = [
+    factors.length > 0 && {
+      key: 'factors',
+      content: (
+        <>
           <SectionHeading {...copy.factorsHeading!} />
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
             {factors.map((f) => (
@@ -79,24 +73,26 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
-        </section>
-      )}
-
-      {posts.length > 0 && (
-        <section className="border-y border-rule bg-panel">
-          <div className="mx-auto max-w-[1200px] px-6 py-14">
-            <SectionHeading {...copy.insightsHeading!} />
-            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {posts.slice(0, 3).map((p) => (
-                <PostCard key={p.slug} post={p as PostData} />
-              ))}
-            </div>
+        </>
+      ),
+    },
+    posts.length > 0 && {
+      key: 'insights',
+      content: (
+        <>
+          <SectionHeading {...copy.insightsHeading!} />
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {posts.slice(0, 3).map((p) => (
+              <PostCard key={p.slug} post={p as PostData} />
+            ))}
           </div>
-        </section>
-      )}
-
-      {properties.length > 0 && (
-        <section className="mx-auto max-w-[1200px] px-6 py-14">
+        </>
+      ),
+    },
+    properties.length > 0 && {
+      key: 'portfolio',
+      content: (
+        <>
           {/* No asset count in the headline — it would drift the moment a property is
               added or sold in the Studio. */}
           <SectionHeading {...copy.portfolioHeading!} />
@@ -110,55 +106,94 @@ export default async function HomePage() {
               {copy.portfolioCta!.label}
             </Button>
           </div>
-        </section>
-      )}
+        </>
+      ),
+    },
+    testimonials.length > 0 && {
+      key: 'testimonials',
+      content: (
+        <>
+          <SectionHeading {...copy.testimonialsHeading!} />
+          <div className="mt-6">
+            <Testimonials items={testimonials.slice(0, 3)} />
+          </div>
+        </>
+      ),
+    },
+    offerings.length > 0 && {
+      key: 'offerings',
+      content: (
+        <>
+          {/*
+            The current-opportunity module spec §4 names. CURRENT_OFFERINGS_QUERY filters
+            on publiclyOffered, which is the Rule 506(c) gate — an offering not filed under
+            that exemption may not be generally solicited, so it must never appear here by
+            default.
+          */}
+          <SectionHeading {...copy.offeringsHeading!} />
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {offerings.map((o) => (
+              <PropertyCard key={o.slug} property={o as PropertyCardData} />
+            ))}
+          </div>
+        </>
+      ),
+    },
+    {
+      // Spec §3 closes the narrative with partners and then the call to action. Brokers,
+      // municipalities and land sellers are an audience spec §3 calls out as served by
+      // nothing on the old site.
+      key: 'partners',
+      content: (
+        <>
+          <SectionHeading {...copy.partnersTeaser!} />
+          <div className="mt-6">
+            <Button href={copy.partnersTeaserCta!.href!} variant="secondary">
+              {copy.partnersTeaserCta!.label}
+            </Button>
+          </div>
+        </>
+      ),
+    },
+  ].filter(Boolean) as { key: string; content: React.ReactNode }[]
 
-      {testimonials.length > 0 && (
-        <section className="border-t border-rule bg-panel">
-          <div className="mx-auto max-w-[1200px] px-6 py-14">
-            <SectionHeading {...copy.testimonialsHeading!} />
-            <div className="mt-6">
-              <Testimonials items={testimonials.slice(0, 3)} />
-            </div>
-          </div>
-        </section>
-      )}
-      {offerings.length > 0 && (
-        <section className="border-t border-rule bg-panel">
-          <div className="mx-auto max-w-[1200px] px-6 py-14">
-            {/*
-              The current-opportunity module spec §4 names. CURRENT_OFFERINGS_QUERY
-              filters on publiclyOffered, which is the Rule 506(c) gate — an offering not
-              filed under that exemption may not be generally solicited, so it must never
-              appear here by default.
-            */}
-            <SectionHeading {...copy.offeringsHeading!} />
-            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {offerings.map((o) => (
-                <PropertyCard key={o.slug} property={o as PropertyCardData} />
-              ))}
-            </div>
-          </div>
-        </section>
+  // The closing call to action is part of the same sequence, so it cannot land on the
+  // same ground as whatever section precedes it.
+  const tones = alternatingTones(bands.length + 1)
+
+  return (
+    <>
+      <HomeHero hero={copy.hero} />
+
+      {stats.length > 0 && (
+        <StatBand
+          stats={stats
+            .slice(0, 5)
+            .map((s) => ({ figure: s.figure ?? '', label: s.label ?? '' }))}
+        />
       )}
 
       {/*
-        Spec §3 ends the homepage narrative with partners and then a call to action.
-        Neither was built: the page previously stopped after the portfolio grid and ran
-        straight into the footer disclaimer, so a reader who got to the bottom had nothing
-        to do next. Brokers, municipalities and land sellers — an audience spec §3 calls
-        out as served by nothing on the old site — had no route in from the homepage.
-      */}
-      <section className="mx-auto max-w-[1200px] px-6 py-14">
-        <SectionHeading {...copy.partnersTeaser!} />
-        <div className="mt-6">
-          <Button href={copy.partnersTeaserCta!.href!} variant="secondary">
-            {copy.partnersTeaserCta!.label}
-          </Button>
-        </div>
-      </section>
+        Bands, not hand-painted sections.
 
-      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={copy.ctaBand} />
+        Every section here is conditional, so hardcoding a ground on each one only holds
+        for whichever combination happened to exist when it was written. Publishing the
+        first two testimonials put "What our partners say" directly above "Currently
+        accepting commitments" — both panelled, 782px of unbroken grey with a hairline
+        between them. Deriving the tones from what actually renders means that cannot
+        happen again for a combination nobody tried.
+      */}
+      {bands.map((band, i) => (
+        <Band key={band.key} tone={tones[i]!}>
+          {band.content}
+        </Band>
+      ))}
+
+      <CtaBand
+        bookACallUrl={settings?.bookACallUrl}
+        copy={copy.ctaBand}
+        tone={tones[bands.length]!}
+      />
 
       {/*
         Homepage only, and once per visitor. It waits before appearing, asks for a name and
