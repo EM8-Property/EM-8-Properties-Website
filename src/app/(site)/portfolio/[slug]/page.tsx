@@ -9,6 +9,7 @@ import type {
   PROPERTY_SLUGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
+import { SHARE_CARD, SHARE_CARD_PATH } from '@/lib/seo'
 import { FactRail } from '@/components/property/FactRail'
 import { PropertyMap } from '@/components/property/PropertyMap'
 import { Chip } from '@/components/ui/Chip'
@@ -30,10 +31,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${p.title} | EM8 Properties`,
     description: p.cardBlurb ?? undefined,
+    // The canonical URL for this asset whatever its status — non-negotiable #4. It was
+    // enforced architecturally (one route per property) but never declared to a crawler.
+    alternates: { canonical: `/portfolio/${slug}` },
     openGraph: {
       title: `${p.title} | EM8 Properties`,
       description: p.cardBlurb ?? undefined,
-      images: p.image ? [urlForImage(p.image).width(1200).height(630).url()] : [],
+      // Falls back to the generated card rather than to nothing. This was `images: []`
+      // when a property had no photograph, and an empty array is not a fallback — it is
+      // an explicit "no image", so the page advertised no card at all. Measured on the
+      // build: /portfolio/antioch-shopping-plaza, the only live offering and the one
+      // property with an empty gallery, was serving `twitter:card = summary` with no
+      // image, which is the small variant LinkedIn renders as a bare link.
+      images: [p.image ? urlForImage(p.image).width(1200).height(630).url() : SHARE_CARD],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${p.title} | EM8 Properties`,
+      description: p.cardBlurb ?? undefined,
+      images: [
+        p.image ? urlForImage(p.image).width(1200).height(630).url() : SHARE_CARD_PATH,
+      ],
     },
   }
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 import Image from 'next/image'
 import { fetchSanity } from '@/sanity/client'
 import { TEAM_QUERY, FOCUS_CARDS_QUERY, ABOUT_PAGE_QUERY } from '@/sanity/queries'
@@ -14,11 +14,12 @@ import { Card } from '@/components/ui/Card'
 import { TEAM_GROUP_LABELS } from '@/lib/teamGroups'
 import { TeamBio } from '@/components/about/TeamBio'
 
-export const metadata: Metadata = {
-  title: 'About | EM8 Properties',
+export const metadata = pageMetadata({
+  title: 'About',
   description:
     'Creating communities people choose to live in. Transit-oriented development in suburban Chicago.',
-}
+  path: '/about',
+})
 
 export default async function AboutPage() {
   const [team, factors, copy] = await Promise.all([

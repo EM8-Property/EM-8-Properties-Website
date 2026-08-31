@@ -12,6 +12,9 @@ import { urlForImage } from '@/sanity/image'
 import { formatUnits } from '@/lib/format'
 import { formatCategory, formatDate } from '@/components/insights/PostCard'
 import { Eyebrow } from '@/components/ui/Eyebrow'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { articleJsonLd } from '@/lib/structuredData'
+import { siteUrl } from '@/lib/siteUrl'
 
 export async function generateStaticParams() {
   const slugs = await fetchSanity<POST_SLUGS_QUERY_RESULT>(POST_SLUGS_QUERY)
@@ -27,6 +30,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title,
     description: post.excerpt ?? undefined,
+    // The LinkedIn-linkable URL, so it is the one that most needs to claim itself as
+    // canonical rather than let a tracking-parameter variant compete with it.
+    alternates: { canonical: `/insights/${slug}` },
     // This is the LinkedIn-linkable URL, so the Open Graph block is the point of the
     // page, not decoration. Next does not synthesise og:title from `title` — without
     // this, a shared link renders with no card title at all.
@@ -47,6 +53,21 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <article className="mx-auto max-w-[720px] px-6 py-12">
+      {/*
+        Article markup on the one route that exists to be linked from elsewhere. EM8 is
+        both author and publisher: these are written in the firm's voice with no byline on
+        the page, and inventing a named author would assert something the page does not
+        say.
+      */}
+      <JsonLd
+        data={articleJsonLd({
+          siteUrl: siteUrl(),
+          path: `/insights/${slug}`,
+          title: post.title ?? '',
+          description: post.excerpt,
+          publishedAt: post.publishedAt,
+        })}
+      />
       <p className="text-[11px] font-medium text-ink-secondary">
         <Link href="/insights" className="text-teal-text">
           Insights

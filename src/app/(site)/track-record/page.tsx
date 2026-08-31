@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 import Link from 'next/link'
 import Image from 'next/image'
 import { fetchSanity } from '@/sanity/client'
@@ -14,11 +14,12 @@ import { StatBand } from '@/components/ui/StatBand'
 import { DealStory } from '@/components/property/DealStory'
 import { Chip } from '@/components/ui/Chip'
 
-export const metadata: Metadata = {
-  title: 'Track Record | EM8 Properties',
+export const metadata = pageMetadata({
+  title: 'Track Record',
   description:
     'Realized results across the Chicago MSA: what we paid, what we did, what we exited at.',
-}
+  path: '/track-record',
+})
 
 /**
  * A view over sold properties. It creates no URLs of its own: every card links back to

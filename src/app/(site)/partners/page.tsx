@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 import { fetchSanity } from '@/sanity/client'
 import { PARTNERS_PAGE_QUERY } from '@/sanity/queries'
 import type { PARTNERS_PAGE_QUERY_RESULT } from '@/sanity/types.generated'
@@ -7,11 +7,12 @@ import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Card } from '@/components/ui/Card'
 
-export const metadata: Metadata = {
-  title: 'Partners | EM8 Properties',
+export const metadata = pageMetadata({
+  title: 'Partners',
   description:
     'EM8 works with Kinzie, Advantage, and municipalities across the Chicago MSA as one accountable team.',
-}
+  path: '/partners',
+})
 
 const SITE_FIELDS: FieldSpec[] = [
   { name: 'firstName', label: 'Your name', type: 'text', required: true },

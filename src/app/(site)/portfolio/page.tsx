@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 import { fetchSanity } from '@/sanity/client'
 import { ALL_PROPERTIES_QUERY } from '@/sanity/queries'
 import type { ALL_PROPERTIES_QUERY_RESULT } from '@/sanity/types.generated'
@@ -6,11 +6,12 @@ import { PortfolioFilter } from '@/components/property/PortfolioFilter'
 import type { PropertyCardData } from '@/components/property/PropertyCard'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 
-export const metadata: Metadata = {
-  title: 'Portfolio | EM8 Properties',
+export const metadata = pageMetadata({
+  title: 'Portfolio',
   description:
     'Multifamily and mixed-use assets across the Chicago MSA and southern Wisconsin.',
-}
+  path: '/portfolio',
+})
 
 export default async function PortfolioPage() {
   const properties = await fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY)
