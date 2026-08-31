@@ -8,7 +8,7 @@ import {
 } from '@/lib/leads'
 import { writeClient } from '@/sanity/writeClient'
 import { resendSender } from '@/lib/email'
-import { rateLimit } from '@/lib/rateLimit'
+import { rateLimit, isPowerOfTen } from '@/lib/rateLimit'
 
 function callerKey(request: Request): string {
   // The RIGHT-most X-Forwarded-For entry, not the left-most.
@@ -34,13 +34,17 @@ export async function POST(request: Request) {
     // hearing about: it means every visitor is being turned away, not just one noisy
     // caller, and it is the only evidence for whether the hourly ceiling is set right.
     //
-    // Once per spent hour, not once per refusal. Refusals are uncapped by design, and a
-    // caller that first arrives after the budget is spent never acquires a per-key bucket
-    // — so it stays on the global path and one address could emit thousands of identical
-    // lines a minute, burying the two lines below that mean a real lead may have been
-    // lost.
-    if (limited.scope === 'global' && limited.globalRefusalsInWindow === 1) {
+    // Sampled, not once per refusal. Refusals are uncapped by design, and a caller that
+    // first arrives after the budget is spent never acquires a per-key bucket — so it
+    // stays on the global path and one address could emit thousands of identical lines a
+    // minute, burying the two lines below that mean a real lead may have been lost.
+    //
+    // At powers of ten rather than only the first, so the volume stays bounded (about
+    // seven lines in the worst hour) without discarding the magnitude — how many visitors
+    // were turned away is the evidence for whether the ceiling is set right.
+    if (limited.scope === 'global' && isPowerOfTen(limited.globalRefusalsInWindow)) {
       console.warn('Lead endpoint refused a submission — site-wide hourly budget spent', {
+        refusedThisHour: limited.globalRefusalsInWindow,
         retryAfterSeconds: limited.retryAfterSeconds,
       })
     }

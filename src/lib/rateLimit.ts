@@ -81,8 +81,33 @@ export type RateLimitResult = {
   retryAfterSeconds: number
   /** Which budget refused, for logging. `null` when the request is allowed. */
   scope: 'key' | 'global' | null
-  /** Running count of site-wide refusals this hour; `1` on the first one. */
+  /**
+   * Running count of site-wide refusals this hour; `1` on the first one.
+   *
+   * Meaningful when `scope === 'global'`. On the `'key'` path it is reported without a
+   * window-rollover check, so after an idle hour it can still carry the previous hour's
+   * tally; an allowed request always reports the live count, since nothing is served once
+   * the budget is spent.
+   */
   globalRefusalsInWindow: number
+}
+
+/**
+ * True for 1, 10, 100, 1000 … — used to sample `globalRefusalsInWindow` for logging.
+ *
+ * Logging only the first refusal of an hour bounds the volume but throws away the
+ * magnitude, and magnitude is the evidence for whether `GLOBAL_LIMIT` is set right: an
+ * hour that turned away three visitors and one that turned away three million would look
+ * identical. Sampling at powers of ten caps a sustained flood at about seven lines an
+ * hour while the last line still names the order of magnitude.
+ *
+ * Computed by multiplication rather than `Math.log10`, which is not exact for every power
+ * of ten in floating point.
+ */
+export function isPowerOfTen(n: number): boolean {
+  if (!Number.isInteger(n) || n < 1) return false
+  for (let p = 1; p <= n; p *= 10) if (p === n) return true
+  return false
 }
 
 export function rateLimit(key: string, now: number = Date.now()): RateLimitResult {
