@@ -32,7 +32,19 @@ const INTERVAL_MS = 6000
  * A slide whose property reference is dangling is dropped rather than rendered: a large
  * clickable photograph that goes nowhere is worse than one fewer slide.
  */
-export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
+export function HeroCarousel({
+  slides,
+  fullScreen = false,
+}: {
+  slides: CarouselSlide[]
+  /**
+   * Fills the viewport instead of running as a banner. Used on the homepage only: the
+   * properties are the strongest asset EM8 has and the landing page should open on them.
+   * A full screen of photograph above /portfolio would push the actual portfolio below the
+   * fold on a page someone arrived at in order to read a list.
+   */
+  fullScreen?: boolean
+}) {
   const usable = useMemo(() => slides.filter((s) => s.slug), [slides])
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -50,7 +62,9 @@ export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="Featured properties"
-      className="relative h-[220px] w-full overflow-hidden bg-panel sm:h-[300px]"
+      className={`relative w-full overflow-hidden bg-panel ${
+        fullScreen ? 'h-[100svh]' : 'h-[220px] sm:h-[300px]'
+      }`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -66,14 +80,15 @@ export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
          * does not help for the same reason. Spec §1 names the old site's oversized
          * photography as a founding problem, so raising the budget was not an option.
          *
-         * A window of three keeps the crossfade in both directions already decoded while
-         * paying for three images instead of eight.
+         * A window keeps the crossfade already decoded while paying for a few images
+         * instead of eight. It is narrower at full-bleed: those crops are far larger, and
+         * three of them put the page 25KB over the image budget. Forward is the direction
+         * that actually matters — the band auto-advances that way — so the previous slide
+         * is dropped there and only reloads if someone clicks back to it.
          */
-        const distance = Math.min(
-          Math.abs(i - index),
-          usable.length - Math.abs(i - index),
-        )
-        const loaded = distance <= 1
+        const forward = (i - index + usable.length) % usable.length
+        const backward = (index - i + usable.length) % usable.length
+        const loaded = forward <= 1 || (!fullScreen && backward <= 1)
 
         return (
           <Link
@@ -89,10 +104,29 @@ export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
           >
             {loaded && (
               <Image
-                src={urlForImage(slide.image).width(1600).height(500).url()}
+                src={
+                  fullScreen
+                    ? urlForImage(slide.image).width(2000).height(1200).url()
+                    : urlForImage(slide.image).width(1600).height(500).url()
+                }
                 alt={(slide.image as { alt?: string })?.alt ?? slide.propertyTitle ?? ''}
-                width={1600}
-                height={500}
+                width={fullScreen ? 2000 : 1600}
+                height={fullScreen ? 1200 : 500}
+                /*
+                  Without a sizes hint Next emits a srcset up to 3840w and the browser,
+                  knowing nothing about the layout, fetches a variant far larger than the
+                  band is ever painted at — measured at 662KB for a single hero. The band
+                  is always full-width, so say so.
+                */
+                sizes="100vw"
+                /*
+                  Below Next's default of 75. At 2048px wide a photograph carries
+                  compression far better than a chart or a screenshot would, and the hero
+                  is the heaviest single asset on the site — spec §1 names the old site's
+                  10-20MB camera originals as one of the three reasons for this rebuild,
+                  so the crop is worth tuning rather than only budgeting for.
+                */
+                quality={68}
                 priority={i === 0}
                 className="h-full w-full object-cover"
               />
@@ -108,6 +142,23 @@ export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
           </Link>
         )
       })}
+
+      {fullScreen && (
+        /*
+          A full screen of photograph has to say there is a page beneath it, or a visitor
+          can reasonably conclude that is the whole site. aria-hidden because it is a hint
+          for the eye — the content below is already in the document for everyone else.
+        */
+        <div
+          data-scroll-cue
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-16 flex justify-center"
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" className="animate-bounce text-white/90">
+            <path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+        </div>
+      )}
 
       {usable.length > 1 && (
         <div className="absolute bottom-4 end-6 flex gap-2">

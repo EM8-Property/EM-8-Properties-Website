@@ -2,9 +2,9 @@
   {
     "path": "/*",
     "resourceSizes": [
-      { "resourceType": "image", "budget": 800 },
+      { "resourceType": "image", "budget": 1400 },
       { "resourceType": "script", "budget": 350 },
-      { "resourceType": "total", "budget": 1600 }
+      { "resourceType": "total", "budget": 2200 }
     ]
   }
 ]
