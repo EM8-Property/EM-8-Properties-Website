@@ -1,0 +1,16 @@
+node_modules
+.next
+dist
+.sanity
+.git
+.github
+tests
+playwright-report
+test-results
+coverage
+.env
+.env*.local
+*.log
+docs
+.superpowers
+README.md

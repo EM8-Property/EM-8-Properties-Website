@@ -1,0 +1,40 @@
+name: Content gate
+
+# The spec §9 placeholder check and the consent/compliance checks over live content.
+#
+# Separate from ci.yml because this reads the real dataset: it is not a per-push check,
+# it is the gate that decides whether content is fit to publish. Spec §8 lists "every
+# placeholder figure replaced" as a launch blocker, and a blocker that only runs when
+# somebody remembers to type `npm run test:content` is not a blocker.
+#
+# Run it manually before a content release, and on a schedule so drift after launch —
+# an editor pasting a figure from an old deck — surfaces without anyone thinking to look.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays at 13:00 UTC (08:00 America/Chicago).
+    - cron: '0 13 * * 1'
+
+jobs:
+  content:
+    runs-on: ubuntu-latest
+    env:
+      # A variable, not a secret: this value ships to every visitor in the client bundle
+      # as NEXT_PUBLIC_SANITY_PROJECT_ID, so it is public by design. Masking it as a
+      # secret only makes build logs harder to read — the id shows as *** exactly when
+      # you are trying to work out which project a failing build pointed at.
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: production
+      # Needed only once the dataset is private. Harmless while it is public.
+      SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:content

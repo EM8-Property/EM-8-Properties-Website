@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/*
+ * EM8 light-institutional palette. Values are copied verbatim from the design spec §2.3
+ * and mirrored in src/lib/tokens.ts, which is what the contrast test asserts against.
+ *
+ * There is deliberately no prefers-color-scheme block. The spec chose a light ground and
+ * accepted that the site no longer matches the dark LinkedIn/deck treatment; an automatic
+ * dark mode would reintroduce exactly the split that decision resolved.
+ */
+@theme {
+  --color-ground: #FFFFFF;
+  --color-panel: #F5F5F3;
+  --color-ink: #1A1A1A;
+  --color-ink-secondary: #555555;
+  --color-rule: #D8D8D4;
+
+  /* Fills, buttons, and figures 24px and up. Never small text — see --color-teal-text. */
+  --color-teal: #4ABDB5;
+  /* Required below 24px. #4ABDB5 measures ~2.2:1 on white and fails WCAG AA. */
+  --color-teal-text: #2C7A74;
+
+  --radius-chip: 4px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+}
+
+/* `inline` so these resolve against the next/font variables set on <html> at runtime. */
+@theme inline {
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-oswald), sans-serif;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+}
+
+/*
+ * Property map basemap.
+ *
+ * OpenStreetMap's default tiles are far more saturated than the light institutional
+ * ground this site uses, and a full-colour map beside muted type reads as an embedded
+ * widget rather than part of the page. Desaturating and lifting them in CSS gets the
+ * quiet basemap the design wants from a tile source that needs no API key — CARTO's
+ * light theme now watermarks every tile unless you hold one.
+ *
+ * The teal marker is drawn by Leaflet as a vector and sits above this layer, so it keeps
+ * its brand colour while the map behind it recedes.
+ */
+.em8-basemap {
+  filter: grayscale(0.85) contrast(0.92) brightness(1.06);
+}

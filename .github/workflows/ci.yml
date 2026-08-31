@@ -1,0 +1,108 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  # Everything that needs no credentials. The unit suite supplies its own dummy Sanity
+  # vars (see vitest.config.mts) and is forbidden from touching the network, so this job
+  # runs identically for an outside contributor's fork, where secrets are unavailable.
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Typecheck runs first on purpose, so a type error fails fast. This is also why
+      # route props are typed explicitly rather than with Next's generated globals —
+      # those only exist after a build has produced .next/types.
+      - run: npx tsc --noEmit
+      # ESLint carries the logical-properties rule, which is what decides whether Phase 2
+      # (Hebrew/RTL) is additive or a rewrite. It is not optional styling enforcement.
+      - run: npx eslint .
+      - run: npm test
+
+  # The build prerenders every route, which means it reaches Sanity — so this job needs
+  # credentials and cannot run on a fork PR, where GitHub withholds secrets. Guarded
+  # rather than left to fail: a red X an outside contributor cannot act on is noise.
+  build:
+    runs-on: ubuntu-latest
+    needs: checks
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    env:
+      # A variable, not a secret: this value ships to every visitor in the client bundle
+      # as NEXT_PUBLIC_SANITY_PROJECT_ID, so it is public by design. Masking it as a
+      # secret only makes build logs harder to read — the id shows as *** exactly when
+      # you are trying to work out which project a failing build pointed at.
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ vars.SANITY_PROJECT_ID }}
+      NEXT_PUBLIC_SANITY_DATASET: production
+      # Required, not optional: the dataset is private. Without this the build fails on
+      # a missing siteSettings document — an error that names the content, not the
+      # credential, and sends you looking in the wrong place entirely.
+      SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Fail here, with a clear message, rather than inside a Playwright webServer
+      # timeout — playwright.config.ts builds before it serves, so without this step a
+      # broken build reports as "server never came up".
+      - run: npm run build
+
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+      # Started here rather than via the action's startServerCommand, on a different
+      # port from the one Playwright uses.
+      #
+      # Lighthouse previously failed with CHROME_INTERSTITIAL_ERROR: the action starts
+      # the server and navigates without waiting for it to listen, and it was racing
+      # Playwright's webServer teardown for port 3000. Chrome loaded
+      # chrome-error://chromewebdata/ and every audit threw, which reads as "the site is
+      # broken" rather than "nothing was serving".
+      #
+      # Polling for a real 200 makes readiness explicit, and a server that never comes up
+      # now fails with that sentence instead of a wall of audit exceptions.
+      - name: Start production server for Lighthouse
+        run: |
+          # nohup so the server survives this step's shell, and a logfile so a startup
+          # failure is readable instead of silent.
+          nohup env PORT=3001 npm start > /tmp/next-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3001/ > /dev/null; then
+              echo "server ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::production server never served a 200 on port 3001 within 60s"
+          echo "--- server log ---"
+          cat /tmp/next-server.log || true
+          exit 1
+
+      - name: Lighthouse budget
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: http://localhost:3001/
+          budgetPath: ./lighthouse-budget.json
+          # The 800KB image budget is the guardrail against the old site's central
+          # failure: 10-20MB camera originals. It fails the build long before anyone
+          # ships one.
+# Note: `npm test` runs only tests/unit. The content-integrity suite
+# (`npm run test:content`) reads the live dataset and is run deliberately before a
+# content release, not on every push — see content-gate.yml.
