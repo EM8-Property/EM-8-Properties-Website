@@ -16,10 +16,9 @@ COPY . .
 # with "Configuration must contain `projectId`" — the original plan's Dockerfile passed
 # no environment at all and could not have produced an image.
 #
-# Only NEXT_PUBLIC_* values belong here. They are inlined into the client bundle by
-# design and are not secrets. The write token, Resend key, and revalidate secret are
-# runtime-only and must never appear as build args — a build arg is recoverable from
-# image history.
+# The NEXT_PUBLIC_* values are inlined into the client bundle by design and are not
+# secrets. The write token, Resend key, and revalidate secret are runtime-only and must
+# never appear here.
 ARG NEXT_PUBLIC_SANITY_PROJECT_ID
 ARG NEXT_PUBLIC_SANITY_DATASET
 ARG NEXT_PUBLIC_SITE_URL
@@ -28,7 +27,26 @@ ENV NEXT_PUBLIC_SANITY_PROJECT_ID=$NEXT_PUBLIC_SANITY_PROJECT_ID \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+# The read token is required at BUILD time too, which is easy to get wrong.
+#
+# The dataset is private. Prerendering runs GROQ as the anonymous role, which returns
+# an empty result set rather than an error, so the build fails on a missing siteSettings
+# document. That error names the content and sends you to the Studio, when the real
+# problem is a missing credential. The check below exists to stop that misdirection.
+#
+# Confined to this builder stage and never promoted to ENV in the runner, so it does
+# not reach the published image. Railway needs the explicit ARG: it does not pass
+# service variables into a Dockerfile build automatically.
+ARG SANITY_API_READ_TOKEN
+
+RUN if [ -z "$SANITY_API_READ_TOKEN" ]; then \
+      echo "ERROR: SANITY_API_READ_TOKEN is empty."; \
+      echo "The Sanity dataset is private, so prerendering needs it at BUILD time."; \
+      echo "Set it as a service variable in Railway. Without it this build fails"; \
+      echo "later with a misleading siteSettings error."; \
+      exit 1; \
+    fi \
+ && SANITY_API_READ_TOKEN="$SANITY_API_READ_TOKEN" npm run build
 
 # ---- run --------------------------------------------------------------------
 FROM node:22-alpine AS runner
