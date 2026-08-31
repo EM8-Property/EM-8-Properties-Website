@@ -168,6 +168,24 @@ export const property = defineType({
         }),
       ],
     }),
+    /**
+     * Whether the property appears in the assets listing on /portfolio and the homepage.
+     *
+     * Antioch Shopping Plaza is the case this exists for: under contract, not owned, so
+     * listing it under "Assets across the Chicago MSA" would state that EM8 owns it.
+     *
+     * It hides the property from that listing and nothing else. The offering module, the
+     * track record, and the property page itself all ignore it — one flag meaning four
+     * different things is how a toggle becomes impossible to reason about.
+     */
+    defineField({
+      name: 'showInPortfolio',
+      title: 'Show in Assets',
+      type: 'boolean',
+      description:
+        'Turn off for a property EM8 does not own yet. It keeps its own page and can still be offered.',
+      initialValue: true,
+    }),
     defineField({ name: 'featured', type: 'boolean', initialValue: false }),
     defineField({ name: 'order', type: 'number', initialValue: 100 }),
   ],

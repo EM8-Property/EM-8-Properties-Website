@@ -345,6 +345,10 @@ export const PROPERTIES = [
    */
   {
     _id: 'property-antioch-shopping-plaza',
+    // Under contract, not owned, so it is kept out of the assets listing — listing it
+    // under "Assets across the Chicago MSA" would state that EM8 owns it. It stays an
+    // open offering and keeps its own page. Flip this on after closing.
+    showInPortfolio: false,
     // The live offering. Only honoured when the document is created; once it exists the
     // Studio value wins, so withdrawing it there is permanent.
     publiclyOffered: true,

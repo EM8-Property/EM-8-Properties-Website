@@ -170,6 +170,13 @@ async function buildDocuments() {
   // next migration — re-reading a payload default there would silently re-solicit a raise
   // an editor had deliberately withdrawn. Only a property that does not exist yet takes
   // its default from the payload, which is how Antioch arrives already public.
+  const existingVisible = new Map(
+    ((await query('*[_type=="property"]{_id, showInPortfolio}')) ?? []).map((d) => [
+      d._id,
+      d.showInPortfolio,
+    ]),
+  )
+
   const existing = new Map(
     ((await query('*[_type=="property"]{_id, publiclyOffered}')) ?? []).map((d) => [
       d._id,
@@ -213,6 +220,13 @@ async function buildDocuments() {
     // above rather than reset — so the figures can sit ready while the offering stays
     // private until someone deliberately turns it on.
     if (p.offering) doc.offering = p.offering
+    // An *explicit* stored value wins, so re-listing a property in the Studio after
+    // closing survives the next migration. An absent one does not: every property predates
+    // this field, so treating "unset" as an editor decision would mean the payload default
+    // could never reach a document that already exists — which is every document.
+    const storedVisibility = existingVisible.get(p._id)
+    doc.showInPortfolio =
+      typeof storedVisibility === 'boolean' ? storedVisibility : p.showInPortfolio !== false
 
     if (p.image) {
       const assetId = APPLY ? await uploadImage(p.image) : await checkImage(p.image)
