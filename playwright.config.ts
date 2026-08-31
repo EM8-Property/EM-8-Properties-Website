@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { defineConfig, devices } from '@playwright/test'
 
 /**
@@ -24,10 +25,15 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          // CI builds explicitly in its own step, so rebuilding here would double the
-          // slowest part of the run. Locally there is no such step, so build first —
-          // otherwise a fresh checkout would serve a .next that does not exist.
-          command: process.env.CI ? 'npm start' : 'npm run build && npm start',
+          // Skip the rebuild only when a build actually exists — CI builds in its own
+          // step, and repeating it here would double the slowest part of the run.
+          // Conditioning on the artefact rather than on CI alone keeps this correct if
+          // that step is ever reordered or removed: a checkout with no .next builds
+          // rather than serving nothing. CI always starts from a fresh clone, so this
+          // can never reuse a stale build from a previous commit.
+          command: existsSync('.next/BUILD_ID')
+            ? 'npm start'
+            : 'npm run build && npm start',
           url: 'http://localhost:3000',
           reuseExistingServer: !process.env.CI,
           timeout: 180_000,

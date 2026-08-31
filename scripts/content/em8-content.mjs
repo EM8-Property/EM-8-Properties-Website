@@ -36,11 +36,23 @@
 const OLD_CDN = 'https://cdn.sanity.io/images/svwmqi1a/production/'
 export const oldImage = (file) => OLD_CDN + file
 
-const block = (text) => ({
+/**
+ * Sanity requires a _key on every array item, Portable Text blocks and their spans
+ * included. Omitting them still writes and still renders — the failure is confined to
+ * the Studio, which shows a "Missing keys" banner on each paragraph and will not reorder
+ * them until an editor repairs it. Nothing in the build, the unit suite, or Lighthouse
+ * can see that.
+ *
+ * Keys are derived from position rather than randomised so that re-running the migration
+ * produces byte-identical documents, instead of a fresh revision in every document's
+ * history on every run.
+ */
+const block = (text, i) => ({
   _type: 'block',
+  _key: `b${i}`,
   style: 'normal',
   markDefs: [],
-  children: [{ _type: 'span', text, marks: [] }],
+  children: [{ _type: 'span', _key: `b${i}s0`, text, marks: [] }],
 })
 export const portable = (paragraphs) => paragraphs.map(block)
 

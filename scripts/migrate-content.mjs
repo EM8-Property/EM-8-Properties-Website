@@ -53,6 +53,20 @@ async function query(groq) {
   return (await res.json()).result
 }
 
+/**
+ * In dry-run mode this verifies the source is reachable and returns a stub id, rather
+ * than skipping the network entirely. A dry run that never touches the CDN cannot catch
+ * a 404 or a token missing asset-upload scope — which is the whole reason to run one
+ * before writing.
+ */
+async function checkImage(filename) {
+  const url = oldImage(filename)
+  const res = await fetch(url, { method: 'HEAD' })
+  if (!res.ok) throw new Error(`source image unreachable (${res.status}): ${url}`)
+  console.log(`    reachable      ${filename}  (${((Number(res.headers.get('content-length')) || 0) / 1024 / 1024).toFixed(1)} MB)`)
+  return 'image-DRYRUN'
+}
+
 /** Upload once, then re-use. Sanity dedupes identical bytes, but this also avoids the download. */
 const assetCache = new Map()
 async function uploadImage(filename) {
@@ -93,6 +107,14 @@ const imageField = (assetId, alt) => ({
 async function buildDocuments() {
   const docs = []
 
+  // publiclyOffered is the one field an editor is expected to change and that this
+  // script would otherwise clobber on every run.
+  const existingOffered = new Map(
+    (
+      (await query('*[_type=="property" && publiclyOffered == true]{_id}')) ?? []
+    ).map((d) => [d._id, true]),
+  )
+
   for (const p of PROPERTIES) {
     console.log(`  property  ${p.title}`)
     const doc = {
@@ -108,9 +130,11 @@ async function buildDocuments() {
       cardBlurb: p.cardBlurb,
       order: p.order,
       featured: Boolean(p.featured),
-      // Never true without an explicit 506(c) decision per property. Defaulting it on
-      // would publish an offering that may only be marketed privately.
-      publiclyOffered: false,
+      // Preserved from the dataset rather than reset, because createOrReplace overwrites
+      // the whole document. Hard-coding false here would silently revert a 506(c)
+      // offering an editor had deliberately enabled in the Studio. New documents default
+      // to false: never public without an explicit per-property decision.
+      publiclyOffered: existingOffered.get(p._id) ?? false,
     }
 
     if (p.metraStation) doc.metraStation = p.metraStation
@@ -125,7 +149,7 @@ async function buildDocuments() {
     if (p.dealStory) doc.dealStory = p.dealStory
 
     if (p.image) {
-      const assetId = APPLY ? await uploadImage(p.image) : 'image-DRYRUN'
+      const assetId = APPLY ? await uploadImage(p.image) : await checkImage(p.image)
       doc.gallery = [{ _key: `${p._id}-0`, ...imageField(assetId, p.alt) }]
     }
 
@@ -143,7 +167,7 @@ async function buildDocuments() {
       order: m.order,
     }
     if (m.image) {
-      const assetId = APPLY ? await uploadImage(m.image) : 'image-DRYRUN'
+      const assetId = APPLY ? await uploadImage(m.image) : await checkImage(m.image)
       doc.photo = imageField(assetId, `${m.name}, ${m.role}, EM8 Properties`)
     }
     docs.push(doc)

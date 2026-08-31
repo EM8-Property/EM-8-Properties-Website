@@ -2,7 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { ASSET_CLASSES, STATUSES } from '@/lib/propertyTaxonomy'
 import { SPEC_9_PLACEHOLDERS } from '../shared/placeholders'
 // Plain ESM data module, shared with scripts/migrate-content.mjs.
-import { PROPERTIES, HERO_STATS, FOCUS_CARDS, TEAM } from '../../scripts/content/em8-content.mjs'
+import {
+  PROPERTIES,
+  HERO_STATS,
+  FOCUS_CARDS,
+  TEAM,
+  portable,
+} from '../../scripts/content/em8-content.mjs'
 
 /**
  * Gates the migration payload before it is written, not after.
@@ -85,6 +91,36 @@ describe('migration payload — structure', () => {
       if (!p.image) continue
       expect(p.alt, `${p.title} has an image but no alt text`).toBeTruthy()
     }
+  })
+})
+
+describe('portable text', () => {
+  // Sanity requires _key on every array item. Without it the Studio shows a "Missing
+  // keys" banner on each paragraph and refuses to reorder them until the editor clicks
+  // "Add missing keys" — while the built site renders perfectly, so nothing in the build,
+  // the unit suite, or Lighthouse notices. Caught only by opening the Studio.
+  type Block = { _key?: string; children: { _key?: string }[] }
+  const blocks: Block[] = portable(['First paragraph.', 'Second paragraph.'])
+
+  it('gives every block a _key', () => {
+    for (const b of blocks) expect(b._key, 'block is missing _key').toBeTruthy()
+  })
+
+  it('gives every span inside a block a _key', () => {
+    for (const b of blocks) {
+      for (const child of b.children) expect(child._key, 'span is missing _key').toBeTruthy()
+    }
+  })
+
+  it('makes keys unique within the array', () => {
+    const keys = blocks.map((b: Block) => b._key)
+    expect(new Set(keys).size).toBe(keys.length)
+  })
+
+  it('generates the same keys every run, so re-migrating does not churn documents', () => {
+    // A random key per run would make every re-run rewrite every block, producing a new
+    // revision and a spurious "changed" entry in the document history each time.
+    expect(portable(['First paragraph.', 'Second paragraph.'])).toEqual(blocks)
   })
 })
 
