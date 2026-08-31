@@ -87,3 +87,41 @@ describe('HeroCarousel', () => {
     expect(container.innerHTML).not.toMatch(PHYSICAL)
   })
 })
+
+/**
+ * The resource budget in CI caught this: rendering an <Image> for all eight slides pulled
+ * 1.3MB of photography against an 800KB image budget on first load, because every slide
+ * sits in the same absolutely-positioned box and the browser treats them all as visible.
+ *
+ * That is the specific failure this whole rebuild exists to avoid — spec §1 describes the
+ * old site's 10-20MB camera-original photos as a founding problem. Only a window around
+ * the current slide is rendered now, which keeps the crossfade smooth without paying for
+ * six photographs nobody has scrolled to.
+ */
+describe('HeroCarousel — resource budget', () => {
+  const many = Array.from({ length: 8 }, (_, i) => ({
+    image: { alt: `slide ${i}` },
+    slug: `property-${i}`,
+    propertyTitle: `Property ${i}`,
+  }))
+
+  it('renders only a small window of images, not one per slide', () => {
+    const { container } = render(<HeroCarousel slides={many} />)
+    const imgs = container.querySelectorAll('img')
+    expect(imgs.length, `rendered ${imgs.length} images for 8 slides`).toBeLessThanOrEqual(3)
+  })
+
+  it('still renders every slide as a link, so navigation is unaffected', () => {
+    const { container } = render(<HeroCarousel slides={many} />)
+    expect(container.querySelectorAll('a')).toHaveLength(8)
+  })
+
+  it('includes the neighbouring slides so the next transition is already decoded', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<HeroCarousel slides={many} />)
+    await user.click(container.querySelectorAll('button')[4]!)
+    const alts = [...container.querySelectorAll('img')].map((i) => i.getAttribute('alt'))
+    expect(alts).toContain('slide 4')
+    expect(alts).toContain('slide 5')
+  })
+})

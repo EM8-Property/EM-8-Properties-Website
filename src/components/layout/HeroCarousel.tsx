@@ -56,37 +56,58 @@ export function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      {usable.map((slide, i) => (
-        <Link
-          key={`${slide.slug}-${i}`}
-          href={`/portfolio/${slide.slug}`}
-          // Inert rather than unmounted: keeping every slide mounted lets the browser
-          // decode the next image before it is shown, and `inert` keeps the hidden ones
-          // out of the tab order and off the accessibility tree while they are invisible.
-          inert={i !== index}
-          aria-hidden={i !== index}
-          className={`absolute inset-0 transition-opacity duration-700 ${
-            i === index ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <Image
-            src={urlForImage(slide.image).width(2000).height(600).url()}
-            alt={(slide.image as { alt?: string })?.alt ?? slide.propertyTitle ?? ''}
-            width={2000}
-            height={600}
-            priority={i === 0}
-            className="h-full w-full object-cover"
-          />
-          {/*
-            A scrim, not a decoration. The property name sits on photography of unknown
-            brightness, and this is what keeps it legible on a pale lobby shot.
-          */}
-          <span className="absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.72)] to-transparent" />
-          <span className="absolute bottom-4 start-6 font-display text-sm font-medium uppercase tracking-wide text-white sm:text-base">
-            {slide.propertyTitle}
-          </span>
-        </Link>
-      ))}
+      {usable.map((slide, i) => {
+        /*
+         * Only the current slide and its two neighbours carry an <Image>.
+         *
+         * Every slide sits in the same absolutely-positioned box, so the browser treats
+         * them all as visible and fetches every one — eight photographs on first paint,
+         * which measured 1.3MB against an 800KB image budget and failed CI. Lazy loading
+         * does not help for the same reason. Spec §1 names the old site's oversized
+         * photography as a founding problem, so raising the budget was not an option.
+         *
+         * A window of three keeps the crossfade in both directions already decoded while
+         * paying for three images instead of eight.
+         */
+        const distance = Math.min(
+          Math.abs(i - index),
+          usable.length - Math.abs(i - index),
+        )
+        const loaded = distance <= 1
+
+        return (
+          <Link
+            key={`${slide.slug}-${i}`}
+            href={`/portfolio/${slide.slug}`}
+            // `inert` keeps the hidden slides out of the tab order and off the
+            // accessibility tree while they are invisible, without unmounting them.
+            inert={i !== index}
+            aria-hidden={i !== index}
+            className={`absolute inset-0 transition-opacity duration-700 ${
+              i === index ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            {loaded && (
+              <Image
+                src={urlForImage(slide.image).width(1600).height(500).url()}
+                alt={(slide.image as { alt?: string })?.alt ?? slide.propertyTitle ?? ''}
+                width={1600}
+                height={500}
+                priority={i === 0}
+                className="h-full w-full object-cover"
+              />
+            )}
+            {/*
+              A scrim, not a decoration. The property name sits on photography of unknown
+              brightness, and this is what keeps it legible on a pale lobby shot.
+            */}
+            <span className="absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.72)] to-transparent" />
+            <span className="absolute bottom-4 start-6 font-display text-sm font-medium uppercase tracking-wide text-white sm:text-base">
+              {slide.propertyTitle}
+            </span>
+          </Link>
+        )
+      })}
 
       {usable.length > 1 && (
         <div className="absolute bottom-4 end-6 flex gap-2">
