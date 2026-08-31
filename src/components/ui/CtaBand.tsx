@@ -1,5 +1,6 @@
 import { LeadForm } from '@/components/forms/LeadForm'
 import { SectionHeading } from './SectionHeading'
+import { Band, type BandTone } from './Band'
 
 /**
  * The closing call to action, shared by the homepage and every property page.
@@ -33,13 +34,19 @@ export type CtaBandCopy = {
 export function CtaBand({
   bookACallUrl,
   copy,
+  tone = "panel",
 }: {
   bookACallUrl?: string | null
   copy?: CtaBandCopy
+  /**
+   * Which ground to sit on. The homepage passes the next tone in its alternating
+   * sequence so this band cannot land on the same ground as the section above it;
+   * property pages leave it panelled, since white content always precedes it there.
+   */
+  tone?: BandTone
 }) {
   return (
-    <section className="border-t border-rule bg-panel">
-      <div className="mx-auto max-w-[1200px] px-6 py-14">
+    <Band tone={tone}>
         <SectionHeading {...(copy?.heading ?? {})} />
 
         <div className="mt-8 grid gap-8 md:grid-cols-2">
@@ -79,7 +86,6 @@ export function CtaBand({
             </div>
           )}
         </div>
-      </div>
-    </section>
+    </Band>
   )
 }
