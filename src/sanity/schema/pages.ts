@@ -23,6 +23,7 @@ export const homePage = defineType({
   title: 'Home page',
   type: 'document',
   fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
     defineField({ name: 'hero', type: 'heroBlock', validation: (r) => r.required() }),
     defineField({
       name: 'factorsHeading',
@@ -106,6 +107,7 @@ export const aboutPage = defineType({
   title: 'About page',
   type: 'document',
   fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
     defineField({ name: 'hero', type: 'heroBlock', validation: (r) => r.required() }),
     defineField({ name: 'factorsHeading', type: 'headingBlock', validation: (r) => r.required() }),
     defineField({
@@ -123,6 +125,7 @@ export const partnersPage = defineType({
   title: 'Partners page',
   type: 'document',
   fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
     defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
     defineField({
       name: 'partners',
@@ -148,6 +151,7 @@ export const investorsPage = defineType({
   title: 'Investors page',
   type: 'document',
   fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
     defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
     defineField({
       name: 'loginLabel',
@@ -176,4 +180,41 @@ export const investorsPage = defineType({
     }),
   ],
   preview: { prepare: () => ({ title: 'Investors page' }) },
+})
+
+/**
+ * Three routes that had no document of their own.
+ *
+ * /portfolio, /insights and /track-record were the pages revision D4 never reached,
+ * because their visible copy is a single heading each and the rest is generated from the
+ * property and post collections. Their search title and description were still literals in
+ * TSX, which is the whole reason these exist.
+ *
+ * They hold `seo` only, deliberately. Their headings could move here too, but that is
+ * copy-migration work with its own before-and-after check, and bundling it into a schema
+ * change about metadata would make both harder to verify. The fields are here when someone
+ * wants them.
+ */
+export const portfolioPage = defineType({
+  name: 'portfolioPage',
+  title: 'Portfolio page',
+  type: 'document',
+  fields: [defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() })],
+  preview: { prepare: () => ({ title: 'Portfolio page' }) },
+})
+
+export const insightsPage = defineType({
+  name: 'insightsPage',
+  title: 'Insights page',
+  type: 'document',
+  fields: [defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() })],
+  preview: { prepare: () => ({ title: 'Insights page' }) },
+})
+
+export const trackRecordPage = defineType({
+  name: 'trackRecordPage',
+  title: 'Track record page',
+  type: 'document',
+  fields: [defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() })],
+  preview: { prepare: () => ({ title: 'Track record page' }) },
 })

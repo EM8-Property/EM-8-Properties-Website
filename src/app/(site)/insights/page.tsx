@@ -1,17 +1,24 @@
-import { pageMetadata } from '@/lib/seo'
+import type { Metadata } from 'next'
+import { seoMetadata } from '@/lib/pageSeo'
 import { fetchSanity } from '@/sanity/client'
-import { ALL_POSTS_QUERY } from '@/sanity/queries'
-import type { ALL_POSTS_QUERY_RESULT } from '@/sanity/types.generated'
+import { ALL_POSTS_QUERY, INSIGHTS_PAGE_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
+import type { ALL_POSTS_QUERY_RESULT, INSIGHTS_PAGE_QUERY_RESULT, SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
 import { InsightsFilter } from '@/components/insights/InsightsFilter'
 import type { PostData } from '@/components/insights/PostCard'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 
-export const metadata = pageMetadata({
-  title: 'Insights',
-  description:
-    'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily.',
-  path: '/insights',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  const [copy, settings] = await Promise.all([
+    fetchSanity<INSIGHTS_PAGE_QUERY_RESULT>(INSIGHTS_PAGE_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
+  return seoMetadata({
+    seo: copy?.seo,
+    path: '/insights',
+    documentName: 'insightsPage',
+    shareImage: settings?.defaultShareImage,
+  })
+}
 
 export default async function InsightsPage() {
   const posts = await fetchSanity<ALL_POSTS_QUERY_RESULT>(ALL_POSTS_QUERY)

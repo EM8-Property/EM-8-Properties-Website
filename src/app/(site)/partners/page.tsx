@@ -1,18 +1,25 @@
-import { pageMetadata } from '@/lib/seo'
+import type { Metadata } from 'next'
+import { seoMetadata } from '@/lib/pageSeo'
 import { fetchSanity } from '@/sanity/client'
-import { PARTNERS_PAGE_QUERY } from '@/sanity/queries'
-import type { PARTNERS_PAGE_QUERY_RESULT } from '@/sanity/types.generated'
+import { PARTNERS_PAGE_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
+import type { PARTNERS_PAGE_QUERY_RESULT, SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
 import { LeadForm, type FieldSpec } from '@/components/forms/LeadForm'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Card } from '@/components/ui/Card'
 
-export const metadata = pageMetadata({
-  title: 'Partners',
-  description:
-    'EM8 works with Kinzie, Advantage, and municipalities across the Chicago MSA as one accountable team.',
-  path: '/partners',
-})
+export async function generateMetadata(): Promise<Metadata> {
+  const [copy, settings] = await Promise.all([
+    fetchSanity<PARTNERS_PAGE_QUERY_RESULT>(PARTNERS_PAGE_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
+  return seoMetadata({
+    seo: copy?.seo,
+    path: '/partners',
+    documentName: 'partnersPage',
+    shareImage: settings?.defaultShareImage,
+  })
+}
 
 const SITE_FIELDS: FieldSpec[] = [
   { name: 'firstName', label: 'Your name', type: 'text', required: true },

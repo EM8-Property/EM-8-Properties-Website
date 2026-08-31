@@ -117,3 +117,44 @@ export const factItem = defineType({
   ],
   preview: { select: { title: 'value', subtitle: 'label' } },
 })
+
+/**
+ * The title and description a page shows in search results and on a share card.
+ *
+ * These were the last strings still hardcoded in TSX after revision D4 moved the rest of
+ * the page copy into Sanity. They stayed behind for a mechanical reason — Next's static
+ * `metadata` export cannot read the CMS, so moving them meant converting every page to
+ * `generateMetadata` — not because anyone decided the team should need a developer to fix
+ * a search-result snippet.
+ *
+ * `title` is the page's own name only. " | EM8 Properties" is appended by `pageTitle`, so
+ * an editor typing the suffix would get it twice.
+ */
+export const seoBlock = defineType({
+  name: 'seoBlock',
+  title: 'Search & sharing',
+  type: 'object',
+  fields: [
+    defineField({
+      name: 'title',
+      title: 'Page title',
+      type: 'string',
+      description:
+        'The page name on its own — "About", not "About | EM8 Properties". The site name is added automatically.',
+      // 43, not 60. Google truncates a title around 60 characters, and pageTitle appends
+      // " | EM8 Properties" — 17 more — so a title written to a 60-character counter
+      // renders at 77 and gets cut off. The counter has to measure what ships.
+      validation: (r) => r.required().max(43),
+    }),
+    defineField({
+      name: 'description',
+      title: 'Search description',
+      type: 'text',
+      rows: 3,
+      description:
+        'One or two sentences. Google shows roughly 155 characters, so the counter caps there.',
+      validation: (r) => r.required().max(155),
+    }),
+  ],
+  preview: { select: { title: 'title', subtitle: 'description' } },
+})

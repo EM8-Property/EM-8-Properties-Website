@@ -32,7 +32,13 @@ async function anonymousQuery(groq: string): Promise<{ status: number; count: nu
   return { status: res.status, count: Array.isArray(body.result) ? body.result.length : 0 }
 }
 
-const CONTENT_TYPES = '["property","post","teamMember","focusCard","testimonial","heroStat","siteSettings"]'
+const CONTENT_TYPES =
+  '["property","post","teamMember","focusCard","testimonial","heroStat","siteSettings",' +
+  '"homePage","aboutPage","partnersPage","investorsPage","portfolioPage","insightsPage","trackRecordPage"]'
+
+/** Every page singleton, each of which must carry a complete `seo` block. */
+const PAGE_IDS =
+  '["homePage","aboutPage","partnersPage","investorsPage","portfolioPage","insightsPage","trackRecordPage"]'
 
 /**
  * Restricts every check below to *published* documents.
@@ -133,5 +139,35 @@ describe('published content', () => {
     expect(settings, 'siteSettings must exist exactly once').toHaveLength(1)
     expect(settings[0]?.agoraPortalUrl).toBeTruthy()
     expect(settings[0]?.disclaimer).toBeTruthy()
+  })
+
+  /**
+   * Every page singleton needs a complete `seo` block, because `seoMetadata` throws
+   * without one — and that throw happens during `next build`, so a single cleared field
+   * in the Studio takes down the whole site's build, not just that route.
+   *
+   * The unit tests check the *seed constants* fit the schema. This checks the dataset,
+   * which is the thing the build actually reads. It moves the failure from deploy time to
+   * the release gate, which is where you want to meet it.
+   */
+  it('has a complete seo block on every page singleton', async () => {
+    const ids = JSON.parse(PAGE_IDS) as string[]
+
+    const pages = await client.fetch<{ _id: string; title?: string; description?: string }[]>(
+      `*[_id in ${PAGE_IDS} && ${PUBLISHED}]{ _id, "title": seo.title, "description": seo.description }`,
+    )
+
+    expect(
+      pages.map((p) => p._id).sort(),
+      'a page singleton the build requires is missing entirely',
+    ).toEqual([...ids].sort())
+
+    for (const page of pages) {
+      expect(page.title, `${page._id} has no seo.title — next build will fail`).toBeTruthy()
+      expect(
+        page.description,
+        `${page._id} has no seo.description — next build will fail`,
+      ).toBeTruthy()
+    }
   })
 })

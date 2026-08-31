@@ -58,6 +58,11 @@ export default defineConfig({
                 ['aboutPage', 'About page'],
                 ['partnersPage', 'Partners page'],
                 ['investorsPage', 'Investors page'],
+                // These three hold only their search title and description — the rest of
+                // each page is generated from the property and post collections.
+                ['portfolioPage', 'Portfolio page'],
+                ['insightsPage', 'Insights page'],
+                ['trackRecordPage', 'Track record page'],
               ] as const
             ).map(([type, title]) =>
               S.listItem()

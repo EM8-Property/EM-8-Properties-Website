@@ -155,5 +155,16 @@ describe('every content route declares its own canonical', () => {
         `${route} passes image: null, so it needs its own opengraph-image.tsx`,
       ).toBe(true)
     }
+
+    // No route may go back to a static `metadata` export.
+    //
+    // Titles and descriptions live in Sanity now, and a missing `seo` field fails the
+    // build — which makes "hardcode it again to get the build green" a plausible panic
+    // fix. Everything above would still pass afterwards, because the canonical path
+    // literal reads the same either way. This is the line that would not.
+    expect(
+      source,
+      `${route} must read its title and description from the CMS, not a static export`,
+    ).not.toMatch(/export const metadata\b/)
   })
 })

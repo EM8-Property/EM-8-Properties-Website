@@ -28,6 +28,7 @@ import {
   TESTIMONIALS,
   SITE_SETTINGS,
   PAGE_COPY,
+  PAGE_SEO,
   oldImage,
   portable,
 } from './content/em8-content.mjs'
@@ -136,7 +137,10 @@ function withKeys(items, prefix) {
 }
 
 async function seedPagesIfMissing(apply) {
-  const ids = Object.keys(PAGE_COPY)
+  // The union, not just PAGE_COPY: /portfolio, /insights and /track-record have documents
+  // that hold nothing but their search title and description, so they appear in PAGE_SEO
+  // and not in PAGE_COPY.
+  const ids = [...new Set([...Object.keys(PAGE_COPY), ...Object.keys(PAGE_SEO)])]
   const present = new Set(
     (await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [],
   )
@@ -147,10 +151,11 @@ async function seedPagesIfMissing(apply) {
       console.log(`  page      ${id} already exists — left untouched`)
       continue
     }
-    const copy = structuredClone(PAGE_COPY[id])
+    const copy = structuredClone(PAGE_COPY[id] ?? {})
     if (copy.partners) copy.partners = withKeys(copy.partners, 'partner')
     if (copy.facts) copy.facts = withKeys(copy.facts, 'fact')
     if (copy.steps) copy.steps = withKeys(copy.steps, 'step')
+    if (PAGE_SEO[id]) copy.seo = structuredClone(PAGE_SEO[id])
     console.log(`  page      seeding ${id}`)
     docs.push({ _id: id, _type: id, ...copy })
   }
@@ -166,6 +171,67 @@ async function seedPagesIfMissing(apply) {
   })
   if (!res.ok) throw new Error(`page seed failed ${res.status}: ${await res.text()}`)
   console.log(`  page      seeded ${docs.length}`)
+}
+
+/**
+ * Adds `seo` to page documents that predate the field.
+ *
+ * `seedPagesIfMissing` cannot do this: it seeds a whole document only when none exists, so
+ * the four pages already in the dataset would keep their missing `seo` forever — and the
+ * field is required, so every one of those pages would fail the build.
+ *
+ * `setIfMissing`, never `set`. An editor who has already written their own title and
+ * description must survive a re-run of this migration; the whole point of moving these
+ * strings into the CMS is that the team owns them now. This only fills a blank.
+ */
+async function backfillPageSeo(apply) {
+  const ids = Object.keys(PAGE_SEO)
+
+  // Per *leaf*, not per `seo` object, and with no `!defined(seo)` pre-filter.
+  //
+  // Keying on the whole object made this fill a blank but never repair a half-filled one:
+  // `setIfMissing: { seo }` is all-or-nothing at that key, so a document with a title and
+  // no description would be skipped forever — reported as "already has one" on every
+  // re-run while `next build` failed on it. The Studio's required() validation blocks that
+  // through the publish path, but Vision, the CLI, and any direct API write do not.
+  //
+  // `setIfMissing` on each leaf keeps the guarantee that matters: an editor's own words
+  // are never overwritten, now at field granularity rather than object granularity.
+  const incomplete =
+    (await query(
+      `*[_id in ${JSON.stringify(ids)} && (!defined(seo.title) || !defined(seo.description))]._id`,
+    )) ?? []
+
+  if (incomplete.length === 0) {
+    console.log('  page seo  no existing page is missing one — left untouched')
+    return
+  }
+
+  for (const id of incomplete) console.log(`  page seo  backfilling ${id}`)
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: incomplete.flatMap((id) => [
+        // The parent object first: a leaf path cannot be set inside an object that does
+        // not exist yet, and this is a no-op when it already does.
+        { patch: { id, setIfMissing: { seo: {} } } },
+        {
+          patch: {
+            id,
+            setIfMissing: {
+              'seo.title': PAGE_SEO[id].title,
+              'seo.description': PAGE_SEO[id].description,
+            },
+          },
+        },
+      ]),
+    }),
+  })
+  if (!res.ok) throw new Error(`page seo backfill failed ${res.status}: ${await res.text()}`)
+  console.log(`  page seo  backfilled ${incomplete.length}`)
 }
 
 async function seedCarouselIfEmpty(apply) {
@@ -379,6 +445,7 @@ async function main() {
   if (!APPLY) {
     await seedCarouselIfEmpty(false)
     await seedPagesIfMissing(false)
+    await backfillPageSeo(false)
     console.log('\nDry run complete. Nothing was written. Re-run with --apply.')
     return
   }
@@ -411,6 +478,7 @@ async function main() {
 
   await seedCarouselIfEmpty(true)
   await seedPagesIfMissing(true)
+  await backfillPageSeo(true)
   const body = await res.json()
   console.log(`\nWrote ${body.results?.length ?? 0} documents.`)
   console.log('Next: npm run test:content, then npm run build.')

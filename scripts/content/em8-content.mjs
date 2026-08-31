@@ -791,3 +791,52 @@ export const PAGE_COPY = {
     testimonialsHeading: { eyebrow: 'Our Investors', title: 'What our partners say' },
   },
 }
+
+/**
+ * Each page's search title and description.
+ *
+ * Every string here is transcribed from the `export const metadata` block that page
+ * carried before this moved into Sanity — same words, same punctuation. The only change is
+ * that the title drops the " | EM8 Properties" suffix, which `pageTitle` appends, so an
+ * editor who types it would get it twice.
+ *
+ * `homePage` is deliberately the site name alone: it is the one page whose title is not a
+ * section of the site.
+ */
+export const PAGE_SEO = {
+  homePage: {
+    title: 'EM8 Properties',
+    description:
+      'Transit-oriented multifamily and mixed-use development in suburban Chicago.',
+  },
+  aboutPage: {
+    title: 'About',
+    description:
+      'Creating communities people choose to live in. Transit-oriented development in suburban Chicago.',
+  },
+  partnersPage: {
+    title: 'Partners',
+    description:
+      'EM8 works with Kinzie, Advantage, and municipalities across the Chicago MSA as one accountable team.',
+  },
+  investorsPage: {
+    title: 'Investors',
+    description:
+      'We work with accredited investors, family offices, and joint-venture partners across the Chicago MSA.',
+  },
+  portfolioPage: {
+    title: 'Portfolio',
+    description:
+      'Multifamily and mixed-use assets across the Chicago MSA and southern Wisconsin.',
+  },
+  insightsPage: {
+    title: 'Insights',
+    description:
+      'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily.',
+  },
+  trackRecordPage: {
+    title: 'Track Record',
+    description:
+      'Realized results across the Chicago MSA: what we paid, what we did, what we exited at.',
+  },
+}

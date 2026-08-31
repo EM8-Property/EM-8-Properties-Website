@@ -49,7 +49,12 @@ export const SHARE_CARD = {
  * document saved without one would otherwise ship a title beginning with a bare pipe.
  */
 export function pageTitle(title: string): string {
-  return !title || title === SITE_NAME ? SITE_NAME : `${title} | ${SITE_NAME}`
+  // Trimmed and case-insensitive, because this value now comes from the CMS rather than
+  // from code: an editor typing "EM8 properties" or a trailing space would otherwise get
+  // "EM8 properties | EM8 Properties".
+  const clean = title.trim()
+  if (!clean || clean.toLowerCase() === SITE_NAME.toLowerCase()) return SITE_NAME
+  return `${clean} | ${SITE_NAME}`
 }
 
 /** A card image with the dimensions and alt text declared, not a bare URL. */
