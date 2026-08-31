@@ -26,50 +26,150 @@ const buckets = new Map<string, Bucket>()
  * Per-key limiting can always be diluted — by a botnet, or by any weakness in deriving
  * the key from proxy headers. This bounds total damage regardless of how many distinct
  * keys an attacker can present: at worst they burn the global budget for the hour, and
- * the CMS and the mail account survive it.
+ * the CMS survives it.
+ *
+ * **Why 400 and not 100.** Every form on the site posts to the same `/api/lead`, and the
+ * limiter runs before the body is read, so it cannot tell them apart: the newsletter
+ * capture in `CtaBand` renders on the homepage and every property page (twelve today,
+ * thirteen the day someone adds a property), the homepage overlay is one more form on
+ * that same homepage, and /investors Keep in Touch and the /partners site submission
+ * share the budget too. At 100/hour a run of ordinary newsletter signups could spend the
+ * whole ceiling and answer a real accredited investor with a 429 — which writes no `lead`
+ * document and sends no email, losing the submission outright. That inverts the
+ * capture-first rationale this endpoint exists to serve.
+ *
+ * 400 also clears one boundary that 300 does not: a single well-behaved caller can be
+ * served at most 5/minute, or 300/hour, so no one compliant key can exhaust the site-wide
+ * budget on its own. That is load-bearing only because the budget counts served requests;
+ * it was moot while refused attempts spent it too. Do not read it as "no small number of
+ * keys can" — two keys at the maximum permitted rate reach 400 in about forty minutes.
+ *
+ * It does not *fix* the sharing: a distributed flood can still starve the investor form.
+ * But because only *served* requests spend the budget (see `rateLimit` below), doing so
+ * now costs roughly eighty distinct addresses within a minute — 80 × 5/minute — where it
+ * once cost one. Sustained over an hour, two addresses holding the maximum permitted rate
+ * would do it, which is not human behaviour on a form like this, and 400 leads written in
+ * an hour is a flood where a 429 is the correct answer. Scoping the budget per lead
+ * `source` would fix the sharing properly, but it means parsing the body before rate
+ * limiting — a security-ordering change, and a separate decision.
+ *
+ * Note the key is the proxy-appended client address, so one key is not one person. Behind
+ * a corporate NAT or carrier CGNAT the per-key 5/minute is the tighter constraint for a
+ * whole building's worth of visitors, not this ceiling.
+ *
+ * On the mail account specifically, this limiter was never the protection: Resend's
+ * allowance is around 100/day, which even the old 100/hour ceiling exceeded. Capture-first
+ * is what contains that — the `lead` document is still written and `submitLead` records
+ * `emailed: false`, so a lead nobody was told about is still recoverable.
  */
 const GLOBAL_WINDOW_MS = 3_600_000
-const GLOBAL_LIMIT = 100
+const GLOBAL_LIMIT = 400
 let globalBucket: Bucket = { count: 0, resetAt: 0 }
 
-export function rateLimit(
-  key: string,
-  now: number = Date.now(),
-): { allowed: boolean; retryAfterSeconds: number } {
-  if (now >= globalBucket.resetAt) {
-    globalBucket = { count: 0, resetAt: now + GLOBAL_WINDOW_MS }
-  }
-  globalBucket.count += 1
-  if (globalBucket.count > GLOBAL_LIMIT) {
+/**
+ * How many callers the site-wide budget has turned away in the current hour.
+ *
+ * Reported rather than logged here, so the limiter holds no logging policy. The route
+ * logs the first refusal of each hour and stays quiet after that — refusals are
+ * uncapped by design, and a caller that first arrives after the budget is spent never
+ * acquires a per-key bucket, so it would otherwise emit a line on every request forever.
+ */
+let globalRefusals = 0
+
+export type RateLimitResult = {
+  allowed: boolean
+  retryAfterSeconds: number
+  /** Which budget refused, for logging. `null` when the request is allowed. */
+  scope: 'key' | 'global' | null
+  /**
+   * Running count of site-wide refusals this hour; `1` on the first one.
+   *
+   * Meaningful when `scope === 'global'`. On the `'key'` path it is reported without a
+   * window-rollover check, so after an idle hour it can still carry the previous hour's
+   * tally; an allowed request always reports the live count, since nothing is served once
+   * the budget is spent.
+   */
+  globalRefusalsInWindow: number
+}
+
+/**
+ * True for 1, 10, 100, 1000 … — used to sample `globalRefusalsInWindow` for logging.
+ *
+ * Logging only the first refusal of an hour bounds the volume but throws away the
+ * magnitude, and magnitude is the evidence for whether `GLOBAL_LIMIT` is set right: an
+ * hour that turned away three visitors and one that turned away three million would look
+ * identical. Sampling at powers of ten caps a sustained flood at about seven lines an
+ * hour while the last line still names the order of magnitude.
+ *
+ * Computed by multiplication rather than `Math.log10`, which is not exact for every power
+ * of ten in floating point.
+ */
+export function isPowerOfTen(n: number): boolean {
+  if (!Number.isInteger(n) || n < 1) return false
+  for (let p = 1; p <= n; p *= 10) if (p === n) return true
+  return false
+}
+
+export function rateLimit(key: string, now: number = Date.now()): RateLimitResult {
+  // The per-key check comes FIRST, and neither counter is committed until the request is
+  // known to be served.
+  //
+  // While the global counter incremented on every attempt, a refused request still spent
+  // site-wide budget — so one unspoofed address could send 400 cheap requests, have 5 of
+  // them served, and 429 every visitor for the rest of the hour. That made the ceiling
+  // bound traffic, which is the cheap thing, rather than damage, which is what the
+  // comment above claims and what the ceiling is for.
+  //
+  // Ordering it this way keeps the reasoning behind the ceiling intact — a botnet's
+  // *served* requests still hit 400 and stop — while making per-key-refused spam unable
+  // to starve the investor form at all.
+  // Derived once. Asking "is this caller's window live" in two places invites a future
+  // edit to change one and not the other; there is only one predicate to get wrong.
+  const existing = buckets.get(key)
+  const liveBucket = existing && now < existing.resetAt ? existing : null
+
+  if (liveBucket && liveBucket.count >= LIMIT) {
     return {
       allowed: false,
-      retryAfterSeconds: Math.max(1, Math.ceil((globalBucket.resetAt - now) / 1000)),
+      retryAfterSeconds: Math.max(1, Math.ceil((liveBucket.resetAt - now) / 1000)),
+      scope: 'key',
+      globalRefusalsInWindow: globalRefusals,
     }
   }
 
-  const existing = buckets.get(key)
+  if (now >= globalBucket.resetAt) {
+    globalBucket = { count: 0, resetAt: now + GLOBAL_WINDOW_MS }
+    globalRefusals = 0
+  }
+  if (globalBucket.count >= GLOBAL_LIMIT) {
+    globalRefusals += 1
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((globalBucket.resetAt - now) / 1000)),
+      scope: 'global',
+      globalRefusalsInWindow: globalRefusals,
+    }
+  }
 
-  if (!existing || now >= existing.resetAt) {
+  // Served. Commit both counters together.
+  globalBucket.count += 1
+
+  if (liveBucket) {
+    liveBucket.count += 1
+  } else {
     // Opportunistic sweep so a stream of unique keys cannot grow the map without bound.
     if (buckets.size > MAX_TRACKED_KEYS) {
       for (const [k, b] of buckets) if (now >= b.resetAt) buckets.delete(k)
     }
     buckets.set(key, { count: 1, resetAt: now + WINDOW_MS })
-    return { allowed: true, retryAfterSeconds: 0 }
   }
 
-  existing.count += 1
-  if (existing.count > LIMIT) {
-    return {
-      allowed: false,
-      retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
-    }
-  }
-  return { allowed: true, retryAfterSeconds: 0 }
+  return { allowed: true, retryAfterSeconds: 0, scope: null, globalRefusalsInWindow: globalRefusals }
 }
 
 /** Test seam. */
 export function resetRateLimits(): void {
   buckets.clear()
   globalBucket = { count: 0, resetAt: 0 }
+  globalRefusals = 0
 }

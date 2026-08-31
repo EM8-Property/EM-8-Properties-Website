@@ -8,7 +8,7 @@ import {
 } from '@/lib/leads'
 import { writeClient } from '@/sanity/writeClient'
 import { resendSender } from '@/lib/email'
-import { rateLimit } from '@/lib/rateLimit'
+import { rateLimit, isPowerOfTen } from '@/lib/rateLimit'
 
 function callerKey(request: Request): string {
   // The RIGHT-most X-Forwarded-For entry, not the left-most.
@@ -29,8 +29,45 @@ function callerKey(request: Request): string {
 export async function POST(request: Request) {
   const limited = rateLimit(callerKey(request))
   if (!limited.allowed) {
+    // A 429 discards a submission and tells nobody — the same asymmetry that got the
+    // honeypot a log line below. A refusal by the site-wide budget is the one worth
+    // hearing about: it means every visitor is being turned away, not just one noisy
+    // caller, and it is the only evidence for whether the hourly ceiling is set right.
+    //
+    // Sampled, not once per refusal. Refusals are uncapped by design, and a caller that
+    // first arrives after the budget is spent never acquires a per-key bucket — so it
+    // stays on the global path and one address could emit thousands of identical lines a
+    // minute, burying the two lines below that mean a real lead may have been lost.
+    //
+    // At powers of ten rather than only the first, so the volume stays bounded (about
+    // seven lines in the worst hour) without discarding the magnitude — how many visitors
+    // were turned away is the evidence for whether the ceiling is set right.
+    if (limited.scope === 'global' && isPowerOfTen(limited.globalRefusalsInWindow)) {
+      console.warn('Lead endpoint refused a submission — site-wide hourly budget spent', {
+        refusedThisHour: limited.globalRefusalsInWindow,
+        retryAfterSeconds: limited.retryAfterSeconds,
+      })
+    }
     return NextResponse.json(
-      { ok: false, error: 'Too many submissions. Please try again shortly.' },
+      {
+        ok: false,
+        // "Shortly" is honest for a per-caller block, which clears within a minute. The
+        // site-wide budget resets on the hour, so saying "shortly" there would send a
+        // real investor back into another refusal.
+        //
+        // One case still understates the wait: a caller over *both* budgets is scoped
+        // 'key', because the per-caller gate runs first, so it is told to retry in a
+        // minute when the site-wide budget will refuse it for up to an hour. Not worth
+        // code — it is no worse than telling every per-caller block to wait an hour.
+        //
+        // Phrased without the words "right" or "left": the logical-properties ESLint rule
+        // scans every string literal under src/, so ordinary prose containing either one
+        // fails the build with a message about Tailwind utilities.
+        error:
+          limited.scope === 'global'
+            ? 'We are receiving an unusual number of submissions. Please try again later.'
+            : 'Too many submissions. Please try again shortly.',
+      },
       { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } },
     )
   }
