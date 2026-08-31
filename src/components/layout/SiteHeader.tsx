@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { showsCarousel } from '@/lib/carouselPages'
 
 const NAV = [
   { href: '/portfolio', label: 'Portfolio' },
@@ -24,11 +26,34 @@ const NAV = [
  * would duplicate every accessible name in the tree, which is both an a11y problem and
  * what makes `getByRole` ambiguous for anything testing this component.
  */
+/**
+ * Opacity of the white scrim behind the header when it overlays photography.
+ *
+ * Exported so a test can hold it to the contrast floor. This is a light-institutional
+ * design and the header carries ink text, not white, so a fully transparent header would
+ * put #1A1A1A on whatever the photograph happens to be. At 0.85 the worst case — pure
+ * black behind it — still measures 12.3:1, so legibility never depends on the image.
+ */
+export const HEADER_SCRIM = 0.85
+
 export function SiteHeader({ agoraUrl }: { agoraUrl: string }) {
   const [open, setOpen] = useState(false)
+  /*
+   * On the pages that carry the photo band, the header sits over the photography so the
+   * image runs to the very top of the page. Everywhere else it stays in normal flow —
+   * overlaying a page with no photo behind it would drop the header onto body copy.
+   */
+  const overlay = showsCarousel(usePathname())
 
   return (
-    <header className="border-b border-rule">
+    <header
+      className={
+        overlay
+          ? `absolute inset-x-0 top-0 z-40 backdrop-blur-sm`
+          : `border-b border-rule`
+      }
+      style={overlay ? { backgroundColor: `rgba(255, 255, 255, ${HEADER_SCRIM})` } : undefined}
+    >
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-y-3 px-6 py-4">
         <Link
           href="/"

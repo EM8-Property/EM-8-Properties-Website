@@ -156,7 +156,7 @@ export default async function HomePage() {
         />
         <div className="mt-6">
           <Button href="/partners" variant="secondary">
-            Bring us a site →
+            See our partners →
           </Button>
         </div>
       </section>

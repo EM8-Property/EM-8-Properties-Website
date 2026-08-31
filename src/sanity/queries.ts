@@ -18,7 +18,7 @@ import { defineQuery } from 'next-sanity'
  */
 
 export const ALL_PROPERTIES_QUERY = defineQuery(`
-  *[_type == "property"] | order(order asc) {
+  *[_type == "property" && showInPortfolio != false] | order(order asc) {
     _id, title, "slug": slug.current, assetClass, status, city, state,
     metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
     "image": gallery[0]

@@ -33,16 +33,15 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <>
-      <SiteHeader agoraUrl={settings.agoraPortalUrl} />
       {/*
-        The photo band sits above the page content on the main content pages.
-
-        Rendered here rather than in each page so the six that show it cannot drift apart,
-        and gated by pathname rather than duplicated: /investors and the property pages are
-        excluded, the former because it is a conversion page and the latter because they
-        already open on their own hero photograph.
+        The header and the photo band share a positioning context so the header can sit
+        over the photography, letting the image run to the very top of the page. On pages
+        with no band the header is in normal flow and the wrapper does nothing.
       */}
-      <CarouselSlot slides={(settings.heroCarousel ?? []) as CarouselSlide[]} />
+      <div className="relative">
+        <SiteHeader agoraUrl={settings.agoraPortalUrl} />
+        <CarouselSlot slides={(settings.heroCarousel ?? []) as CarouselSlide[]} />
+      </div>
       <main className="flex-1">{children}</main>
       <SiteFooter disclaimer={settings.disclaimer} contactEmail={settings.contactEmail} />
     </>
