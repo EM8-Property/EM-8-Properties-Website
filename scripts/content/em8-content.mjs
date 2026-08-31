@@ -443,7 +443,11 @@ export const TEAM = [
     role: 'Principal',
     bio: 'Oversees capital markets, refinancing strategy, and investor relations across all assets.',
     image: '10298315722421f69fd2877f9fd463d4bcea7993-800x800.jpg',
-    order: 20,
+    // Moved out of the leadership list on 2026-08-31 at Hunter’s direction. Confirmed as
+    // “Mikey”. Nir and Ilan join him here once their titles and bios are supplied — a
+    // bio is not something this file is allowed to invent.
+    group: 'partner-board',
+    order: 10,
   },
   {
     _id: 'teamMember-alexander-riegler',

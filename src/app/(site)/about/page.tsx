@@ -7,6 +7,7 @@ import { urlForImage } from '@/sanity/image'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Card } from '@/components/ui/Card'
+import { TEAM_GROUP_LABELS } from '@/lib/teamGroups'
 
 export const metadata: Metadata = {
   title: 'About | EM8 Properties',
@@ -14,11 +15,31 @@ export const metadata: Metadata = {
     'Creating communities people choose to live in. Transit-oriented development in suburban Chicago.',
 }
 
+/**
+ * Order matters: leadership first, then the board. Declared once so the two sections
+ * cannot drift apart in markup.
+ */
+const GROUP_SECTIONS = [
+  {
+    group: 'leadership',
+    eyebrow: TEAM_GROUP_LABELS.leadership,
+    title: 'Operators and investors who know these suburbs',
+  },
+  {
+    group: 'partner-board',
+    eyebrow: TEAM_GROUP_LABELS['partner-board'],
+    title: 'The people we answer to',
+  },
+] as const
+
 export default async function AboutPage() {
   const [team, factors] = await Promise.all([
     fetchSanity<TEAM_QUERY_RESULT>(TEAM_QUERY),
     fetchSanity<FOCUS_CARDS_QUERY_RESULT>(FOCUS_CARDS_QUERY),
   ])
+
+  const byGroup = (g: string) =>
+    team.filter((m) => (m.group ?? 'leadership') === g)
 
   return (
     <div>
@@ -53,43 +74,56 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      <section className="border-t border-rule bg-panel">
-        <div className="mx-auto max-w-[1200px] px-6 py-14">
-          <SectionHeading
-            eyebrow="Team"
-            title="Operators and investors who know these suburbs"
-          />
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {team.map((m) => (
-              <Card key={m._id}>
-                {/*
-                  Square crops driven by Sanity's hotspot. The circular-crop decapitation
-                  the old style guide warned about cannot recur, because the editor sets
-                  the focal point in the Studio rather than hoping the crop is kind.
-                */}
-                {m.photo ? (
-                  <Image
-                    src={urlForImage(m.photo).width(600).height(600).url()}
-                    alt={m.photo.alt ?? m.name ?? ''}
-                    width={600}
-                    height={600}
-                    className="aspect-square w-full object-cover"
-                  />
-                ) : (
-                  <div className="aspect-square w-full bg-rule" />
-                )}
-                <div className="p-4">
-                  <h3 className="text-sm font-semibold text-ink">{m.name}</h3>
-                  {m.role && <Eyebrow>{m.role}</Eyebrow>}
-                  {m.bio && (
-                    <p className="mt-2 text-xs leading-relaxed text-ink-secondary">{m.bio}</p>
-                  )}
+      {/*
+        Two sections, not one list.
+
+        A board seat is a governance relationship, not a rung on the org chart, so
+        rendering a board member and an accountant as peers under a single "Team" heading
+        misrepresents both. `group` on the document decides which section a person lands
+        in; a group with nobody in it renders nothing rather than an empty heading.
+      */}
+      {GROUP_SECTIONS.map(
+        ({ group, eyebrow, title }) =>
+          byGroup(group).length > 0 && (
+            <section key={group} className="border-t border-rule bg-panel">
+              <div className="mx-auto max-w-[1200px] px-6 py-14">
+                <SectionHeading eyebrow={eyebrow} title={title} />
+                <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {byGroup(group).map((m) => (
+                    <Card key={m._id}>
+                      {/*
+                        Square crops driven by Sanity's hotspot. The circular-crop
+                        decapitation the old style guide warned about cannot recur, because
+                        the editor sets the focal point in the Studio rather than hoping the
+                        crop is kind.
+                      */}
+                      {m.photo ? (
+                        <Image
+                          src={urlForImage(m.photo).width(600).height(600).url()}
+                          alt={m.photo.alt ?? m.name ?? ''}
+                          width={600}
+                          height={600}
+                          className="aspect-square w-full object-cover"
+                        />
+                      ) : (
+                        <div className="aspect-square w-full bg-rule" />
+                      )}
+                      <div className="p-4">
+                        <h3 className="text-sm font-semibold text-ink">{m.name}</h3>
+                        {m.role && <Eyebrow>{m.role}</Eyebrow>}
+                        {m.bio && (
+                          <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
+                            {m.bio}
+                          </p>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+              </div>
+            </section>
+          ),
+      )}
     </div>
   )
 }

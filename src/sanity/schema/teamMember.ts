@@ -1,4 +1,5 @@
 import { defineType, defineField } from 'sanity'
+import { TEAM_GROUPS, TEAM_GROUP_LABELS } from '../../lib/teamGroups'
 
 export const teamMember = defineType({
   name: 'teamMember',
@@ -19,6 +20,16 @@ export const teamMember = defineType({
       type: 'image',
       options: { hotspot: true },
       fields: [defineField({ name: 'alt', type: 'string', validation: (r) => r.required() })],
+    }),
+    /**
+     * Governance relationship, not job title. Drives which section of /about a person
+     * appears under; defaults to leadership so existing records keep their place.
+     */
+    defineField({
+      name: 'group',
+      type: 'string',
+      options: { list: TEAM_GROUPS.map((v) => ({ title: TEAM_GROUP_LABELS[v], value: v })) },
+      initialValue: 'leadership',
     }),
     defineField({ name: 'linkedin', title: 'LinkedIn URL', type: 'url' }),
     defineField({ name: 'order', type: 'number', initialValue: 100 }),

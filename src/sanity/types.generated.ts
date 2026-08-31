@@ -22,6 +22,13 @@ export type SanityImageAssetReference = {
   [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
 };
 
+export type PropertyReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "property";
+};
+
 export type SiteSettings = {
   _id: string;
   _type: "siteSettings";
@@ -31,6 +38,19 @@ export type SiteSettings = {
   agoraPortalUrl?: string;
   contactEmail?: string;
   bookACallUrl?: string;
+  heroCarousel?: Array<{
+    image?: {
+      asset?: SanityImageAssetReference;
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      _type: "image";
+    };
+    property?: PropertyReference;
+    _type: "carouselSlide";
+    _key: string;
+  }>;
   defaultShareImage?: {
     asset?: SanityImageAssetReference;
     media?: unknown;
@@ -132,15 +152,9 @@ export type TeamMember = {
     alt?: string;
     _type: "image";
   };
+  group?: "leadership" | "partner-board";
   linkedin?: string;
   order?: number;
-};
-
-export type PropertyReference = {
-  _ref: string;
-  _type: "reference";
-  _weak?: boolean;
-  [internalGroqTypeReferenceTo]?: "property";
 };
 
 export type Post = {
@@ -401,6 +415,7 @@ export type SanityImageAsset = {
 
 export type AllSanitySchemaTypes =
   | SanityImageAssetReference
+  | PropertyReference
   | SiteSettings
   | SanityImageCrop
   | SanityImageHotspot
@@ -409,7 +424,6 @@ export type AllSanitySchemaTypes =
   | FocusCard
   | HeroStat
   | TeamMember
-  | PropertyReference
   | Post
   | Slug
   | Property
@@ -725,7 +739,7 @@ export type POST_SLUGS_QUERY_RESULT = Array<string | null>;
 
 // Source: src/sanity/queries.ts
 // Variable: TEAM_QUERY
-// Query: *[_type == "teamMember"] | order(order asc) { _id, name, role, bio, photo, linkedin }
+// Query: *[_type == "teamMember"] | order(order asc) { _id, name, role, bio, photo, linkedin, group }
 export type TEAM_QUERY_RESULT = Array<{
   _id: string;
   name: string | null;
@@ -740,6 +754,7 @@ export type TEAM_QUERY_RESULT = Array<{
     _type: "image";
   } | null;
   linkedin: string | null;
+  group: "leadership" | "partner-board" | null;
 }>;
 
 // Source: src/sanity/queries.ts
@@ -823,7 +838,7 @@ export type CURRENT_OFFERINGS_QUERY_RESULT = Array<{
 
 // Source: src/sanity/queries.ts
 // Variable: SITE_SETTINGS_QUERY
-// Query: *[_type == "siteSettings"][0] { agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage }
+// Query: *[_type == "siteSettings"][0] {    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }  }
 export type SITE_SETTINGS_QUERY_RESULT = {
   agoraPortalUrl: string | null;
   contactEmail: string | null;
@@ -836,6 +851,18 @@ export type SITE_SETTINGS_QUERY_RESULT = {
     crop?: SanityImageCrop;
     _type: "image";
   } | null;
+  heroCarousel: Array<{
+    image: {
+      asset?: SanityImageAssetReference;
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      _type: "image";
+    } | null;
+    slug: string | null;
+    propertyTitle: string | null;
+  }> | null;
 } | null;
 
 // Query TypeMap
@@ -849,11 +876,11 @@ declare module "@sanity/client" {
     '\n  *[_type == "post"] | order(publishedAt desc) {\n    _id, title, "slug": slug.current, publishedAt, category, excerpt, heroImage\n  }\n': ALL_POSTS_QUERY_RESULT;
     '\n  *[_type == "post" && slug.current == $slug][0] {\n    title, "slug": slug.current, publishedAt, category, excerpt, heroImage, body,\n    relatedProperty-> { title, "slug": slug.current, city, unitCount, retailUnitCount, walkMinutes, "image": gallery[0] }\n  }\n': POST_BY_SLUG_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current)].slug.current': POST_SLUGS_QUERY_RESULT;
-    '*[_type == "teamMember"] | order(order asc) { _id, name, role, bio, photo, linkedin }': TEAM_QUERY_RESULT;
+    '*[_type == "teamMember"] | order(order asc) { _id, name, role, bio, photo, linkedin, group }': TEAM_QUERY_RESULT;
     '*[_type == "heroStat"] | order(order asc) { _id, figure, label }': HERO_STATS_QUERY_RESULT;
     '*[_type == "focusCard"] | order(order asc) { _id, title, description }': FOCUS_CARDS_QUERY_RESULT;
     '\n  *[_type == "testimonial" && consentOnRecord == true] | order(order asc) {\n    _id, quote, attribution, descriptor, investorSince, featured\n  }\n': TESTIMONIALS_QUERY_RESULT;
     '\n  *[_type == "property" && publiclyOffered == true] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0], offering\n  }\n': CURRENT_OFFERINGS_QUERY_RESULT;
-    '*[_type == "siteSettings"][0] { agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage }': SITE_SETTINGS_QUERY_RESULT;
+    '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
   }
 }
