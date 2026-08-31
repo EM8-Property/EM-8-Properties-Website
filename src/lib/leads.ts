@@ -3,14 +3,31 @@ export class LeadValidationError extends Error {}
 /** Thrown when a submission looks automated. Handled as a silent success upstream. */
 export class LeadSpamError extends Error {}
 
-const SOURCES = ['keep-in-touch', 'site-submission', 'newsletter'] as const
+/**
+ * Every origin a lead can have. Exported so the Sanity schema and the forms cannot
+ * drift apart — a source the Studio does not list shows a blank origin on the document.
+ *
+ * `homepage-popup` is separate from `keep-in-touch` deliberately. /investors makes the
+ * accreditation checkbox required, so a keep-in-touch lead has always carried a true
+ * accreditation flag; that field is the Rule 506(c) artifact. The overlay never asks, so
+ * filing it under the same source would fill the investor list with keep-in-touch leads
+ * recording an accreditation nobody asserted.
+ */
+export const LEAD_SOURCES = [
+  'keep-in-touch',
+  'site-submission',
+  'newsletter',
+  'homepage-popup',
+] as const
+
+const SOURCES = LEAD_SOURCES
 
 /**
  * Sources that collect a name. `newsletter` is the homepage CTA, which asks for an email
  * address and nothing else — requiring a name there would defeat the point of having a
  * low-friction ask at all.
  */
-const SOURCES_REQUIRING_NAME: readonly string[] = ['keep-in-touch', 'site-submission']
+const SOURCES_REQUIRING_NAME: readonly string[] = ['keep-in-touch', 'site-submission', 'homepage-popup']
 export type LeadSource = (typeof SOURCES)[number]
 
 export type LeadInput = {

@@ -1,5 +1,7 @@
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
+import { CarouselSlot } from '@/components/layout/CarouselSlot'
+import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 import { fetchSanity } from '@/sanity/client'
 import { SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type { SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
@@ -32,6 +34,15 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     <>
       <SiteHeader agoraUrl={settings.agoraPortalUrl} />
+      {/*
+        The photo band sits above the page content on the main content pages.
+
+        Rendered here rather than in each page so the six that show it cannot drift apart,
+        and gated by pathname rather than duplicated: /investors and the property pages are
+        excluded, the former because it is a conversion page and the latter because they
+        already open on their own hero photograph.
+      */}
+      <CarouselSlot slides={(settings.heroCarousel ?? []) as CarouselSlide[]} />
       <main className="flex-1">{children}</main>
       <SiteFooter disclaimer={settings.disclaimer} contactEmail={settings.contactEmail} />
     </>

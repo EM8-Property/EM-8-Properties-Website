@@ -74,7 +74,7 @@ export const POST_SLUGS_QUERY = defineQuery(
 )
 
 export const TEAM_QUERY = defineQuery(
-  `*[_type == "teamMember"] | order(order asc) { _id, name, role, bio, photo, linkedin }`,
+  `*[_type == "teamMember"] | order(order asc) { _id, name, role, bio, photo, linkedin, group }`,
 )
 
 export const HERO_STATS_QUERY = defineQuery(
@@ -112,5 +112,8 @@ export const CURRENT_OFFERINGS_QUERY = defineQuery(`
 `)
 
 export const SITE_SETTINGS_QUERY = defineQuery(
-  `*[_type == "siteSettings"][0] { agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage }`,
+  `*[_type == "siteSettings"][0] {
+    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,
+    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }
+  }`,
 )

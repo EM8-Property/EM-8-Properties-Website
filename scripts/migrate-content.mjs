@@ -107,6 +107,58 @@ const imageField = (assetId, alt) => ({
   alt,
 })
 
+/**
+ * Seeds the top-of-page carousel, but only when it is empty.
+ *
+ * This band is meant to be curated in the Studio — reordered, re-cropped, and eventually
+ * swapped for real lobby photography. Rewriting it on every migration would throw away
+ * that work silently, so an existing list is left completely alone.
+ *
+ * The seed reuses each property's own gallery image, which is already an asset in this
+ * dataset, so nothing is uploaded and no photograph is invented. Sold assets are skipped:
+ * this band is navigation toward what EM8 owns now.
+ */
+async function seedCarouselIfEmpty(apply) {
+  const existing = await query('*[_id=="siteSettings"][0].heroCarousel')
+  if (Array.isArray(existing) && existing.length > 0) {
+    console.log(`  carousel  ${existing.length} slides already curated — left untouched`)
+    return
+  }
+
+  const sources = await query(
+    `*[_type=="property" && status != "sold" && defined(gallery[0].asset._ref)]
+       | order(order asc){ _id, title, "slug": slug.current, "asset": gallery[0].asset._ref, "alt": gallery[0].alt }`,
+  )
+  if (!sources?.length) {
+    console.log('  carousel  no property photography available to seed from')
+    return
+  }
+
+  const slides = sources.map((p, i) => ({
+    _key: `slide-${i}`,
+    _type: 'carouselSlide',
+    image: {
+      _type: 'image',
+      asset: { _type: 'reference', _ref: p.asset },
+      alt: p.alt || `${p.title}, ${'an EM8 Properties asset'}`,
+    },
+    property: { _type: 'reference', _ref: p._id },
+  }))
+
+  console.log(`  carousel  seeding ${slides.length} slides: ${sources.map((p) => p.title).join(', ')}`)
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: [{ patch: { id: 'siteSettings', set: { heroCarousel: slides } } }],
+    }),
+  })
+  if (!res.ok) throw new Error(`carousel seed failed ${res.status}: ${await res.text()}`)
+  console.log('  carousel  seeded')
+}
+
 async function buildDocuments() {
   const docs = []
 
@@ -178,6 +230,8 @@ async function buildDocuments() {
       name: m.name,
       role: m.role,
       bio: m.bio,
+      // Governance grouping, not job title. Defaults to leadership for anyone unmarked.
+      group: m.group ?? 'leadership',
       order: m.order,
     }
     if (m.image) {
@@ -259,6 +313,7 @@ async function main() {
   }
 
   if (!APPLY) {
+    await seedCarouselIfEmpty(false)
     console.log('\nDry run complete. Nothing was written. Re-run with --apply.')
     return
   }
@@ -288,6 +343,8 @@ async function main() {
     throw new Error(`siteSettings patch failed ${settingsRes.status}: ${await settingsRes.text()}`)
   }
   console.log(`Patched siteSettings: ${Object.keys(SITE_SETTINGS).join(', ')}`)
+
+  await seedCarouselIfEmpty(true)
   const body = await res.json()
   console.log(`\nWrote ${body.results?.length ?? 0} documents.`)
   console.log('Next: npm run test:content, then npm run build.')

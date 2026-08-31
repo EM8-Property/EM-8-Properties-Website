@@ -25,6 +25,7 @@ import { PropertyCard, type PropertyCardData } from '@/components/property/Prope
 import { PostCard, type PostData } from '@/components/insights/PostCard'
 import { Testimonials } from '@/components/ui/Testimonials'
 import { CtaBand } from '@/components/ui/CtaBand'
+import { InvestorPopup } from '@/components/home/InvestorPopup'
 
 /** Narrative scroll: hero → stats → success factors → insights → portfolio → partners. */
 export default async function HomePage() {
@@ -161,6 +162,13 @@ export default async function HomePage() {
       </section>
 
       <CtaBand bookACallUrl={settings?.bookACallUrl} />
+
+      {/*
+        Homepage only, and once per visitor. It waits before appearing, asks for a name and
+        an email and nothing else, and a dismissal is remembered — an overlay that returns
+        every visit trains people to close it unread, which costs more than it captures.
+      */}
+      <InvestorPopup />
     </>
   )
 }
