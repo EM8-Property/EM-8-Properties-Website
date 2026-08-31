@@ -29,6 +29,7 @@ import {
   SITE_SETTINGS,
   PAGE_COPY,
   PAGE_SEO,
+  CTA_BAND,
   oldImage,
   portable,
 } from './content/em8-content.mjs'
@@ -232,6 +233,60 @@ async function backfillPageSeo(apply) {
   })
   if (!res.ok) throw new Error(`page seo backfill failed ${res.status}: ${await res.text()}`)
   console.log(`  page seo  backfilled ${incomplete.length}`)
+}
+
+/**
+ * Moves the closing call to action from `homePage` onto `siteSettings`.
+ *
+ * It was only ever read by the homepage. Property pages rendered the same component with
+ * no copy — a headless email box on all eleven — and the five content pages had no call to
+ * action at all. `siteSettings` is where a record every page reads belongs.
+ *
+ * The live value wins over the seed constant. If the team has already edited this copy in
+ * the Studio, that is the version that must survive the move; falling back to the constant
+ * would quietly revert their words to what shipped months ago. The constant is only used
+ * when `homePage` has nothing to move.
+ */
+async function moveCtaBandToSettings(apply) {
+  const [existing, fromHomePage] = await Promise.all([
+    query('*[_id=="siteSettings"][0].ctaBand'),
+    query('*[_id=="homePage"][0].ctaBand'),
+  ])
+
+  if (existing) {
+    console.log('  cta band  siteSettings already has one — left untouched')
+  }
+
+  const needsMove = !existing
+  const needsCleanup = Boolean(fromHomePage)
+  if (!needsMove && !needsCleanup) return
+
+  if (needsMove) {
+    console.log(
+      fromHomePage
+        ? '  cta band  moving the live copy from homePage to siteSettings'
+        : '  cta band  seeding siteSettings from the content module',
+    )
+  }
+  if (needsCleanup) console.log('  cta band  clearing the old homePage copy')
+  if (!apply) return
+
+  const mutations = []
+  if (needsMove) {
+    mutations.push({
+      patch: { id: 'siteSettings', setIfMissing: { ctaBand: fromHomePage ?? CTA_BAND } },
+    })
+  }
+  // Unset last, and only after the copy is safely on siteSettings.
+  if (needsCleanup) mutations.push({ patch: { id: 'homePage', unset: ['ctaBand'] } })
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mutations }),
+  })
+  if (!res.ok) throw new Error(`cta band move failed ${res.status}: ${await res.text()}`)
+  console.log('  cta band  done')
 }
 
 async function seedCarouselIfEmpty(apply) {
@@ -446,6 +501,7 @@ async function main() {
     await seedCarouselIfEmpty(false)
     await seedPagesIfMissing(false)
     await backfillPageSeo(false)
+    await moveCtaBandToSettings(false)
     console.log('\nDry run complete. Nothing was written. Re-run with --apply.')
     return
   }
@@ -479,6 +535,7 @@ async function main() {
   await seedCarouselIfEmpty(true)
   await seedPagesIfMissing(true)
   await backfillPageSeo(true)
+  await moveCtaBandToSettings(true)
   const body = await res.json()
   console.log(`\nWrote ${body.results?.length ?? 0} documents.`)
   console.log('Next: npm run test:content, then npm run build.')

@@ -214,7 +214,7 @@ export default async function HomePage() {
 
       <CtaBand
         bookACallUrl={settings?.bookACallUrl}
-        copy={copy.ctaBand}
+        copy={settings?.ctaBand}
         tone={tones[bands.length]!}
       />
 

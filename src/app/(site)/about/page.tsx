@@ -14,6 +14,7 @@ import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Card } from '@/components/ui/Card'
 import { TEAM_GROUP_LABELS } from '@/lib/teamGroups'
+import { CtaBand } from '@/components/ui/CtaBand'
 import { TeamBio } from '@/components/about/TeamBio'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,10 +31,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const [team, factors, copy] = await Promise.all([
+  const [team, factors, copy, settings] = await Promise.all([
     fetchSanity<TEAM_QUERY_RESULT>(TEAM_QUERY),
     fetchSanity<FOCUS_CARDS_QUERY_RESULT>(FOCUS_CARDS_QUERY),
     fetchSanity<ABOUT_PAGE_QUERY_RESULT>(ABOUT_PAGE_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
   ])
 
   if (!copy?.hero) {
@@ -146,6 +148,11 @@ export default async function AboutPage() {
             </section>
           ),
       )}
+      <CtaBand
+        bookACallUrl={settings?.bookACallUrl}
+        copy={settings?.ctaBand}
+        tone="ground"
+      />
     </div>
   )
 }

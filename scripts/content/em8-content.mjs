@@ -669,21 +669,6 @@ export const PAGE_COPY = {
     },
     partnersTeaserCta: { label: 'See our partners →', href: '/partners' },
     portfolioCta: { label: 'View All →', href: '/portfolio' },
-    ctaBand: {
-      heading: {
-        eyebrow: 'Get Started',
-        title: 'Tell us where to send what we find',
-        intro:
-          'We look at transit-adjacent multifamily, mixed-use, and retail across the Chicago MSA. Leave an address and we will share what we are working on, or book a call and ask us directly.',
-      },
-      submitLabel: 'Keep me posted',
-      successMessage:
-        'Thank you — we have your address and will be in touch when something fits.',
-      callTitle: 'Would rather talk it through?',
-      callBody:
-        'Book twenty minutes with us. No materials required, and no obligation on either side.',
-      callLabel: 'Book a call →',
-    },
     popup: {
       enabled: true,
       eyebrow: 'Keep In Touch',
@@ -839,4 +824,31 @@ export const PAGE_SEO = {
     description:
       'Realized results across the Chicago MSA: what we paid, what we did, what we exited at.',
   },
+}
+
+/**
+ * The closing call to action, shared by every page.
+ *
+ * It used to sit on `homePage`, and the schema comment claimed it was "shared by the
+ * homepage and every property page" — but a property page passed no copy at all, so all
+ * eleven rendered a headless email box: no heading, no intro, and no book-a-call, since
+ * that block hides itself when its label is missing. Patched onto `siteSettings` so the
+ * one record the comment always described is the one every page reads.
+ *
+ * The strings are unchanged from what shipped on the homepage.
+ */
+export const CTA_BAND = {
+  heading: {
+    eyebrow: 'Get Started',
+    title: 'Tell us where to send what we find',
+    intro:
+      'We look at transit-adjacent multifamily, mixed-use, and retail across the Chicago MSA. Leave an address and we will share what we are working on, or book a call and ask us directly.',
+  },
+  submitLabel: 'Keep me posted',
+  successMessage:
+    'Thank you — we have your address and will be in touch when something fits.',
+  callTitle: 'Would rather talk it through?',
+  callBody:
+    'Book twenty minutes with us. No materials required, and no obligation on either side.',
+  callLabel: 'Book a call →',
 }

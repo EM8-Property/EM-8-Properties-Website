@@ -5,6 +5,7 @@ import { ALL_PROPERTIES_QUERY, PORTFOLIO_PAGE_QUERY, SITE_SETTINGS_QUERY } from 
 import type { ALL_PROPERTIES_QUERY_RESULT, PORTFOLIO_PAGE_QUERY_RESULT, SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
 import { PortfolioFilter } from '@/components/property/PortfolioFilter'
 import type { PropertyCardData } from '@/components/property/PropertyCard'
+import { CtaBand } from '@/components/ui/CtaBand'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,7 +22,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PortfolioPage() {
-  const properties = await fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY)
+  const [properties, settings] = await Promise.all([
+    fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
 
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-14">
@@ -39,6 +43,7 @@ export default async function PortfolioPage() {
       <div className="mt-8">
         <PortfolioFilter properties={properties as PropertyCardData[]} />
       </div>
+      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
     </div>
   )
 }

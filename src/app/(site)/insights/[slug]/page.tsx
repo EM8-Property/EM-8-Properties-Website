@@ -3,10 +3,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { PortableText } from 'next-sanity'
 import { fetchSanity } from '@/sanity/client'
-import { POST_BY_SLUG_QUERY, POST_SLUGS_QUERY } from '@/sanity/queries'
+import { POST_BY_SLUG_QUERY, POST_SLUGS_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type {
   POST_BY_SLUG_QUERY_RESULT,
   POST_SLUGS_QUERY_RESULT,
+  SITE_SETTINGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
 import { formatUnits } from '@/lib/format'
@@ -16,6 +17,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { articleJsonLd } from '@/lib/structuredData'
 import { pageMetadata } from '@/lib/seo'
 import { siteUrl } from '@/lib/siteUrl'
+import { CtaBand } from '@/components/ui/CtaBand'
 
 export async function generateStaticParams() {
   const slugs = await fetchSanity<POST_SLUGS_QUERY_RESULT>(POST_SLUGS_QUERY)
@@ -57,7 +59,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await fetchSanity<POST_BY_SLUG_QUERY_RESULT>(POST_BY_SLUG_QUERY, { slug })
+  const [post, settings] = await Promise.all([
+    fetchSanity<POST_BY_SLUG_QUERY_RESULT>(POST_BY_SLUG_QUERY, { slug }),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
   if (!post) notFound()
 
   return (
@@ -130,6 +135,19 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
       )}
+
+      {/*
+        An article is the likeliest arrival point from LinkedIn — /insights exists to be
+        linked from there — and it ended with nothing to do next.
+
+        It stays inside the 720px prose measure rather than breaking out of it: the band
+        brings its own panel and rule, which is enough to read as the page closing, and a
+        full-width band here would need the article's wrapper restructured for a section
+        that is not the point of the page.
+      */}
+      <div className="mt-12">
+        <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
+      </div>
     </article>
   )
 }
