@@ -27,9 +27,25 @@ const buckets = new Map<string, Bucket>()
  * the key from proxy headers. This bounds total damage regardless of how many distinct
  * keys an attacker can present: at worst they burn the global budget for the hour, and
  * the CMS and the mail account survive it.
+ *
+ * **Why 400 and not 100.** Every form on the site posts to the same `/api/lead`, and the
+ * limiter runs before the body is read, so it cannot tell them apart: the newsletter
+ * capture in `CtaBand` appears on twelve pages, the homepage overlay on one more, and
+ * /investors Keep in Touch and the /partners site submission share the same budget. At
+ * 100/hour a run of ordinary newsletter signups could spend the whole ceiling and answer
+ * a real accredited investor with a 429 — which writes no `lead` document and sends no
+ * email, losing the submission outright. That inverts the capture-first rationale this
+ * endpoint exists to serve, and it fails in exactly the direction the site cannot afford.
+ *
+ * 400 keeps a real ceiling on abuse — a spammer still cannot write thousands of
+ * documents — while leaving the shared budget far clear of legitimate traffic. It does
+ * not *fix* the sharing: a determined flood can still starve the investor form, just at
+ * four times the cost. Scoping the budget per `source` would fix it properly, but that
+ * means parsing the body before rate limiting, which is a security-ordering change and a
+ * separate decision.
  */
 const GLOBAL_WINDOW_MS = 3_600_000
-const GLOBAL_LIMIT = 100
+const GLOBAL_LIMIT = 400
 let globalBucket: Bucket = { count: 0, resetAt: 0 }
 
 export function rateLimit(
