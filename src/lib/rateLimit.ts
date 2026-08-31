@@ -40,12 +40,22 @@ const buckets = new Map<string, Bucket>()
  *
  * 400 also clears one boundary that 300 does not: a single well-behaved caller can be
  * served at most 5/minute, or 300/hour, so no one compliant key can exhaust the site-wide
- * budget on its own.
+ * budget on its own. That is load-bearing only because the budget counts served requests;
+ * it was moot while refused attempts spent it too. Do not read it as "no small number of
+ * keys can" — two keys at the maximum permitted rate reach 400 in about forty minutes.
  *
- * It does not *fix* the sharing: a distributed flood can still starve the investor form,
- * just at four times the cost. Scoping the budget per lead `source` would fix that
- * properly, but it means parsing the body before rate limiting — a security-ordering
- * change, and a separate decision.
+ * It does not *fix* the sharing: a distributed flood can still starve the investor form.
+ * But because only *served* requests spend the budget (see `rateLimit` below), doing so
+ * now costs roughly eighty distinct addresses within a minute — 80 × 5/minute — where it
+ * once cost one. Sustained over an hour, two addresses holding the maximum permitted rate
+ * would do it, which is not human behaviour on a form like this, and 400 leads written in
+ * an hour is a flood where a 429 is the correct answer. Scoping the budget per lead
+ * `source` would fix the sharing properly, but it means parsing the body before rate
+ * limiting — a security-ordering change, and a separate decision.
+ *
+ * Note the key is the proxy-appended client address, so one key is not one person. Behind
+ * a corporate NAT or carrier CGNAT the per-key 5/minute is the tighter constraint for a
+ * whole building's worth of visitors, not this ceiling.
  *
  * On the mail account specifically, this limiter was never the protection: Resend's
  * allowance is around 100/day, which even the old 100/hour ceiling exceeded. Capture-first
@@ -56,11 +66,23 @@ const GLOBAL_WINDOW_MS = 3_600_000
 const GLOBAL_LIMIT = 400
 let globalBucket: Bucket = { count: 0, resetAt: 0 }
 
+/**
+ * How many callers the site-wide budget has turned away in the current hour.
+ *
+ * Reported rather than logged here, so the limiter holds no logging policy. The route
+ * logs the first refusal of each hour and stays quiet after that — refusals are
+ * uncapped by design, and a caller that first arrives after the budget is spent never
+ * acquires a per-key bucket, so it would otherwise emit a line on every request forever.
+ */
+let globalRefusals = 0
+
 export type RateLimitResult = {
   allowed: boolean
   retryAfterSeconds: number
   /** Which budget refused, for logging. `null` when the request is allowed. */
   scope: 'key' | 'global' | null
+  /** Running count of site-wide refusals this hour; `1` on the first one. */
+  globalRefusalsInWindow: number
 }
 
 export function rateLimit(key: string, now: number = Date.now()): RateLimitResult {
@@ -76,33 +98,39 @@ export function rateLimit(key: string, now: number = Date.now()): RateLimitResul
   // Ordering it this way keeps the reasoning behind the ceiling intact — a botnet's
   // *served* requests still hit 400 and stop — while making per-key-refused spam unable
   // to starve the investor form at all.
+  // Derived once. Asking "is this caller's window live" in two places invites a future
+  // edit to change one and not the other; there is only one predicate to get wrong.
   const existing = buckets.get(key)
-  const keyWindowIsFresh = !existing || now >= existing.resetAt
+  const liveBucket = existing && now < existing.resetAt ? existing : null
 
-  if (existing && !keyWindowIsFresh && existing.count >= LIMIT) {
+  if (liveBucket && liveBucket.count >= LIMIT) {
     return {
       allowed: false,
-      retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+      retryAfterSeconds: Math.max(1, Math.ceil((liveBucket.resetAt - now) / 1000)),
       scope: 'key',
+      globalRefusalsInWindow: globalRefusals,
     }
   }
 
   if (now >= globalBucket.resetAt) {
     globalBucket = { count: 0, resetAt: now + GLOBAL_WINDOW_MS }
+    globalRefusals = 0
   }
   if (globalBucket.count >= GLOBAL_LIMIT) {
+    globalRefusals += 1
     return {
       allowed: false,
       retryAfterSeconds: Math.max(1, Math.ceil((globalBucket.resetAt - now) / 1000)),
       scope: 'global',
+      globalRefusalsInWindow: globalRefusals,
     }
   }
 
   // Served. Commit both counters together.
   globalBucket.count += 1
 
-  if (existing && !keyWindowIsFresh) {
-    existing.count += 1
+  if (liveBucket) {
+    liveBucket.count += 1
   } else {
     // Opportunistic sweep so a stream of unique keys cannot grow the map without bound.
     if (buckets.size > MAX_TRACKED_KEYS) {
@@ -111,11 +139,12 @@ export function rateLimit(key: string, now: number = Date.now()): RateLimitResul
     buckets.set(key, { count: 1, resetAt: now + WINDOW_MS })
   }
 
-  return { allowed: true, retryAfterSeconds: 0, scope: null }
+  return { allowed: true, retryAfterSeconds: 0, scope: null, globalRefusalsInWindow: globalRefusals }
 }
 
 /** Test seam. */
 export function resetRateLimits(): void {
   buckets.clear()
   globalBucket = { count: 0, resetAt: 0 }
+  globalRefusals = 0
 }

@@ -33,7 +33,13 @@ export async function POST(request: Request) {
     // honeypot a log line below. A refusal by the site-wide budget is the one worth
     // hearing about: it means every visitor is being turned away, not just one noisy
     // caller, and it is the only evidence for whether the hourly ceiling is set right.
-    if (limited.scope === 'global') {
+    //
+    // Once per spent hour, not once per refusal. Refusals are uncapped by design, and a
+    // caller that first arrives after the budget is spent never acquires a per-key bucket
+    // — so it stays on the global path and one address could emit thousands of identical
+    // lines a minute, burying the two lines below that mean a real lead may have been
+    // lost.
+    if (limited.scope === 'global' && limited.globalRefusalsInWindow === 1) {
       console.warn('Lead endpoint refused a submission — site-wide hourly budget spent', {
         retryAfterSeconds: limited.retryAfterSeconds,
       })
@@ -44,6 +50,11 @@ export async function POST(request: Request) {
         // "Shortly" is honest for a per-caller block, which clears within a minute. The
         // site-wide budget resets on the hour, so saying "shortly" there would send a
         // real investor back into another refusal.
+        //
+        // One case still understates the wait: a caller over *both* budgets is scoped
+        // 'key', because the per-caller gate runs first, so it is told to retry in a
+        // minute when the site-wide budget will refuse it for up to an hour. Not worth
+        // code — it is no worse than telling every per-caller block to wait an hour.
         //
         // Phrased without the words "right" or "left": the logical-properties ESLint rule
         // scans every string literal under src/, so ordinary prose containing either one

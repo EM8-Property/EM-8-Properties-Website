@@ -99,17 +99,66 @@ describe('rateLimit — global ceiling', () => {
   })
 
   it('charges a caller its own budget only for requests that are served', () => {
-    // Spend the global budget with other callers, then refuse a caller that has never
-    // been seen. Its per-minute budget must be intact once the hour rolls over.
     for (let i = 0; i < 2000; i++) {
       if (!rateLimit(distinctKey('10.3', i), 1000).allowed) break
     }
+    // This is the assertion that pins the property. A caller that has never been seen is
+    // refused by the global budget; if those refusals were charged against its own five,
+    // the sixth call here would come back scoped 'key' instead of 'global'.
     for (let i = 0; i < 20; i++) {
       expect(rateLimit('203.0.113.7', 1000).scope).toBe('global')
     }
-    // The 20 global refusals above must not have counted against this caller's own five.
-    for (let i = 0; i < 5; i++) {
-      expect(rateLimit('203.0.113.7', 1000 + 3_600_001).allowed).toBe(true)
+  })
+
+  /**
+   * Refusals are deliberately not capped — that is the point of a ceiling. So the route
+   * cannot log one line per refusal: a caller arriving after the budget is spent never
+   * gets a per-key bucket (it returns at the global gate first), so it stays on the
+   * global path indefinitely and one address could emit thousands of identical lines a
+   * minute. That would bury the two log lines that mean a real lead may have been lost —
+   * the honeypot warning and the Sanity write failure.
+   *
+   * The limiter therefore reports how many times the site-wide budget has refused someone
+   * this hour, and the route logs only the first.
+   */
+  it('counts site-wide refusals within the hour so the log can fire once per window', () => {
+    let first
+    for (let i = 0; i < 2000; i++) {
+      const result = rateLimit(distinctKey('10.4', i), 1000)
+      if (!result.allowed) {
+        first = result
+        break
+      }
     }
+    expect(first?.scope).toBe('global')
+    expect(first?.globalRefusalsInWindow).toBe(1)
+
+    expect(rateLimit('198.51.100.9', 1000).globalRefusalsInWindow).toBe(2)
+    expect(rateLimit('198.51.100.9', 1000).globalRefusalsInWindow).toBe(3)
+  })
+
+  it('starts the refusal count again in the next hour, so each spent hour is logged', () => {
+    for (let i = 0; i < 2000; i++) {
+      if (!rateLimit(distinctKey('10.5', i), 1000).allowed) break
+    }
+    rateLimit('198.51.100.9', 1000)
+    rateLimit('198.51.100.9', 1000)
+
+    const nextHour = 1000 + 3_600_001
+    let firstOfNextHour
+    for (let i = 0; i < 2000; i++) {
+      const result = rateLimit(distinctKey('10.6', i), nextHour)
+      if (!result.allowed) {
+        firstOfNextHour = result
+        break
+      }
+    }
+    expect(firstOfNextHour?.globalRefusalsInWindow).toBe(1)
+  })
+
+  it('does not count a per-caller refusal against the site-wide refusal tally', () => {
+    for (let i = 0; i < 20; i++) rateLimit('1.2.3.4', 1000)
+    expect(rateLimit('1.2.3.4', 1000).scope).toBe('key')
+    expect(rateLimit('5.6.7.8', 1000).globalRefusalsInWindow).toBe(0)
   })
 })
