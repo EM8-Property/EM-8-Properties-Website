@@ -12,6 +12,8 @@ import {
   TESTIMONIALS,
   SITE_SETTINGS,
   portable,
+  PAGE_COPY,
+  PAGE_SEO,
 } from '../../scripts/content/em8-content.mjs'
 
 /**
@@ -43,7 +45,25 @@ type Property = {
 }
 
 const properties = PROPERTIES as Property[]
-const blob = JSON.stringify({ PROPERTIES, HERO_STATS, FOCUS_CARDS, TEAM, POSTS, TESTIMONIALS, SITE_SETTINGS })
+// PAGE_COPY and PAGE_SEO are in here deliberately.
+//
+// The seven search descriptions used to be literals in src/app/(site)/*/page.tsx, so the
+// source scan in complianceLanguage.test.ts covered them for free. Moving them into the
+// CMS payload took them out of that scan without putting them into this one — leaving the
+// most-read investor-facing prose on the site outside the placeholder gate, the compliance
+// gate and the release gate at the same time. Silence from a gate has to mean "checked",
+// not "not looked".
+const blob = JSON.stringify({
+  PROPERTIES,
+  HERO_STATS,
+  FOCUS_CARDS,
+  TEAM,
+  POSTS,
+  TESTIMONIALS,
+  SITE_SETTINGS,
+  PAGE_COPY,
+  PAGE_SEO,
+})
 
 describe('migration payload — structure', () => {
   it('gives every property a unique slug and document id', () => {

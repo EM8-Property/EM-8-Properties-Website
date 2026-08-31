@@ -141,10 +141,14 @@ export const seoBlock = defineType({
       type: 'string',
       description:
         'The page name on its own — "About", not "About | EM8 Properties". The site name is added automatically.',
-      validation: (r) => r.required().max(60),
+      // 43, not 60. Google truncates a title around 60 characters, and pageTitle appends
+      // " | EM8 Properties" — 17 more — so a title written to a 60-character counter
+      // renders at 77 and gets cut off. The counter has to measure what ships.
+      validation: (r) => r.required().max(43),
     }),
     defineField({
       name: 'description',
+      title: 'Search description',
       type: 'text',
       rows: 3,
       description:

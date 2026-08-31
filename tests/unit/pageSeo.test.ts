@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { seoMetadata, resolveShareImage } from '@/lib/pageSeo'
 import { SHARE_CARD } from '@/lib/seo'
+import { SINGLETON_TYPES } from '@/sanity/schema'
 import { PAGE_SEO } from '../../scripts/content/em8-content.mjs'
 
 describe('seoMetadata', () => {
@@ -81,9 +82,28 @@ describe('the seeded page SEO copy', () => {
     ])
   })
 
+  /**
+   * The migration seeds a document whose `_id` and `_type` are both the key of this map.
+   * A typo would therefore create a document of a schema type that does not exist —
+   * which Sanity accepts silently and the Studio never shows, so the only symptom would
+   * be a page failing its build for a document that appears to have been created fine.
+   *
+   * Cross-checked against the registered singletons rather than a second hardcoded list,
+   * so the two cannot drift.
+   */
+  it('uses only ids that are registered, pinned singleton types', () => {
+    const pageSingletons = (SINGLETON_TYPES as readonly string[])
+      .filter((t) => t !== 'siteSettings')
+      .sort()
+    expect(entries.map(([id]) => id).sort()).toEqual(pageSingletons)
+  })
+
   it.each(entries)('%s fits the schema limits', (_id, seo) => {
+    // 43, matching the schema. Google truncates a title around 60 characters and
+    // `pageTitle` appends " | EM8 Properties" — 17 more — so 43 is what actually fits.
     expect(seo.title.length).toBeGreaterThan(0)
-    expect(seo.title.length).toBeLessThanOrEqual(60)
+    expect(seo.title.length).toBeLessThanOrEqual(43)
+    expect(`${seo.title} | EM8 Properties`.length).toBeLessThanOrEqual(60)
     expect(seo.description.length).toBeGreaterThan(0)
     expect(seo.description.length).toBeLessThanOrEqual(155)
   })

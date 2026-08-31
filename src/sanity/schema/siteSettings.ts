@@ -72,7 +72,15 @@ export const siteSettings = defineType({
         },
       ],
     }),
-    defineField({ name: 'defaultShareImage', type: 'image' }),
+    defineField({
+      name: 'defaultShareImage',
+      type: 'image',
+      // Hotspot matters here now that this field is rendered rather than ignored: the
+      // card is a fixed 1200x630 crop, and a portrait upload centre-cropped to that can
+      // cut the subject's head off. Same reason every other image in this schema has it.
+      options: { hotspot: true },
+      description: 'Shown when a page is shared. Upload at least 1200x630.',
+    }),
     defineField({ name: 'disclaimer', type: 'text', rows: 5, validation: (r) => r.required() }),
   ],
   preview: { prepare: () => ({ title: 'Site settings' }) },

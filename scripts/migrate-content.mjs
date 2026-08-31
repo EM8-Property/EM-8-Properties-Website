@@ -186,30 +186,52 @@ async function seedPagesIfMissing(apply) {
  */
 async function backfillPageSeo(apply) {
   const ids = Object.keys(PAGE_SEO)
-  const missing =
+
+  // Per *leaf*, not per `seo` object, and with no `!defined(seo)` pre-filter.
+  //
+  // Keying on the whole object made this fill a blank but never repair a half-filled one:
+  // `setIfMissing: { seo }` is all-or-nothing at that key, so a document with a title and
+  // no description would be skipped forever — reported as "already has one" on every
+  // re-run while `next build` failed on it. The Studio's required() validation blocks that
+  // through the publish path, but Vision, the CLI, and any direct API write do not.
+  //
+  // `setIfMissing` on each leaf keeps the guarantee that matters: an editor's own words
+  // are never overwritten, now at field granularity rather than object granularity.
+  const incomplete =
     (await query(
-      `*[_id in ${JSON.stringify(ids)} && !defined(seo)]._id`,
+      `*[_id in ${JSON.stringify(ids)} && (!defined(seo.title) || !defined(seo.description))]._id`,
     )) ?? []
 
-  if (missing.length === 0) {
-    console.log('  page seo  every page already has one — left untouched')
+  if (incomplete.length === 0) {
+    console.log('  page seo  no existing page is missing one — left untouched')
     return
   }
 
-  for (const id of missing) console.log(`  page seo  backfilling ${id}`)
+  for (const id of incomplete) console.log(`  page seo  backfilling ${id}`)
   if (!apply) return
 
   const res = await fetch(`${API}/data/mutate/${dataset}`, {
     method: 'POST',
     headers: { ...auth, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      mutations: missing.map((id) => ({
-        patch: { id, setIfMissing: { seo: PAGE_SEO[id] } },
-      })),
+      mutations: incomplete.flatMap((id) => [
+        // The parent object first: a leaf path cannot be set inside an object that does
+        // not exist yet, and this is a no-op when it already does.
+        { patch: { id, setIfMissing: { seo: {} } } },
+        {
+          patch: {
+            id,
+            setIfMissing: {
+              'seo.title': PAGE_SEO[id].title,
+              'seo.description': PAGE_SEO[id].description,
+            },
+          },
+        },
+      ]),
     }),
   })
   if (!res.ok) throw new Error(`page seo backfill failed ${res.status}: ${await res.text()}`)
-  console.log(`  page seo  backfilled ${missing.length}`)
+  console.log(`  page seo  backfilled ${incomplete.length}`)
 }
 
 async function seedCarouselIfEmpty(apply) {
