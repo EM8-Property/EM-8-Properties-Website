@@ -29,8 +29,30 @@ function callerKey(request: Request): string {
 export async function POST(request: Request) {
   const limited = rateLimit(callerKey(request))
   if (!limited.allowed) {
+    // A 429 discards a submission and tells nobody — the same asymmetry that got the
+    // honeypot a log line below. A refusal by the site-wide budget is the one worth
+    // hearing about: it means every visitor is being turned away, not just one noisy
+    // caller, and it is the only evidence for whether the hourly ceiling is set right.
+    if (limited.scope === 'global') {
+      console.warn('Lead endpoint refused a submission — site-wide hourly budget spent', {
+        retryAfterSeconds: limited.retryAfterSeconds,
+      })
+    }
     return NextResponse.json(
-      { ok: false, error: 'Too many submissions. Please try again shortly.' },
+      {
+        ok: false,
+        // "Shortly" is honest for a per-caller block, which clears within a minute. The
+        // site-wide budget resets on the hour, so saying "shortly" there would send a
+        // real investor back into another refusal.
+        //
+        // Phrased without the words "right" or "left": the logical-properties ESLint rule
+        // scans every string literal under src/, so ordinary prose containing either one
+        // fails the build with a message about Tailwind utilities.
+        error:
+          limited.scope === 'global'
+            ? 'We are receiving an unusual number of submissions. Please try again later.'
+            : 'Too many submissions. Please try again shortly.',
+      },
       { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } },
     )
   }
