@@ -227,8 +227,6 @@ export type Property = {
   unitCount?: number;
   retailUnitCount?: number;
   squareFeet?: number;
-  walkScore?: number;
-  transitScore?: number;
   yearBuilt?: number;
   yearRenovated?: number;
   cardBlurb?: string;
@@ -446,7 +444,7 @@ export type ALL_PROPERTIES_QUERY_RESULT = Array<{
 
 // Source: src/sanity/queries.ts
 // Variable: PROPERTY_BY_SLUG_QUERY
-// Query: *[_type == "property" && slug.current == $slug][0] {    _id, title, "slug": slug.current, assetClass, status, city, state,    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,    "image": gallery[0],    squareFeet, yearRenovated, walkScore, transitScore, overview, businessPlan,    gallery, coordinates, dealStory, publiclyOffered,    "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {      title, "slug": slug.current, publishedAt    }  }
+// Query: *[_type == "property" && slug.current == $slug][0] {    _id, title, "slug": slug.current, assetClass, status, city, state,    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,    "image": gallery[0],    squareFeet, yearRenovated, overview, businessPlan,    gallery, coordinates, dealStory, publiclyOffered,    "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {      title, "slug": slug.current, publishedAt    }  }
 export type PROPERTY_BY_SLUG_QUERY_RESULT = {
   _id: string;
   title: string | null;
@@ -479,8 +477,6 @@ export type PROPERTY_BY_SLUG_QUERY_RESULT = {
   } | null;
   squareFeet: number | null;
   yearRenovated: number | null;
-  walkScore: number | null;
-  transitScore: number | null;
   overview: Array<{
     children?: Array<{
       marks?: Array<string>;
@@ -755,7 +751,7 @@ import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
     '\n  *[_type == "property"] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0]\n  }\n': ALL_PROPERTIES_QUERY_RESULT;
-    '\n  *[_type == "property" && slug.current == $slug][0] {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0],\n    squareFeet, yearRenovated, walkScore, transitScore, overview, businessPlan,\n    gallery, coordinates, dealStory, publiclyOffered,\n    "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {\n      title, "slug": slug.current, publishedAt\n    }\n  }\n': PROPERTY_BY_SLUG_QUERY_RESULT;
+    '\n  *[_type == "property" && slug.current == $slug][0] {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0],\n    squareFeet, yearRenovated, overview, businessPlan,\n    gallery, coordinates, dealStory, publiclyOffered,\n    "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {\n      title, "slug": slug.current, publishedAt\n    }\n  }\n': PROPERTY_BY_SLUG_QUERY_RESULT;
     '*[_type == "property" && defined(slug.current)].slug.current': PROPERTY_SLUGS_QUERY_RESULT;
     '\n  *[_type == "property" && status == "sold"] | order(dealStory.exitYear desc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0],\n    dealStory\n  }\n': SOLD_PROPERTIES_QUERY_RESULT;
     '\n  *[_type == "post"] | order(publishedAt desc) {\n    _id, title, "slug": slug.current, publishedAt, category, excerpt, heroImage\n  }\n': ALL_POSTS_QUERY_RESULT;

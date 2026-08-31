@@ -8,8 +8,6 @@ type Props = {
   squareFeet?: number | null
   walkMinutes?: number | null
   metraStation?: string | null
-  walkScore?: number | null
-  transitScore?: number | null
   publiclyOffered?: boolean | null
 }
 
@@ -46,13 +44,6 @@ export function FactRail({ property: p }: { property: Props }) {
         {p.squareFeet != null && (
           <Fact figure={p.squareFeet.toLocaleString('en-US')} label="Square Feet" />
         )}
-        {/*
-          Explicit null/undefined checks, not truthiness: a Walk Score of 0 is a real
-          measurement and a very different claim from "we don't know it". Truthiness
-          would silently hide the worst score and show nothing instead.
-        */}
-        {p.walkScore != null && <Fact figure={String(p.walkScore)} label="Walk Score" />}
-        {p.transitScore != null && <Fact figure={String(p.transitScore)} label="Transit Score" />}
       </div>
 
       {/*

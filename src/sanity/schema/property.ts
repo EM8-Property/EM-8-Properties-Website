@@ -70,23 +70,6 @@ export const property = defineType({
     }),
     defineField({ name: 'squareFeet', type: 'number' }),
 
-    // Walk Score and Transit Score are third-party measures on a fixed 0-100 scale.
-    // Bounded here so a mistyped value cannot render as a nonsense score next to the
-    // Metra fact it is meant to corroborate.
-    defineField({
-      name: 'walkScore',
-      title: 'Walk Score',
-      type: 'number',
-      description: 'From walkscore.com. Displaying it requires their attribution and a link back.',
-      validation: (r) => r.min(0).max(100),
-    }),
-    defineField({
-      name: 'transitScore',
-      title: 'Transit Score',
-      type: 'number',
-      description: 'From walkscore.com. Displaying it requires their attribution and a link back.',
-      validation: (r) => r.min(0).max(100),
-    }),
     defineField({ name: 'yearBuilt', type: 'number' }),
     defineField({ name: 'yearRenovated', type: 'number' }),
     defineField({

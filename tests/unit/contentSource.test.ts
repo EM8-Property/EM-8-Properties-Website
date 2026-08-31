@@ -171,15 +171,6 @@ describe('migration payload — the rules that gate launch', () => {
     }
   })
 
-  it('leaves Walk Score and Transit Score unset until a real source supplies them', () => {
-    // They require a walkscore.com API key. An invented score is exactly the failure
-    // spec §9 exists to prevent, so their absence is asserted rather than assumed.
-    for (const p of properties as unknown as Record<string, unknown>[]) {
-      expect(p.walkScore, `${p.title} has an unsourced Walk Score`).toBeUndefined()
-      expect(p.transitScore, `${p.title} has an unsourced Transit Score`).toBeUndefined()
-    }
-  })
-
   it('publishes no confidential figure from the internal portfolio sheet', () => {
     // Lender names, debt balances, promote, and EM8's own equity are in the source
     // spreadsheet and must never reach a public marketing page.

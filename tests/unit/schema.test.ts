@@ -65,16 +65,6 @@ describe('property schema', () => {
     })
   })
 
-  it('bounds Walk Score and Transit Score to the 0-100 scale they are defined on', () => {
-    for (const name of ['walkScore', 'transitScore']) {
-      expect(field(property, name), `${name} is missing`).toBeDefined()
-      expect(field(property, name).type).toBe('number')
-      const calls = captureValidation(field(property, name).validation)
-      expect(calls, `${name} lower bound`).toContainEqual({ method: 'min', arg: 0 })
-      expect(calls, `${name} upper bound`).toContainEqual({ method: 'max', arg: 100 })
-    }
-  })
-
   it('caps the card blurb so it cannot overrun the card', () => {
     const calls = captureValidation(field(property, 'cardBlurb').validation)
     expect(calls).toContainEqual({ method: 'max', arg: 180 })

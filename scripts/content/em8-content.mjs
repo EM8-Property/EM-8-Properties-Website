@@ -16,8 +16,6 @@
  *    counts, zoning-litigation claims, Boulevard's target returns and retail suite mix,
  *    and all three insight articles. Empty beats invented; tests/shared/placeholders.ts
  *    fails the gate if any of them reappear.
- *  - Walk Score and Transit Score, which need a walkscore.com API key. The fields exist;
- *    the values are not guessed.
  *  - Everything confidential in the portfolio sheet: lender names, debt balances, rates,
  *    maturities, promote earned, EM8's own equity, and LP capital accounts. None of it
  *    belongs on a public marketing site.

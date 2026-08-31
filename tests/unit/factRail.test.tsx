@@ -70,20 +70,4 @@ describe('FactRail unit mix and transit scores', () => {
     expect(screen.getByText(/^Units$/i)).toBeDefined()
     expect(screen.queryByText(/Retail/i)).toBeNull()
   })
-
-  it('shows Walk Score and Transit Score when they are known', () => {
-    render(<FactRail property={{ ...p, walkScore: 71, transitScore: 48 }} />)
-    expect(screen.getByText('71')).toBeDefined()
-    expect(screen.getByText(/Walk Score/i)).toBeDefined()
-    expect(screen.getByText('48')).toBeDefined()
-    expect(screen.getByText(/Transit Score/i)).toBeDefined()
-  })
-
-  it('omits the score tiles entirely when they are unknown', () => {
-    // They come from a third-party API that needs a key. An absent score must render as
-    // nothing at all, never as 0 — a Walk Score of 0 is a real and very different claim.
-    render(<FactRail property={{ ...p, walkScore: null, transitScore: undefined }} />)
-    expect(screen.queryByText(/Walk Score/i)).toBeNull()
-    expect(screen.queryByText(/Transit Score/i)).toBeNull()
-  })
 })

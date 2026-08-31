@@ -39,11 +39,6 @@ describe('GROQ queries', () => {
     }
   })
 
-  it('fetches Walk Score and Transit Score for the property page', () => {
-    expect(PROPERTY_BY_SLUG_QUERY).toContain('walkScore')
-    expect(PROPERTY_BY_SLUG_QUERY).toContain('transitScore')
-  })
-
   it('track record does not create a second set of property URLs', () => {
     // /track-record is a view over sold properties. It selects the same slug the
     // canonical /portfolio/[slug] page uses; it must not invent a parallel path.

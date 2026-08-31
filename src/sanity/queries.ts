@@ -30,7 +30,7 @@ export const PROPERTY_BY_SLUG_QUERY = defineQuery(`
     _id, title, "slug": slug.current, assetClass, status, city, state,
     metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
     "image": gallery[0],
-    squareFeet, yearRenovated, walkScore, transitScore, overview, businessPlan,
+    squareFeet, yearRenovated, overview, businessPlan,
     gallery, coordinates, dealStory, publiclyOffered,
     "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {
       title, "slug": slug.current, publishedAt
