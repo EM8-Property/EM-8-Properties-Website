@@ -47,6 +47,9 @@ export async function POST(request: Request) {
     const result = await submitLead(input, {
       create: (doc) => writeClient.create(doc as never),
       sender: resendSender,
+      // Records whether the team was actually notified. Without it a lead nobody heard
+      // about looks identical to one that went through.
+      patch: (id, fields) => writeClient.patch(id).set(fields).commit(),
     })
     return NextResponse.json({ ok: true, id: result.id })
   } catch (err) {

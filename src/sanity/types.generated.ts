@@ -73,6 +73,7 @@ export type Lead = {
   propertyAddress?: string;
   message?: string;
   submittedAt?: string;
+  emailed?: boolean;
   exportedToAgora?: boolean;
 };
 
