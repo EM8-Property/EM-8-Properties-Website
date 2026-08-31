@@ -29,6 +29,22 @@ import { Testimonials } from '@/components/ui/Testimonials'
 import { CtaBand } from '@/components/ui/CtaBand'
 import { Band, alternatingTones } from '@/components/ui/Band'
 import { InvestorPopup } from '@/components/home/InvestorPopup'
+import { pageMetadata, SITE_NAME } from '@/lib/seo'
+
+/**
+ * The homepage carried no metadata of its own, inheriting only the root layout's title
+ * and description — which means no Open Graph block and no canonical on the one URL
+ * everything else links to.
+ *
+ * The title is the site name rather than a section suffix, and the copy is the root
+ * layout's, unchanged.
+ */
+export const metadata = pageMetadata({
+  title: SITE_NAME,
+  description:
+    'Transit-oriented multifamily and mixed-use development in suburban Chicago.',
+  path: '/',
+})
 
 /** Narrative scroll: hero → stats → success factors → insights → portfolio → partners. */
 export default async function HomePage() {

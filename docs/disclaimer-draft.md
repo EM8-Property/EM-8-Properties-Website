@@ -49,6 +49,29 @@ individual's circumstances. Prospective investors should consult their own advis
 
 EM8 Properties LLC is not a registered broker-dealer or investment adviser.
 
+## Structured data — a boundary drawn in code, pending counsel
+
+The site emits JSON-LD (`src/lib/structuredData.ts`), and the boundary is deliberate:
+**Organization** site-wide and **Article** on insight posts, and **nothing describing
+properties, offerings, or returns.**
+
+The reasoning, so nobody "completes" the markup later without asking. Schema.org's
+real-estate and product vocabularies (`RealEstateListing`, `Product`, `Offer`, `price`)
+exist to describe things that are for sale. Restating a targeted IRR or an equity multiple
+as a machine-readable, price-like claim — stripped of the realized/targeted distinction and
+the qualifying language the surrounding page carries — is a materially different statement
+from the same figure rendered in prose, and it would be republished by aggregators outside
+EM8's control. Neither type earns a Google rich result that would help this site, so there
+is no upside to weigh against it.
+
+**A question for counsel:** is any structured-data description of a `publiclyOffered`
+property acceptable, and if so with what qualifying fields? Until that is answered the
+markup stays as it is.
+
+The same rule applies as to visible copy: nothing is asserted that the CMS does not hold.
+Organization carries name, url, and contact email only — no address, logo, founding date,
+or social profiles, because a crawler cannot tell a confident guess from a fact.
+
 ## Questions worth asking counsel
 
 1. Should the entity name be the LLC, or a different named issuer?

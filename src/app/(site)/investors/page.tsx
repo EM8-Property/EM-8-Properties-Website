@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 import { fetchSanity } from '@/sanity/client'
 import {
   SITE_SETTINGS_QUERY,
@@ -15,11 +15,12 @@ import { Testimonials } from '@/components/ui/Testimonials'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 
-export const metadata: Metadata = {
-  title: 'Investors | EM8 Properties',
+export const metadata = pageMetadata({
+  title: 'Investors',
   description:
     'We work with accredited investors, family offices, and joint-venture partners across the Chicago MSA.',
-}
+  path: '/investors',
+})
 
 const FIELDS: FieldSpec[] = [
   { name: 'firstName', label: 'First name', type: 'text', required: true },

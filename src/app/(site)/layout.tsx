@@ -5,6 +5,9 @@ import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 import { fetchSanity } from '@/sanity/client'
 import { SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type { SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { organizationJsonLd } from '@/lib/structuredData'
+import { siteUrl } from '@/lib/siteUrl'
 
 /**
  * Chrome and the required-content guard for every visitor-facing page.
@@ -33,6 +36,17 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <>
+      {/*
+        Who the firm is, once per page, for every content route. It lives here rather than
+        on the homepage because it describes the site rather than a page, and this layout
+        already holds the one document the values come from.
+      */}
+      <JsonLd
+        data={organizationJsonLd({
+          siteUrl: siteUrl(),
+          contactEmail: settings.contactEmail,
+        })}
+      />
       {/*
         The header and the photo band share a positioning context so the header can sit
         over the photography, letting the image run to the very top of the page. On pages

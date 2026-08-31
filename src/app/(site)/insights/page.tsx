@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 import { fetchSanity } from '@/sanity/client'
 import { ALL_POSTS_QUERY } from '@/sanity/queries'
 import type { ALL_POSTS_QUERY_RESULT } from '@/sanity/types.generated'
@@ -6,11 +6,12 @@ import { InsightsFilter } from '@/components/insights/InsightsFilter'
 import type { PostData } from '@/components/insights/PostCard'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 
-export const metadata: Metadata = {
-  title: 'Insights | EM8 Properties',
+export const metadata = pageMetadata({
+  title: 'Insights',
   description:
     'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily.',
-}
+  path: '/insights',
+})
 
 export default async function InsightsPage() {
   const posts = await fetchSanity<ALL_POSTS_QUERY_RESULT>(ALL_POSTS_QUERY)
