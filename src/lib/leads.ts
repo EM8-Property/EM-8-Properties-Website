@@ -21,6 +21,7 @@ export type LeadInput = {
 
 export type EmailSender = { send(msg: { subject: string; body: string }): Promise<void> }
 type CreateFn = (doc: Record<string, unknown>) => Promise<{ _id: string }>
+type PatchFn = (id: string, fields: Record<string, unknown>) => Promise<unknown>
 
 /**
  * Name of the hidden field a person never sees and a naive bot fills.
@@ -140,7 +141,7 @@ export function parseLead(input: unknown): LeadInput {
  */
 export async function submitLead(
   input: LeadInput,
-  deps: { create: CreateFn; sender: EmailSender },
+  deps: { create: CreateFn; sender: EmailSender; patch?: PatchFn },
 ): Promise<{ id: string; emailed: boolean }> {
   const doc = await deps.create({
     ...input,
@@ -172,6 +173,23 @@ export async function submitLead(
     })
   } catch {
     emailed = false
+  }
+
+  // Write the outcome back to the document.
+  //
+  // Without this the flag lives only in the HTTP response, which nobody reads after the
+  // fact — so a lead nobody was notified about is indistinguishable from one that went
+  // through. That is precisely the case this document exists to catch, and it happened:
+  // an unverified Resend sender domain returned 403, the lead was captured correctly,
+  // and the record gave no indication that the team was never told.
+  //
+  // Failing to write the flag is not allowed to fail the submission. The lead is already
+  // saved and the sender has already been helped; losing the bookkeeping is a smaller
+  // problem than telling a real investor their details did not go through.
+  try {
+    await deps.patch?.(doc._id, { emailed })
+  } catch {
+    // Intentionally swallowed. See above.
   }
 
   return { id: doc._id, emailed }

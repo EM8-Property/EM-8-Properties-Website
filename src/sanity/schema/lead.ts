@@ -27,6 +27,19 @@ export const lead = defineType({
     defineField({ name: 'propertyAddress', type: 'string', readOnly: true }),
     defineField({ name: 'message', type: 'text', readOnly: true }),
     defineField({ name: 'submittedAt', type: 'datetime', readOnly: true }),
+    // Written by the API after the notification attempt, not by an editor.
+    //
+    // This is what makes the capture-first design actually recoverable: a lead with
+    // emailed:false was saved but never announced to anyone. Query
+    // *[_type=="lead" && emailed != true] to find every investor the team was not told
+    // about — the search that was impossible when this flag went unrecorded.
+    defineField({
+      name: 'emailed',
+      title: 'Team was notified',
+      type: 'boolean',
+      readOnly: true,
+      description: 'False means the lead was captured but the notification email failed.',
+    }),
     defineField({ name: 'exportedToAgora', type: 'boolean', initialValue: false }),
   ],
   preview: { select: { title: 'email', subtitle: 'source' } },
