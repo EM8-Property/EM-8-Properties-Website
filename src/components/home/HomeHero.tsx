@@ -20,7 +20,7 @@ export function HomeHero() {
       </h1>
       <p className="mt-5 max-w-[56ch] text-sm leading-relaxed text-ink-secondary">
         We develop and operate multifamily and mixed-use housing within walking distance of
-        Metra stations — working with municipalities rather than around them.
+        Metra stations. We work with municipalities rather than around them.
       </p>
       <div className="mt-6 flex gap-3">
         <Button href="/portfolio">View Portfolio →</Button>

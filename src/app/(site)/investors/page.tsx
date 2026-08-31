@@ -13,7 +13,7 @@ import { Eyebrow } from '@/components/ui/Eyebrow'
 export const metadata: Metadata = {
   title: 'Investors | EM8 Properties',
   description:
-    'EM8 partners with accredited investors, family offices, and JV partners across the Chicago MSA.',
+    'We work with accredited investors, family offices, and joint-venture partners across the Chicago MSA.',
 }
 
 /**
@@ -23,12 +23,12 @@ export const metadata: Metadata = {
 const STEPS: [string, string][] = [
   [
     'Verify and review',
-    'Accreditation is verified through our portal. You receive the full offering materials.',
+    'Our portal verifies your accreditation. Then you get the full offering materials.',
   ],
   ['Commit and fund', 'Subscription documents and capital calls are handled in the portal.'],
   [
     'Hold and receive',
-    'Quarterly reporting and distributions, with statements available any time.',
+    'Quarterly reporting and distributions. Statements are there whenever you want them.',
   ],
   ['Exit', 'Refinance or sale, with proceeds distributed per the operating agreement.'],
 ]
@@ -71,8 +71,8 @@ export default async function InvestorsPage() {
         <div>
           <SectionHeading
             eyebrow="Investors"
-            title="We work with patient, mission-aligned capital"
-            intro="EM8 partners with accredited investors, family offices, and JV partners on transit-oriented multifamily and mixed-use across the Chicago MSA."
+            title="We work with investors who can wait"
+            intro="We work with accredited investors, family offices, and joint-venture partners on transit-oriented multifamily and mixed-use around Chicago."
           />
           {settings?.agoraPortalUrl && (
             <a

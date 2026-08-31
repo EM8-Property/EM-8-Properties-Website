@@ -76,13 +76,13 @@ export const PROPERTIES = [
     image: '19872fd567ecde655bd15d04e48a723b6b752cf6-1600x917.jpg',
     alt: 'The Boulevard at Central Station, Tinley Park',
     cardBlurb:
-      'Mixed-use development with street-level retail, built in 2021 and acquired in 2026, beside the Tinley Park Metra platform on the Rock Island District line.',
+      'Mixed-use development with street-level retail, built in 2021 and bought in 2026. The Tinley Park Metra platform is directly across the street.',
     overview: [
-      'The Boulevard at Central Station sits directly across from the Tinley Park Metra station, a position that is effectively impossible to reproduce — the platform is the amenity, and there is only one of them.',
-      'The building pairs apartments above street-level retail, giving residents a walkable downtown block and giving the retail a steady commuter flow each morning and evening.',
+      'The Boulevard at Central Station sits directly across from the Tinley Park Metra station. Nobody can build that position twice. The platform is the amenity, and there is only one of them.',
+      'Apartments sit above street-level retail. The shops get commuter traffic twice a day, and the residents get a downtown block they can actually walk.',
     ],
     businessPlan: [
-      'EM8 acquired the asset in June 2026. The plan is operational rather than structural: tighten management, lease the retail to tenants that serve the commuter and resident base, and hold a well-built 2021 property in a location that cannot be replicated.',
+      'We bought it in June 2026. The work here is operational rather than structural: tighten up management, and lease the retail to businesses the commuters and residents will actually use. The building is only a few years old and the location is fixed.',
     ],
   },
   {
@@ -104,13 +104,13 @@ export const PROPERTIES = [
     image: '04c37374686073f6bf650aa6ebd92a0a41989278-4160x3117.jpg',
     alt: '157 & Cicero, Oak Forest',
     cardBlurb:
-      'Ground-up mixed-use development completed in 2024, combining apartments with street-level retail a short walk from the Oak Forest Metra station.',
+      'Ground-up mixed-use, finished in 2024. Apartments over street-level retail, five minutes on foot from the Oak Forest Metra station.',
     overview: [
-      'EM8 built 157 & Cicero from the ground up in partnership with the City of Oak Forest, delivering apartments and street-level retail on a site the city had wanted activated for years.',
-      'It is the clearest example of how EM8 works: a municipality with a plan for its downtown, a developer willing to build what the plan asked for, and a Metra platform a few minutes away.',
+      'We built 157 & Cicero from the ground up with the City of Oak Forest, on a site the city had been trying to get activated for years.',
+      'This is how we prefer to work. The city had a plan for its downtown, and we built what the plan asked for, a few minutes from the Metra platform.',
     ],
     businessPlan: [
-      'Delivered and stabilized. The asset now operates at the top of its submarket, with the retail leased to tenants that draw from both the building and the surrounding neighborhood.',
+      'Delivered and stabilized. The retail is leased to tenants who draw on the building and the blocks around it.',
     ],
   },
   {
@@ -132,13 +132,13 @@ export const PROPERTIES = [
     image: '1773bb5110fccba66a5624bdfee794dd21b7b897-4160x3117.jpg',
     alt: 'Waverly Creek Townhomes, Oak Forest',
     cardBlurb:
-      'Ground-up townhome development with a retail component, delivered in 2026 within walking distance of the Oak Forest Metra station.',
+      'Ground-up townhomes with a retail component, delivered in 2026. Still leasing. Five minutes on foot from the Oak Forest Metra station.',
     overview: [
-      'Waverly Creek is a ground-up townhome development at 156th and Cicero, delivered in May 2026 and now in lease-up.',
-      'Townhomes fill a gap in the Oak Forest housing stock: households that want more room than an apartment without leaving a walkable, transit-served part of the city.',
+      'A ground-up townhome development at 156th and Cicero, delivered in May 2026 and leasing now.',
+      'Townhomes fill a real gap in Oak Forest. Some households want more room than an apartment gives them but do not want to leave a walkable part of town with a train in it.',
     ],
     businessPlan: [
-      'The asset is leasing now. The near-term work is absorption — moving from initial delivery to a stabilized rent roll — alongside leasing the retail component.',
+      'Leasing now. The near-term work is absorption, getting from delivery to a stabilized rent roll, and filling the retail.',
     ],
   },
   {
@@ -158,12 +158,12 @@ export const PROPERTIES = [
     image: 'a142e32f07324bf7348a026501d355c52217e2b2-5280x3956.jpg',
     alt: 'ReVerb — Woodland Trails, Oak Forest',
     cardBlurb:
-      'Seventy-two apartments in Oak Forest, fully stabilized following a renovation of unit interiors and shared amenity space.',
+      'Seventy-two apartments in Oak Forest. We rebuilt the interiors and the shared spaces in 2022, and it has run essentially full since.',
     overview: [
-      'ReVerb is a 72-unit community on LeClaire Avenue in Oak Forest, renovated inside and out and now operating at full occupancy.',
+      'Seventy-two apartments on LeClaire Avenue in Oak Forest. We renovated it inside and out, and it has run at full occupancy since.',
     ],
     businessPlan: [
-      'Stabilized and held for income. Interiors and common areas were upgraded ahead of lease-up, and the asset has run essentially full since.',
+      'Stabilized and held for income. We upgraded the interiors and common areas before lease-up, and it has run essentially full since.',
     ],
   },
   {
@@ -183,12 +183,12 @@ export const PROPERTIES = [
     image: '9db204df8d7738c6486b8df3cf444148e3863811-1222x811.png',
     alt: 'Oak Forest K, Oak Forest',
     cardBlurb:
-      'Forty apartments taken through a full interior modernization and exterior facade program, completed in 2025.',
+      'Forty apartments across two buildings, modernized inside and refaced outside. The work finished in 2025.',
     overview: [
-      'Oak Forest K covers two buildings on Lamon Avenue and West 157th Street, a few minutes from the Metra station, acquired across two closings in late 2022 and early 2023.',
+      'Two buildings, on Lamon Avenue and West 157th Street, a few minutes from the Metra station. We closed on them separately in late 2022 and early 2023.',
     ],
     businessPlan: [
-      'The renovation finished in 2025: interiors modernized unit by unit and the exterior facade rebuilt. The asset is now held and operated at its improved rent level.',
+      'The renovation wrapped in 2025. We modernized interiors unit by unit and rebuilt the exterior facade. We hold and operate it at the improved rent level now.',
     ],
   },
   {
@@ -206,12 +206,12 @@ export const PROPERTIES = [
     image: '51870aba22bd28478bb3f13a840130ebe85f3091-1600x1199.jpg',
     alt: '382 Penn Apartments, Glen Ellyn',
     cardBlurb:
-      'Eighty-eight apartments in Glen Ellyn, in active lease-up alongside a unit-by-unit renovation program.',
+      'Eighty-eight apartments in Glen Ellyn. We renovate units as they turn instead of emptying the building, so it earns while it leases.',
     overview: [
-      '382 Penn is an 88-unit community on Pennsylvania Avenue in Glen Ellyn, a DuPage County submarket with strong schools and an established downtown.',
+      'Eighty-eight apartments on Pennsylvania Avenue in Glen Ellyn, a DuPage County suburb with good schools and a downtown people actually use.',
     ],
     businessPlan: [
-      'Renovation and lease-up run together: units are taken and upgraded as they turn, rather than emptying the building, so the asset keeps producing income throughout.',
+      'Renovation and lease-up run at the same time. We take units as they turn instead of emptying the building, so it keeps producing income the whole way through.',
     ],
   },
   {
@@ -229,12 +229,12 @@ export const PROPERTIES = [
     image: '285467a42b1a50e50fe824f5ca8780cdffa02f1e-5568x3712.jpg',
     alt: 'Park Townhomes at Highland Park',
     cardBlurb:
-      'Forty townhomes on Green Bay Road in Highland Park, stabilized and held for income in an established North Shore submarket.',
+      'Forty townhomes on Green Bay Road. New supply on the North Shore is scarce and the older stock rarely trades, so we hold this one for income.',
     overview: [
-      'Forty townhomes on Green Bay Road in Highland Park — a North Shore submarket where new supply is scarce and the existing stock rarely changes hands.',
+      'Forty townhomes on Green Bay Road in Highland Park. New supply on the North Shore is scarce, and the stock that exists rarely comes to market.',
     ],
     businessPlan: [
-      'Held for income. The asset was refinanced in the first quarter of 2026 and continues to operate at a high leased rate.',
+      'Held for income. We refinanced in the first quarter of 2026, and it continues to run at a high leased rate.',
     ],
   },
   {
@@ -254,12 +254,12 @@ export const PROPERTIES = [
     image: 'f920b3a2849a5edcf1f9879adb0793a8987b4873-620x426.jpg',
     alt: 'Antioch Industrial, Antioch',
     cardBlurb:
-      "A 36,530-square-foot manufacturing facility on a net lease in Lake County's medical and biopharmaceutical corridor, renovated in 2021.",
+      "A 36,530-square-foot manufacturing building on a net lease, renovated in 2021. It sits in Lake County's medical and biopharmaceutical corridor.",
     overview: [
-      'A purpose-built manufacturing facility on Drom Court in Antioch, originally built in 1989 and extensively renovated in 2021, in the Lake County medical and biopharmaceutical corridor.',
+      'A purpose-built manufacturing facility on Drom Court in Antioch, put up in 1989 and heavily renovated in 2021. Lake County’s medical and biopharmaceutical corridor runs through here.',
     ],
     businessPlan: [
-      "Held on a net lease, where the tenant carries operating expenses. It is the portfolio's one industrial holding and its steadiest income line.",
+      "Held on a net lease, so the tenant carries the operating costs. It is our only industrial building and the steadiest income line we have.",
     ],
   },
   {
@@ -278,16 +278,16 @@ export const PROPERTIES = [
     image: '15eff42cd7014323a1613cb851712db1f81fe917-5472x3648.jpg',
     alt: 'Burbank Manor Apartments, Burbank',
     cardBlurb:
-      'A 173-unit senior garden apartment community in Burbank, acquired in December 2020 and sold in July 2022.',
+      'A 173-unit senior garden apartment community in Burbank. We bought it in December 2020 and sold it in July 2022.',
     overview: [
-      'Burbank Manor is a 173-unit senior garden apartment community built in 1984, comprising roughly 148,000 square feet on Pinehurst Court.',
+      'A 173-unit senior garden apartment community built in 1984, roughly 148,000 square feet on Pinehurst Court.',
     ],
     dealStory: {
       acquired:
-        'Acquired in December 2020 — a 173-unit senior garden apartment community in Burbank, built in 1984.',
+        'We bought it in December 2020: 173 units of senior garden apartments in Burbank, built in 1984.',
       executed:
-        'Operations were stabilized and the rent roll brought to market across the hold, finishing at 96% occupancy.',
-      exited: 'Sold in July 2022 for $20.5 million, at a realized capitalization rate of 5.49%.',
+        'We stabilized operations and brought the rent roll up to market over the hold, finishing at 96% occupancy.',
+      exited: 'Sold in July 2022 for $20.5 million, a realized cap rate of 5.49%.',
       equityMultiple: '1.99x',
       exitYear: 2022,
     },
@@ -307,16 +307,16 @@ export const PROPERTIES = [
     image: 'bb954d2b6e1f3fe4a3494ec7f1f86cf6393eb1cb-2048x1365.jpg',
     alt: 'Embassy Apartments, Mundelein',
     cardBlurb:
-      'Seventy-two apartments on South Shaddle Avenue in Mundelein, acquired in August 2021 and sold in June 2023.',
+      'Seventy-two apartments on South Shaddle Avenue in Mundelein. We bought it in August 2021 and sold it in June 2023.',
     overview: [
-      'Embassy Apartments is a 72-unit community of two-story garden buildings on South Shaddle Avenue in Mundelein, built in 1972.',
+      'Seventy-two apartments in two-story garden buildings on South Shaddle Avenue in Mundelein, built in 1972.',
     ],
     dealStory: {
       acquired:
-        'Acquired in August 2021 — 72 apartments across two-story garden buildings in Mundelein, built in 1972.',
+        'We bought it in August 2021: 72 apartments in two-story garden buildings in Mundelein, built in 1972.',
       executed:
-        'Unit interiors were renovated and the rent roll repositioned while occupancy held in the mid-nineties.',
-      exited: 'Sold in June 2023 for $10.0 million, at a realized capitalization rate of 6.36%.',
+        'We renovated the unit interiors and repositioned the rent roll while occupancy held in the mid-nineties.',
+      exited: 'Sold in June 2023 for $10.0 million, a realized cap rate of 6.36%.',
       equityMultiple: '1.37x',
       exitYear: 2023,
     },
@@ -342,28 +342,28 @@ export const FOCUS_CARDS = [
     _id: 'focusCard-communities',
     title: 'Communities people choose',
     description:
-      'We build and operate places residents choose to stay in. Retention, not turnover, is what compounds — in the rent roll and in the reputation that brings the next deal.',
+      'We build places people stay in. Retention is what compounds, both in the rent roll and in the reputation that brings us the next deal. Turnover burns both.',
     order: 10,
   },
   {
     _id: 'focusCard-transit',
     title: 'Transit and infrastructure first',
     description:
-      'Site selection starts with what already exists: a Metra platform, green space, a downtown worth walking to. We would rather buy proximity than try to manufacture it.',
+      'We start with what a place already has: a Metra platform, a park, a downtown worth walking to. Buying proximity is cheaper and more honest than trying to manufacture it.',
     order: 20,
   },
   {
     _id: 'focusCard-municipal',
     title: 'Partnership with municipalities',
     description:
-      'We treat municipalities as long-term partners rather than counterparties, working to understand what a community wants built before proposing what we would like to build.',
+      'We treat a city as a long-term partner, not a counterparty. That means finding out what a community wants built before we propose what we want to build.',
     order: 30,
   },
   {
     _id: 'focusCard-design',
     title: 'Design for value, not for savings',
     description:
-      'Design decisions are made against long-term value rather than short-term value engineering. The cheapest specification is rarely the one that still looks right in year ten.',
+      'We make design decisions against long-term value instead of short-term value engineering. The cheapest specification is rarely the one that still looks right in year ten.',
     order: 40,
   },
 ]

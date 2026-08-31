@@ -17,7 +17,7 @@ import { Chip } from '@/components/ui/Chip'
 export const metadata: Metadata = {
   title: 'Track Record | EM8 Properties',
   description:
-    'Realized results across the Chicago MSA — what we paid, what we did, what we exited at.',
+    'Realized results across the Chicago MSA: what we paid, what we did, what we exited at.',
 }
 
 /**

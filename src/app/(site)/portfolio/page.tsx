@@ -25,7 +25,7 @@ export default async function PortfolioPage() {
       <SectionHeading
         eyebrow="Portfolio"
         title="Assets across the Chicago MSA"
-        intro="Value-add renovations, ground-up development, and stabilized operations — all self-managed."
+        intro="Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves."
       />
       <div className="mt-8">
         <PortfolioFilter properties={properties as PropertyCardData[]} />

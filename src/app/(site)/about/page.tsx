@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/Card'
 export const metadata: Metadata = {
   title: 'About | EM8 Properties',
   description:
-    'Creating communities people choose to live in — transit-oriented development in suburban Chicago.',
+    'Creating communities people choose to live in. Transit-oriented development in suburban Chicago.',
 }
 
 export default async function AboutPage() {
@@ -29,7 +29,7 @@ export default async function AboutPage() {
         </h1>
         <p className="mt-4 max-w-[60ch] text-sm leading-relaxed text-ink-secondary">
           We develop, build, and operate housing in suburban Chicago where the
-          infrastructure for a good life already exists — a train, a main street, green
+          infrastructure for a good life is already there: a train, a main street, green
           space, somewhere to buy groceries. Then we try to be the reason people stay.
         </p>
       </div>
@@ -57,7 +57,7 @@ export default async function AboutPage() {
         <div className="mx-auto max-w-[1200px] px-6 py-14">
           <SectionHeading
             eyebrow="Team"
-            title="Operators and investors with deep Chicago market experience"
+            title="Operators and investors who know these suburbs"
           />
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {team.map((m) => (

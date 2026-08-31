@@ -19,7 +19,7 @@ const PARTNERS: [string, string, string][] = [
   [
     'Development & Capital',
     'EM8 Properties',
-    'Site selection, entitlement, capital structure, and design direction. We stay the owner — we don’t merchant-build and walk away.',
+    'Site selection, entitlement, capital structure, and design direction. We stay the owner. We don’t merchant-build and walk away.',
   ],
   [
     'Construction',
@@ -29,7 +29,7 @@ const PARTNERS: [string, string, string][] = [
   [
     'Property Management',
     'Advantage',
-    'Day-to-day operations and resident experience. Monthly walks of every vacant unit, grounds, and amenity — with us present.',
+    'Day-to-day operations and resident experience. We walk every vacant unit, the grounds, and the amenities together each month.',
   ],
 ]
 
@@ -57,7 +57,7 @@ export default function PartnersPage() {
       <SectionHeading
         eyebrow="Partners"
         title="One accountable team, start to finish"
-        intro="Most developers assemble a new cast for every project and spend the job managing the seams. We work with the same builder and the same manager across the portfolio — so nobody gets to point at somebody else."
+        intro="Most developers assemble a new cast for every project, then spend the job managing the seams. We use the same builder and the same manager across the portfolio, so nobody gets to point at somebody else."
       />
 
       <div className="mt-8 grid gap-5 sm:grid-cols-3">
@@ -81,7 +81,7 @@ export default function PartnersPage() {
           <SectionHeading
             eyebrow="Bring Us A Site"
             title="Have land near a Metra station?"
-            intro="We look at multifamily and mixed-use sites within walking distance of transit across the Chicago MSA and southern Wisconsin. Brokers, municipalities, and owners — we answer every one."
+            intro="We look at multifamily and mixed-use sites within walking distance of transit across the Chicago MSA and southern Wisconsin. Brokers, cities, owners: we answer every one."
           />
           <dl className="mt-5 flex flex-wrap gap-8">
             {[
