@@ -21,6 +21,7 @@ export default async function InsightsPage() {
         eyebrow="Insights"
         title="What we've learned building next to the tracks"
         intro="Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA."
+        level={1}
       />
       <div className="mt-8">
         <InsightsFilter posts={posts as PostData[]} />

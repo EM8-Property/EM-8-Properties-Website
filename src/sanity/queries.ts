@@ -31,7 +31,7 @@ export const PROPERTY_BY_SLUG_QUERY = defineQuery(`
     metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
     "image": gallery[0],
     squareFeet, yearRenovated, overview, businessPlan,
-    gallery, coordinates, dealStory, publiclyOffered,
+    gallery, coordinates, dealStory, publiclyOffered, offering,
     "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {
       title, "slug": slug.current, publishedAt
     }
@@ -96,6 +96,21 @@ export const TESTIMONIALS_QUERY = defineQuery(`
   }
 `)
 
+/**
+ * The current-opportunity module spec §4 refers to.
+ *
+ * Filtered on publiclyOffered, which is the Rule 506(c) gate: an offering not filed
+ * under 506(c) may not be generally solicited, so it must never reach a public page by
+ * default. The filter is the enforcement, not a convenience.
+ */
+export const CURRENT_OFFERINGS_QUERY = defineQuery(`
+  *[_type == "property" && publiclyOffered == true] | order(order asc) {
+    _id, title, "slug": slug.current, assetClass, status, city, state,
+    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
+    "image": gallery[0], offering
+  }
+`)
+
 export const SITE_SETTINGS_QUERY = defineQuery(
-  `*[_type == "siteSettings"][0] { agoraPortalUrl, contactEmail, disclaimer, defaultShareImage }`,
+  `*[_type == "siteSettings"][0] { agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage }`,
 )

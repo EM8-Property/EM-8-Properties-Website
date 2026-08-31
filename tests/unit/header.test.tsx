@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { SiteHeader } from '@/components/layout/SiteHeader'
-import { SiteFooter } from '@/components/layout/SiteFooter'
 
 const PHYSICAL = /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/
 
@@ -26,14 +25,5 @@ describe('SiteHeader', () => {
   })
 })
 
-describe('SiteFooter', () => {
-  it('renders the disclaimer it is given', () => {
-    render(<SiteFooter disclaimer="Past performance is not indicative of future results." />)
-    expect(screen.getByText(/Past performance is not indicative/)).toBeDefined()
-  })
-
-  it('uses no physical-direction utilities', () => {
-    const { container } = render(<SiteFooter disclaimer="x" />)
-    expect(container.innerHTML).not.toMatch(PHYSICAL)
-  })
-})
+// SiteFooter has its own suite in footer.test.tsx, which covers the navigation and
+// contact address added after this file was written.

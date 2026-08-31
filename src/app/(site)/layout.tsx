@@ -21,10 +21,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   //
   // This throws only for content routes. /studio sits outside this group precisely so
   // that the tool needed to create the missing document stays reachable.
-  if (!settings?.agoraPortalUrl || !settings?.disclaimer) {
+  if (!settings?.agoraPortalUrl || !settings?.disclaimer || !settings?.contactEmail) {
     throw new Error(
       'siteSettings is missing or incomplete. Publish a siteSettings document with ' +
-        'agoraPortalUrl and disclaimer set — at /studio, or at ' +
+        'agoraPortalUrl, contactEmail and disclaimer set — at /studio, or at ' +
         'https://em-8-properties.sanity.studio',
     )
   }
@@ -33,7 +33,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     <>
       <SiteHeader agoraUrl={settings.agoraPortalUrl} />
       <main className="flex-1">{children}</main>
-      <SiteFooter disclaimer={settings.disclaimer} />
+      <SiteFooter disclaimer={settings.disclaimer} contactEmail={settings.contactEmail} />
     </>
   )
 }

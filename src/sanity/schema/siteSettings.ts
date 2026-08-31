@@ -16,6 +16,12 @@ export const siteSettings = defineType({
       validation: (r) => r.required(),
     }),
     defineField({ name: 'contactEmail', type: 'string', validation: (r) => r.required() }),
+    defineField({
+      name: 'bookACallUrl',
+      title: 'Book a call URL',
+      type: 'url',
+      description: 'Scheduling link used by the homepage call to action.',
+    }),
     defineField({ name: 'defaultShareImage', type: 'image' }),
     defineField({ name: 'disclaimer', type: 'text', rows: 5, validation: (r) => r.required() }),
   ],

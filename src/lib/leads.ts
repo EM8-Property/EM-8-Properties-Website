@@ -3,12 +3,19 @@ export class LeadValidationError extends Error {}
 /** Thrown when a submission looks automated. Handled as a silent success upstream. */
 export class LeadSpamError extends Error {}
 
-const SOURCES = ['keep-in-touch', 'site-submission'] as const
+const SOURCES = ['keep-in-touch', 'site-submission', 'newsletter'] as const
+
+/**
+ * Sources that collect a name. `newsletter` is the homepage CTA, which asks for an email
+ * address and nothing else — requiring a name there would defeat the point of having a
+ * low-friction ask at all.
+ */
+const SOURCES_REQUIRING_NAME: readonly string[] = ['keep-in-touch', 'site-submission']
 export type LeadSource = (typeof SOURCES)[number]
 
 export type LeadInput = {
   source: LeadSource
-  firstName: string
+  firstName?: string
   lastName?: string
   email: string
   phone?: string
@@ -84,7 +91,9 @@ export function parseLead(input: unknown): LeadInput {
   }
 
   const firstName = str(v.firstName)
-  if (!firstName) throw new LeadValidationError('First name required')
+  if (!firstName && SOURCES_REQUIRING_NAME.includes(source)) {
+    throw new LeadValidationError('First name required')
+  }
 
   const email = str(v.email)
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -120,7 +129,7 @@ export function parseLead(input: unknown): LeadInput {
 
   return {
     source: source as LeadSource,
-    firstName,
+    ...(firstName ? { firstName } : {}),
     ...(str(v.lastName) ? { lastName: str(v.lastName) } : {}),
     email,
     ...(str(v.phone) ? { phone: str(v.phone) } : {}),
@@ -152,12 +161,17 @@ export async function submitLead(
     exportedToAgora: false,
   })
 
+  const fullName = [input.firstName, input.lastName].filter(Boolean).join(' ')
+
   let emailed = true
   try {
     await deps.sender.send({
-      subject: `New ${input.source} lead: ${input.firstName} ${input.lastName ?? ''}`.trim(),
+      // `fullName` is built rather than interpolated directly: a newsletter lead has no
+      // name at all, and the previous template produced "New newsletter lead: undefined"
+      // in both the subject line and the body.
+      subject: [`New ${input.source} lead`, fullName].filter(Boolean).join(': '),
       body: [
-        `Name: ${input.firstName} ${input.lastName ?? ''}`.trim(),
+        fullName ? `Name: ${fullName}` : '',
         `Email: ${input.email}`,
         input.phone ? `Phone: ${input.phone}` : '',
         input.investorType ? `Investor type: ${input.investorType}` : '',

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { HONEYPOT_FIELD } from '@/lib/leads'
+import type { LeadSource } from '@/lib/leads'
 
 export type FieldSpec = {
   name: string
@@ -17,10 +18,13 @@ export function LeadForm({
   source,
   fields,
   submitLabel,
+  successMessage,
 }: {
-  source: 'keep-in-touch' | 'site-submission'
+  source: LeadSource
   fields: FieldSpec[]
   submitLabel: string
+  /** Overrides the default confirmation. The homepage CTA promises less than the forms. */
+  successMessage?: string
 }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +57,7 @@ export function LeadForm({
   if (status === 'sent') {
     return (
       <p className="rounded-card border border-rule bg-panel p-5 text-sm text-ink">
-        Thank you — we&rsquo;ve got it and someone will be in touch.
+        {successMessage ?? 'Thank you — we’ve got it and someone will be in touch.'}
       </p>
     )
   }
