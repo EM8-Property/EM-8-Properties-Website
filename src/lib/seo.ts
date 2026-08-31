@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { SHARE_CARD_SIZE } from '@/components/seo/shareCardFrame'
 
 /**
  * Head metadata shared by every static content route.
@@ -27,10 +26,12 @@ export const SITE_NAME = 'EM8 Properties'
 export const SHARE_CARD_PATH = '/share-card'
 
 /**
- * Dimensions come from the card itself rather than being restated here. Two independent
- * copies of 1200x630 would let the declared `og:image:width` quietly lie the day the card
- * is redrawn at another aspect.
+ * The size every generated card is drawn at — the one LinkedIn, Facebook and X all render
+ * large. Declared here, and imported by the card itself, so `og:image:width` cannot come
+ * to disagree with the pixels. `lib` stays a leaf: the card imports this, not the reverse.
  */
+export const SHARE_CARD_SIZE = { width: 1200, height: 630 } as const
+
 export const SHARE_CARD = {
   url: SHARE_CARD_PATH,
   width: SHARE_CARD_SIZE.width,
@@ -43,9 +44,12 @@ export const SHARE_CARD = {
  *
  * The homepage passes `SITE_NAME` itself, where a suffix would read
  * "EM8 Properties | EM8 Properties", so that case returns the name alone.
+ *
+ * An empty title does too. The dynamic routes pass `p.title ?? ''` from the CMS, and a
+ * document saved without one would otherwise ship a title beginning with a bare pipe.
  */
 export function pageTitle(title: string): string {
-  return title === SITE_NAME ? SITE_NAME : `${title} | ${SITE_NAME}`
+  return !title || title === SITE_NAME ? SITE_NAME : `${title} | ${SITE_NAME}`
 }
 
 /** A card image with the dimensions and alt text declared, not a bare URL. */

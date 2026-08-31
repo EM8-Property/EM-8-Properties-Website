@@ -52,8 +52,17 @@ export function organizationJsonLd({
   }
 }
 
-/** A reference to the Organization node the layout already emits, not a second copy of it. */
-type Attribution = { '@id': string }
+/**
+ * Points at the Organization node the layout emits on the same page, and describes itself.
+ *
+ * Both halves matter. The `@id` links the two into one graph rather than leaving two
+ * unconnected nodes for the same firm. The `@type` and `name` keep the Article valid read
+ * on its own: Google treats `author.name` as required when `author` is present, and
+ * whether a crawler resolves an `@id` across two separate `<script>` blocks on one page is
+ * an assumption, not a documented guarantee. A bare reference traded a certainty for that
+ * assumption on the one page /insights exists for; two extra keys retire the question.
+ */
+type Attribution = { '@id': string; '@type': 'Organization'; name: string }
 
 type ArticleJsonLd = {
   '@context': string
@@ -84,9 +93,11 @@ export function articleJsonLd({
   /** Absolute URL. Google lists `image` as recommended on Article. */
   image?: string | null
 }): ArticleJsonLd {
-  // Refers to the Organization the site layout emits on this same page rather than
-  // repeating its fields, so the two are one graph instead of two unlinked nodes.
-  const attribution: Attribution = { '@id': organizationId(siteUrl) }
+  const attribution: Attribution = {
+    '@id': organizationId(siteUrl),
+    '@type': 'Organization',
+    name: SITE_NAME,
+  }
 
   return {
     '@context': 'https://schema.org',

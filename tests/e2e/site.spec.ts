@@ -18,6 +18,32 @@ test('homepage leads with the purpose', async ({ page }) => {
  * still skipping at cutover, that is itself the finding.
  */
 
+/**
+ * The head fields a dynamic route needs, asserted on the rendered document.
+ *
+ * Both dynamic routes hand-rolled their own Open Graph block once and lost `og:url` and
+ * `og:site_name` doing it — the two fields the social graph uses to identify a shared
+ * object. They are also the routes that run through the `image: null` seam, so they are
+ * the ones most worth checking here rather than only in a unit test.
+ */
+async function expectShareableHead(page: import('@playwright/test').Page, path: string) {
+  const canonical = await page.locator('link[rel="canonical"]').getAttribute('href')
+  expect(canonical, `canonical on ${path}`).toBeTruthy()
+  expect(new URL(canonical!).pathname, `canonical path on ${path}`).toBe(path)
+
+  const ogUrl = await page.locator('meta[property="og:url"]').getAttribute('content')
+  expect(ogUrl, `og:url on ${path}`).toBe(canonical)
+
+  await expect(page.locator('meta[property="og:site_name"]')).toHaveAttribute(
+    'content',
+    'EM8 Properties',
+  )
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image',
+  )
+}
+
 test('a portfolio card opens its canonical property page', async ({ page }) => {
   await page.goto('/portfolio')
   const cards = page.locator('a[href^="/portfolio/"]')
@@ -26,6 +52,7 @@ test('a portfolio card opens its canonical property page', async ({ page }) => {
   await cards.first().click()
   await expect(page).toHaveURL(/\/portfolio\/[a-z0-9-]+$/)
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expectShareableHead(page, new URL(page.url()).pathname)
 })
 
 test('the portfolio filter narrows the grid', async ({ page }) => {
@@ -55,6 +82,9 @@ test('an insights article resolves and carries share metadata', async ({ page })
     'content',
     /^https?:\/\/(?!localhost)/,
   )
+  await expectShareableHead(page, new URL(page.url()).pathname)
+  // An article overrides the site-wide default: it is an article, not a website.
+  await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
 })
 
 test('track record links back to canonical property URLs, not its own', async ({ page }) => {
@@ -173,7 +203,13 @@ test('every content route declares the canonical it should, and a large card', a
     //
     // `/` canonicalises to the bare origin, which is Next's own normalisation.
     expect(url.pathname, `canonical path on ${route}`).toBe(route === '/' ? '/' : route)
-    expect(url.protocol, `canonical protocol on ${route}`).toBe('https:')
+    // https, unless a developer has pointed NEXT_PUBLIC_SITE_URL at a local origin to
+    // make local canonicals sane — that is a setup choice, not a defect.
+    const localOrigin = url.hostname === 'localhost' || url.hostname === '127.0.0.1'
+    expect(
+      localOrigin ? ['http:', 'https:'] : ['https:'],
+      `canonical protocol on ${route}`,
+    ).toContain(url.protocol)
     origins.add(url.origin)
 
     const ogImage = await page

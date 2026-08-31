@@ -1,7 +1,8 @@
 import { palette } from '@/lib/tokens'
 
-/** Every share card is 1200x630 — the size LinkedIn, Facebook and X all render large. */
-export const SHARE_CARD_SIZE = { width: 1200, height: 630 } as const
+// Re-exported so a card file needs one import. The value lives in `lib/seo`, which also
+// declares the og:image dimensions, so the tags and the pixels cannot disagree.
+export { SHARE_CARD_SIZE } from '@/lib/seo'
 
 /**
  * The shared frame for every generated share card: wordmark, headline, teal rule.

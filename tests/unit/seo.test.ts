@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 import { stripComments } from '../shared/sourceScan'
 import { pageMetadata, pageTitle, SITE_NAME } from '@/lib/seo'
 
@@ -143,6 +143,17 @@ describe('every content route declares its own canonical', () => {
       )
     } else {
       expect(source).toMatch(new RegExp(`path:\\s*'${route}'`))
+    }
+
+    // `image: null` means "a file convention supplies the card". If that file is renamed
+    // or removed — plausible when these routes are next touched — the page keeps promising
+    // `twitter:card = summary_large_image` with no image behind it, which is the exact
+    // failure class this branch exists to remove, and nothing else would see it.
+    if (/image:\s*null/.test(source)) {
+      expect(
+        existsSync(join(dirname(file), 'opengraph-image.tsx')),
+        `${route} passes image: null, so it needs its own opengraph-image.tsx`,
+      ).toBe(true)
     }
   })
 })

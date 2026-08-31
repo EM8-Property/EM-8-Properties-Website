@@ -53,15 +53,22 @@ describe('articleJsonLd', () => {
     expect(article.datePublished).toBe('2026-08-30T12:00:00Z')
   })
 
-  it('refers to the Organization node rather than emitting a second copy of it', () => {
-    // The layout already emits Organization on this same page. Restating its fields here
-    // would leave two unlinked nodes describing the same firm; an @id reference makes it
-    // one graph.
-    const ref = { '@id': organizationId('https://em-8.com') }
+  it('links to the Organization node and still describes itself', () => {
+    // The @id ties this to the Organization the layout emits on the same page, so the two
+    // are one graph. The @type and name keep the Article valid read on its own — Google
+    // treats author.name as required, and cross-block @id resolution is an assumption.
+    const ref = {
+      '@id': organizationId('https://em-8.com'),
+      '@type': 'Organization',
+      name: 'EM8 Properties',
+    }
     expect(article.publisher).toEqual(ref)
     expect(article.author).toEqual(ref)
+  })
+
+  it('uses the same @id the Organization node declares, or the link is dangling', () => {
     expect(organizationJsonLd({ siteUrl: 'https://em-8.com', contactEmail: null })['@id']).toBe(
-      ref['@id'],
+      article.publisher['@id'],
     )
   })
 
