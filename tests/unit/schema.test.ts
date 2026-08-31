@@ -89,10 +89,10 @@ describe('property schema', () => {
 })
 
 describe('teamMember schema', () => {
-  it('caps bios at 200 characters', () => {
+  it('caps bios at 1500 characters', () => {
     expect(captureValidation(field(byName('teamMember'), 'bio').validation)).toContainEqual({
       method: 'max',
-      arg: 200,
+      arg: 1500,
     })
   })
 

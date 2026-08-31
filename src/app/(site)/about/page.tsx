@@ -8,6 +8,7 @@ import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Card } from '@/components/ui/Card'
 import { TEAM_GROUP_LABELS } from '@/lib/teamGroups'
+import { TeamBio } from '@/components/about/TeamBio'
 
 export const metadata: Metadata = {
   title: 'About | EM8 Properties',
@@ -111,11 +112,7 @@ export default async function AboutPage() {
                       <div className="p-4">
                         <h3 className="text-sm font-semibold text-ink">{m.name}</h3>
                         {m.role && <Eyebrow>{m.role}</Eyebrow>}
-                        {m.bio && (
-                          <p className="mt-2 text-xs leading-relaxed text-ink-secondary">
-                            {m.bio}
-                          </p>
-                        )}
+                        <TeamBio bio={m.bio} />
                       </div>
                     </Card>
                   ))}
