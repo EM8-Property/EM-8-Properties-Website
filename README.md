@@ -184,15 +184,21 @@ All of these bit during the build and are documented in the plan's Revisions sec
   long enough — at 375px the eyebrow began at y=62 while the header ran to y=68. Nothing in
   the build, tsc, lint or Lighthouse sees a 6px overlap, and desktop looks perfect. The
   overlay reserves `pt-24` for this. The copy is CMS text, so it can get longer at any time.
-- **Full-bleed photography costs LCP, not bytes.** Going edge to edge moved Lighthouse
-  performance 97 → 95 on the homepage, entirely through LCP (2.5s → 3.0s), while total
-  transfer actually *fell* (725KB → 717KB, images 405KB → 363KB) and Speed Index improved
-  sharply (2.3s → 0.9s). A bigger photograph is a bigger largest-contentful element by
-  definition. Do not go looking for a byte regression that is not there.
-- **Measure the same build you are reasoning about.** An intermediate version of the above
-  read 89 and 3.8s. That was a real defect — the outgoing slide's image was being unmounted
-  the moment its fade began — not the cost of full-bleed, and quoting it would have made
-  the design look worse than it is. Re-measure after every fix.
+- **Full-bleed photography costs LCP, not bytes.** Going edge to edge *reduced* payload —
+  703–717KB total against 725KB, images 362KB against 405KB — with no budget overage. A
+  bigger photograph is nonetheless a bigger largest-contentful element by definition, so
+  expect LCP to rise. Do not go looking for a byte regression that is not there.
+- **One Lighthouse run against the deployed site tells you almost nothing.** Seven runs of
+  the same commit on Railway returned `87, 87, 87, 97, 98, 87, 87`. Both clusters ship an
+  identical payload (5 images, largest 125KB), so the ~10-point spread is container and CDN
+  warmth, not the build. The slow cluster is LCP 3.7s / SI 3.9s, the fast one 2.4s / 2.3s.
+  **Take at least five samples before believing a performance delta**, and never compare a
+  `localhost` run against a deployed one — that mistake was made here and had to be
+  retracted on PR #17.
+- **Measure the same build you are reasoning about.** An intermediate build read 89 and
+  LCP 3.8s locally. That was a real defect — the outgoing carousel slide's image was being
+  unmounted the moment its fade began — not the cost of full-bleed. Re-measure after every
+  fix, and re-measure the *baseline* too if you intend to quote a delta.
 - **Lighthouse's `target-size` failure predates all of this.** The carousel dots are 10px,
   below the 24px WCAG 2.2 minimum, which is why accessibility scores 96 rather than 100 —
   on the live site too. Confirm against the deployed URL before attributing it to a change.
