@@ -40,8 +40,11 @@ export function CtaBand({
   copy?: CtaBandCopy
   /**
    * Which ground to sit on. The homepage passes the next tone in its alternating
-   * sequence so this band cannot land on the same ground as the section above it;
-   * property pages leave it panelled, since white content always precedes it there.
+   * sequence so this band cannot land on the same ground as the section above it.
+   *
+   * Everywhere else the panelled default is the contrast, because white content precedes
+   * it — with one exception: /about closes on its panelled board section and passes
+   * `ground`, or the two greys would run together.
    */
   tone?: BandTone
 }) {

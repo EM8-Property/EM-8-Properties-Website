@@ -81,6 +81,16 @@ export const siteSettings = defineType({
       options: { hotspot: true },
       description: 'Shown when a page is shared. Upload at least 1200x630.',
     }),
+    /**
+     * The closing call to action, on siteSettings because it really is shared.
+     *
+     * It lived on homePage, and the schema comment claimed it was "shared by the homepage
+     * and every property page" — but a property page passed no copy at all, so all eleven
+     * rendered a headless email box: no heading, no intro, and no book-a-call, because
+     * that block hides itself when the label is missing. One record is what the comment
+     * always described; this is where a record shared by every page belongs.
+     */
+    defineField({ name: 'ctaBand', type: 'ctaBand', validation: (r) => r.required() }),
     defineField({ name: 'disclaimer', type: 'text', rows: 5, validation: (r) => r.required() }),
   ],
   preview: { prepare: () => ({ title: 'Site settings' }) },

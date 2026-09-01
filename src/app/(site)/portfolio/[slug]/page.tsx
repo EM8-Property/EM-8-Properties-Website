@@ -162,7 +162,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
         was Leaflet’s attribution — despite being the likeliest arrival point from search
         and LinkedIn.
       */}
-      <CtaBand bookACallUrl={settings?.bookACallUrl} />
+      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
     </article>
   )
 }

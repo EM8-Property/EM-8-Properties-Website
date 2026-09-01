@@ -5,6 +5,7 @@ import { ALL_POSTS_QUERY, INSIGHTS_PAGE_QUERY, SITE_SETTINGS_QUERY } from '@/san
 import type { ALL_POSTS_QUERY_RESULT, INSIGHTS_PAGE_QUERY_RESULT, SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
 import { InsightsFilter } from '@/components/insights/InsightsFilter'
 import type { PostData } from '@/components/insights/PostCard'
+import { CtaBand } from '@/components/ui/CtaBand'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,19 +22,32 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function InsightsPage() {
-  const posts = await fetchSanity<ALL_POSTS_QUERY_RESULT>(ALL_POSTS_QUERY)
+  const [posts, settings] = await Promise.all([
+    fetchSanity<ALL_POSTS_QUERY_RESULT>(ALL_POSTS_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-14">
-      <SectionHeading
-        eyebrow="Insights"
-        title="What we've learned building next to the tracks"
-        intro="Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA."
-        level={1}
-      />
-      <div className="mt-8">
-        <InsightsFilter posts={posts as PostData[]} />
+    <div>
+      {/*
+        The measure wraps the content, not the band. `Band` owns its own ground and
+        measure — that is its documented contract — so nesting it inside another
+        `max-w-[1200px] px-6` container would stop its panel and its rules 24px short of
+        the viewport, double the horizontal padding, and leave this page's closing block
+        looking nothing like the one on the homepage.
+      */}
+      <div className="mx-auto max-w-[1200px] px-6 py-14">
+        <SectionHeading
+          eyebrow="Insights"
+          title="What we've learned building next to the tracks"
+          intro="Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA."
+          level={1}
+        />
+        <div className="mt-8">
+          <InsightsFilter posts={posts as PostData[]} />
+        </div>
       </div>
+      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
     </div>
   )
 }

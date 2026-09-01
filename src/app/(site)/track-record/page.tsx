@@ -15,6 +15,7 @@ import { formatUnits } from '@/lib/format'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { StatBand } from '@/components/ui/StatBand'
 import { DealStory } from '@/components/property/DealStory'
+import { CtaBand } from '@/components/ui/CtaBand'
 import { Chip } from '@/components/ui/Chip'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,9 +37,10 @@ export async function generateMetadata(): Promise<Metadata> {
  * its search ranking and double the editing surface.
  */
 export default async function TrackRecordPage() {
-  const [sold, stats] = await Promise.all([
+  const [sold, stats, settings] = await Promise.all([
     fetchSanity<SOLD_PROPERTIES_QUERY_RESULT>(SOLD_PROPERTIES_QUERY),
     fetchSanity<HERO_STATS_QUERY_RESULT>(HERO_STATS_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
   ])
 
   return (
@@ -107,6 +109,7 @@ export default async function TrackRecordPage() {
           </div>
         ))}
       </div>
+      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
     </div>
   )
 }

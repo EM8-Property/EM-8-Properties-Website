@@ -1,15 +1,18 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { CtaBand } from '@/components/ui/CtaBand'
-import { PAGE_COPY } from '../../scripts/content/em8-content.mjs'
+import { CTA_BAND } from '../../scripts/content/em8-content.mjs'
 
 const PHYSICAL = /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/
 const CAL = 'https://calendar.app.google/mJNPKxULTGh8NMTq9'
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- plain ESM data module */
-// The copy that actually ships, not a fixture. It moved into the CMS, so a stand-in
-// would prove nothing about the live band.
-const copy = (PAGE_COPY as any).homePage.ctaBand
+// The copy that actually ships, not a fixture. It moved into the CMS, so a stand-in would
+// prove nothing about the live band.
+//
+// It used to be read from `PAGE_COPY.homePage.ctaBand`, which is exactly the assumption
+// this change removes: the band is shared by every page now, so its copy is on
+// siteSettings and no single page owns it.
+const copy = CTA_BAND
 
 /**
  * The homepage ran hero → stats → factors → portfolio and then stopped, straight into the

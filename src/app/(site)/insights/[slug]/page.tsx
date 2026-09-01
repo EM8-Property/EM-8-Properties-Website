@@ -3,10 +3,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { PortableText } from 'next-sanity'
 import { fetchSanity } from '@/sanity/client'
-import { POST_BY_SLUG_QUERY, POST_SLUGS_QUERY } from '@/sanity/queries'
+import { POST_BY_SLUG_QUERY, POST_SLUGS_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type {
   POST_BY_SLUG_QUERY_RESULT,
   POST_SLUGS_QUERY_RESULT,
+  SITE_SETTINGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
 import { formatUnits } from '@/lib/format'
@@ -16,6 +17,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { articleJsonLd } from '@/lib/structuredData'
 import { pageMetadata } from '@/lib/seo'
 import { siteUrl } from '@/lib/siteUrl'
+import { CtaBand } from '@/components/ui/CtaBand'
 
 export async function generateStaticParams() {
   const slugs = await fetchSanity<POST_SLUGS_QUERY_RESULT>(POST_SLUGS_QUERY)
@@ -57,11 +59,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const post = await fetchSanity<POST_BY_SLUG_QUERY_RESULT>(POST_BY_SLUG_QUERY, { slug })
+  const [post, settings] = await Promise.all([
+    fetchSanity<POST_BY_SLUG_QUERY_RESULT>(POST_BY_SLUG_QUERY, { slug }),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
   if (!post) notFound()
 
   return (
-    <article className="mx-auto max-w-[720px] px-6 py-12">
+    <>
+      <article className="mx-auto max-w-[720px] px-6 py-12">
       {/*
         Article markup on the one route that exists to be linked from elsewhere. EM8 is
         both author and publisher: these are written in the firm's voice with no byline on
@@ -130,6 +136,19 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           </div>
         </div>
       )}
-    </article>
+
+      </article>
+
+      {/*
+        An article is the likeliest arrival point from LinkedIn — /insights exists to be
+        linked from there — and it ended with nothing to do next.
+
+        Outside the prose measure, so the band runs the full width the way it does on every
+        other page. Nested inside the 720px article its panel and rules stopped short of
+        the viewport, and its own `md:grid-cols-2` still fired at a 768px viewport — which
+        put the email capture and the book-a-call block into roughly 296px columns.
+      */}
+      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
+    </>
   )
 }

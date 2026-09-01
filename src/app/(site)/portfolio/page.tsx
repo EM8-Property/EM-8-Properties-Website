@@ -5,6 +5,7 @@ import { ALL_PROPERTIES_QUERY, PORTFOLIO_PAGE_QUERY, SITE_SETTINGS_QUERY } from 
 import type { ALL_PROPERTIES_QUERY_RESULT, PORTFOLIO_PAGE_QUERY_RESULT, SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
 import { PortfolioFilter } from '@/components/property/PortfolioFilter'
 import type { PropertyCardData } from '@/components/property/PropertyCard'
+import { CtaBand } from '@/components/ui/CtaBand'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,24 +22,35 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PortfolioPage() {
-  const properties = await fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY)
+  const [properties, settings] = await Promise.all([
+    fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-14">
+    <div>
       {/*
-        The headline deliberately carries no asset count. Spec §9 forbids shipping
-        invented figures, and a hardcoded "Ten assets" would drift the moment a property
-        is added or sold in the Studio.
+        The measure wraps the content, not the band. `Band` owns its own ground and
+        measure, so nesting it inside another `max-w-[1200px] px-6` container would stop
+        its panel and rules short of the viewport and double the horizontal padding.
       */}
-      <SectionHeading
-        eyebrow="Portfolio"
-        title="Assets across the Chicago MSA"
-        intro="Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves."
-        level={1}
-      />
-      <div className="mt-8">
-        <PortfolioFilter properties={properties as PropertyCardData[]} />
+      <div className="mx-auto max-w-[1200px] px-6 py-14">
+        {/*
+          The headline deliberately carries no asset count. Spec §9 forbids shipping
+          invented figures, and a hardcoded "Ten assets" would drift the moment a property
+          is added or sold in the Studio.
+        */}
+        <SectionHeading
+          eyebrow="Portfolio"
+          title="Assets across the Chicago MSA"
+          intro="Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves."
+          level={1}
+        />
+        <div className="mt-8">
+          <PortfolioFilter properties={properties as PropertyCardData[]} />
+        </div>
       </div>
+      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
     </div>
   )
 }

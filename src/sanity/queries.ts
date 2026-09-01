@@ -114,6 +114,10 @@ export const CURRENT_OFFERINGS_QUERY = defineQuery(`
 export const SITE_SETTINGS_QUERY = defineQuery(
   `*[_type == "siteSettings"][0] {
     agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,
+    ctaBand {
+      heading { eyebrow, title, intro },
+      submitLabel, successMessage, callTitle, callBody, callLabel
+    },
     heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }
   }`,
 )
@@ -138,10 +142,6 @@ export const HOME_PAGE_QUERY = defineQuery(`
     partnersTeaser { eyebrow, title, intro },
     partnersTeaserCta { label, href },
     portfolioCta { label, href },
-    ctaBand {
-      heading { eyebrow, title, intro },
-      submitLabel, successMessage, callTitle, callBody, callLabel
-    },
     popup { enabled, eyebrow, title, body, submitLabel, successMessage }
   }
 `)

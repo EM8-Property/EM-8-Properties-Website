@@ -57,16 +57,15 @@ export const homePage = defineType({
       type: 'ctaLink',
       validation: (r) => r.required(),
     }),
-    defineField({ name: 'ctaBand', type: 'ctaBand', validation: (r) => r.required() }),
     defineField({ name: 'popup', title: 'Homepage popup', type: 'popupBlock' }),
   ],
   preview: { prepare: () => ({ title: 'Home page' }) },
 })
 
 /**
- * The closing call to action, shared by the homepage and every property page. One record,
- * because the two must not drift apart — that is why the component was shared in the first
- * place.
+ * The closing call to action. Lives on siteSettings, not on any one page: it closes the
+ * homepage, every property page, and the five content pages that had no call to action at
+ * all. One record, so they cannot drift apart.
  */
 export const ctaBand = defineType({
   name: 'ctaBand',
