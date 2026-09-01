@@ -9,8 +9,20 @@
  * `/portfolio/[slug]` page, which is the one place it was explicitly not wanted — those
  * already open on their own hero photograph.
  */
+/**
+ * The homepage is deliberately absent.
+ *
+ * It used to be here, and the band it produced ran the full width of the viewport at the
+ * full height of it — so the first screen was photograph and nothing else, with the page's
+ * own headline below the fold. The homepage now renders its own hero inside the 1200px
+ * content column, with the headline on the photograph rather than beneath it.
+ *
+ * Removing it from this list is what stops the layout adding a second band above that one,
+ * and it is also what returns the header to normal flow there: an overlaid header only
+ * makes sense while a photograph reaches the top edge of the page, and on the homepage one
+ * no longer does. Both behaviours read this list, which is why the rule lives in one place.
+ */
 export const CAROUSEL_PATHS = [
-  '/',
   '/portfolio',
   '/track-record',
   '/insights',

@@ -10,7 +10,7 @@ vi.mock('next/navigation', () => ({ usePathname: () => mockPath() }))
 
 beforeEach(() => {
   cleanup()
-  mockPath.mockReturnValue('/')
+  mockPath.mockReturnValue('/portfolio')
 })
 
 /**

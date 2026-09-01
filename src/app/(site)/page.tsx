@@ -20,6 +20,7 @@ import type {
   HOME_PAGE_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { HomeHero } from '@/components/home/HomeHero'
+import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 import { StatBand } from '@/components/ui/StatBand'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Button } from '@/components/ui/Button'
@@ -186,7 +187,17 @@ export default async function HomePage() {
 
   return (
     <>
-      <HomeHero hero={copy.hero} />
+      {/*
+        The homepage owns its hero rather than taking the layout's band. That band ran the
+        full width of the viewport at the full height of it, so the first screen carried no
+        words at all; this one sits in the same 1200px column as the rest of the page, with
+        the headline on the photograph. `/` is no longer in CAROUSEL_PATHS, so the layout
+        adds nothing above this.
+      */}
+      <HomeHero
+        hero={copy.hero}
+        slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
+      />
 
       {stats.length > 0 && (
         <StatBand

@@ -111,16 +111,19 @@ describe('HeroCarousel — resource budget', () => {
     expect(imgs.length, `rendered ${imgs.length} images for 8 slides`).toBeLessThanOrEqual(3)
   })
 
-  it('loads fewer still at full bleed, where each crop is much larger', () => {
-    // Three full-screen crops put the homepage 25KB over the 800KB image budget in CI.
-    const { container } = render(<HeroCarousel slides={many} fullScreen />)
+  it('keeps the window small on the hero too', () => {
+    // The window was narrower still when the hero filled the viewport: three crops at
+    // 2000x1200 put the homepage 25KB over the image budget in CI. The hero is now capped
+    // at the 1200px content column, so its crops are the same order as the banner's and
+    // it can afford the neighbour in both directions again.
+    const { container } = render(<HeroCarousel slides={many} variant="hero" />)
     const imgs = container.querySelectorAll('img')
-    expect(imgs.length, `rendered ${imgs.length} full-bleed images`).toBeLessThanOrEqual(2)
+    expect(imgs.length, `rendered ${imgs.length} hero images`).toBeLessThanOrEqual(3)
   })
 
   it('still preloads the slide it is about to advance to', () => {
     // Forward is the direction the band auto-advances, so that transition must be decoded.
-    const { container } = render(<HeroCarousel slides={many} fullScreen />)
+    const { container } = render(<HeroCarousel slides={many} variant="hero" />)
     const alts = [...container.querySelectorAll('img')].map((i) => i.getAttribute('alt'))
     expect(alts).toContain('slide 0')
     expect(alts).toContain('slide 1')
