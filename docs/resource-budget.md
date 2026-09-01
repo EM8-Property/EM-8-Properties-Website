@@ -16,8 +16,14 @@ folklore for whoever changes them next.
 carousel advance through all eight slides, so it converges on "every photograph on the
 page" no matter how small the preload window is. First paint on the homepage — the number
 that matches what Lighthouse and a real visitor see — measured **723 KB of images and
-954 KB total**: two hero crops and three card thumbnails. Lighthouse itself reported 363 KB
-of images and no budget overage.
+954 KB total**: two hero crops and three card thumbnails. Lighthouse against the deployed
+site reports 362 KB of images, 703 KB total, and no budget overage — both **lower** than the
+725 KB / 405 KB the contained hero was serving before it.
+
+Byte budgets are the stable measurement here. Lighthouse's *performance score* against the
+deployed URL is not: seven runs of the same commit returned 87, 87, 87, 97, 98, 87, 87 on
+an identical payload. Take five samples before believing a delta, and never compare a
+`localhost` run to a deployed one.
 
 Quote both, and know which one you are quoting. The upper bound is the guard against a
 camera original being uploaded; first paint is the number that describes the experience.
