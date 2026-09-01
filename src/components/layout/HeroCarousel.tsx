@@ -13,6 +13,7 @@ export type CarouselSlide = {
 
 const INTERVAL_MS = 6000
 
+
 /**
  * The photo band above the hero on the main content pages.
  *
@@ -34,17 +35,30 @@ const INTERVAL_MS = 6000
  */
 export function HeroCarousel({
   slides,
-  fullScreen = false,
+  variant = 'banner',
+  overlay,
 }: {
   slides: CarouselSlide[]
   /**
-   * Fills the viewport instead of running as a banner. Used on the homepage only: the
-   * properties are the strongest asset EM8 has and the landing page should open on them.
-   * A full screen of photograph above /portfolio would push the actual portfolio below the
-   * fold on a page someone arrived at in order to read a list.
+   * `banner` is the thin strip above the content on the five pages that carry one.
+   *
+   * `hero` is the homepage's opening block. It was `fullScreen` — the full width of the
+   * viewport at the full height of it — which meant the first screen a visitor saw was
+   * photograph, a property caption and a scroll arrow, with EM8's actual proposition
+   * below the fold. It is now sized to sit inside the 1200px content column, with the
+   * page's own headline on the photograph instead of beneath it.
    */
-  fullScreen?: boolean
+  variant?: 'banner' | 'hero'
+  /**
+   * Rendered above the slides, for the hero variant's headline.
+   *
+   * A sibling of the slides rather than a child, and this matters: every slide is a
+   * `<Link>` to its property, so copy containing its own buttons cannot be nested inside
+   * one — interactive elements inside an anchor are invalid and unreachable by keyboard.
+   */
+  overlay?: React.ReactNode
 }) {
+  const isHero = variant === 'hero'
   const usable = useMemo(() => slides.filter((s) => s.slug), [slides])
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
@@ -63,7 +77,16 @@ export function HeroCarousel({
       aria-roledescription="carousel"
       aria-label="Featured properties"
       className={`relative w-full overflow-hidden bg-panel ${
-        fullScreen ? 'h-[100svh]' : 'h-[220px] sm:h-[300px]'
+        isHero
+          ? // min-h, not h, and the overlay sits in flow rather than absolutely.
+            //
+            // With a fixed height the section clips whatever does not fit, and because the
+            // copy is bottom-aligned it clips from the TOP — the eyebrow first, then the
+            // headline. The copy comes from the CMS and is unbounded, so a longer intro or
+            // a third sentence would silently truncate the page's own proposition with no
+            // build error and no failing test. The box grows instead.
+            'flex flex-col justify-end min-h-[420px] rounded-card sm:min-h-[500px] lg:min-h-[560px]'
+          : 'h-[220px] sm:h-[300px]'
       }`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -88,7 +111,7 @@ export function HeroCarousel({
          */
         const forward = (i - index + usable.length) % usable.length
         const backward = (index - i + usable.length) % usable.length
-        const loaded = forward <= 1 || (!fullScreen && backward <= 1)
+        const loaded = forward <= 1 || backward <= 1
 
         return (
           <Link
@@ -105,20 +128,24 @@ export function HeroCarousel({
             {loaded && (
               <Image
                 src={
-                  fullScreen
-                    ? urlForImage(slide.image).width(2000).height(1200).url()
+                  isHero
+                    ? urlForImage(slide.image).width(1600).height(900).url()
                     : urlForImage(slide.image).width(1600).height(500).url()
                 }
                 alt={(slide.image as { alt?: string })?.alt ?? slide.propertyTitle ?? ''}
-                width={fullScreen ? 2000 : 1600}
-                height={fullScreen ? 1200 : 500}
+                width={1600}
+                height={isHero ? 900 : 500}
                 /*
                   Without a sizes hint Next emits a srcset up to 3840w and the browser,
-                  knowing nothing about the layout, fetches a variant far larger than the
-                  band is ever painted at — measured at 662KB for a single hero. The band
-                  is always full-width, so say so.
+                  knowing nothing about the layout, fetches a variant far larger than it is
+                  ever painted at — measured at 662KB for a single hero crop.
+
+                  The banner is full-width so it says 100vw. The hero is capped at the
+                  content column, which paints at 1152px (1200 minus the 24px gutters), so
+                  it says that instead — which is most of why this change made the homepage
+                  lighter rather than heavier.
                 */
-                sizes="100vw"
+                sizes={isHero ? '(min-width: 1200px) 1152px, 100vw' : '100vw'}
                 /*
                   Below Next's default of 75. At 2048px wide a photograph carries
                   compression far better than a chart or a screenshot would, and the hero
@@ -135,28 +162,44 @@ export function HeroCarousel({
               A scrim, not a decoration. The property name sits on photography of unknown
               brightness, and this is what keeps it legible on a pale lobby shot.
             */}
-            <span className="absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.72)] to-transparent" />
-            <span className="absolute bottom-4 start-6 font-display text-sm font-medium uppercase tracking-wide text-white sm:text-base">
-              {slide.propertyTitle}
-            </span>
+            <span
+              className={
+                isHero
+                  ? // Taller and darker than the banner's, because the headline sits on
+                    // this rather than beneath the photograph.
+                    //
+                    // Unlike the header's scrim, this does NOT hold contrast on its own
+                    // against any image: on a narrow viewport the copy is tall enough to
+                    // reach the top of the box, where the gradient is weakest, and over a
+                    // bright sky the eyebrow measured well below 4.5:1. Hunter's call is
+                    // that the hero photograph is chosen dark, which is what carries it —
+                    // so this is a content constraint, not only a CSS one. Anyone swapping
+                    // in a pale lobby shot has to check the headline against it, or put a
+                    // solid scrim behind the copy.
+                    'absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.90)] via-[rgba(26,26,26,0.55)] to-[rgba(26,26,26,0.25)]'
+                  : 'absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.72)] to-transparent'
+              }
+            />
+            {!isHero && (
+              <span className="absolute bottom-4 start-6 font-display text-sm font-medium uppercase tracking-wide text-white sm:text-base">
+                {slide.propertyTitle}
+              </span>
+            )}
           </Link>
         )
       })}
 
-      {fullScreen && (
+      {overlay && (
         /*
-          A full screen of photograph has to say there is a page beneath it, or a visitor
-          can reasonably conclude that is the whole site. aria-hidden because it is a hint
-          for the eye — the content below is already in the document for everyone else.
+          pointer-events-none so the photograph underneath stays clickable; the copy
+          re-enables them on its own buttons. Without this the headline would swallow
+          clicks meant for the slide it sits on.
         */
-        <div
-          data-scroll-cue
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-16 flex justify-center"
-        >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" className="animate-bounce text-white/90">
-            <path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
+        // #8 — pb clears the slide dots, which sit at `bottom-4 end-6`. With eight
+        // slides that row is ~136px wide, and at a narrow viewport a wrapped second row of
+        // buttons ran underneath it.
+        <div className="pointer-events-none relative w-full p-6 pb-12 sm:p-10 sm:pb-14">
+          {overlay}
         </div>
       )}
 

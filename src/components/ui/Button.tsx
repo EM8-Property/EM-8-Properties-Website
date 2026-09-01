@@ -6,7 +6,7 @@ export function Button({
   children,
 }: {
   href: string
-  variant?: 'primary' | 'secondary'
+  variant?: 'primary' | 'secondary' | 'onPhoto'
   children: React.ReactNode
 }) {
   const base =
@@ -24,10 +24,18 @@ export function Button({
    * only the text colour changes, so the palette is untouched. Confirmed with Hunter
    * 2026-08-30 as a deliberate departure from the spec's wording.
    */
+  /*
+   * `onPhoto` is the secondary button on the homepage hero, where the ground is a
+   * photograph rather than white. `border-rule` and `text-ink` are both near-invisible
+   * against a dark scrim, so it takes white on both — the primary variant is unchanged,
+   * since ink on the accent teal reads on any ground.
+   */
   const style =
     variant === 'primary'
       ? 'bg-teal text-ink hover:bg-[#3AA8A0]'
-      : 'border border-rule text-ink hover:border-teal'
+      : variant === 'onPhoto'
+        ? 'border border-white/70 text-white hover:border-white hover:bg-white/10'
+        : 'border border-rule text-ink hover:border-teal'
   return (
     <Link href={href} className={`${base} ${style}`}>
       {children}

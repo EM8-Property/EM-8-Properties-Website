@@ -142,7 +142,7 @@ describe('HomeHero', () => {
   }
 
   it('renders the copy it is given', () => {
-    render(<HomeHero hero={hero} />)
+    render(<HomeHero hero={hero} slides={[]} />)
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'A headline with an accent.',
     )
@@ -150,7 +150,12 @@ describe('HomeHero', () => {
   })
 
   it('renders without an accent or a second button', () => {
-    render(<HomeHero hero={{ ...hero, titleAccent: null, titleSuffix: null, secondaryCta: null }} />)
+    render(
+      <HomeHero
+        hero={{ ...hero, titleAccent: null, titleSuffix: null, secondaryCta: null }}
+        slides={[]}
+      />,
+    )
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('A headline')
     expect(screen.queryByRole('link', { name: 'Read' })).toBeNull()
   })

@@ -38,7 +38,10 @@ export const siteSettings = defineType({
       title: 'Top-of-page photo carousel',
       type: 'array',
       description:
-        'Shown above the hero on the home, portfolio, track record, insights, partners and about pages. Each photo links to its property.',
+        'The photo band on the portfolio, track record, insights, partners and about pages, and the ' +
+        'homepage hero. Each photo links to its property. ' +
+        'IMPORTANT: on the homepage the headline sits ON TOP of these photographs, so they must be ' +
+        'dark. A pale sky or a bright lobby will make the headline unreadable.',
       of: [
         {
           type: 'object',
