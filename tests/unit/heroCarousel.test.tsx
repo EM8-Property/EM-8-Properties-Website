@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HeroCarousel } from '@/components/layout/HeroCarousel'
 
@@ -119,6 +119,22 @@ describe('HeroCarousel — resource budget', () => {
     const { container } = render(<HeroCarousel slides={many} variant="hero" />)
     const imgs = container.querySelectorAll('img')
     expect(imgs.length, `rendered ${imgs.length} hero images`).toBeLessThanOrEqual(3)
+  })
+
+  it('tells the browser the hero is the content column, not the viewport', () => {
+    // This is what distinguishes the two variants, and it is most of why capping the hero
+    // made the homepage lighter rather than heavier: `sizes="100vw"` had the browser fetch
+    // a variant sized for a 1512px viewport — 567KB for one crop — to paint an 1152px box.
+    //
+    // The window-size assertions above cannot tell the variants apart any more, since both
+    // bound at 3. This can.
+    const hero = render(<HeroCarousel slides={many} variant="hero" />)
+    expect(hero.container.querySelector('img')!.getAttribute('sizes')).toBe(
+      '(min-width: 1200px) 1152px, 100vw',
+    )
+    cleanup()
+    const banner = render(<HeroCarousel slides={many} />)
+    expect(banner.container.querySelector('img')!.getAttribute('sizes')).toBe('100vw')
   })
 
   it('still preloads the slide it is about to advance to', () => {

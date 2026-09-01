@@ -42,8 +42,13 @@ export function HomeHero({ hero, slides }: { hero: HeroCopy; slides: CarouselSli
             {' '}
             {/*
               The accent is the light teal, not `teal-text`. That darker tone exists for
-              small type on white and all but disappears against a dark scrim; here the
-              ground is photography under a heavy gradient, where the accent reads.
+              small type on white and all but disappears against a dark scrim.
+
+              This is the most image-fragile element in the hero: measured over the gradient
+              it reads about 5.9:1 on a dark photograph and about 1.7:1 on a pale one —
+              worse than plain white would be. What carries it is the photograph being dark,
+              not the gradient. See the scrim comment in HeroCarousel. The token is used
+              within its documented contract, which scopes it to 24px and up; this is 30px.
             */}
             <span className="text-teal">{hero.titleAccent}</span>
           </>

@@ -78,7 +78,14 @@ export function HeroCarousel({
       aria-label="Featured properties"
       className={`relative w-full overflow-hidden bg-panel ${
         isHero
-          ? 'h-[420px] rounded-card sm:h-[500px] lg:h-[560px]'
+          ? // min-h, not h, and the overlay sits in flow rather than absolutely.
+            //
+            // With a fixed height the section clips whatever does not fit, and because the
+            // copy is bottom-aligned it clips from the TOP — the eyebrow first, then the
+            // headline. The copy comes from the CMS and is unbounded, so a longer intro or
+            // a third sentence would silently truncate the page's own proposition with no
+            // build error and no failing test. The box grows instead.
+            'flex flex-col justify-end min-h-[420px] rounded-card sm:min-h-[500px] lg:min-h-[560px]'
           : 'h-[220px] sm:h-[300px]'
       }`}
       onMouseEnter={() => setPaused(true)}
@@ -130,9 +137,13 @@ export function HeroCarousel({
                 height={isHero ? 900 : 500}
                 /*
                   Without a sizes hint Next emits a srcset up to 3840w and the browser,
-                  knowing nothing about the layout, fetches a variant far larger than the
-                  band is ever painted at — measured at 662KB for a single hero. The band
-                  is always full-width, so say so.
+                  knowing nothing about the layout, fetches a variant far larger than it is
+                  ever painted at — measured at 662KB for a single hero crop.
+
+                  The banner is full-width so it says 100vw. The hero is capped at the
+                  content column, which paints at 1152px (1200 minus the 24px gutters), so
+                  it says that instead — which is most of why this change made the homepage
+                  lighter rather than heavier.
                 */
                 sizes={isHero ? '(min-width: 1200px) 1152px, 100vw' : '100vw'}
                 /*
@@ -184,8 +195,11 @@ export function HeroCarousel({
           re-enables them on its own buttons. Without this the headline would swallow
           clicks meant for the slide it sits on.
         */
-        <div className="pointer-events-none absolute inset-0 flex items-end">
-          <div className="w-full p-6 sm:p-10">{overlay}</div>
+        // #8 — pb clears the slide dots, which sit at `bottom-4 end-6`. With eight
+        // slides that row is ~136px wide, and at a narrow viewport a wrapped second row of
+        // buttons ran underneath it.
+        <div className="pointer-events-none relative w-full p-6 pb-12 sm:p-10 sm:pb-14">
+          {overlay}
         </div>
       )}
 

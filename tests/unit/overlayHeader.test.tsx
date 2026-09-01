@@ -28,6 +28,18 @@ describe('SiteHeader overlay', () => {
     expect(container.firstElementChild!.className).toMatch(/absolute|fixed/)
   })
 
+  it('sits in normal flow on the homepage, whose hero is inside the content column', () => {
+    // The behaviour this changed, asserted directly rather than inferred from
+    // CAROUSEL_PATHS. Overlaying only makes sense while a photograph reaches the top edge
+    // of the page; the homepage hero is a block within the 1200px column now, so an
+    // absolutely positioned header there would be floating over white.
+    mockPath.mockReturnValue('/')
+    const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+    const cls = container.firstElementChild!.className
+    expect(cls).not.toMatch(/\babsolute\b/)
+    expect(cls).toContain('border-b')
+  })
+
   it('sits in normal flow on pages with no photo band', () => {
     mockPath.mockReturnValue('/investors')
     const { container } = render(<SiteHeader agoraUrl="https://x.test" />)

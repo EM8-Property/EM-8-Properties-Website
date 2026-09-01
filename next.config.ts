@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: 'https', hostname: 'cdn.sanity.io' }],
     // Next 16 allowlists image qualities and ships with only [75]. A `quality` prop
     // holding any other value is silently ignored and falls back to 75 — no warning, no
-    // build error, byte-identical output. The full-bleed hero asks for 68, so 68 has to
-    // be declared here or the prop does nothing at all.
+    // build error, byte-identical output. The hero and banner crops ask for 68, so 68
+    // has to be declared here or the prop does nothing at all.
     qualities: [68, 75],
   },
 }
