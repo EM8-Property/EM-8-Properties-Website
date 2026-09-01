@@ -14,6 +14,7 @@ import {
   portable,
   PAGE_COPY,
   PAGE_SEO,
+  CTA_BAND,
 } from '../../scripts/content/em8-content.mjs'
 
 /**
@@ -63,6 +64,7 @@ const blob = JSON.stringify({
   SITE_SETTINGS,
   PAGE_COPY,
   PAGE_SEO,
+  CTA_BAND,
 })
 
 describe('migration payload — structure', () => {

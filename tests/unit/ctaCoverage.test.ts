@@ -71,6 +71,45 @@ describe('every page offers a way to make contact', () => {
   })
 
   /**
+   * `Band` owns its own ground and measure — that is its documented contract, and
+   * `band.test.tsx` asserts it. Nesting it inside a page's own `max-w-[…]` container
+   * breaks that three ways at once: the panel and its rules stop short of the viewport so
+   * it reads as a floating card, `px-6` applies twice so the CTA heading sits inboard of
+   * the page heading above it, and the parent's bottom padding lands below the panel.
+   *
+   * Three routes shipped exactly that. `/insights/[slug]` was the worst: inside a 720px
+   * article the band's `md:grid-cols-2` still fired at a 768px viewport, putting the email
+   * capture and the book-a-call block into roughly 296px columns.
+   *
+   * Nothing else sees this — it builds, it typechecks, it renders, and every other test
+   * passes. This is the assertion that catches it.
+   */
+  it.each(
+    routes.filter((r) => !HAS_OWN_FORM.includes(r.route)).map((r) => [r.route, r.file]),
+  )('%s renders the band outside any page measure', (route, file) => {
+    const source = stripComments(readFileSync(file, 'utf8')).replace(/\r\n/g, '\n')
+    const at = source.indexOf('<CtaBand')
+    expect(at, `${route} has no CtaBand`).toBeGreaterThan(-1)
+
+    // Every element still open at the point the band is rendered. A `max-w-` on any of
+    // them is a measure the band is trapped inside.
+    const before = source.slice(0, at)
+    const opened: string[] = []
+    for (const tag of before.matchAll(/<(\/?)(div|article|section|main)\b([^>]*)>/g)) {
+      const closing = tag[1] === '/'
+      const attrs = tag[3] ?? ''
+      if (closing) opened.pop()
+      else if (!attrs.trimEnd().endsWith('/')) opened.push(attrs)
+    }
+
+    const measured = opened.filter((attrs) => /max-w-\[/.test(attrs))
+    expect(
+      measured,
+      `${route} nests CtaBand inside a measured container: ${measured.join(' | ')}`,
+    ).toEqual([])
+  })
+
+  /**
    * /about ends on a panelled section — the board cards — and `CtaBand` is panelled by
    * default. Left alone that puts two grey sections back to back, which is the exact
    * defect PR #9 chased to the wrong component and PR #10 fixed structurally. The

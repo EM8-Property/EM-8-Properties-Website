@@ -253,11 +253,17 @@ async function moveCtaBandToSettings(apply) {
     query('*[_id=="homePage"][0].ctaBand'),
   ])
 
-  if (existing) {
+  // Checked per leaf, not on the object. Keyed on `existing` alone, a ctaBand with a
+  // heading and no submitLabel would report "already has one" on every re-run while the
+  // band stayed broken — the same granularity bug backfillPageSeo was rewritten to fix.
+  const complete = Boolean(existing?.heading?.title && existing?.submitLabel)
+  if (complete) {
     console.log('  cta band  siteSettings already has one — left untouched')
+  } else if (existing) {
+    console.log('  cta band  siteSettings has an incomplete one — filling the gaps')
   }
 
-  const needsMove = !existing
+  const needsMove = !complete
   const needsCleanup = Boolean(fromHomePage)
   if (!needsMove && !needsCleanup) return
 

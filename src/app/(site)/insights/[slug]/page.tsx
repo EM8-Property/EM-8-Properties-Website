@@ -66,7 +66,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   if (!post) notFound()
 
   return (
-    <article className="mx-auto max-w-[720px] px-6 py-12">
+    <>
+      <article className="mx-auto max-w-[720px] px-6 py-12">
       {/*
         Article markup on the one route that exists to be linked from elsewhere. EM8 is
         both author and publisher: these are written in the firm's voice with no byline on
@@ -136,18 +137,18 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         </div>
       )}
 
+      </article>
+
       {/*
         An article is the likeliest arrival point from LinkedIn — /insights exists to be
         linked from there — and it ended with nothing to do next.
 
-        It stays inside the 720px prose measure rather than breaking out of it: the band
-        brings its own panel and rule, which is enough to read as the page closing, and a
-        full-width band here would need the article's wrapper restructured for a section
-        that is not the point of the page.
+        Outside the prose measure, so the band runs the full width the way it does on every
+        other page. Nested inside the 720px article its panel and rules stopped short of
+        the viewport, and its own `md:grid-cols-2` still fired at a 768px viewport — which
+        put the email capture and the book-a-call block into roughly 296px columns.
       */}
-      <div className="mt-12">
-        <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
-      </div>
-    </article>
+      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
+    </>
   )
 }

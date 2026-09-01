@@ -30,13 +30,16 @@ const buckets = new Map<string, Bucket>()
  *
  * **Why 400 and not 100.** Every form on the site posts to the same `/api/lead`, and the
  * limiter runs before the body is read, so it cannot tell them apart: the newsletter
- * capture in `CtaBand` renders on the homepage and every property page (twelve today,
- * thirteen the day someone adds a property), the homepage overlay is one more form on
- * that same homepage, and /investors Keep in Touch and the /partners site submission
- * share the budget too. At 100/hour a run of ordinary newsletter signups could spend the
- * whole ceiling and answer a real accredited investor with a 429 — which writes no `lead`
- * document and sends no email, losing the submission outright. That inverts the
- * capture-first rationale this endpoint exists to serve.
+ * capture in `CtaBand` now closes almost every page — the homepage, every property page,
+ * /about, /portfolio, /insights, /track-record and every article — the homepage overlay is
+ * one more form on that same homepage, and /investors Keep in Touch and the /partners site
+ * submission share the budget too. The ceiling was never derived from that count, but the
+ * sharing it describes got wider, not narrower.
+ *
+ * At 100/hour a run of ordinary newsletter signups could spend the whole ceiling and
+ * answer a real accredited investor with a 429 — which writes no `lead` document and sends
+ * no email, losing the submission outright. That inverts the capture-first rationale this
+ * endpoint exists to serve.
  *
  * 400 also clears one boundary that 300 does not: a single well-behaved caller can be
  * served at most 5/minute, or 300/hour, so no one compliant key can exhaust the site-wide

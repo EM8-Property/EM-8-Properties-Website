@@ -26,11 +26,23 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   //
   // This throws only for content routes. /studio sits outside this group precisely so
   // that the tool needed to create the missing document stays reachable.
-  if (!settings?.agoraPortalUrl || !settings?.disclaimer || !settings?.contactEmail) {
+  // `ctaBand` is checked here for a reason worth stating: Sanity's `required()` is
+  // Studio-side only. It does not gate the API, the query, or the build — so a `ctaBand`
+  // cleared through Vision, the CLI, or a stale draft being published would leave every
+  // page rendering `SectionHeading` with no props: an empty <h2> above a bare email box.
+  // That is exactly the headless band this was moved to siteSettings to fix, silently
+  // reinstated on every page instead of eleven.
+  if (
+    !settings?.agoraPortalUrl ||
+    !settings?.disclaimer ||
+    !settings?.contactEmail ||
+    !settings?.ctaBand?.heading?.title ||
+    !settings?.ctaBand?.submitLabel
+  ) {
     throw new Error(
       'siteSettings is missing or incomplete. Publish a siteSettings document with ' +
-        'agoraPortalUrl, contactEmail and disclaimer set — at /studio, or at ' +
-        'https://em-8-properties.sanity.studio',
+        'agoraPortalUrl, contactEmail, disclaimer and a complete ctaBand set — at ' +
+        '/studio, or at https://em-8-properties.sanity.studio',
     )
   }
 
