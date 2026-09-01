@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HeroCarousel } from '@/components/layout/HeroCarousel'
 
@@ -111,35 +111,21 @@ describe('HeroCarousel — resource budget', () => {
     expect(imgs.length, `rendered ${imgs.length} images for 8 slides`).toBeLessThanOrEqual(3)
   })
 
-  it('keeps the window small on the hero too', () => {
-    // The window was narrower still when the hero filled the viewport: three crops at
-    // 2000x1200 put the homepage 25KB over the image budget in CI. The hero is now capped
-    // at the 1200px content column, so its crops are the same order as the banner's and
-    // it can afford the neighbour in both directions again.
-    const { container } = render(<HeroCarousel slides={many} variant="hero" />)
-    const imgs = container.querySelectorAll('img')
-    expect(imgs.length, `rendered ${imgs.length} hero images`).toBeLessThanOrEqual(3)
-  })
-
-  it('tells the browser the hero is the content column, not the viewport', () => {
-    // This is what distinguishes the two variants, and it is most of why capping the hero
-    // made the homepage lighter rather than heavier: `sizes="100vw"` had the browser fetch
-    // a variant sized for a 1512px viewport — 567KB for one crop — to paint an 1152px box.
+  it('describes its width honestly, which is what decides the bytes fetched', () => {
+    // There were two variants here, and the contained one claimed a 1152px box. Both are
+    // gone: the band is the width of the viewport on every page now, so it says 100vw.
     //
-    // The window-size assertions above cannot tell the variants apart any more, since both
-    // bound at 3. This can.
-    const hero = render(<HeroCarousel slides={many} variant="hero" />)
-    expect(hero.container.querySelector('img')!.getAttribute('sizes')).toBe(
-      '(min-width: 1200px) 1152px, 100vw',
-    )
-    cleanup()
-    const banner = render(<HeroCarousel slides={many} />)
-    expect(banner.container.querySelector('img')!.getAttribute('sizes')).toBe('100vw')
+    // That is the expensive answer — docs/resource-budget.md records 567KB for a single
+    // crop at this hint — but it is the true one, and a `sizes` that misdescribes the
+    // layout buys its savings by shipping a blurry image. The window above and the 1600px
+    // crop are what hold the image budget instead.
+    const { container } = render(<HeroCarousel slides={many} />)
+    expect(container.querySelector('img')!.getAttribute('sizes')).toBe('100vw')
   })
 
   it('still preloads the slide it is about to advance to', () => {
     // Forward is the direction the band auto-advances, so that transition must be decoded.
-    const { container } = render(<HeroCarousel slides={many} variant="hero" />)
+    const { container } = render(<HeroCarousel slides={many} />)
     const alts = [...container.querySelectorAll('img')].map((i) => i.getAttribute('alt'))
     expect(alts).toContain('slide 0')
     expect(alts).toContain('slide 1')

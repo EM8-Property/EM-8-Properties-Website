@@ -4,21 +4,28 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { urlForImage } from '@/sanity/image'
+import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 
-export type CarouselSlide = {
-  image: unknown
-  slug: string | null
-  propertyTitle: string | null
-}
+/*
+ * Re-exported so the seven pages can keep importing the type from the component they are
+ * rendering. It is a type-only re-export, which is erased at compile time — the *function*
+ * deliberately is not re-exported, because this is a `'use client'` module and a server
+ * component calling anything it exports fails the build.
+ */
+export type { CarouselSlide }
 
 const INTERVAL_MS = 6000
 
-
 /**
- * The photo band above the hero on the main content pages.
+ * The full-bleed photograph every section page opens on, with that page's own title laid
+ * over it by `PageHero`.
  *
  * Content comes from the `siteSettings` singleton, not from each property, so the same
  * photos appear everywhere the band is shown and there is exactly one list to edit.
+ *
+ * It used to have two variants: a thin `banner` strip carrying only a property caption,
+ * and a `hero` block capped at the 1200px content column. Both are gone. Every page now
+ * opens the same way, so there is one shape and one set of numbers to reason about.
  *
  * Three things this deliberately does, all of which are the difference between a carousel
  * and an accessibility complaint:
@@ -35,22 +42,11 @@ const INTERVAL_MS = 6000
  */
 export function HeroCarousel({
   slides,
-  variant = 'banner',
   overlay,
 }: {
   slides: CarouselSlide[]
   /**
-   * `banner` is the thin strip above the content on the five pages that carry one.
-   *
-   * `hero` is the homepage's opening block. It was `fullScreen` — the full width of the
-   * viewport at the full height of it — which meant the first screen a visitor saw was
-   * photograph, a property caption and a scroll arrow, with EM8's actual proposition
-   * below the fold. It is now sized to sit inside the 1200px content column, with the
-   * page's own headline on the photograph instead of beneath it.
-   */
-  variant?: 'banner' | 'hero'
-  /**
-   * Rendered above the slides, for the hero variant's headline.
+   * The page's own title block, rendered above the slides.
    *
    * A sibling of the slides rather than a child, and this matters: every slide is a
    * `<Link>` to its property, so copy containing its own buttons cannot be nested inside
@@ -58,15 +54,36 @@ export function HeroCarousel({
    */
   overlay?: React.ReactNode
 }) {
-  const isHero = variant === 'hero'
-  const usable = useMemo(() => slides.filter((s) => s.slug), [slides])
-  const [index, setIndex] = useState(0)
+  const usable = useMemo(() => usableSlides(slides), [slides])
+  /*
+   * `prev` is the slide being faded OUT, and it is tracked in the same state update as
+   * `index` on purpose.
+   *
+   * Without it, advancing unmounts the outgoing slide's <Image> on the very render that
+   * starts its 700ms fade — so the photograph hard-cuts to the bare scrim and the next one
+   * fades up out of that, every six seconds, on every page. Recording it in a separate
+   * effect would not do: effects run after commit, so the image would still be gone for a
+   * frame.
+   *
+   * It is never cleared. That means the steady state holds three images — outgoing,
+   * current, incoming — which is exactly the window this component had before. What the
+   * change buys is the *first paint*, where `prev` is null and only two are mounted, and
+   * first paint is the number Lighthouse and a visitor actually pay.
+   */
+  const [{ index, prev }, setSlide] = useState<{ index: number; prev: number | null }>({
+    index: 0,
+    prev: null,
+  })
   const [paused, setPaused] = useState(false)
 
   useEffect(() => {
     if (usable.length < 2 || paused) return
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-    const id = setInterval(() => setIndex((i) => (i + 1) % usable.length), INTERVAL_MS)
+    const id = setInterval(
+      () =>
+        setSlide((s) => ({ index: (s.index + 1) % usable.length, prev: s.index })),
+      INTERVAL_MS,
+    )
     return () => clearInterval(id)
   }, [usable.length, paused])
 
@@ -76,18 +93,20 @@ export function HeroCarousel({
     <section
       aria-roledescription="carousel"
       aria-label="Featured properties"
-      className={`relative w-full overflow-hidden bg-panel ${
-        isHero
-          ? // min-h, not h, and the overlay sits in flow rather than absolutely.
-            //
-            // With a fixed height the section clips whatever does not fit, and because the
-            // copy is bottom-aligned it clips from the TOP — the eyebrow first, then the
-            // headline. The copy comes from the CMS and is unbounded, so a longer intro or
-            // a third sentence would silently truncate the page's own proposition with no
-            // build error and no failing test. The box grows instead.
-            'flex flex-col justify-end min-h-[420px] rounded-card sm:min-h-[500px] lg:min-h-[560px]'
-          : 'h-[220px] sm:h-[300px]'
-      }`}
+      /*
+       * min-h, not h, and the overlay sits in flow rather than absolutely.
+       *
+       * With a fixed height the section clips whatever does not fit, and because the copy
+       * is bottom-aligned it clips from the TOP — the eyebrow first, then the headline.
+       * The copy comes from the CMS and is unbounded, so a longer intro or a third
+       * sentence would silently truncate a page's own proposition with no build error and
+       * no failing test. The box grows instead.
+       *
+       * Deliberately not viewport height. The band this replaces was `100vh`, which is
+       * what put the headline below the fold — the width was only ever half of that
+       * problem, and it is the half being restored here.
+       */
+      className="relative flex w-full flex-col justify-end overflow-hidden bg-panel min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -95,23 +114,31 @@ export function HeroCarousel({
     >
       {usable.map((slide, i) => {
         /*
-         * Only the current slide and its two neighbours carry an <Image>.
+         * Only the current slide, the one it will cross-fade to, and the one it just left
+         * carry an <Image>.
          *
          * Every slide sits in the same absolutely-positioned box, so the browser treats
          * them all as visible and fetches every one — eight photographs on first paint,
          * which measured 1.3MB against an 800KB image budget and failed CI. Lazy loading
          * does not help for the same reason. Spec §1 names the old site's oversized
-         * photography as a founding problem, so raising the budget was not an option.
+         * photography as a founding problem, so raising the budget is the last resort and
+         * not the first.
          *
          * A window keeps the crossfade already decoded while paying for a few images
-         * instead of eight. It is narrower at full-bleed: those crops are far larger, and
-         * three of them put the page 25KB over the image budget. Forward is the direction
-         * that actually matters — the band auto-advances that way — so the previous slide
-         * is dropped there and only reloads if someone clicks back to it.
+         * instead of eight.
+         *
+         * The window is forward-looking plus whatever is currently fading out: the
+         * current slide, the one it will cross-fade to, and the one it just left. At
+         * full-bleed the crops are large enough that the difference between two and three
+         * is worth having on the *first* paint, which is why `prev` starts null — nothing
+         * has faded out yet, so nothing behind is worth fetching before it is needed.
+         *
+         * Measured on this build: first paint is two crops, 723KB of images against a
+         * 1400KB budget, and Lighthouse reported no overage. Including the backward
+         * neighbour up front instead would fetch a third before anything has moved.
          */
         const forward = (i - index + usable.length) % usable.length
-        const backward = (index - i + usable.length) % usable.length
-        const loaded = forward <= 1 || backward <= 1
+        const loaded = forward <= 1 || i === prev
 
         return (
           <Link
@@ -127,31 +154,25 @@ export function HeroCarousel({
           >
             {loaded && (
               <Image
-                src={
-                  isHero
-                    ? urlForImage(slide.image).width(1600).height(900).url()
-                    : urlForImage(slide.image).width(1600).height(500).url()
-                }
+                src={urlForImage(slide.image).width(1600).height(900).url()}
                 alt={(slide.image as { alt?: string })?.alt ?? slide.propertyTitle ?? ''}
                 width={1600}
-                height={isHero ? 900 : 500}
+                height={900}
                 /*
-                  Without a sizes hint Next emits a srcset up to 3840w and the browser,
-                  knowing nothing about the layout, fetches a variant far larger than it is
-                  ever painted at — measured at 662KB for a single hero crop.
-
-                  The banner is full-width so it says 100vw. The hero is capped at the
-                  content column, which paints at 1152px (1200 minus the 24px gutters), so
-                  it says that instead — which is most of why this change made the homepage
-                  lighter rather than heavier.
+                  The band really is the width of the viewport now, so this really is
+                  100vw — and that is the most expensive line in this file.
+                  docs/resource-budget.md records a single crop at 567KB when the browser
+                  was left to guess. The honest hint is the cheap one here; the levers that
+                  defend the image budget are the preload window above and the 1600px crop
+                  below, not a `sizes` value that misdescribes the layout.
                 */
-                sizes={isHero ? '(min-width: 1200px) 1152px, 100vw' : '100vw'}
+                sizes="100vw"
                 /*
-                  Below Next's default of 75. At 2048px wide a photograph carries
-                  compression far better than a chart or a screenshot would, and the hero
-                  is the heaviest single asset on the site — spec §1 names the old site's
-                  10-20MB camera originals as one of the three reasons for this rebuild,
-                  so the crop is worth tuning rather than only budgeting for.
+                  Below Next's default of 75, and declared in `images.qualities` in
+                  next.config.ts — Next 16 silently ignores any quality not on that list
+                  and falls back to 75, with no warning and byte-identical output. A
+                  photograph carries compression far better than a chart would, and this is
+                  the heaviest single asset on the site.
                 */
                 quality={68}
                 priority={i === 0}
@@ -159,32 +180,16 @@ export function HeroCarousel({
               />
             )}
             {/*
-              A scrim, not a decoration. The property name sits on photography of unknown
-              brightness, and this is what keeps it legible on a pale lobby shot.
+              A scrim, not a decoration. The page title sits on photography of unknown
+              brightness, and this is what keeps it legible.
+
+              What carries the contrast is the photograph being dark, not the gradient:
+              measured over this, the eyebrow reads about 9.2:1 on a dark image and about
+              2.4:1 on a pale one. That is a content constraint as much as a CSS one, and
+              the Studio field description for `heroCarousel` says so. Anyone swapping in a
+              pale lobby shot has to check the title against it.
             */}
-            <span
-              className={
-                isHero
-                  ? // Taller and darker than the banner's, because the headline sits on
-                    // this rather than beneath the photograph.
-                    //
-                    // Unlike the header's scrim, this does NOT hold contrast on its own
-                    // against any image: on a narrow viewport the copy is tall enough to
-                    // reach the top of the box, where the gradient is weakest, and over a
-                    // bright sky the eyebrow measured well below 4.5:1. Hunter's call is
-                    // that the hero photograph is chosen dark, which is what carries it —
-                    // so this is a content constraint, not only a CSS one. Anyone swapping
-                    // in a pale lobby shot has to check the headline against it, or put a
-                    // solid scrim behind the copy.
-                    'absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.90)] via-[rgba(26,26,26,0.55)] to-[rgba(26,26,26,0.25)]'
-                  : 'absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.72)] to-transparent'
-              }
-            />
-            {!isHero && (
-              <span className="absolute bottom-4 start-6 font-display text-sm font-medium uppercase tracking-wide text-white sm:text-base">
-                {slide.propertyTitle}
-              </span>
-            )}
+            <span className="absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.90)] via-[rgba(26,26,26,0.55)] to-[rgba(26,26,26,0.25)]" />
           </Link>
         )
       })}
@@ -192,13 +197,28 @@ export function HeroCarousel({
       {overlay && (
         /*
           pointer-events-none so the photograph underneath stays clickable; the copy
-          re-enables them on its own buttons. Without this the headline would swallow
-          clicks meant for the slide it sits on.
+          re-enables them on its own buttons. Without this the title would swallow clicks
+          meant for the slide it sits on.
+
+          No `mx-auto max-w-[1200px]` here, deliberately. The words are held a similar
+          distance in from the edge of the image as they were when that image was a 1152px
+          block — they are not snapped back to the content column, which would undo the
+          full-bleed change for everything except the photograph itself.
+
+          pb clears the slide dots, which sit at `bottom-4 end-6`. With eight slides that
+          row is ~136px wide, and at a narrow viewport a wrapped second row of buttons ran
+          underneath it.
+
+          pt clears the header, which now sits *over* this band on every page. Measured at
+          375px: the eyebrow's first line began at y=62 while the header ran to y=68, so
+          the top line of copy rendered underneath it. The copy is bottom-aligned, so it
+          climbs as it grows — and it comes from the CMS, so a longer intro would push it
+          further up with no build error and nothing to catch it. The header is ~68px.
         */
-        // #8 — pb clears the slide dots, which sit at `bottom-4 end-6`. With eight
-        // slides that row is ~136px wide, and at a narrow viewport a wrapped second row of
-        // buttons ran underneath it.
-        <div className="pointer-events-none relative w-full p-6 pb-12 sm:p-10 sm:pb-14">
+        <div
+          data-hero-overlay
+          className="pointer-events-none relative w-full p-6 pb-12 pt-24 sm:p-10 sm:pb-14 sm:pt-28"
+        >
           {overlay}
         </div>
       )}
@@ -209,7 +229,9 @@ export function HeroCarousel({
             <button
               key={`dot-${slide.slug}-${i}`}
               type="button"
-              onClick={() => setIndex(i)}
+              onClick={() =>
+                setSlide((s) => (s.index === i ? s : { index: i, prev: s.index }))
+              }
               aria-current={i === index}
               aria-label={`Show slide ${i + 1} of ${usable.length}${
                 slide.propertyTitle ? `: ${slide.propertyTitle}` : ''

@@ -6,7 +6,8 @@ import type { ALL_PROPERTIES_QUERY_RESULT, PORTFOLIO_PAGE_QUERY_RESULT, SITE_SET
 import { PortfolioFilter } from '@/components/property/PortfolioFilter'
 import type { PropertyCardData } from '@/components/property/PropertyCard'
 import { CtaBand } from '@/components/ui/CtaBand'
-import { SectionHeading } from '@/components/ui/SectionHeading'
+import { PageHero } from '@/components/layout/PageHero'
+import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 
 export async function generateMetadata(): Promise<Metadata> {
   const [copy, settings] = await Promise.all([
@@ -30,26 +31,33 @@ export default async function PortfolioPage() {
   return (
     <div>
       {/*
-        The measure wraps the content, not the band. `Band` owns its own ground and
-        measure, so nesting it inside another `max-w-[1200px] px-6` container would stop
-        its panel and rules short of the viewport and double the horizontal padding.
+        The headline deliberately carries no asset count. Spec §9 forbids shipping
+        invented figures, and a hardcoded "Ten assets" would drift the moment a property
+        is added or sold in the Studio.
+
+        These words are still literals. This page, /insights and /track-record hold only
+        `seo` in Sanity — moving their headings into the CMS is tracked separately, because
+        bundling a copy migration into a layout change would make both harder to verify.
+        The words are reproduced here exactly as they shipped.
       */}
+      <PageHero
+        copy={{
+          eyebrow: 'Portfolio',
+          title: 'Assets across the Chicago MSA',
+          intro:
+            'Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves.',
+        }}
+        slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
+      />
       <div className="mx-auto max-w-[1200px] px-6 py-14">
-        {/*
-          The headline deliberately carries no asset count. Spec §9 forbids shipping
-          invented figures, and a hardcoded "Ten assets" would drift the moment a property
-          is added or sold in the Studio.
-        */}
-        <SectionHeading
-          eyebrow="Portfolio"
-          title="Assets across the Chicago MSA"
-          intro="Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves."
-          level={1}
-        />
-        <div className="mt-8">
-          <PortfolioFilter properties={properties as PropertyCardData[]} />
-        </div>
+        <PortfolioFilter properties={properties as PropertyCardData[]} />
       </div>
+      {/*
+        A sibling of the measure, never inside it. `Band` owns its own ground and measure,
+        so nesting it in another `max-w-[1200px] px-6` container would stop its panel and
+        rules short of the viewport and double the horizontal padding. The same is true of
+        `PageHero` above, for the same reason.
+      */}
       <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
     </div>
   )

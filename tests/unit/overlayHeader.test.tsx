@@ -28,24 +28,42 @@ describe('SiteHeader overlay', () => {
     expect(container.firstElementChild!.className).toMatch(/absolute|fixed/)
   })
 
-  it('sits in normal flow on the homepage, whose hero is inside the content column', () => {
-    // The behaviour this changed, asserted directly rather than inferred from
-    // CAROUSEL_PATHS. Overlaying only makes sense while a photograph reaches the top edge
-    // of the page; the homepage hero is a block within the 1200px column now, so an
-    // absolutely positioned header there would be floating over white.
-    mockPath.mockReturnValue('/')
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
-    const cls = container.firstElementChild!.className
-    expect(cls).not.toMatch(/\babsolute\b/)
-    expect(cls).toContain('border-b')
+  it('overlays every section page, the homepage and /investors included', () => {
+    // Both were exceptions and neither is one any more. The homepage hero was a block
+    // inside the content column with white above it, so overlaying would have floated the
+    // header over nothing; /investors carried no photograph at all. Both now open on the
+    // same full-bleed band as the rest, so the header goes over all seven.
+    for (const path of [
+      '/',
+      '/portfolio',
+      '/track-record',
+      '/insights',
+      '/partners',
+      '/about',
+      '/investors',
+    ]) {
+      cleanup()
+      mockPath.mockReturnValue(path)
+      const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+      expect(
+        container.firstElementChild!.className,
+        `expected the header to overlay on ${path}`,
+      ).toMatch(/\babsolute\b/)
+    }
   })
 
-  it('sits in normal flow on pages with no photo band', () => {
-    mockPath.mockReturnValue('/investors')
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
-    const cls = container.firstElementChild!.className
-    expect(cls).not.toMatch(/\babsolute\b/)
-    expect(cls).toContain('border-b')
+  it('stays in normal flow on the two detail routes, which have no shared band', () => {
+    // The negative case is load-bearing: an absolutely positioned header on a page whose
+    // first element is body copy drops the nav straight onto the text. Both detail routes
+    // open on their own image and their own headline, not on the shared carousel.
+    for (const path of ['/portfolio/oak-forest-k', '/insights/some-article']) {
+      cleanup()
+      mockPath.mockReturnValue(path)
+      const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+      const cls = container.firstElementChild!.className
+      expect(cls, `expected normal flow on ${path}`).not.toMatch(/\babsolute\b/)
+      expect(cls).toContain('border-b')
+    }
   })
 
   it('keeps ink text legible over the darkest possible photograph', () => {

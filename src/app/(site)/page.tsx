@@ -19,7 +19,7 @@ import type {
   SITE_SETTINGS_QUERY_RESULT,
   HOME_PAGE_QUERY_RESULT,
 } from '@/sanity/types.generated'
-import { HomeHero } from '@/components/home/HomeHero'
+import { PageHero } from '@/components/layout/PageHero'
 import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 import { StatBand } from '@/components/ui/StatBand'
 import { SectionHeading } from '@/components/ui/SectionHeading'
@@ -188,14 +188,17 @@ export default async function HomePage() {
   return (
     <>
       {/*
-        The homepage owns its hero rather than taking the layout's band. That band ran the
-        full width of the viewport at the full height of it, so the first screen carried no
-        words at all; this one sits in the same 1200px column as the rest of the page, with
-        the headline on the photograph. `/` is no longer in CAROUSEL_PATHS, so the layout
-        adds nothing above this.
+        The photograph runs edge to edge with the headline on it, and the header sits over
+        the top of it. Every section page opens this way now — this one is no longer the
+        exception it was while its hero was capped at the content column.
+
+        What is deliberately NOT restored is the height. The band this grew out of filled
+        the viewport as well as spanning it, and that is what pushed EM8's proposition
+        below the fold. `PageHero` is bounded by min-heights, so the headline stays on the
+        first screen.
       */}
-      <HomeHero
-        hero={copy.hero}
+      <PageHero
+        copy={copy.hero}
         slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
       />
 
