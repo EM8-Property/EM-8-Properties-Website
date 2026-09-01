@@ -191,18 +191,21 @@ export const INVESTORS_PAGE_QUERY = defineQuery(`
  */
 export const PORTFOLIO_PAGE_QUERY = defineQuery(`
   *[_id == "portfolioPage"][0] {
-    seo { title, description }
+    seo { title, description },
+    heading { eyebrow, title, intro }
   }
 `)
 
 export const INSIGHTS_PAGE_QUERY = defineQuery(`
   *[_id == "insightsPage"][0] {
-    seo { title, description }
+    seo { title, description },
+    heading { eyebrow, title, intro }
   }
 `)
 
 export const TRACK_RECORD_PAGE_QUERY = defineQuery(`
   *[_id == "trackRecordPage"][0] {
-    seo { title, description }
+    seo { title, description },
+    heading { eyebrow, title, intro }
   }
 `)

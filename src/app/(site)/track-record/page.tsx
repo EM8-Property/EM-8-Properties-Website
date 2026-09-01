@@ -38,25 +38,26 @@ export async function generateMetadata(): Promise<Metadata> {
  * its search ranking and double the editing surface.
  */
 export default async function TrackRecordPage() {
-  const [sold, stats, settings] = await Promise.all([
+  const [sold, stats, settings, copy] = await Promise.all([
     fetchSanity<SOLD_PROPERTIES_QUERY_RESULT>(SOLD_PROPERTIES_QUERY),
     fetchSanity<HERO_STATS_QUERY_RESULT>(HERO_STATS_QUERY),
     fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+    fetchSanity<TRACK_RECORD_PAGE_QUERY_RESULT>(TRACK_RECORD_PAGE_QUERY),
   ])
+
+  // Missing required content fails the build loudly rather than rendering a titleless
+  // page. Sanity's `required()` is Studio-side only, so this throw is the real guard.
+  if (!copy?.heading) {
+    throw new Error(
+      'The trackRecordPage document is missing or has no heading. Create it in the ' +
+        'Studio under Track record page.',
+    )
+  }
 
   return (
     <div>
-      {/*
-        Still literals: this page holds only `seo` in Sanity. Moving the heading into the
-        CMS is tracked separately — the words are reproduced here exactly as they shipped.
-      */}
       <PageHero
-        copy={{
-          eyebrow: 'Track Record',
-          title: 'Realized results, not projections',
-          intro:
-            "Every deal we've taken full cycle, with what we paid, what we did, and what we exited at.",
-        }}
+        copy={copy.heading}
         slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
       />
 

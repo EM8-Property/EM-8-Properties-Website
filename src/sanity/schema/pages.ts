@@ -182,23 +182,28 @@ export const investorsPage = defineType({
 })
 
 /**
- * Three routes that had no document of their own.
+ * Three routes whose visible copy is a single heading each, the rest being generated from
+ * the property and post collections.
  *
- * /portfolio, /insights and /track-record were the pages revision D4 never reached,
- * because their visible copy is a single heading each and the rest is generated from the
- * property and post collections. Their search title and description were still literals in
- * TSX, which is the whole reason these exist.
+ * They were the pages revision D4 never reached. They held `seo` only, and the note here
+ * used to say their headings "could move here too, but that is copy-migration work with
+ * its own before-and-after check" — deferred, not declined. This is that work: `heading`
+ * now sits alongside `seo`, so every page on the site is editable without a developer.
  *
- * They hold `seo` only, deliberately. Their headings could move here too, but that is
- * copy-migration work with its own before-and-after check, and bundling it into a schema
- * change about metadata would make both harder to verify. The fields are here when someone
- * wants them.
+ * `heading` is required for the same reason it is on every other page. Missing required
+ * content fails the build loudly rather than rendering a page with no title, which is the
+ * failure mode the old site's constants.ts fallback created. Note that Sanity's
+ * `required()` is Studio-side only — the guard that actually holds is the throw in each
+ * page component.
  */
 export const portfolioPage = defineType({
   name: 'portfolioPage',
   title: 'Portfolio page',
   type: 'document',
-  fields: [defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() })],
+  fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
+    defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
+  ],
   preview: { prepare: () => ({ title: 'Portfolio page' }) },
 })
 
@@ -206,7 +211,10 @@ export const insightsPage = defineType({
   name: 'insightsPage',
   title: 'Insights page',
   type: 'document',
-  fields: [defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() })],
+  fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
+    defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
+  ],
   preview: { prepare: () => ({ title: 'Insights page' }) },
 })
 
@@ -214,6 +222,9 @@ export const trackRecordPage = defineType({
   name: 'trackRecordPage',
   title: 'Track record page',
   type: 'document',
-  fields: [defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() })],
+  fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
+    defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
+  ],
   preview: { prepare: () => ({ title: 'Track record page' }) },
 })

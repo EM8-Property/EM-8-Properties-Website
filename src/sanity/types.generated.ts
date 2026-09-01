@@ -91,6 +91,7 @@ export type TrackRecordPage = {
   _updatedAt: string;
   _rev: string;
   seo?: SeoBlock;
+  heading?: HeadingBlock;
 };
 
 export type InsightsPage = {
@@ -100,6 +101,7 @@ export type InsightsPage = {
   _updatedAt: string;
   _rev: string;
   seo?: SeoBlock;
+  heading?: HeadingBlock;
 };
 
 export type PortfolioPage = {
@@ -109,6 +111,7 @@ export type PortfolioPage = {
   _updatedAt: string;
   _rev: string;
   seo?: SeoBlock;
+  heading?: HeadingBlock;
 };
 
 export type InvestorsPage = {
@@ -1325,6 +1328,22 @@ export type PARTNERS_PAGE_QUERY_RESULT =
       submissionHeading: null;
       facts: null;
       formTitle: null;
+      submitLabel: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      partners: null;
+      submissionHeading: null;
+      facts: null;
+      formTitle: null;
       submitLabel: string | null;
     }
   | {
@@ -1414,6 +1433,23 @@ export type INVESTORS_PAGE_QUERY_RESULT =
       stepsTitle: null;
       steps: null;
       keepInTouchHeading: null;
+      submitLabel: null;
+      testimonialsHeading: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      loginLabel: null;
+      stepsTitle: null;
+      steps: null;
+      keepInTouchHeading: null;
       submitLabel: string | null;
       testimonialsHeading: null;
     }
@@ -1449,45 +1485,84 @@ export type INVESTORS_PAGE_QUERY_RESULT =
 
 // Source: src/sanity/queries.ts
 // Variable: PORTFOLIO_PAGE_QUERY
-// Query: *[_id == "portfolioPage"][0] {    seo { title, description }  }
+// Query: *[_id == "portfolioPage"][0] {    seo { title, description },    heading { eyebrow, title, intro }  }
 export type PORTFOLIO_PAGE_QUERY_RESULT =
   | {
       seo: null;
+      heading: null;
     }
   | {
       seo: {
         title: string | null;
         description: string | null;
+      } | null;
+      heading: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
       } | null;
     }
   | null;
 
 // Source: src/sanity/queries.ts
 // Variable: INSIGHTS_PAGE_QUERY
-// Query: *[_id == "insightsPage"][0] {    seo { title, description }  }
+// Query: *[_id == "insightsPage"][0] {    seo { title, description },    heading { eyebrow, title, intro }  }
 export type INSIGHTS_PAGE_QUERY_RESULT =
   | {
       seo: null;
+      heading: null;
     }
   | {
       seo: {
         title: string | null;
         description: string | null;
       } | null;
-    }
-  | null;
-
-// Source: src/sanity/queries.ts
-// Variable: TRACK_RECORD_PAGE_QUERY
-// Query: *[_id == "trackRecordPage"][0] {    seo { title, description }  }
-export type TRACK_RECORD_PAGE_QUERY_RESULT =
-  | {
-      seo: null;
+      heading: null;
     }
   | {
       seo: {
         title: string | null;
         description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+    }
+  | null;
+
+// Source: src/sanity/queries.ts
+// Variable: TRACK_RECORD_PAGE_QUERY
+// Query: *[_id == "trackRecordPage"][0] {    seo { title, description },    heading { eyebrow, title, intro }  }
+export type TRACK_RECORD_PAGE_QUERY_RESULT =
+  | {
+      seo: null;
+      heading: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
       } | null;
     }
   | null;
@@ -1513,8 +1588,8 @@ declare module "@sanity/client" {
     '\n  *[_id == "aboutPage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro },\n    factorsHeading { eyebrow, title, intro },\n    leadershipTitle,\n    boardTitle\n  }\n': ABOUT_PAGE_QUERY_RESULT;
     '\n  *[_id == "partnersPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    partners[] { eyebrow, title, body },\n    submissionHeading { eyebrow, title, intro },\n    facts[] { label, value },\n    formTitle,\n    submitLabel\n  }\n': PARTNERS_PAGE_QUERY_RESULT;
     '\n  *[_id == "investorsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    loginLabel,\n    stepsTitle,\n    steps[] { title, body },\n    keepInTouchHeading { eyebrow, title, intro },\n    submitLabel,\n    testimonialsHeading { eyebrow, title, intro }\n  }\n': INVESTORS_PAGE_QUERY_RESULT;
-    '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
-    '\n  *[_id == "insightsPage"][0] {\n    seo { title, description }\n  }\n': INSIGHTS_PAGE_QUERY_RESULT;
-    '\n  *[_id == "trackRecordPage"][0] {\n    seo { title, description }\n  }\n': TRACK_RECORD_PAGE_QUERY_RESULT;
+    '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
+    '\n  *[_id == "insightsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': INSIGHTS_PAGE_QUERY_RESULT;
+    '\n  *[_id == "trackRecordPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': TRACK_RECORD_PAGE_QUERY_RESULT;
   }
 }

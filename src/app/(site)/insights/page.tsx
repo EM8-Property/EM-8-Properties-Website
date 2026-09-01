@@ -23,24 +23,25 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function InsightsPage() {
-  const [posts, settings] = await Promise.all([
+  const [posts, settings, copy] = await Promise.all([
     fetchSanity<ALL_POSTS_QUERY_RESULT>(ALL_POSTS_QUERY),
     fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+    fetchSanity<INSIGHTS_PAGE_QUERY_RESULT>(INSIGHTS_PAGE_QUERY),
   ])
+
+  // Missing required content fails the build loudly rather than rendering a titleless
+  // page. Sanity's `required()` is Studio-side only, so this throw is the real guard.
+  if (!copy?.heading) {
+    throw new Error(
+      'The insightsPage document is missing or has no heading. Create it in the Studio ' +
+        'under Insights page.',
+    )
+  }
 
   return (
     <div>
-      {/*
-        Still literals: this page holds only `seo` in Sanity. Moving the heading into the
-        CMS is tracked separately — the words are reproduced here exactly as they shipped.
-      */}
       <PageHero
-        copy={{
-          eyebrow: 'Insights',
-          title: "What we've learned building next to the tracks",
-          intro:
-            'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA.',
-        }}
+        copy={copy.heading}
         slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
       />
       <div className="mx-auto max-w-[1200px] px-6 py-14">
