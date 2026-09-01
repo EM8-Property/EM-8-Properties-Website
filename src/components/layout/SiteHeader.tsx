@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { showsCarousel } from '@/lib/carouselPages'
+import { showsHero } from '@/lib/heroPages'
 
 const NAV = [
   { href: '/portfolio', label: 'Portfolio' },
@@ -39,11 +39,15 @@ export const HEADER_SCRIM = 0.85
 export function SiteHeader({ agoraUrl }: { agoraUrl: string }) {
   const [open, setOpen] = useState(false)
   /*
-   * On the pages that carry the photo band, the header sits over the photography so the
-   * image runs to the very top of the page. Everywhere else it stays in normal flow —
-   * overlaying a page with no photo behind it would drop the header onto body copy.
+   * On the pages that open on a photograph, the header sits over it so the image runs to
+   * the very top of the page. Everywhere else it stays in normal flow — overlaying a page
+   * with no photo behind it would drop the header onto body copy.
+   *
+   * That is now all seven section pages, the homepage included. It briefly excluded the
+   * homepage, whose hero was a block inside the content column with white above it. The
+   * photograph reaches the top edge there again, so the header goes back over it.
    */
-  const overlay = showsCarousel(usePathname())
+  const overlay = showsHero(usePathname())
 
   return (
     <header

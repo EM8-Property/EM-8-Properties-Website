@@ -15,6 +15,8 @@ import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Card } from '@/components/ui/Card'
 import { TEAM_GROUP_LABELS } from '@/lib/teamGroups'
 import { CtaBand } from '@/components/ui/CtaBand'
+import { PageHero } from '@/components/layout/PageHero'
+import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 import { TeamBio } from '@/components/about/TeamBio'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -61,19 +63,10 @@ export default async function AboutPage() {
 
   return (
     <div>
-      <div className="mx-auto max-w-[1200px] px-6 py-14">
-        <Eyebrow>{copy.hero.eyebrow}</Eyebrow>
-        <h1 className="mt-3 max-w-[19ch] text-4xl font-bold leading-tight tracking-tight text-ink">
-          {copy.hero.title}
-          {copy.hero.titleAccent && (
-            <> <span className="text-teal-text">{copy.hero.titleAccent}</span></>
-          )}
-          {copy.hero.titleSuffix}
-        </h1>
-        <p className="mt-4 max-w-[60ch] text-sm leading-relaxed text-ink-secondary">
-          {copy.hero.intro}
-        </p>
-      </div>
+      <PageHero
+        copy={copy.hero}
+        slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
+      />
 
       <section className="mx-auto max-w-[1200px] px-6 py-10">
         <SectionHeading {...copy.factorsHeading!} />

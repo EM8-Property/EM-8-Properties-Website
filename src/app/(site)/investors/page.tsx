@@ -15,6 +15,8 @@ import { LeadForm, type FieldSpec } from '@/components/forms/LeadForm'
 import { Testimonials } from '@/components/ui/Testimonials'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
+import { PageHero } from '@/components/layout/PageHero'
+import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 
 export async function generateMetadata(): Promise<Metadata> {
   const [copy, settings] = await Promise.all([
@@ -70,16 +72,28 @@ export default async function InvestorsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-14">
+    <div>
+      {/*
+        /investors had no photograph at all until now — it was the one section page that
+        opened on white. It takes the same shared band as the rest so the site opens the
+        same way everywhere.
+      */}
+      <PageHero
+        copy={copy.heading}
+        slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
+      />
+
+      <div className="mx-auto max-w-[1200px] px-6 py-14">
       <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
         <div>
-          <SectionHeading {...copy.heading} level={1} />
           {settings?.agoraPortalUrl && (
             <a
               href={settings.agoraPortalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-5 inline-block rounded-control bg-ink px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white"
+              // No top margin now: this is the first element in the column, directly
+              // under the hero, rather than sitting beneath a heading.
+              className="inline-block rounded-control bg-ink px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white"
             >
               {copy.loginLabel}
             </a>
@@ -129,6 +143,7 @@ export default async function InvestorsPage() {
           </div>
         </section>
       )}
+      </div>
     </div>
   )
 }

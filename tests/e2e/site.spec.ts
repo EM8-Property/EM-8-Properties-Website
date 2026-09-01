@@ -239,3 +239,73 @@ test('every content route declares the canonical it should, and a large card', a
     )
   }
 })
+
+/*
+ * The full-bleed hero, measured on the rendered page rather than inferred from a class.
+ *
+ * This is the check that would have caught the two defects this change actually shipped
+ * with: a headline sitting *under* the overlaid header at 375px, and — twice — a stale
+ * server still serving the previous build while every unit test passed. Neither was
+ * visible to the build, tsc, lint or Lighthouse.
+ */
+test('every section page opens on a full-bleed photograph with its own title on it', async ({
+  page,
+}) => {
+  const routes = [
+    '/',
+    '/about',
+    '/insights',
+    '/investors',
+    '/partners',
+    '/portfolio',
+    '/track-record',
+  ]
+
+  for (const route of routes) {
+    await page.goto(route)
+    const band = page.locator('section[aria-roledescription="carousel"]').first()
+    await expect(band, `${route} has no photo band`).toBeVisible()
+
+    const viewportWidth = page.viewportSize()!.width
+    const box = (await band.boundingBox())!
+
+    // Edge to edge: it starts at the left edge and spans the viewport. A band nested in
+    // the 1200px measure would start ~156px in and stop short on both sides.
+    expect(box.x, `${route} band is inset from the edge`).toBeLessThanOrEqual(1)
+    expect(box.width, `${route} band is narrower than the viewport`).toBeGreaterThanOrEqual(
+      viewportWidth - 1,
+    )
+    // It reaches the top of the page, which is what the overlaid header requires.
+    expect(box.y, `${route} band does not reach the top`).toBeLessThanOrEqual(1)
+
+    // The page's own h1 is inside the band, laid over the photograph.
+    const h1 = page.getByRole('heading', { level: 1 })
+    await expect(h1, `${route} has no h1`).toBeVisible()
+    const h1Box = (await h1.boundingBox())!
+    expect(h1Box.y, `${route} h1 is not on the photograph`).toBeLessThan(box.y + box.height)
+
+    // And it clears the header rather than rendering underneath it. This is the mobile
+    // defect: measured at 375px the eyebrow began at y=62 while the header ran to y=68.
+    const headerBox = (await page.locator('header').boundingBox())!
+    expect(
+      h1Box.y,
+      `${route} h1 overlaps the header`,
+    ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
+  }
+})
+
+test('the hero clears the header on a narrow viewport too', async ({ page }) => {
+  // The defect only appeared below ~640px: the copy is bottom-aligned, so it climbs as it
+  // wraps, and three headline lines plus a four-line intro is enough to reach the header.
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/')
+
+  const headerBox = (await page.locator('header').boundingBox())!
+  // The eyebrow is the first line of copy, so it is the one that goes under the header.
+  const eyebrow = page.locator('[data-hero-overlay] p').first()
+  const eyebrowBox = (await eyebrow.boundingBox())!
+
+  expect(eyebrowBox.y, 'the eyebrow renders under the overlaid header').toBeGreaterThanOrEqual(
+    headerBox.y + headerBox.height,
+  )
+})

@@ -1,7 +1,5 @@
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
-import { CarouselSlot } from '@/components/layout/CarouselSlot'
-import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 import { fetchSanity } from '@/sanity/client'
 import { SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type { SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
@@ -60,13 +58,21 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         })}
       />
       {/*
-        The header and the photo band share a positioning context so the header can sit
-        over the photography, letting the image run to the very top of the page. On pages
-        with no band the header is in normal flow and the wrapper does nothing.
+        The header positions itself against this wrapper so it can sit over the
+        photograph, letting the image run to the very top of the page.
+
+        The photograph itself is no longer rendered here. It used to be — a shared strip
+        the layout painted above every page's own heading — but each page now lays its own
+        title ON that photograph, and a layout cannot know a page's title. So each page
+        renders `PageHero` itself, and this wrapper holds only the header.
+
+        When the header overlays, it is out of flow, so this div collapses to nothing and
+        the hero below starts at the very top of the document — which is exactly what
+        full-bleed needs. On the two detail routes, where the header stays in normal flow,
+        the div takes the header's height and the page follows beneath it as before.
       */}
       <div className="relative">
         <SiteHeader agoraUrl={settings.agoraPortalUrl} />
-        <CarouselSlot slides={(settings.heroCarousel ?? []) as CarouselSlide[]} />
       </div>
       <main className="flex-1">{children}</main>
       <SiteFooter disclaimer={settings.disclaimer} contactEmail={settings.contactEmail} />

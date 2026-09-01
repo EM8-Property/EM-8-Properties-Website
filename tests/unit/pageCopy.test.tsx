@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { schemaTypes, SINGLETON_TYPES } from '@/sanity/schema'
 import { PAGE_COPY } from '../../scripts/content/em8-content.mjs'
 import { readSourceProse } from '../shared/sourceScan'
-import { HomeHero } from '@/components/home/HomeHero'
+import { PageHero } from '@/components/layout/PageHero'
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- asserting on raw schema shape */
 const byName = (n: string) => schemaTypes.find((t: any) => t.name === n) as any
@@ -130,7 +130,7 @@ describe('the copy has actually left the components', () => {
   })
 })
 
-describe('HomeHero', () => {
+describe('PageHero', () => {
   const hero = {
     eyebrow: 'Eyebrow here',
     title: 'A headline',
@@ -142,7 +142,7 @@ describe('HomeHero', () => {
   }
 
   it('renders the copy it is given', () => {
-    render(<HomeHero hero={hero} slides={[]} />)
+    render(<PageHero copy={hero} slides={[]} />)
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'A headline with an accent.',
     )
@@ -151,8 +151,8 @@ describe('HomeHero', () => {
 
   it('renders without an accent or a second button', () => {
     render(
-      <HomeHero
-        hero={{ ...hero, titleAccent: null, titleSuffix: null, secondaryCta: null }}
+      <PageHero
+        copy={{ ...hero, titleAccent: null, titleSuffix: null, secondaryCta: null }}
         slides={[]}
       />,
     )

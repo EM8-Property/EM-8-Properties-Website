@@ -12,10 +12,11 @@ import type {
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
 import { formatUnits } from '@/lib/format'
-import { SectionHeading } from '@/components/ui/SectionHeading'
 import { StatBand } from '@/components/ui/StatBand'
 import { DealStory } from '@/components/property/DealStory'
 import { CtaBand } from '@/components/ui/CtaBand'
+import { PageHero } from '@/components/layout/PageHero'
+import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 import { Chip } from '@/components/ui/Chip'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,14 +46,19 @@ export default async function TrackRecordPage() {
 
   return (
     <div>
-      <div className="mx-auto max-w-[1200px] px-6 py-14">
-        <SectionHeading
-          eyebrow="Track Record"
-          title="Realized results, not projections"
-          intro="Every deal we've taken full cycle, with what we paid, what we did, and what we exited at."
-          level={1}
-        />
-      </div>
+      {/*
+        Still literals: this page holds only `seo` in Sanity. Moving the heading into the
+        CMS is tracked separately — the words are reproduced here exactly as they shipped.
+      */}
+      <PageHero
+        copy={{
+          eyebrow: 'Track Record',
+          title: 'Realized results, not projections',
+          intro:
+            "Every deal we've taken full cycle, with what we paid, what we did, and what we exited at.",
+        }}
+        slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
+      />
 
       {stats.length > 0 && (
         <StatBand

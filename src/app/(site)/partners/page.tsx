@@ -7,6 +7,8 @@ import { LeadForm, type FieldSpec } from '@/components/forms/LeadForm'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Card } from '@/components/ui/Card'
+import { PageHero } from '@/components/layout/PageHero'
+import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 
 export async function generateMetadata(): Promise<Metadata> {
   const [copy, settings] = await Promise.all([
@@ -40,7 +42,12 @@ const SITE_FIELDS: FieldSpec[] = [
 ]
 
 export default async function PartnersPage() {
-  const copy = await fetchSanity<PARTNERS_PAGE_QUERY_RESULT>(PARTNERS_PAGE_QUERY)
+  // `settings` is fetched here now for `heroCarousel`: the page opens on the shared
+  // photograph, which lives on the singleton so one list drives every page.
+  const [copy, settings] = await Promise.all([
+    fetchSanity<PARTNERS_PAGE_QUERY_RESULT>(PARTNERS_PAGE_QUERY),
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+  ])
 
   if (!copy?.heading) {
     throw new Error(
@@ -49,10 +56,19 @@ export default async function PartnersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 py-14">
-      <SectionHeading {...copy.heading} level={1} />
+    <div>
+      {/*
+        The hero is a sibling of the measure, never inside it. A full-bleed band nested in
+        a `max-w-[1200px] px-6` container stops short of the viewport on both sides and
+        doubles the horizontal padding — the same mistake that once collapsed CtaBand.
+      */}
+      <PageHero
+        copy={copy.heading}
+        slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
+      />
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-3">
+      <div className="mx-auto max-w-[1200px] px-6 py-14">
+      <div className="grid gap-5 sm:grid-cols-3">
         {(copy.partners ?? []).map(({ eyebrow, title, body }) => (
           <Card key={title}>
             <div className="p-5">
@@ -93,6 +109,7 @@ export default async function PartnersPage() {
           />
         </div>
       </section>
+      </div>
     </div>
   )
 }

@@ -171,6 +171,32 @@ All of these bit during the build and are documented in the plan's Revisions sec
   Measuring page weight without a fresh load totals a previous page state as well — it
   reported 2046KB for a page that actually loads 817KB. Reload before measuring.
 
+### Found on 2026-09-01
+
+- **`npm start` does not replace a server already on port 3000.** The old process keeps the
+  port and keeps serving the **previous build**, while the new one exits quietly. Two
+  measurements were taken against stale markup before this was spotted — the unit tests were
+  green the whole time, because they never touch the server. Kill the listener first:
+  `netstat -ano | grep :3000`, then `taskkill //PID <pid> //F`. If a change you just made is
+  not in the page, check this before you debug the change.
+- **An overlaid header clips hero copy that is bottom-aligned.** The copy grows upward as it
+  wraps, so it collides with the header only on a narrow viewport and only once the copy is
+  long enough — at 375px the eyebrow began at y=62 while the header ran to y=68. Nothing in
+  the build, tsc, lint or Lighthouse sees a 6px overlap, and desktop looks perfect. The
+  overlay reserves `pt-24` for this. The copy is CMS text, so it can get longer at any time.
+- **Full-bleed photography costs LCP, not bytes.** Going edge to edge moved Lighthouse
+  performance 97 → 89 on the homepage, entirely through LCP (2.5s → 3.8s), while total
+  transfer actually fell slightly (725KB → 717KB) and Speed Index improved (2.3s → 0.9s).
+  A bigger photograph is a bigger largest-contentful element by definition. Do not go
+  looking for a byte regression that is not there.
+- **Lighthouse's `target-size` failure predates all of this.** The carousel dots are 10px,
+  below the 24px WCAG 2.2 minimum, which is why accessibility scores 96 rather than 100 —
+  on the live site too. Confirm against the deployed URL before attributing it to a change.
+- **`npm run lighthouse` dies on Windows *after* it finishes.** `chrome-launcher` throws
+  `EPERM` removing its own temp directory, so the script exits non-zero with a stack trace.
+  `lh.json` has already been written by then — run `node scripts/lighthouse-report.mjs`
+  against it rather than concluding the audit failed.
+
 ## Status
 
 Tasks 1–15 complete. Task 14 descoped (see the plan). Task 16's infrastructure is built;
