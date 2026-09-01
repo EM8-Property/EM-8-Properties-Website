@@ -37,6 +37,7 @@ npm run dev                  # production dataset
 | `npm run lighthouse` | Lighthouse + resource budget against a running `npm start` |
 | `npm run typegen` | Regenerate Sanity types. **Run after every schema change** |
 | `node --env-file=.env.local scripts/migrate-content.mjs` | Re-write content from `scripts/content/em8-content.mjs`. Dry run; add `--apply` to write |
+| `… scripts/migrate-content.mjs --only=<step>` | Run **one** backfill: `carousel`, `pages`, `seo`, `headings`, `cta`. Prefer this after the initial load — see below |
 | `bash scripts/deploy-studio.sh` | Redeploy the hosted Studio. **Run after every schema change** |
 
 ## Environment
@@ -170,6 +171,13 @@ All of these bit during the build and are documented in the plan's Revisions sec
 - **`performance.getEntriesByType('resource')` accumulates across soft navigations.**
   Measuring page weight without a fresh load totals a previous page state as well — it
   reported 2046KB for a page that actually loads 817KB. Reload before measuring.
+
+- **A bare `--apply` is not a backfill, it is a full content reset.** It runs
+  `createOrReplace` over every property, team member, post and testimonial from the seed
+  constants, so any wording the team has changed in the Studio since the last run is
+  silently reverted. That is correct for the initial load and wrong for everything after
+  it. Use `--only=<step>` to apply a single backfill; each step is independently
+  idempotent, and the scoped run prints exactly which documents it will touch.
 
 ### Found on 2026-09-01
 

@@ -775,6 +775,44 @@ export const PAGE_COPY = {
     submitLabel: 'Send',
     testimonialsHeading: { eyebrow: 'Our Investors', title: 'What our partners say' },
   },
+
+  /*
+   * The last three pages to hold their own title in code.
+   *
+   * These carry a heading and nothing else: the rest of each page is generated from the
+   * property and post collections. Every string below is transcribed character for
+   * character from the literals those pages shipped with — this is a move, not a rewrite,
+   * and `pageCopy.test.tsx` pins that.
+   *
+   * Note the apostrophes. Two of these use a straight ' where most of the rest of this
+   * file uses a typographic ’ — that is what the pages actually shipped, and it is a real
+   * difference on a rendered page, so they are reproduced as they were rather than tidied
+   * up in passing. Verified by diffing the rendered hero copy against the live site.
+   */
+  portfolioPage: {
+    heading: {
+      eyebrow: 'Portfolio',
+      title: 'Assets across the Chicago MSA',
+      intro:
+        'Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves.',
+    },
+  },
+  insightsPage: {
+    heading: {
+      eyebrow: 'Insights',
+      title: "What we've learned building next to the tracks",
+      intro:
+        'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA.',
+    },
+  },
+  trackRecordPage: {
+    heading: {
+      eyebrow: 'Track Record',
+      title: 'Realized results, not projections',
+      intro:
+        "Every deal we've taken full cycle, with what we paid, what we did, and what we exited at.",
+    },
+  },
 }
 
 /**

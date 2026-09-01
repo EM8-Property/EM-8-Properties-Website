@@ -23,30 +23,40 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PortfolioPage() {
-  const [properties, settings] = await Promise.all([
+  const [properties, settings, copy] = await Promise.all([
     fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY),
     fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+    fetchSanity<PORTFOLIO_PAGE_QUERY_RESULT>(PORTFOLIO_PAGE_QUERY),
   ])
+
+  /*
+   * Missing required content fails the build loudly rather than rendering a page with no
+   * title. Sanity's `required()` is Studio-side only — it greys out Publish and gates
+   * nothing else — so this throw is the guard that actually holds.
+   *
+   * `?.title`, not `?.heading`. GROQ projects `heading { eyebrow, title, intro }` into an
+   * object even when every field inside is null, and that object is truthy — so a shallow
+   * check passes a half-filled heading straight through and renders an empty `<h1>`, which
+   * is the exact outcome this exists to prevent. Same shape as the `siteSettings` guard in
+   * `(site)/layout.tsx`.
+   */
+  if (!copy?.heading?.title) {
+    throw new Error(
+      'The portfolioPage document has no heading title. Add one in the Studio under ' +
+        'Portfolio page.',
+    )
+  }
 
   return (
     <div>
       {/*
-        The headline deliberately carries no asset count. Spec §9 forbids shipping
-        invented figures, and a hardcoded "Ten assets" would drift the moment a property
-        is added or sold in the Studio.
-
-        These words are still literals. This page, /insights and /track-record hold only
-        `seo` in Sanity — moving their headings into the CMS is tracked separately, because
-        bundling a copy migration into a layout change would make both harder to verify.
-        The words are reproduced here exactly as they shipped.
+        The headline deliberately carries no asset count — spec §9 forbids shipping
+        invented figures, and a hardcoded "Ten assets" would drift the moment a property is
+        added or sold in the Studio. It is the editor's job to keep that true now, which is
+        rather the point of the copy living in the CMS.
       */}
       <PageHero
-        copy={{
-          eyebrow: 'Portfolio',
-          title: 'Assets across the Chicago MSA',
-          intro:
-            'Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves.',
-        }}
+        copy={copy.heading}
         slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
       />
       <div className="mx-auto max-w-[1200px] px-6 py-14">

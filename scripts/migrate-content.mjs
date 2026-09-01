@@ -36,6 +36,35 @@ import {
 
 const APPLY = process.argv.includes('--apply')
 
+/**
+ * `--only=<step>` runs one backfill and nothing else.
+ *
+ * Without it the only way to apply a step is to apply everything, and "everything" means
+ * `createOrReplace` on every property, team member, post and testimonial from the seed
+ * constants. That is correct for the initial load and actively dangerous afterwards: any
+ * wording the team has since changed in the Studio is silently reverted to what shipped.
+ *
+ * A backfill that adds one field should not carry that risk. Each step is independently
+ * idempotent, so running one alone is well defined.
+ *
+ * **This flag fails closed, deliberately.** Its whole purpose is to prevent an unscoped
+ * write, so any mention of it — `--only`, `--only=`, `--onlyheadings`, a misspelt step —
+ * stops the run. Matching the exact `--only=` prefix and defaulting to `''` would send
+ * every one of those spellings down the full destructive path instead of the scoped one
+ * the person was plainly reaching for. This project has already lost live content to one
+ * migration slip; a guard that fails open is worse than no guard, because it is trusted.
+ *
+ * `null` means genuinely absent. Anything else is a scoped run, valid or not.
+ */
+const onlyArgs = process.argv.filter((a) => a.startsWith('--only'))
+const ONLY =
+  onlyArgs.length === 0
+    ? null
+    : // Two --only flags is ambiguous; refuse rather than silently honour the first.
+      onlyArgs.length > 1 || !onlyArgs[0].startsWith('--only=')
+      ? ''
+      : onlyArgs[0].slice(7)
+
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET
 const token = process.env.SANITY_API_WRITE_TOKEN
@@ -138,9 +167,10 @@ function withKeys(items, prefix) {
 }
 
 async function seedPagesIfMissing(apply) {
-  // The union, not just PAGE_COPY: /portfolio, /insights and /track-record have documents
-  // that hold nothing but their search title and description, so they appear in PAGE_SEO
-  // and not in PAGE_COPY.
+  // The union of both, not either alone. Every page appears in PAGE_SEO; PAGE_COPY holds
+  // whatever visible copy a page has beyond that, which for /portfolio, /insights and
+  // /track-record is a single heading each. Taking the union keeps this correct however
+  // those two lists diverge later.
   const ids = [...new Set([...Object.keys(PAGE_COPY), ...Object.keys(PAGE_SEO)])]
   const present = new Set(
     (await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [],
@@ -233,6 +263,90 @@ async function backfillPageSeo(apply) {
   })
   if (!res.ok) throw new Error(`page seo backfill failed ${res.status}: ${await res.text()}`)
   console.log(`  page seo  backfilled ${incomplete.length}`)
+}
+
+/**
+ * Adds `heading` to the three page documents that predate the field.
+ *
+ * /portfolio, /insights and /track-record held nothing but `seo`; their eyebrow, headline
+ * and intro were literals in TSX. `seedPagesIfMissing` cannot do this — it seeds a whole
+ * document only when none exists, and all three are already in the dataset — so without
+ * this they would keep their missing `heading` forever while every one of those pages
+ * threw at build time.
+ *
+ * Per *leaf*, and this is the trap `backfillPageSeo` was rewritten to fix: `setIfMissing`
+ * on the whole `heading` object is all-or-nothing at that key, so a document with an
+ * eyebrow and no title would be skipped forever, reported as "already has one" on every
+ * re-run while the build kept failing on it. Patching each leaf keeps the guarantee that
+ * matters — an editor's own words are never overwritten — at field granularity.
+ *
+ * `setIfMissing`, never `set`. The whole point of moving these strings into the CMS is
+ * that the team owns them now; this only ever fills a blank.
+ *
+ * Safe to apply before the code that reads it deploys. This is an addition, and deployed
+ * code ignores fields it does not know about — see docs/deploys-and-migrations.md. It is
+ * also *required* to run first: the pages throw when `heading` is absent, so shipping the
+ * code first would take all three down.
+ */
+async function backfillPageHeadings(apply) {
+  const ids = ['portfolioPage', 'insightsPage', 'trackRecordPage']
+
+  /*
+   * Absence is reported, not folded into "nothing to do".
+   *
+   * A document that does not exist matches no filter, so a `!defined(...)` query alone
+   * reports the all-clear for a page that is in fact missing entirely — and these pages
+   * throw without a heading, so that clean dry run would be describing a broken build.
+   * The full run hides this because `seedPagesIfMissing` goes first; `--only=headings`
+   * does not have that luxury.
+   */
+  const present = new Set((await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [])
+  const absent = ids.filter((id) => !present.has(id))
+  if (absent.length > 0) {
+    throw new Error(
+      `headings: no document for ${absent.join(', ')}. These pages throw without one — ` +
+        `run --only=pages first, or create them in the Studio.`,
+    )
+  }
+
+  const incomplete =
+    (await query(
+      `*[_id in ${JSON.stringify(ids)} && (!defined(heading.eyebrow) || !defined(heading.title) || !defined(heading.intro))]._id`,
+    )) ?? []
+
+  if (incomplete.length === 0) {
+    console.log('  headings  all three present and complete — left untouched')
+    return
+  }
+
+  for (const id of incomplete) console.log(`  headings  backfilling ${id}`)
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: incomplete.flatMap((id) => [
+        // The parent object first: a leaf path cannot be set inside an object that does
+        // not exist yet, and this is a no-op when it already does.
+        { patch: { id, setIfMissing: { heading: {} } } },
+        {
+          patch: {
+            id,
+            setIfMissing: {
+              'heading.eyebrow': PAGE_COPY[id].heading.eyebrow,
+              'heading.title': PAGE_COPY[id].heading.title,
+              'heading.intro': PAGE_COPY[id].heading.intro,
+            },
+          },
+        },
+      ]),
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`page heading backfill failed ${res.status}: ${await res.text()}`)
+  }
+  console.log(`  headings  backfilled ${incomplete.length}`)
 }
 
 /**
@@ -490,9 +604,57 @@ async function buildDocuments() {
   return docs
 }
 
+/**
+ * The independently runnable steps, for `--only=`.
+ *
+ * Four of these are **additions**, and additions are safe to apply before the code that
+ * reads them deploys — deployed code ignores fields it does not know about.
+ *
+ * `cta` is not one of them, and the distinction matters more than the shared list makes it
+ * look. `moveCtaBandToSettings` ends by unsetting `homePage.ctaBand`: that is a REMOVAL,
+ * it is the exact mutation that took the live homepage's call to action down on
+ * 2026-08-31, and it must not run until the code that stopped reading the old location is
+ * deployed and verified. Idempotent is not the same as safe to run early.
+ * See docs/deploys-and-migrations.md.
+ */
+const STEPS = {
+  carousel: seedCarouselIfEmpty,
+  pages: seedPagesIfMissing,
+  seo: backfillPageSeo,
+  headings: backfillPageHeadings,
+  cta: moveCtaBandToSettings,
+}
+
+/** Steps that remove or move a field, and so must follow their code rather than lead it. */
+const REMOVALS = new Set(['cta'])
+
 async function main() {
   console.log(`\nEM8 content migration -> project ${projectId}, dataset ${dataset}`)
   console.log(APPLY ? 'MODE: apply (writing)\n' : 'MODE: dry run (no writes; pass --apply)\n')
+
+  if (ONLY !== null) {
+    if (!STEPS[ONLY]) {
+      console.error(
+        ONLY === ''
+          ? `--only needs exactly one step: --only=<${Object.keys(STEPS).join('|')}>`
+          : `Unknown step "${ONLY}". Available: ${Object.keys(STEPS).join(', ')}`,
+      )
+      // Refusing, not falling through. Without --only this run would createOrReplace every
+      // document from the seed constants, which is the opposite of what was asked for.
+      process.exit(1)
+    }
+    console.log(`SCOPE: ${ONLY} only — no document rewrite, no siteSettings patch\n`)
+    if (REMOVALS.has(ONLY)) {
+      console.log(
+        `  WARNING  "${ONLY}" REMOVES a field. Deployed code still reading the old\n` +
+          `           location will break the moment the webhook revalidates. Only run\n` +
+          `           this once the code that stopped reading it is live and verified.\n`,
+      )
+    }
+    await STEPS[ONLY](APPLY)
+    console.log(APPLY ? `\nStep "${ONLY}" applied.` : `\nDry run complete. Re-run with --apply.`)
+    return
+  }
 
   const docs = await buildDocuments()
 
@@ -507,6 +669,7 @@ async function main() {
     await seedCarouselIfEmpty(false)
     await seedPagesIfMissing(false)
     await backfillPageSeo(false)
+    await backfillPageHeadings(false)
     await moveCtaBandToSettings(false)
     console.log('\nDry run complete. Nothing was written. Re-run with --apply.')
     return
@@ -541,6 +704,7 @@ async function main() {
   await seedCarouselIfEmpty(true)
   await seedPagesIfMissing(true)
   await backfillPageSeo(true)
+  await backfillPageHeadings(true)
   await moveCtaBandToSettings(true)
   const body = await res.json()
   console.log(`\nWrote ${body.results?.length ?? 0} documents.`)

@@ -170,4 +170,41 @@ describe('published content', () => {
       ).toBeTruthy()
     }
   })
+
+  /**
+   * The same gate for `heading`, on the three pages whose components throw without one.
+   *
+   * /portfolio, /insights and /track-record render their title from the CMS now. Each one
+   * throws when `heading.title` is empty, and because that throw happens during
+   * `next build` it takes the whole deploy down rather than one route — the same blast
+   * radius as the `seo` case above, and the reason that check exists.
+   *
+   * Checked per leaf, because a `heading` object with null fields is still an object: the
+   * shallow version of this would pass while the page threw. `eyebrow` and `intro` are
+   * asserted too — they do not throw, but `PageHero` renders both, so an empty one is a
+   * silently degraded page rather than a loud failure, which is worse to discover late.
+   */
+  it('has a complete heading on the three pages that render one from the CMS', async () => {
+    const ids = ['portfolioPage', 'insightsPage', 'trackRecordPage']
+
+    const pages = await client.fetch<
+      { _id: string; eyebrow?: string; title?: string; intro?: string }[]
+    >(
+      `*[_id in ${JSON.stringify(ids)} && ${PUBLISHED}]{ _id, "eyebrow": heading.eyebrow, "title": heading.title, "intro": heading.intro }`,
+    )
+
+    expect(
+      pages.map((p) => p._id).sort(),
+      'a page whose component throws without a heading is missing entirely',
+    ).toEqual([...ids].sort())
+
+    for (const page of pages) {
+      expect(
+        page.title,
+        `${page._id} has no heading.title — that page throws and next build fails`,
+      ).toBeTruthy()
+      expect(page.eyebrow, `${page._id} has no heading.eyebrow`).toBeTruthy()
+      expect(page.intro, `${page._id} has no heading.intro`).toBeTruthy()
+    }
+  })
 })
