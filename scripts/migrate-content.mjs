@@ -44,10 +44,26 @@ const APPLY = process.argv.includes('--apply')
  * constants. That is correct for the initial load and actively dangerous afterwards: any
  * wording the team has since changed in the Studio is silently reverted to what shipped.
  *
- * A backfill that adds one field should not carry that risk. Each step is already written
- * to be independently idempotent, so running one alone is well defined.
+ * A backfill that adds one field should not carry that risk. Each step is independently
+ * idempotent, so running one alone is well defined.
+ *
+ * **This flag fails closed, deliberately.** Its whole purpose is to prevent an unscoped
+ * write, so any mention of it — `--only`, `--only=`, `--onlyheadings`, a misspelt step —
+ * stops the run. Matching the exact `--only=` prefix and defaulting to `''` would send
+ * every one of those spellings down the full destructive path instead of the scoped one
+ * the person was plainly reaching for. This project has already lost live content to one
+ * migration slip; a guard that fails open is worse than no guard, because it is trusted.
+ *
+ * `null` means genuinely absent. Anything else is a scoped run, valid or not.
  */
-const ONLY = (process.argv.find((a) => a.startsWith('--only=')) ?? '').slice(7)
+const onlyArgs = process.argv.filter((a) => a.startsWith('--only'))
+const ONLY =
+  onlyArgs.length === 0
+    ? null
+    : // Two --only flags is ambiguous; refuse rather than silently honour the first.
+      onlyArgs.length > 1 || !onlyArgs[0].startsWith('--only=')
+      ? ''
+      : onlyArgs[0].slice(7)
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET
@@ -151,9 +167,10 @@ function withKeys(items, prefix) {
 }
 
 async function seedPagesIfMissing(apply) {
-  // The union, not just PAGE_COPY: /portfolio, /insights and /track-record have documents
-  // that hold nothing but their search title and description, so they appear in PAGE_SEO
-  // and not in PAGE_COPY.
+  // The union of both, not either alone. Every page appears in PAGE_SEO; PAGE_COPY holds
+  // whatever visible copy a page has beyond that, which for /portfolio, /insights and
+  // /track-record is a single heading each. Taking the union keeps this correct however
+  // those two lists diverge later.
   const ids = [...new Set([...Object.keys(PAGE_COPY), ...Object.keys(PAGE_SEO)])]
   const present = new Set(
     (await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [],
@@ -274,13 +291,31 @@ async function backfillPageSeo(apply) {
 async function backfillPageHeadings(apply) {
   const ids = ['portfolioPage', 'insightsPage', 'trackRecordPage']
 
+  /*
+   * Absence is reported, not folded into "nothing to do".
+   *
+   * A document that does not exist matches no filter, so a `!defined(...)` query alone
+   * reports the all-clear for a page that is in fact missing entirely — and these pages
+   * throw without a heading, so that clean dry run would be describing a broken build.
+   * The full run hides this because `seedPagesIfMissing` goes first; `--only=headings`
+   * does not have that luxury.
+   */
+  const present = new Set((await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [])
+  const absent = ids.filter((id) => !present.has(id))
+  if (absent.length > 0) {
+    throw new Error(
+      `headings: no document for ${absent.join(', ')}. These pages throw without one — ` +
+        `run --only=pages first, or create them in the Studio.`,
+    )
+  }
+
   const incomplete =
     (await query(
       `*[_id in ${JSON.stringify(ids)} && (!defined(heading.eyebrow) || !defined(heading.title) || !defined(heading.intro))]._id`,
     )) ?? []
 
   if (incomplete.length === 0) {
-    console.log('  headings  no page is missing one — left untouched')
+    console.log('  headings  all three present and complete — left untouched')
     return
   }
 
@@ -569,7 +604,19 @@ async function buildDocuments() {
   return docs
 }
 
-/** The independently runnable backfills, for `--only=`. */
+/**
+ * The independently runnable steps, for `--only=`.
+ *
+ * Four of these are **additions**, and additions are safe to apply before the code that
+ * reads them deploys — deployed code ignores fields it does not know about.
+ *
+ * `cta` is not one of them, and the distinction matters more than the shared list makes it
+ * look. `moveCtaBandToSettings` ends by unsetting `homePage.ctaBand`: that is a REMOVAL,
+ * it is the exact mutation that took the live homepage's call to action down on
+ * 2026-08-31, and it must not run until the code that stopped reading the old location is
+ * deployed and verified. Idempotent is not the same as safe to run early.
+ * See docs/deploys-and-migrations.md.
+ */
 const STEPS = {
   carousel: seedCarouselIfEmpty,
   pages: seedPagesIfMissing,
@@ -578,18 +625,32 @@ const STEPS = {
   cta: moveCtaBandToSettings,
 }
 
+/** Steps that remove or move a field, and so must follow their code rather than lead it. */
+const REMOVALS = new Set(['cta'])
+
 async function main() {
   console.log(`\nEM8 content migration -> project ${projectId}, dataset ${dataset}`)
   console.log(APPLY ? 'MODE: apply (writing)\n' : 'MODE: dry run (no writes; pass --apply)\n')
 
-  if (ONLY) {
+  if (ONLY !== null) {
     if (!STEPS[ONLY]) {
       console.error(
-        `Unknown step "${ONLY}". Available: ${Object.keys(STEPS).join(', ')}`,
+        ONLY === ''
+          ? `--only needs exactly one step: --only=<${Object.keys(STEPS).join('|')}>`
+          : `Unknown step "${ONLY}". Available: ${Object.keys(STEPS).join(', ')}`,
       )
+      // Refusing, not falling through. Without --only this run would createOrReplace every
+      // document from the seed constants, which is the opposite of what was asked for.
       process.exit(1)
     }
     console.log(`SCOPE: ${ONLY} only — no document rewrite, no siteSettings patch\n`)
+    if (REMOVALS.has(ONLY)) {
+      console.log(
+        `  WARNING  "${ONLY}" REMOVES a field. Deployed code still reading the old\n` +
+          `           location will break the moment the webhook revalidates. Only run\n` +
+          `           this once the code that stopped reading it is live and verified.\n`,
+      )
+    }
     await STEPS[ONLY](APPLY)
     console.log(APPLY ? `\nStep "${ONLY}" applied.` : `\nDry run complete. Re-run with --apply.`)
     return

@@ -71,19 +71,26 @@ describe('seeded page copy', () => {
      * rendered page is byte-identical rather than tidied up in passing.
      */
     const headings = PAGE_COPY as any
+    // toEqual on the whole object for all three, not a field each: a test named "exactly
+    // as they shipped" that pins only the title lets the intro be reworded underneath it.
     expect(headings.portfolioPage.heading).toEqual({
       eyebrow: 'Portfolio',
       title: 'Assets across the Chicago MSA',
       intro:
         'Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves.',
     })
-    expect(headings.insightsPage.heading.title).toBe(
-      "What we've learned building next to the tracks",
-    )
-    expect(headings.trackRecordPage.heading.title).toBe('Realized results, not projections')
-    expect(headings.trackRecordPage.heading.intro).toBe(
-      "Every deal we've taken full cycle, with what we paid, what we did, and what we exited at.",
-    )
+    expect(headings.insightsPage.heading).toEqual({
+      eyebrow: 'Insights',
+      title: "What we've learned building next to the tracks",
+      intro:
+        'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA.',
+    })
+    expect(headings.trackRecordPage.heading).toEqual({
+      eyebrow: 'Track Record',
+      title: 'Realized results, not projections',
+      intro:
+        "Every deal we've taken full cycle, with what we paid, what we did, and what we exited at.",
+    })
   })
 
   it('gives all three pages a complete heading, since each page now throws without one', () => {

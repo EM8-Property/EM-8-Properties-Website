@@ -784,9 +784,10 @@ export const PAGE_COPY = {
    * character from the literals those pages shipped with — this is a move, not a rewrite,
    * and `pageCopy.test.tsx` pins that.
    *
-   * Note the apostrophes. Two of these use a typographic ’ and the source used a straight
-   * ', which is a real difference on a rendered page; they are reproduced exactly as they
-   * were, straight quotes included, so nothing visibly changes when the CMS takes over.
+   * Note the apostrophes. Two of these use a straight ' where most of the rest of this
+   * file uses a typographic ’ — that is what the pages actually shipped, and it is a real
+   * difference on a rendered page, so they are reproduced as they were rather than tidied
+   * up in passing. Verified by diffing the rendered hero copy against the live site.
    */
   portfolioPage: {
     heading: {

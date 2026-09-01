@@ -29,14 +29,21 @@ export default async function PortfolioPage() {
     fetchSanity<PORTFOLIO_PAGE_QUERY_RESULT>(PORTFOLIO_PAGE_QUERY),
   ])
 
-  // The same rule as every other page: missing required content fails the build loudly
-  // rather than rendering a page with no title. Sanity's own `required()` is Studio-side
-  // only — it greys out Publish and gates nothing else — so this throw is the guard that
-  // actually holds.
-  if (!copy?.heading) {
+  /*
+   * Missing required content fails the build loudly rather than rendering a page with no
+   * title. Sanity's `required()` is Studio-side only — it greys out Publish and gates
+   * nothing else — so this throw is the guard that actually holds.
+   *
+   * `?.title`, not `?.heading`. GROQ projects `heading { eyebrow, title, intro }` into an
+   * object even when every field inside is null, and that object is truthy — so a shallow
+   * check passes a half-filled heading straight through and renders an empty `<h1>`, which
+   * is the exact outcome this exists to prevent. Same shape as the `siteSettings` guard in
+   * `(site)/layout.tsx`.
+   */
+  if (!copy?.heading?.title) {
     throw new Error(
-      'The portfolioPage document is missing or has no heading. Create it in the Studio ' +
-        'under Portfolio page.',
+      'The portfolioPage document has no heading title. Add one in the Studio under ' +
+        'Portfolio page.',
     )
   }
 

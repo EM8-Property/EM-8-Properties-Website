@@ -46,11 +46,13 @@ export default async function TrackRecordPage() {
   ])
 
   // Missing required content fails the build loudly rather than rendering a titleless
-  // page. Sanity's `required()` is Studio-side only, so this throw is the real guard.
-  if (!copy?.heading) {
+  // page. Sanity's `required()` is Studio-side only, so this throw is the real guard, and
+  // it checks `title` rather than `heading` — GROQ projects an all-null heading into a
+  // truthy object, which a shallow check would wave through as an empty <h1>.
+  if (!copy?.heading?.title) {
     throw new Error(
-      'The trackRecordPage document is missing or has no heading. Create it in the ' +
-        'Studio under Track record page.',
+      'The trackRecordPage document has no heading title. Add one in the Studio under ' +
+        'Track record page.',
     )
   }
 
