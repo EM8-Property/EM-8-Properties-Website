@@ -1,6 +1,9 @@
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Button } from '@/components/ui/Button'
-import { HeroCarousel, type CarouselSlide } from '@/components/layout/HeroCarousel'
+import { HeroCarousel } from '@/components/layout/HeroCarousel'
+// From lib, not from HeroCarousel: that module is `'use client'`, and a server component
+// calling a function it exports fails the build outright.
+import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 
 /**
  * The title block every section page opens with.
@@ -50,7 +53,10 @@ export function PageHero({
   copy: PageHeroCopy
   slides: CarouselSlide[]
 }) {
-  const hasPhoto = slides.filter((s) => s.slug).length > 0
+  // The same helper HeroCarousel uses to decide what it will render, deliberately shared:
+  // if these two ever disagreed, this would hand a carousel a list it then rejects, and
+  // the page would lose its <h1> while the header kept overlaying nothing.
+  const hasPhoto = usableSlides(slides).length > 0
 
   const title = (
     <>
@@ -96,7 +102,13 @@ export function PageHero({
   // has to render, so it falls back to the plain block on white.
   if (!hasPhoto) {
     return (
-      <div className="mx-auto max-w-[1200px] px-6 pb-10 pt-14">
+      // pt-24, not pt-14, and for the same reason the overlay carries it: `showsHero` is
+      // decided by path while this branch is decided by content, so the header is still
+      // absolutely positioned over this page even though there is no photograph under it.
+      // At pt-14 (56px) the eyebrow rendered beneath a ~68px header. Nothing in the
+      // layout's required-content guard covers `heroCarousel`, so this branch is reachable
+      // on any of the seven pages the moment that list is emptied.
+      <div className="mx-auto max-w-[1200px] px-6 pb-10 pt-24 sm:pt-28">
         <div className="max-w-[42ch]">
           {copy.eyebrow && <Eyebrow>{copy.eyebrow}</Eyebrow>}
           <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl">

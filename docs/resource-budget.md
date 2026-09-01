@@ -45,12 +45,22 @@ browser fetches a variant sized for it, which docs measured at 567 KB for one cr
 saving that used to come from `(min-width: 1200px) 1152px` is gone, and it cannot be
 recovered without lying about the layout, which buys bytes by shipping a blurry image.
 
-**What pays for it instead is the preload window, which went back to two.** Only the
-current slide and the one it is about to cross-fade to carry an `<img>`. Forward is the
-only direction the band auto-advances, so the previous slide is dropped and reloads if
-someone clicks a dot backwards. At a window of three the page measured 1206 KB against the
-1400 KB budget — passing, but spending headroom reserved for photography that has not been
-shot yet.
+**What pays for it instead is the preload window on the first paint.** Only the current
+slide and the one it is about to cross-fade to carry an `<img>` when the page loads; the
+slide being faded *out* stays mounted once there is one, so the steady state is three. That
+is the same window this component has always had — what changed is that nothing behind the
+first slide is fetched before anything has moved.
+
+**Be careful which number you argue from here.** The worst case above cannot tell you
+whether this helped: it forces every image to load, so it lands on 1206 KB at a window of
+two *or* three. The discriminating number is first paint — 723 KB of images with two crops
+against roughly 1080 KB with three. Both fit the 1400 KB budget; the point is the headroom
+left for photography that has not been shot yet, not a gate that was failing.
+
+A narrower window than this is not available. Dropping the outgoing slide to save one crop
+unmounts its image on the render that starts its 700 ms fade, so the photograph hard-cuts
+to the bare scrim and the next one fades up out of that — every six seconds, on all seven
+pages. It was written that way once and caught in review.
 
 The budgets were left where they are. They were sized for a full-bleed hero in the first
 place, the page passes inside them, and raising a gate that is not failing spends the guard
@@ -77,10 +87,10 @@ Both times it has failed so far, the cause was real and the fix was in the code:
    further at full-bleed size, where each crop was much larger.
 
    That narrowing was reversed on 2026-08-31, when capping the hero at the content column
-   made its crops the same order as the banner's. It was **reinstated on 2026-09-01** when
-   the band went full width again on all seven section pages. The rule underneath has held
-   both times: window of three when the band is inside the measure, two when it is
-   edge to edge.
+   made its crops the same order as the banner's. On 2026-09-01, with the band full width
+   again on all seven section pages, it came back in a narrower form: **first paint** loads
+   two crops, and the third slot is spent only on the slide that is actually fading out.
+   Narrowing it any further breaks the crossfade — see above.
 
    So if you are reading this because the budget failed, check in this order: `sizes` (it
    should say `100vw` and the band should genuinely be full width), then the window, then

@@ -84,65 +84,65 @@ export default async function InvestorsPage() {
       />
 
       <div className="mx-auto max-w-[1200px] px-6 py-14">
-      <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
-        <div>
-          {settings?.agoraPortalUrl && (
-            <a
-              href={settings.agoraPortalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              // No top margin now: this is the first element in the column, directly
-              // under the hero, rather than sitting beneath a heading.
-              className="inline-block rounded-control bg-ink px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white"
-            >
-              {copy.loginLabel}
-            </a>
-          )}
+        <div className="grid gap-10 lg:grid-cols-[1.3fr_1fr]">
+          <div>
+            {settings?.agoraPortalUrl && (
+              <a
+                href={settings.agoraPortalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                // No top margin now: this is the first element in the column, directly
+                // under the hero, rather than sitting beneath a heading.
+                className="inline-block rounded-control bg-ink px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-white"
+              >
+                {copy.loginLabel}
+              </a>
+            )}
 
-          <h2 className="mt-10 text-lg font-bold tracking-tight text-ink">
-            {copy.stepsTitle}
-          </h2>
-          <ol className="mt-4 grid gap-3">
-            {(copy.steps ?? []).map(({ title, body }, i) => (
-              <li key={title} className="flex gap-3">
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-chip bg-teal-text text-[10px] font-bold text-white">
-                  {i + 1}
-                </span>
-                <span>
-                  <span className="block text-xs font-semibold text-ink">{title}</span>
-                  <span className="mt-1 block text-[11px] leading-relaxed text-ink-secondary">
-                    {body}
+            <h2 className="mt-10 text-lg font-bold tracking-tight text-ink">
+              {copy.stepsTitle}
+            </h2>
+            <ol className="mt-4 grid gap-3">
+              {(copy.steps ?? []).map(({ title, body }, i) => (
+                <li key={title} className="flex gap-3">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-chip bg-teal-text text-[10px] font-bold text-white">
+                    {i + 1}
                   </span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        <div className="rounded-card border border-rule bg-panel p-6">
-          <Eyebrow>{copy.keepInTouchHeading!.eyebrow}</Eyebrow>
-          <h2 className="mt-2 text-lg font-bold tracking-tight text-ink">
-            {copy.keepInTouchHeading!.title}
-          </h2>
-          <p className="mb-4 mt-1.5 text-[11px] leading-relaxed text-ink-secondary">
-            {copy.keepInTouchHeading!.intro}
-          </p>
-          <LeadForm
-            source="keep-in-touch"
-            fields={FIELDS}
-            submitLabel={copy.submitLabel ?? 'Send'}
-          />
-        </div>
-      </div>
-
-      {testimonials.length > 0 && (
-        <section className="mt-16">
-          <SectionHeading {...copy.testimonialsHeading!} />
-          <div className="mt-6">
-            <Testimonials items={testimonials} />
+                  <span>
+                    <span className="block text-xs font-semibold text-ink">{title}</span>
+                    <span className="mt-1 block text-[11px] leading-relaxed text-ink-secondary">
+                      {body}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
-        </section>
-      )}
+
+          <div className="rounded-card border border-rule bg-panel p-6">
+            <Eyebrow>{copy.keepInTouchHeading!.eyebrow}</Eyebrow>
+            <h2 className="mt-2 text-lg font-bold tracking-tight text-ink">
+              {copy.keepInTouchHeading!.title}
+            </h2>
+            <p className="mb-4 mt-1.5 text-[11px] leading-relaxed text-ink-secondary">
+              {copy.keepInTouchHeading!.intro}
+            </p>
+            <LeadForm
+              source="keep-in-touch"
+              fields={FIELDS}
+              submitLabel={copy.submitLabel ?? 'Send'}
+            />
+          </div>
+        </div>
+
+        {testimonials.length > 0 && (
+          <section className="mt-16">
+            <SectionHeading {...copy.testimonialsHeading!} />
+            <div className="mt-6">
+              <Testimonials items={testimonials} />
+            </div>
+          </section>
+        )}
       </div>
     </div>
   )

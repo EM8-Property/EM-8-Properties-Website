@@ -31,17 +31,12 @@ export default async function PortfolioPage() {
   return (
     <div>
       {/*
-        The measure wraps the content, not the band. `Band` owns its own ground and
-        measure, so nesting it inside another `max-w-[1200px] px-6` container would stop
-        its panel and rules short of the viewport and double the horizontal padding.
-      */}
-      {/*
         The headline deliberately carries no asset count. Spec §9 forbids shipping
         invented figures, and a hardcoded "Ten assets" would drift the moment a property
         is added or sold in the Studio.
 
-        These words are still literals. Unlike the other four section pages, this one holds
-        only `seo` in Sanity — moving the heading into the CMS is tracked separately, and
+        These words are still literals. This page, /insights and /track-record hold only
+        `seo` in Sanity — moving their headings into the CMS is tracked separately, because
         bundling a copy migration into a layout change would make both harder to verify.
         The words are reproduced here exactly as they shipped.
       */}
@@ -57,6 +52,12 @@ export default async function PortfolioPage() {
       <div className="mx-auto max-w-[1200px] px-6 py-14">
         <PortfolioFilter properties={properties as PropertyCardData[]} />
       </div>
+      {/*
+        A sibling of the measure, never inside it. `Band` owns its own ground and measure,
+        so nesting it in another `max-w-[1200px] px-6` container would stop its panel and
+        rules short of the viewport and double the horizontal padding. The same is true of
+        `PageHero` above, for the same reason.
+      */}
       <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
     </div>
   )

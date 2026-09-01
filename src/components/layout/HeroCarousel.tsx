@@ -4,12 +4,15 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { urlForImage } from '@/sanity/image'
+import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 
-export type CarouselSlide = {
-  image: unknown
-  slug: string | null
-  propertyTitle: string | null
-}
+/*
+ * Re-exported so the seven pages can keep importing the type from the component they are
+ * rendering. It is a type-only re-export, which is erased at compile time — the *function*
+ * deliberately is not re-exported, because this is a `'use client'` module and a server
+ * component calling anything it exports fails the build.
+ */
+export type { CarouselSlide }
 
 const INTERVAL_MS = 6000
 
@@ -51,14 +54,36 @@ export function HeroCarousel({
    */
   overlay?: React.ReactNode
 }) {
-  const usable = useMemo(() => slides.filter((s) => s.slug), [slides])
-  const [index, setIndex] = useState(0)
+  const usable = useMemo(() => usableSlides(slides), [slides])
+  /*
+   * `prev` is the slide being faded OUT, and it is tracked in the same state update as
+   * `index` on purpose.
+   *
+   * Without it, advancing unmounts the outgoing slide's <Image> on the very render that
+   * starts its 700ms fade — so the photograph hard-cuts to the bare scrim and the next one
+   * fades up out of that, every six seconds, on every page. Recording it in a separate
+   * effect would not do: effects run after commit, so the image would still be gone for a
+   * frame.
+   *
+   * It is never cleared. That means the steady state holds three images — outgoing,
+   * current, incoming — which is exactly the window this component had before. What the
+   * change buys is the *first paint*, where `prev` is null and only two are mounted, and
+   * first paint is the number Lighthouse and a visitor actually pay.
+   */
+  const [{ index, prev }, setSlide] = useState<{ index: number; prev: number | null }>({
+    index: 0,
+    prev: null,
+  })
   const [paused, setPaused] = useState(false)
 
   useEffect(() => {
     if (usable.length < 2 || paused) return
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-    const id = setInterval(() => setIndex((i) => (i + 1) % usable.length), INTERVAL_MS)
+    const id = setInterval(
+      () =>
+        setSlide((s) => ({ index: (s.index + 1) % usable.length, prev: s.index })),
+      INTERVAL_MS,
+    )
     return () => clearInterval(id)
   }, [usable.length, paused])
 
@@ -89,7 +114,8 @@ export function HeroCarousel({
     >
       {usable.map((slide, i) => {
         /*
-         * Only the current slide and its two neighbours carry an <Image>.
+         * Only the current slide, the one it will cross-fade to, and the one it just left
+         * carry an <Image>.
          *
          * Every slide sits in the same absolutely-positioned box, so the browser treats
          * them all as visible and fetches every one — eight photographs on first paint,
@@ -98,21 +124,21 @@ export function HeroCarousel({
          * photography as a founding problem, so raising the budget is the last resort and
          * not the first.
          *
-         * A window keeps the crossfade already decoded while paying for two images
+         * A window keeps the crossfade already decoded while paying for a few images
          * instead of eight.
          *
-         * Two, not three, and that is a full-bleed decision. When the band was capped at
-         * the 1200px content column its crops were small enough to afford the neighbour in
-         * both directions; edge to edge they are not. Measured on this build, a window of
-         * three came to 1206KB against a 1400KB image budget — passing, but spending
-         * headroom docs/resource-budget.md reserves for the real lobby photography still
-         * to be shot. The same trade was made the last time this band ran full width.
+         * The window is forward-looking plus whatever is currently fading out: the
+         * current slide, the one it will cross-fade to, and the one it just left. At
+         * full-bleed the crops are large enough that the difference between two and three
+         * is worth having on the *first* paint, which is why `prev` starts null — nothing
+         * has faded out yet, so nothing behind is worth fetching before it is needed.
          *
-         * Forward only, because forward is the sole direction it auto-advances. The
-         * previous slide reloads if someone clicks a dot to go back to it.
+         * Measured on this build: first paint is two crops, 723KB of images against a
+         * 1400KB budget, and Lighthouse reported no overage. Including the backward
+         * neighbour up front instead would fetch a third before anything has moved.
          */
         const forward = (i - index + usable.length) % usable.length
-        const loaded = forward <= 1
+        const loaded = forward <= 1 || i === prev
 
         return (
           <Link
@@ -203,7 +229,9 @@ export function HeroCarousel({
             <button
               key={`dot-${slide.slug}-${i}`}
               type="button"
-              onClick={() => setIndex(i)}
+              onClick={() =>
+                setSlide((s) => (s.index === i ? s : { index: i, prev: s.index }))
+              }
               aria-current={i === index}
               aria-label={`Show slide ${i + 1} of ${usable.length}${
                 slide.propertyTitle ? `: ${slide.propertyTitle}` : ''

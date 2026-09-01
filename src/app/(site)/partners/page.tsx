@@ -68,47 +68,47 @@ export default async function PartnersPage() {
       />
 
       <div className="mx-auto max-w-[1200px] px-6 py-14">
-      <div className="grid gap-5 sm:grid-cols-3">
-        {(copy.partners ?? []).map(({ eyebrow, title, body }) => (
-          <Card key={title}>
-            <div className="p-5">
-              <Eyebrow>{eyebrow}</Eyebrow>
-              <h3 className="mt-2 font-display text-base font-medium uppercase tracking-wide text-ink">
-                {title}
-              </h3>
-              <p className="mt-2 text-xs leading-relaxed text-ink-secondary">{body}</p>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* The audience the current site serves with nothing: brokers, municipalities,
-          and land sellers. */}
-      <section className="mt-16 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
-        <div>
-          <SectionHeading {...copy.submissionHeading!} />
-          <dl className="mt-5 flex flex-wrap gap-8">
-            {(copy.facts ?? []).map(({ label, value }) => (
-              <div key={label}>
-                <dt className="text-[8px] font-semibold uppercase tracking-[0.15em] text-ink-secondary">
-                  {label}
-                </dt>
-                <dd className="mt-1 text-xs font-semibold text-ink">{value}</dd>
+        <div className="grid gap-5 sm:grid-cols-3">
+          {(copy.partners ?? []).map(({ eyebrow, title, body }) => (
+            <Card key={title}>
+              <div className="p-5">
+                <Eyebrow>{eyebrow}</Eyebrow>
+                <h3 className="mt-2 font-display text-base font-medium uppercase tracking-wide text-ink">
+                  {title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-ink-secondary">{body}</p>
               </div>
-            ))}
-          </dl>
+            </Card>
+          ))}
         </div>
-        <div className="rounded-card border border-rule bg-panel p-6">
-          <h2 className="mb-4 text-base font-bold tracking-tight text-ink">
-            {copy.formTitle}
-          </h2>
-          <LeadForm
-            source="site-submission"
-            fields={SITE_FIELDS}
-            submitLabel={copy.submitLabel ?? 'Send'}
-          />
-        </div>
-      </section>
+
+        {/* The audience the current site serves with nothing: brokers, municipalities,
+            and land sellers. */}
+        <section className="mt-16 grid gap-10 lg:grid-cols-[1.2fr_1fr]">
+          <div>
+            <SectionHeading {...copy.submissionHeading!} />
+            <dl className="mt-5 flex flex-wrap gap-8">
+              {(copy.facts ?? []).map(({ label, value }) => (
+                <div key={label}>
+                  <dt className="text-[8px] font-semibold uppercase tracking-[0.15em] text-ink-secondary">
+                    {label}
+                  </dt>
+                  <dd className="mt-1 text-xs font-semibold text-ink">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <div className="rounded-card border border-rule bg-panel p-6">
+            <h2 className="mb-4 text-base font-bold tracking-tight text-ink">
+              {copy.formTitle}
+            </h2>
+            <LeadForm
+              source="site-submission"
+              fields={SITE_FIELDS}
+              submitLabel={copy.submitLabel ?? 'Send'}
+            />
+          </div>
+        </section>
       </div>
     </div>
   )

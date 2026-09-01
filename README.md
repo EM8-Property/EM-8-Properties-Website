@@ -185,10 +185,14 @@ All of these bit during the build and are documented in the plan's Revisions sec
   the build, tsc, lint or Lighthouse sees a 6px overlap, and desktop looks perfect. The
   overlay reserves `pt-24` for this. The copy is CMS text, so it can get longer at any time.
 - **Full-bleed photography costs LCP, not bytes.** Going edge to edge moved Lighthouse
-  performance 97 → 89 on the homepage, entirely through LCP (2.5s → 3.8s), while total
-  transfer actually fell slightly (725KB → 717KB) and Speed Index improved (2.3s → 0.9s).
-  A bigger photograph is a bigger largest-contentful element by definition. Do not go
-  looking for a byte regression that is not there.
+  performance 97 → 95 on the homepage, entirely through LCP (2.5s → 3.0s), while total
+  transfer actually *fell* (725KB → 717KB, images 405KB → 363KB) and Speed Index improved
+  sharply (2.3s → 0.9s). A bigger photograph is a bigger largest-contentful element by
+  definition. Do not go looking for a byte regression that is not there.
+- **Measure the same build you are reasoning about.** An intermediate version of the above
+  read 89 and 3.8s. That was a real defect — the outgoing slide's image was being unmounted
+  the moment its fade began — not the cost of full-bleed, and quoting it would have made
+  the design look worse than it is. Re-measure after every fix.
 - **Lighthouse's `target-size` failure predates all of this.** The carousel dots are 10px,
   below the 24px WCAG 2.2 minimum, which is why accessibility scores 96 rather than 100 —
   on the live site too. Confirm against the deployed URL before attributing it to a change.

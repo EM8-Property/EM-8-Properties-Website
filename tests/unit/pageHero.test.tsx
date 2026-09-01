@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { PageHero } from '@/components/layout/PageHero'
 import { HeroCarousel } from '@/components/layout/HeroCarousel'
 import { HERO_PATHS, showsHero } from '@/lib/heroPages'
@@ -81,19 +82,46 @@ describe('full-bleed hero geometry', () => {
     expect(cls).not.toMatch(/(?:^|\s)h-\[\d+px\]/)
   })
 
-  it('preloads forward only, which is what pays for full-bleed', () => {
+  it('keeps the outgoing slide mounted while it fades out', async () => {
+    /*
+     * The defect this exists to catch, and the reason every other window test missed it:
+     * they all assert at index 0, where nothing has faded out yet.
+     *
+     * With a forward-only window the outgoing slide's <Image> unmounted on the very render
+     * that started its 700ms fade, so the photograph hard-cut to the bare scrim and the
+     * next one faded up out of that — every six seconds, on all seven pages. Invisible to
+     * a static render, a screenshot, the build, and Lighthouse.
+     */
+    const many = Array.from({ length: 8 }, (_, i) => ({
+      image: { alt: `a${i}` },
+      slug: `s${i}`,
+      propertyTitle: `S${i}`,
+    }))
+    const { container } = render(<HeroCarousel slides={many} />)
+    const alts = () =>
+      [...container.querySelectorAll('img')].map((i) => i.getAttribute('alt'))
+
+    expect(alts()).not.toContain('a3')
+    // Jump to slide 4 the way a visitor does, through the dots.
+    await userEvent.click(container.querySelectorAll('button')[3]!)
+
+    expect(alts(), 'the slide being faded out lost its image').toContain('a0')
+    expect(alts(), 'the newly current slide has no image').toContain('a3')
+    expect(alts(), 'the next slide is not decoded').toContain('a4')
+    // Still bounded — the point of a window at all.
+    expect(alts().length).toBeLessThanOrEqual(3)
+  })
+
+  it('fetches only two crops on the first paint', () => {
     /*
      * Eight slides in one absolutely-positioned box read as all-visible to the browser,
      * which fetched every one and failed the image budget. Only a window carries an <img>.
      *
-     * The window is two at full-bleed, not three. docs/resource-budget.md records this
-     * exact trade the last time the band ran edge to edge: the crops are far larger, and
-     * the third one is what put the page over. Measured here, three crops came to 1206KB
-     * against a 1400KB image budget — passing, but spending the headroom that is
-     * deliberately reserved for the real lobby photography still to be shot.
-     *
-     * Forward is the direction that matters, because the band only auto-advances that way.
-     * The previous slide is dropped and reloads if someone clicks back to it.
+     * First paint is where full-bleed is actually paid for: nothing has faded out yet, so
+     * the backward neighbour is not worth a crop this size. Measured on this build, two
+     * crops came to 723KB of images against a 1400KB budget, and Lighthouse reported no
+     * overage. Once the band advances, the outgoing slide stays mounted through its fade
+     * and the steady state is three — see the crossfade test above.
      */
     const many = Array.from({ length: 8 }, (_, i) => ({
       image: { alt: `a${i}` },
