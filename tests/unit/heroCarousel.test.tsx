@@ -113,14 +113,19 @@ describe('HeroCarousel — resource budget', () => {
 
   it('describes its width honestly, which is what decides the bytes fetched', () => {
     // There were two variants here, and the contained one claimed a 1152px box. Both are
-    // gone: the band is the width of the viewport on every page now, so it says 100vw.
+    // gone: the band is the width of the viewport on every page, and the height of it too.
     //
-    // That is the expensive answer — docs/resource-budget.md records 567KB for a single
-    // crop at this hint — but it is the true one, and a `sizes` that misdescribes the
-    // layout buys its savings by shipping a blurry image. The window above and the 1600px
-    // crop are what hold the image budget instead.
+    // Honest is not the same as 100vw any more. `object-cover` on a box taller than the
+    // crop is shaped paints the photograph wider than the box and crops the sides off, so
+    // on a portrait phone the painted width is around four times the width of the screen
+    // — measured, a 1200w variant stretched across 1444 CSS px at 375x812. The narrow
+    // clauses ask for what is actually painted; desktop is width-driven and stays at
+    // 100vw. The window above and the 1600px crop are what hold the image budget, and the
+    // cap is why the correction costs 49KB a crop rather than a multiple.
     const { container } = render(<HeroCarousel slides={many} />)
-    expect(container.querySelector('img')!.getAttribute('sizes')).toBe('100vw')
+    const sizes = container.querySelector('img')!.getAttribute('sizes')!
+    expect(sizes).toMatch(/\(max-width:\s*640px\)\s*[34]\d\dvw/)
+    expect(sizes.endsWith('100vw')).toBe(true)
   })
 
   it('still preloads the slide it is about to advance to', () => {

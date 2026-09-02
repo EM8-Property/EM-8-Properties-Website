@@ -34,17 +34,24 @@ beforeEach(() => {
 })
 
 /**
- * The photograph now runs edge to edge on every section page, with that page's own title
- * laid over it.
+ * The photograph now fills the whole first screen on every section page — the width of the
+ * viewport and the height of it — with that page's own title laid over it.
  *
- * Two things this deliberately keeps from the contained hero it replaces, because they
- * were the actual fixes in the change that contained it — the width was only ever half
- * of that story:
+ * The height was withheld for two revisions, so it is worth being exact about what changed
+ * rather than reading the older comments as still true. The band this grew out of was
+ * `100vh` *with the heading rendered underneath it*, and that is what put EM8's
+ * proposition below the fold — the height was never the defect, the stacking was. The
+ * title has sat ON the photograph since the full-bleed change, so filling the viewport now
+ * means the first screen is a photograph carrying the page's own words.
  *
- *   - The headline sits ON the photograph, so the first screen carries words. The band
- *     this grew out of ran the full width of the viewport at the full HEIGHT of it, and
- *     that is what put EM8's proposition below the fold.
- *   - The box grows rather than clipping. The copy comes from the CMS and is unbounded.
+ * Two properties survive from the contained hero and are still load-bearing:
+ *
+ *   - The copy clears the overlaid header. Full height gives it far more room, so this is
+ *     slack rather than the near miss it was — but the reservation stays, because a
+ *     landscape phone is 375px tall and puts it straight back.
+ *   - The box grows rather than clipping. `min-h`, never `h`: the copy comes from the CMS,
+ *     is unbounded, and is bottom-aligned, so a fixed height clips from the TOP — the
+ *     eyebrow first, then the headline.
  */
 describe('full-bleed hero geometry', () => {
   it('spans the viewport rather than the content column', () => {
@@ -57,29 +64,75 @@ describe('full-bleed hero geometry', () => {
     expect(cls).not.toMatch(/rounded-card/)
   })
 
-  it('tells the browser it is full width, which is what decides the bytes fetched', () => {
-    // The single most expensive line in this component. Without an accurate hint Next
-    // emits a srcset up to 3840w and the browser fetches a variant far larger than it
-    // paints — docs/resource-budget.md records 567KB for one crop that way. Full-bleed
-    // genuinely is 100vw, so it says so; the budget is defended by the preload window and
-    // the crop size instead.
+  it('describes the width the image is PAINTED at, not the width of the box', () => {
+    /*
+     * The single most expensive line in this component, and full height changed what the
+     * honest answer to it is.
+     *
+     * `sizes` is the width the browser should assume the image occupies, and with
+     * `object-cover` on a box that is taller than the photograph is shaped, that is not
+     * the width of the box. The image is scaled until it covers the box's HEIGHT and the
+     * overflow is cropped off the sides, so the painted width is the viewport height
+     * times the crop's aspect ratio — about 1.8 times. On a portrait phone that is
+     * roughly four times the width of the screen.
+     *
+     * `sizes="100vw"` was accurate while the band was 420px tall. Measured at 375x812
+     * with it still in place: the browser fetched the 1200w variant and painted it across
+     * 1444 CSS px, so the photograph was upscaled 3.6x on a phone — visibly soft, on the
+     * whole of the first screen, and invisible to every other check. Desktop was
+     * unaffected, because there the box is wider than it is tall and width still drives.
+     *
+     * So the phone breakpoints ask for the painted width. What keeps that from becoming a
+     * byte regression is the crop cap: every variant at or above 1600w resolves to the
+     * same 1600x900 asset, measured at 133KB against 84KB for the 1200w it was fetching
+     * before. See docs/resource-budget.md.
+     */
     const { container } = render(<HeroCarousel slides={SLIDES} />)
-    expect(container.querySelector('img')!.getAttribute('sizes')).toBe('100vw')
+    const sizes = container.querySelector('img')!.getAttribute('sizes')!
+    // A phone is asked for several times its own width, because that is what it paints.
+    const phone = sizes.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
+    expect(phone, 'no narrow-viewport clause').not.toBeNull()
+    expect(Number(phone![1])).toBeGreaterThanOrEqual(300)
+    // Desktop is width-driven, so it stays honest at the width of the viewport.
+    expect(sizes.endsWith('100vw')).toBe(true)
   })
 
-  it('never fills the viewport height', () => {
-    // The regression that put the headline below the fold. Width came back; height did not.
+  it('fills the height of the first screen, so the page has to be scrolled', () => {
     const { container } = render(<HeroCarousel slides={SLIDES} />)
-    expect(container.firstElementChild!.className).not.toMatch(/100svh|100vh|100dvh/)
+    expect(container.firstElementChild!.className).toMatch(/\bmin-h-svh\b/)
+  })
+
+  it('measures the screen with svh, not vh and not dvh', () => {
+    /*
+     * Three units, and the difference between them shows up only on a phone.
+     *
+     * `vh` ignores mobile browser chrome, so 100vh is taller than what can be seen: the
+     * bottom of the photograph, and the slide dots with it, sit behind the address bar.
+     *
+     * `dvh` tracks that chrome as it collapses, so the band RESIZES mid-scroll. The copy
+     * is bottom-aligned, so it would slide down the screen while the reader is moving, and
+     * the section below would shift under their thumb.
+     *
+     * `svh` is the viewport with the chrome showing, which is the state a page is in when
+     * it loads. The first screen is the photograph, nothing peeks out below it, and
+     * nothing moves afterwards.
+     */
+    const cls = render(<HeroCarousel slides={SLIDES} />).container.firstElementChild!
+      .className
+    expect(cls).not.toMatch(/100vh|min-h-screen/)
+    expect(cls).not.toMatch(/dvh/)
   })
 
   it('grows rather than clipping, because the copy is unbounded CMS text', () => {
     const cls = render(<HeroCarousel slides={SLIDES} />).container.firstElementChild!
       .className
-    // min-h, never a fixed h-[…]: the copy is bottom-aligned, so a fixed height clips
-    // from the TOP — the eyebrow first, then the headline.
-    expect(cls).toMatch(/min-h-\[420px\]/)
+    // min-h, never a fixed height: the copy is bottom-aligned, so a fixed height clips
+    // from the TOP — the eyebrow first, then the headline. A landscape phone is 375px
+    // tall, which is less than the header reservation plus four lines of CMS copy, so
+    // this is reachable rather than theoretical.
     expect(cls).not.toMatch(/(?:^|\s)h-\[\d+px\]/)
+    expect(cls).not.toMatch(/(?:^|\s)h-svh\b/)
+    expect(cls).not.toMatch(/(?:^|\s)h-screen\b/)
   })
 
   it('keeps the outgoing slide mounted while it fades out', async () => {

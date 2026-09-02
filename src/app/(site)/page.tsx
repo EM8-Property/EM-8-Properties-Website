@@ -188,14 +188,18 @@ export default async function HomePage() {
   return (
     <>
       {/*
-        The photograph runs edge to edge with the headline on it, and the header sits over
-        the top of it. Every section page opens this way now — this one is no longer the
-        exception it was while its hero was capped at the content column.
+        The photograph fills the first screen — edge to edge and the full height of the
+        viewport — with the headline on it and the header over the top of it. Every
+        section page opens this way now; this one is no longer the exception it was while
+        its hero was capped at the content column.
 
-        What is deliberately NOT restored is the height. The band this grew out of filled
-        the viewport as well as spanning it, and that is what pushed EM8's proposition
-        below the fold. `PageHero` is bounded by min-heights, so the headline stays on the
-        first screen.
+        The height came back last, and the earlier version of this comment said it never
+        would. What that was guarding against is a different layout: the band this grew
+        out of filled the viewport with the heading rendered *underneath* it, so the first
+        screen was a photograph and nothing else. The heading has sat ON the photograph
+        since the full-bleed change, so the first screen carries EM8's proposition at any
+        height, and the stat band below it is now reached by scrolling rather than by
+        having a tall enough monitor.
       */}
       <PageHero
         copy={copy.hero}

@@ -309,3 +309,51 @@ test('the hero clears the header on a narrow viewport too', async ({ page }) => 
     headerBox.y + headerBox.height,
   )
 })
+
+/*
+ * The hero fills the first screen, measured on the rendered page.
+ *
+ * A class assertion cannot see this: `min-h-svh` is one Tailwind utility away from
+ * `min-h-[100vh]`, which looks identical in a unit test and identical on a desktop
+ * browser, and differs only on a phone with an address bar. It also cannot see a parent
+ * that constrains the band, or a scrollbar-versus-viewport discrepancy.
+ */
+for (const viewport of [
+  { name: 'desktop', width: 1280, height: 720 },
+  { name: 'mobile', width: 375, height: 812 },
+]) {
+  test(`the hero fills the first screen on ${viewport.name}, and the page scrolls`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height })
+    await page.goto('/')
+
+    // The viewport as the page sees it, which is what svh resolves against — not the
+    // number passed above, which does not account for a scrollbar.
+    const innerHeight = await page.evaluate(() => window.innerHeight)
+    const band = page.locator('section[aria-roledescription="carousel"]').first()
+    const box = (await band.boundingBox())!
+
+    expect(box.height, 'the hero is shorter than the screen').toBeGreaterThanOrEqual(
+      innerHeight - 1,
+    )
+    // And it is the screen rather than a multiple of it. min-h means CMS copy can push it
+    // past the fold, but only by the amount that copy actually needs; a stray `h-[200vh]`
+    // or a doubled unit would sail through the assertion above.
+    expect(box.height, 'the hero is taller than the screen needs').toBeLessThan(
+      innerHeight * 1.5,
+    )
+
+    // Nothing but the hero is on the first screen. This is the point of the change: the
+    // stat band used to sit under the fold on a laptop and above it on a desktop monitor.
+    const nextSection = page.locator('section[aria-roledescription="carousel"] ~ *').first()
+    const nextBox = (await nextSection.boundingBox())!
+    expect(nextBox.y, 'the section after the hero is visible on load').toBeGreaterThanOrEqual(
+      innerHeight - 1,
+    )
+
+    // "So you have to scroll down" — there has to be somewhere to scroll to.
+    const scrollHeight = await page.evaluate(() => document.documentElement.scrollHeight)
+    expect(scrollHeight, 'the page does not scroll').toBeGreaterThan(innerHeight)
+  })
+}
