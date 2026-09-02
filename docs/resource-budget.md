@@ -71,6 +71,14 @@ drives the cover and `100vw` is exactly right.
 
 It now reads `(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw`.
 
+Those multipliers are approximations and cannot be anything else: `sizes` takes media
+queries on **width**, and the quantity being described depends on **height**. 400vw is
+calibrated on a 375x812 phone, where 812 × 1.778 / 375 = 3.85. A shorter 375x667 phone
+really wants 316vw; a 768x1024 tablet wants 237vw against the 200vw declared. Neither
+costs anything while the 1600px cap binds — every over-ask resolves to the same asset, and
+every under-ask here still clears the cap at any plausible DPR. **If that cap is ever
+raised, these numbers stop being free and want re-deriving.**
+
 **What it costs, measured on the same localhost runner before and after** (Lighthouse's
 mobile form factor, 412x823 at DPR 1.75):
 

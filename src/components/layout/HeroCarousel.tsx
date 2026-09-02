@@ -112,6 +112,19 @@ export function HeroCarousel({
        * the bottom-aligned copy down the screen while the reader is moving. `svh` is the
        * viewport with the chrome showing, which is the state the page loads in.
        *
+       * `svh` has its own cost, and it is the one worth paying: once that chrome collapses
+       * the visible viewport is taller than `svh`, so a sliver of the next section shows
+       * above the fold. That happens while the reader is already scrolling. The `dvh`
+       * alternative moves the copy under their thumb instead.
+       *
+       * One consequence of the height that is not a CSS decision: every slide is a `<Link>`
+       * at `absolute inset-0`, so the whole of the first screen is now a click target whose
+       * destination changes every six seconds, on all seven pages, where before it was a
+       * 420-560px band. Hovering pauses the rotation, which covers a mouse; a touch has no
+       * hover, so a tap on empty sky opens whichever building is showing. That is inherited
+       * behaviour rather than new, and it is deliberately left alone — but it grew about
+       * fourfold in surface area here, so it is written down rather than assumed.
+       *
        * The height was withheld through the two revisions before this one, and the older
        * comments read as though it always should be. What they were describing is a
        * different layout: the band was `100vh` with the heading rendered *underneath* it,
@@ -147,9 +160,13 @@ export function HeroCarousel({
          * is worth having on the *first* paint, which is why `prev` starts null — nothing
          * has faded out yet, so nothing behind is worth fetching before it is needed.
          *
-         * Measured on this build: first paint is two crops, 723KB of images against a
-         * 1400KB budget, and Lighthouse reported no overage. Including the backward
-         * neighbour up front instead would fetch a third before anything has moved.
+         * First paint is two crops, and what they cost depends on the form factor now
+         * that `sizes` differs by breakpoint: 725KB of images against a 1400KB budget on
+         * Lighthouse's mobile runner, and the same 723KB it measured on desktop before
+         * this band grew to full height. The before-and-after table is in
+         * docs/resource-budget.md; the two numbers being one apart is a coincidence worth
+         * not misreading. Including the backward neighbour up front instead would fetch a
+         * third crop before anything has moved.
          */
         const forward = (i - index + usable.length) % usable.length
         const loaded = forward <= 1 || i === prev
@@ -196,6 +213,15 @@ export function HeroCarousel({
                   that defend the image budget are still the preload window above and that
                   cap; this line only stops the browser guessing low. See
                   docs/resource-budget.md.
+
+                  The multipliers are approximations, and they have to be: `sizes` takes
+                  media queries on WIDTH, and the quantity being described depends on
+                  HEIGHT. 400vw is calibrated on a 375x812 phone, where 812 * 1.778 / 375
+                  is 3.85. A shorter 375x667 phone really wants 316vw and a 768x1024 tablet
+                  wants 237vw against the 200vw declared. Neither matters while the cap
+                  binds — every over-ask lands on the same 1600px asset and every under-ask
+                  here still clears it at any plausible DPR. If the cap is ever raised,
+                  these numbers stop being free and want re-deriving.
                 */
                 sizes="(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw"
                 /*

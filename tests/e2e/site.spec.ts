@@ -333,7 +333,9 @@ test('the hero copy lines up with the section copy below it, at every width', as
     const x = await page.evaluate(() => {
       const at = (el: Element | null) => (el ? Math.round(el.getBoundingClientRect().x) : null)
       return {
-        eyebrow: at(document.querySelector('[data-hero-overlay] p')),
+        // The eyebrow when there is one, the intro when there is not — either way the
+        // first paragraph of hero copy, and both sit in the same measure.
+        firstLine: at(document.querySelector('[data-hero-overlay] p')),
         h1: at(document.querySelector('h1')),
         // The first section heading below the fold, and the footer wordmark at the
         // other end of the page — both inside the content measure.
@@ -344,9 +346,10 @@ test('the hero copy lines up with the section copy below it, at every width', as
 
     expect(x.h2, `no section heading found at ${width}px`).not.toBeNull()
     expect(x.h1, `h1 out of line with the section heading at ${width}px`).toBe(x.h2)
-    expect(x.eyebrow, `eyebrow out of line with the section heading at ${width}px`).toBe(
-      x.h2,
-    )
+    expect(
+      x.firstLine,
+      `the first line of hero copy is out of line with the section heading at ${width}px`,
+    ).toBe(x.h2)
     expect(x.footer, `footer out of line with the hero at ${width}px`).toBe(x.h1)
   }
 })

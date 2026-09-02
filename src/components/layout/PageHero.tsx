@@ -26,21 +26,33 @@ export type PageHeroCopy = {
 }
 
 /**
- * A full-bleed photograph with the page's own title laid over it.
+ * A full-screen photograph with the page's own title laid over it.
  *
  * This generalises what was `HomeHero`. The homepage was the only page whose title sat on
  * the photograph; the other six carried a thin decorative strip with a property caption
- * and then their heading *below* it, in ink on white. They all open the same way now.
+ * and then their heading *below* it, in ink on white. They all open the same way now, and
+ * since 2026-09-02 the photograph fills the height of the first screen as well as its
+ * width, so the page is scrolled to reach anything else.
  *
- * Two properties are worth stating because both were regressions once:
+ * Three properties are worth stating because each was a regression once:
  *
- *   - The photograph runs edge to edge, but the copy does **not** snap back to the 1200px
- *     content column. It sits a similar distance in from the edge of the image as it did
- *     when that image was a 1152px block. Re-imposing the measure here would undo the
- *     change for everything except the picture.
+ *   - The photograph runs edge to edge; the copy on it does not. It sits on the site's
+ *     content measure — `mx-auto max-w-[1200px] px-6`, the same three utilities as Band,
+ *     SiteHeader, SiteFooter, every page container and the fallback below — so the hero's
+ *     first line starts on the same vertical as every heading and paragraph under it.
+ *
+ *     This is the reverse of what this docblock said for one day, and the reversal is the
+ *     point: the copy was first left at a fixed inset from the *image*, on the reasoning
+ *     that snapping it to the column would undo the full-bleed change for everything
+ *     except the photograph. Measured, that produced copy at x=40 at every width above
+ *     640px against a column at x=180 on a 1512px viewport, and at 1024px and below it
+ *     put the hero copy *further* in than the body text. Hunter asked for it in line.
  *   - The title still renders when there is no photography. A hero that disappears with
  *     its images would take the page's whole proposition with it, so the no-slides path
  *     falls back to a plain block in ink on white.
+ *   - The copy clears the overlaid header. Full height gives it much more room than it had
+ *     at 420px, but the reservation stays: the copy is bottom-aligned and unbounded CMS
+ *     text, and a landscape phone is 375px tall.
  *
  * `titleAccent` arrives as its own field rather than as markup inside the title, so the
  * teal stays a design token instead of a hex an editor might paste, and nobody has to

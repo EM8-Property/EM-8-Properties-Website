@@ -93,6 +93,13 @@ describe('full-bleed hero geometry', () => {
     const phone = sizes.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
     expect(phone, 'no narrow-viewport clause').not.toBeNull()
     expect(Number(phone![1])).toBeGreaterThanOrEqual(300)
+    // And a tablet, by less, because it is less tall relative to its width. Asserted
+    // because without it the middle clause can be deleted with every test still green,
+    // and a 768x1024 viewport is the one that falls furthest between the other two.
+    const tablet = sizes.match(/\(max-width:\s*1024px\)\s*(\d+)vw/)
+    expect(tablet, 'no tablet clause').not.toBeNull()
+    expect(Number(tablet![1])).toBeGreaterThan(100)
+    expect(Number(tablet![1])).toBeLessThan(Number(phone![1]))
     // Desktop is width-driven, so it stays honest at the width of the viewport.
     expect(sizes.endsWith('100vw')).toBe(true)
   })
@@ -102,9 +109,13 @@ describe('full-bleed hero geometry', () => {
     expect(container.firstElementChild!.className).toMatch(/\bmin-h-svh\b/)
   })
 
-  it('measures the screen with svh, not vh and not dvh', () => {
+  it('rejects vh and dvh, which are the two wrong ways to measure a screen', () => {
     /*
-     * Three units, and the difference between them shows up only on a phone.
+     * A forward guard rather than a check on this change: the base class string satisfied
+     * both of these assertions too, because it named no viewport unit at all. What pins
+     * the change is `min-h-svh` in the test above; this one exists so that a later edit
+     * cannot swap the unit for one of the two that misbehave. Three units, and the
+     * difference between them shows up only on a phone.
      *
      * `vh` ignores mobile browser chrome, so 100vh is taller than what can be seen: the
      * bottom of the photograph, and the slide dots with it, sit behind the address bar.
@@ -114,8 +125,8 @@ describe('full-bleed hero geometry', () => {
      * the section below would shift under their thumb.
      *
      * `svh` is the viewport with the chrome showing, which is the state a page is in when
-     * it loads. The first screen is the photograph, nothing peeks out below it, and
-     * nothing moves afterwards.
+     * it loads. Its own cost is that a sliver of the next section shows once the chrome
+     * collapses — which happens while the reader is already scrolling.
      */
     const cls = render(<HeroCarousel slides={SLIDES} />).container.firstElementChild!
       .className
@@ -130,6 +141,11 @@ describe('full-bleed hero geometry', () => {
     // from the TOP — the eyebrow first, then the headline. A landscape phone is 375px
     // tall, which is less than the header reservation plus four lines of CMS copy, so
     // this is reachable rather than theoretical.
+    //
+    // The positive assertion matters as much as the negatives: without it this passes
+    // against a component carrying no height utility at all, which is a different bug
+    // with the same shape.
+    expect(cls).toMatch(/\bmin-h-/)
     expect(cls).not.toMatch(/(?:^|\s)h-\[\d+px\]/)
     expect(cls).not.toMatch(/(?:^|\s)h-svh\b/)
     expect(cls).not.toMatch(/(?:^|\s)h-screen\b/)

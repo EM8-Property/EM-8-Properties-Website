@@ -31,7 +31,7 @@ npm run dev                  # production dataset
 | `npm run dev` | Dev server against the `production` dataset |
 | `bash scripts/dev-preview.sh` | Dev server against `preview` — sample content for design review |
 | `npm run build` | Production build. **Fails if `siteSettings` is missing** — that is deliberate |
-| `npm test` | Unit suite (135 tests). Never touches the network |
+| `npm test` | Unit suite (422 tests). Never touches the network |
 | `npm run test:content` | Content gate against the live dataset. Run before any content release |
 | `npm run test:e2e` | Playwright. Set `E2E_BASE_URL` to run against a deployed URL |
 | `npm run lighthouse` | Lighthouse + resource budget against a running `npm start` |
