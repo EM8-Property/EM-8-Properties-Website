@@ -8,7 +8,14 @@
  * This replaces CAROUSEL_PATHS, which answered a narrower question: which pages carried a
  * thin decorative photo strip *above* their title. Every page in that list now carries its
  * title *on* the photograph instead, the homepage has rejoined them, and /investors — which
- * had no photograph at all — has been added, so all seven section pages open the same way.
+ * had no photograph at all — has been added, so all seven section pages open on the
+ * photograph.
+ *
+ * They do not all open at the same SIZE, and this list is deliberately indifferent to
+ * that: the homepage runs the full screen and the other six a 420/500/560px band. That
+ * choice lives in `HeroCarousel`'s SHAPE map and is passed per page. What this list
+ * answers is only whether there is a photograph for the header to overlay, which is true
+ * of both shapes.
  *
  * Exact matches, not prefixes. `startsWith('/portfolio')` would put a shared carousel on
  * every /portfolio/[slug] page, which is the one place it is explicitly not wanted: those

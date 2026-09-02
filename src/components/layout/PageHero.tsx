@@ -26,33 +26,38 @@ export type PageHeroCopy = {
 }
 
 /**
- * A full-screen photograph with the page's own title laid over it.
+ * A photograph with the page's own title laid over it, in one of the band's two shapes.
  *
  * This generalises what was `HomeHero`. The homepage was the only page whose title sat on
  * the photograph; the other six carried a thin decorative strip with a property caption
- * and then their heading *below* it, in ink on white. They all open the same way now, and
- * since 2026-09-02 the photograph fills the height of the first screen as well as its
- * width, so the page is scrolled to reach anything else.
+ * and then their heading *below* it, in ink on white. All seven now carry their title on
+ * the photograph — that part is settled and shared. What differs is the shape: the
+ * homepage's photograph fills the first screen with its copy floating at the edge of the
+ * image, and the other six run a 420/500/560px band with their copy on the content
+ * measure. `HeroCarousel`'s `SHAPE` map is where those numbers live and where the reason
+ * for the split is recorded; this component only forwards the choice.
  *
- * Three properties are worth stating because each was a regression once:
+ * Three properties hold whichever shape is asked for, and each was a regression once:
  *
- *   - The photograph runs edge to edge; the copy on it does not. It sits on the site's
- *     content measure — `mx-auto max-w-[1200px] px-6`, the same three utilities as Band,
- *     SiteHeader, SiteFooter, every page container and the fallback below — so the hero's
- *     first line starts on the same vertical as every heading and paragraph under it.
+ *   - The photograph runs edge to edge; the copy on it never spans the same width. In
+ *     `band` it sits on `mx-auto max-w-[1200px] px-6` — the same three utilities as Band,
+ *     SiteHeader, SiteFooter, every page container and the fallback below — so the page
+ *     title starts on the same vertical as every heading under it. In `screen` it sits at
+ *     a fixed inset from the image instead, because there the words belong to the
+ *     photograph rather than to the page's grid.
  *
- *     This is the reverse of what this docblock said for one day, and the reversal is the
- *     point: the copy was first left at a fixed inset from the *image*, on the reasoning
- *     that snapping it to the column would undo the full-bleed change for everything
- *     except the photograph. Measured, that produced copy at x=40 at every width above
- *     640px against a column at x=180 on a 1512px viewport, and at 1024px and below it
- *     put the hero copy *further* in than the body text. Hunter asked for it in line.
+ *     Both of those were briefly applied to all seven pages, in both directions, before
+ *     Hunter split them. The measurement that settled the six: copy at x=40 at every
+ *     width above 640px against a column at x=180 on a 1512px viewport, and at 1024px and
+ *     below the hero copy sat *further* in than the body text it was meant to sit outside
+ *     of.
  *   - The title still renders when there is no photography. A hero that disappears with
  *     its images would take the page's whole proposition with it, so the no-slides path
- *     falls back to a plain block in ink on white.
- *   - The copy clears the overlaid header. Full height gives it much more room than it had
- *     at 420px, but the reservation stays: the copy is bottom-aligned and unbounded CMS
- *     text, and a landscape phone is 375px tall.
+ *     falls back to a plain block in ink on white. That fallback has one shape, on the
+ *     measure, because with no photograph there is no image edge to hang copy off.
+ *   - The copy clears the overlaid header. `screen` has slack; `band` is where the near
+ *     miss was measured, at 375px with the eyebrow at y=62 under a header ending at y=68.
+ *     The copy is bottom-aligned and unbounded CMS text, so it climbs as it grows.
  *
  * `titleAccent` arrives as its own field rather than as markup inside the title, so the
  * teal stays a design token instead of a hex an editor might paste, and nobody has to
