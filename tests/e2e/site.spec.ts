@@ -298,6 +298,56 @@ test('every section page opens on a full-bleed photograph with its own title on 
       h1Box.y,
       `${route} h1 overlaps the header`,
     ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
+
+    /*
+     * And it starts on the same vertical as the copy below it.
+     *
+     * The wordmark is the anchor because it is on every page and sits in the same
+     * `mx-auto max-w-[1200px] px-6` container as every heading and paragraph in the body,
+     * so one comparison covers the whole measure. A class assertion cannot do this job:
+     * the overlay could carry the right utilities and still be pushed out of line by the
+     * band around it.
+     *
+     * Measured before this was fixed: the h1 began at x=40 at every width above 640px
+     * while the column began at 180 on a 1512px viewport, 144 at 1440 and 64 at 1280.
+     */
+    const wordmarkBox = (await page.locator('header a').first().boundingBox())!
+    expect(
+      Math.round(h1Box.x),
+      `${route} h1 is out of line with the content column`,
+    ).toBe(Math.round(wordmarkBox.x))
+  }
+})
+
+test('the hero copy lines up with the section copy below it, at every width', async ({
+  page,
+}) => {
+  // The wordmark is the anchor in the loop above; this is the other end of the same
+  // claim, measured against body copy on the page rather than chrome, and at the widths
+  // where the column is doing something different: centred with wide gutters, centred
+  // with narrow ones, and flush at the phone width where the two already agreed.
+  for (const width of [1512, 1440, 1280, 1024, 768, 375]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/')
+
+    const x = await page.evaluate(() => {
+      const at = (el: Element | null) => (el ? Math.round(el.getBoundingClientRect().x) : null)
+      return {
+        eyebrow: at(document.querySelector('[data-hero-overlay] p')),
+        h1: at(document.querySelector('h1')),
+        // The first section heading below the fold, and the footer wordmark at the
+        // other end of the page — both inside the content measure.
+        h2: at(document.querySelector('main h2')),
+        footer: at(document.querySelector('footer p')),
+      }
+    })
+
+    expect(x.h2, `no section heading found at ${width}px`).not.toBeNull()
+    expect(x.h1, `h1 out of line with the section heading at ${width}px`).toBe(x.h2)
+    expect(x.eyebrow, `eyebrow out of line with the section heading at ${width}px`).toBe(
+      x.h2,
+    )
+    expect(x.footer, `footer out of line with the hero at ${width}px`).toBe(x.h1)
   }
 })
 

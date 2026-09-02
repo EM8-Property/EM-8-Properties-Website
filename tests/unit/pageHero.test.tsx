@@ -206,15 +206,38 @@ describe('PageHero copy', () => {
     expect(screen.getByText(COPY.intro)).toBeDefined()
   })
 
-  it('is not bound by the content measure', () => {
-    // The explicit ask: the words sit a similar distance in from the edge of the image as
-    // they did when the image was a 1152px block, rather than snapping to that column.
+  it('holds the same measure as the copy below it', () => {
+    /*
+     * The photograph is full-bleed; the words on it are not.
+     *
+     * This reverses what this test asserted a day earlier, so the history is worth
+     * keeping. When the band first went edge to edge, the copy was deliberately left at a
+     * fixed inset from the *image* rather than snapped to the content column, on the
+     * reasoning that re-imposing the measure would undo the change for everything except
+     * the picture. Hunter looked at it and asked for the opposite: the hero's first line
+     * should start on the same vertical as every heading, paragraph and the wordmark
+     * below it.
+     *
+     * Measured before: the eyebrow and the h1 began at x=40 at every width above 640px,
+     * while the content column began at x=180 on a 1512px viewport, x=144 at 1440 and
+     * x=64 at 1280 — and at x=24 at 1024 and below, where the hero copy was actually
+     * inset FURTHER than the body text. The two only agreed on a phone.
+     *
+     * `mx-auto max-w-[1200px] px-6` is the measure, spelled the same way in Band,
+     * SectionHeading's callers, SiteHeader, SiteFooter and this component's own
+     * no-photography fallback. Written as those three utilities rather than as a shared
+     * constant because that is how the rest of the codebase writes it; a wrapper would
+     * have to be adopted everywhere to be worth anything.
+     */
     const { container } = render(<PageHero copy={COPY} slides={SLIDES} />)
     const overlay = container.querySelector('[data-hero-overlay]')!
-    expect(overlay.className).not.toMatch(/max-w-\[1200px\]/)
-    expect(overlay.className).not.toMatch(/mx-auto/)
-    expect(overlay.className).toMatch(/\bp-6\b/)
-    expect(overlay.className).toMatch(/sm:p-10/)
+    expect(overlay.className).toMatch(/\bmx-auto\b/)
+    expect(overlay.className).toMatch(/max-w-\[1200px\]/)
+    expect(overlay.className).toMatch(/\bpx-6\b/)
+    // The old fixed inset, which is what put the copy out of line. `sm:p-10` also set the
+    // vertical padding, so it cannot simply be narrowed to `sm:px-10`.
+    expect(overlay.className).not.toMatch(/sm:p-10/)
+    expect(overlay.className).not.toMatch(/(?:^|\s)p-6\b/)
   })
 
   it('reserves room at the top for the header that now sits over it', () => {

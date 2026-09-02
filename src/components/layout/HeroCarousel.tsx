@@ -231,16 +231,29 @@ export function HeroCarousel({
           re-enables them on its own buttons. Without this the title would swallow clicks
           meant for the slide it sits on.
 
-          No `mx-auto max-w-[1200px]` here, deliberately. The words are held a similar
-          distance in from the edge of the image as they were when that image was a 1152px
-          block — they are not snapped back to the content column, which would undo the
-          full-bleed change for everything except the photograph itself.
+          `mx-auto max-w-[1200px] px-6` is the site's content measure, spelled the same
+          way in Band, SiteHeader, SiteFooter, every page's own container and this
+          component's no-photography fallback. The photograph is full-bleed; the words on
+          it are not — the hero's first line starts on the same vertical as every heading,
+          paragraph and the wordmark above it.
 
-          pb clears the slide dots, which sit at `bottom-4 end-6`. With eight slides that
-          row is ~136px wide, and at a narrow viewport a wrapped second row of buttons ran
-          underneath it.
+          This is the opposite of what the comment here said a day earlier, so the reason
+          is worth keeping. When the band first went edge to edge the copy was left at a
+          fixed inset from the *image*, on the reasoning that snapping it to the column
+          would undo the full-bleed change for everything except the photograph. What that
+          actually produced was copy at x=40 at every width above 640px while the column
+          ran at x=180 on a 1512px viewport, x=144 at 1440 and x=64 at 1280 — and at 1024
+          and below, where the column is flush at x=24, the hero copy was inset *further*
+          than the body text it was meant to sit outside of. Hunter asked for it in line.
 
-          pt clears the header, which now sits *over* this band on every page. Measured at
+          The slide dots are deliberately NOT moved with it. They sit at `bottom-4 end-6`,
+          against the edge of the photograph, because they are a control on the image
+          rather than a line of the page's copy.
+
+          pb clears those dots. With eight slides that row is ~136px wide, and at a narrow
+          viewport a wrapped second row of buttons ran underneath it.
+
+          pt clears the header, which sits *over* this band on every page. Measured at
           375px: the eyebrow's first line began at y=62 while the header ran to y=68, so
           the top line of copy rendered underneath it. The copy is bottom-aligned, so it
           climbs as it grows — and it comes from the CMS, so a longer intro would push it
@@ -248,7 +261,7 @@ export function HeroCarousel({
         */
         <div
           data-hero-overlay
-          className="pointer-events-none relative w-full p-6 pb-12 pt-24 sm:p-10 sm:pb-14 sm:pt-28"
+          className="pointer-events-none relative mx-auto w-full max-w-[1200px] px-6 pb-12 pt-24 sm:pb-14 sm:pt-28"
         >
           {overlay}
         </div>
