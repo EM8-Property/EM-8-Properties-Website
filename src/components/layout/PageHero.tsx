@@ -1,6 +1,6 @@
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Button } from '@/components/ui/Button'
-import { HeroCarousel } from '@/components/layout/HeroCarousel'
+import { HeroCarousel, type HeroVariant } from '@/components/layout/HeroCarousel'
 // From lib, not from HeroCarousel: that module is `'use client'`, and a server component
 // calling a function it exports fails the build outright.
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
@@ -61,9 +61,16 @@ export type PageHeroCopy = {
 export function PageHero({
   copy,
   slides,
+  variant = 'band',
 }: {
   copy: PageHeroCopy
   slides: CarouselSlide[]
+  /**
+   * Forwarded to `HeroCarousel`, which is where the two shapes are defined. Defaults to
+   * `band` here too rather than relying on the carousel's default, so that reading this
+   * signature tells you what six of the seven pages get without opening another file.
+   */
+  variant?: HeroVariant
 }) {
   // The same helper HeroCarousel uses to decide what it will render, deliberately shared:
   // if these two ever disagreed, this would hand a carousel a list it then rejects, and
@@ -140,6 +147,7 @@ export function PageHero({
   return (
     <HeroCarousel
       slides={slides}
+      variant={variant}
       overlay={
         <div className="max-w-[42ch]">
           {copy.eyebrow && <Eyebrow tone="onPhoto">{copy.eyebrow}</Eyebrow>}

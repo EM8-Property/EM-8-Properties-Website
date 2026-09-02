@@ -17,6 +17,48 @@ export type { CarouselSlide }
 const INTERVAL_MS = 6000
 
 /**
+ * Which shape the band takes. One prop with two named values, not two booleans.
+ *
+ * `screen` — the homepage. The photograph fills the first screen, the width of the
+ * viewport and the height of it, and the copy floats on the image at a fixed inset from
+ * its edge. It is a photograph with a proposition laid on it, and the page is scrolled to
+ * reach anything else.
+ *
+ * `band` — the other six section pages. The photograph is 420/500/560px tall by
+ * breakpoint and the copy sits on the site's content measure, so the page title lines up
+ * with every heading and paragraph below it. It is a page header that happens to be
+ * photographic.
+ *
+ * Each of those two shapes was briefly applied to all seven pages — full screen with the
+ * copy on the measure was live for a day — before Hunter split them this way. That is why
+ * this is a closed set of two rather than an independent height flag and copy flag: the
+ * four combinations include the one that was looked at and rejected, and there is no
+ * reason to keep it reachable.
+ */
+export type HeroVariant = 'screen' | 'band'
+
+/**
+ * Everything the two shapes disagree about, in one place, so the differences can be read
+ * side by side rather than hunted through three ternaries.
+ *
+ * `sizes` is in here and not in the JSX because it is not a styling choice: it is the
+ * width the browser should assume the image occupies, and `object-cover` makes that a
+ * function of the box's HEIGHT. See the note at the <Image> below for the measurements.
+ */
+const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string }> = {
+  screen: {
+    box: 'min-h-svh',
+    copy: 'p-6 pb-12 pt-24 sm:p-10 sm:pb-14 sm:pt-28',
+    sizes: '(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw',
+  },
+  band: {
+    box: 'min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]',
+    copy: 'mx-auto max-w-[1200px] px-6 pb-12 pt-24 sm:pb-14 sm:pt-28',
+    sizes: '100vw',
+  },
+}
+
+/**
  * The full-bleed photograph every section page opens on, with that page's own title laid
  * over it by `PageHero`.
  *
@@ -43,6 +85,7 @@ const INTERVAL_MS = 6000
 export function HeroCarousel({
   slides,
   overlay,
+  variant = 'band',
 }: {
   slides: CarouselSlide[]
   /**
@@ -53,6 +96,14 @@ export function HeroCarousel({
    * one — interactive elements inside an anchor are invalid and unreachable by keyboard.
    */
   overlay?: React.ReactNode
+  /**
+   * Which of the two shapes this band takes. See `SHAPE` below for what each one is and
+   * why the two are one prop rather than two.
+   *
+   * Defaults to `band`, which is what six of the seven section pages want. Only the
+   * homepage passes `screen`, and it says so at the call site.
+   */
+  variant?: HeroVariant
 }) {
   const usable = useMemo(() => usableSlides(slides), [slides])
   /*
@@ -133,7 +184,7 @@ export function HeroCarousel({
        * the photograph since the full-bleed change, so the first screen now carries the
        * page's own words at any height.
        */
-      className="relative flex w-full flex-col justify-end overflow-hidden bg-panel min-h-svh"
+      className={`relative flex w-full flex-col justify-end overflow-hidden bg-panel ${SHAPE[variant].box}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -223,7 +274,7 @@ export function HeroCarousel({
                   here still clears it at any plausible DPR. If the cap is ever raised,
                   these numbers stop being free and want re-deriving.
                 */
-                sizes="(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw"
+                sizes={SHAPE[variant].sizes}
                 /*
                   Below Next's default of 75, and declared in `images.qualities` in
                   next.config.ts — Next 16 silently ignores any quality not on that list
@@ -287,7 +338,7 @@ export function HeroCarousel({
         */
         <div
           data-hero-overlay
-          className="pointer-events-none relative mx-auto w-full max-w-[1200px] px-6 pb-12 pt-24 sm:pb-14 sm:pt-28"
+          className={`pointer-events-none relative w-full ${SHAPE[variant].copy}`}
         >
           {overlay}
         </div>

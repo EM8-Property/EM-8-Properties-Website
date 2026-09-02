@@ -111,21 +111,29 @@ describe('HeroCarousel — resource budget', () => {
     expect(imgs.length, `rendered ${imgs.length} images for 8 slides`).toBeLessThanOrEqual(3)
   })
 
-  it('describes its width honestly, which is what decides the bytes fetched', () => {
-    // There were two variants here, and the contained one claimed a 1152px box. Both are
-    // gone: the band is the width of the viewport on every page, and the height of it too.
+  it('describes its width honestly in each shape, which decides the bytes fetched', () => {
+    // There were two variants here once, and the contained one claimed a 1152px box.
+    // There are two again, and the difference between them is a height rather than a
+    // width: `screen` is the viewport, `band` is 420/500/560px.
     //
-    // Honest is not the same as 100vw any more. `object-cover` on a box taller than the
-    // crop is shaped paints the photograph wider than the box and crops the sides off, so
-    // on a portrait phone the painted width is around four times the width of the screen
-    // — measured, a 1200w variant stretched across 1444 CSS px at 375x812. The narrow
-    // clauses ask for what is actually painted; desktop is width-driven and stays at
-    // 100vw. The window above and the 1600px crop are what hold the image budget, and the
-    // cap is why the correction costs 49KB a crop rather than a multiple.
-    const { container } = render(<HeroCarousel slides={many} />)
-    const sizes = container.querySelector('img')!.getAttribute('sizes')!
-    expect(sizes).toMatch(/\(max-width:\s*640px\)\s*[34]\d\dvw/)
-    expect(sizes.endsWith('100vw')).toBe(true)
+    // Honest therefore differs. `object-cover` on a box taller than the crop is shaped
+    // paints the photograph wider than the box and crops the sides off, so the painted
+    // width is the box height times about 1.8. At full screen on a portrait phone that is
+    // around four times the width of the screen — measured, a 1200w variant stretched
+    // across 1444 CSS px at 375x812, which is an upscale at any DPR. In the band the same
+    // phone paints about 747 CSS px, which the 1200w variant still covers, so `100vw`
+    // understates it without producing an artefact and the cheaper hint stays. The window
+    // above and the 1600px crop cap are what hold the image budget either way.
+    const sizesFor = (variant: 'screen' | 'band') =>
+      render(<HeroCarousel slides={many} variant={variant} />)
+        .container.querySelector('img')!
+        .getAttribute('sizes')!
+
+    const screen = sizesFor('screen')
+    expect(screen).toMatch(/\(max-width:\s*640px\)\s*[34]\d\dvw/)
+    expect(screen.endsWith('100vw')).toBe(true)
+
+    expect(sizesFor('band')).toBe('100vw')
   })
 
   it('still preloads the slide it is about to advance to', () => {

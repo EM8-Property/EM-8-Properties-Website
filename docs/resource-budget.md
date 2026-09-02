@@ -104,6 +104,49 @@ Perf score and LCP, five localhost samples: `main` returned 95/95 with LCP 3.0s 
 the full-screen band returned 98, 96, 95, 92 with LCP 2.3s, 2.8s, 3.0s, 3.3s. That spread
 is the noise this document warns about, not a delta. CLS stayed 0.
 
+### 2026-09-02, later — the full screen is the homepage only, and `sizes` splits with it
+
+Hunter looked at all seven pages at full screen and kept it on one. The homepage stays
+`screen`; the other six went back to the 420/500/560px `band`, because on those pages a
+full-screen photograph put the page's actual content — the purpose, the portfolio grid,
+the realized deals — entirely below the fold behind a picture and a title.
+
+The two shapes now carry different hints, and this is the one place the variant reaches
+past CSS. `HeroCarousel`'s `SHAPE` map holds both.
+
+| | box | `sizes` |
+|---|---|---|
+| `screen` (homepage) | `min-h-svh` | `(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw` |
+| `band` (six pages) | `min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]` | `100vw` |
+
+**Why `band` keeps the cheaper hint, when the section above argues the accurate one.**
+The painted width is the box height times about 1.8, so in the band a 375px phone paints
+roughly 747 CSS px against a 375px box — `100vw` understates it just as it did at full
+screen. The difference is what the browser then fetches: at 375x812 with `100vw` it picks
+the 1200w variant, and 1200 is *wider* than the 747 px it paints. There is no upscale and
+nothing to see. At full screen the same variant was painted across 1444 CSS px, which is
+an upscale at any DPR and visibly soft. So the accurate hint would cost 49KB a crop on six
+pages to correct an artefact that is not there.
+
+That is the general rule worth taking from this: the question is never whether `100vw` is
+*accurate*, it is whether the variant it makes the browser pick is narrower than the width
+the image is painted at.
+
+**Measured after the split, first paint, images only.** The CI gate audits `/`, which is
+unchanged at 725KB.
+
+| page | 1512x900 @1 | 375x812 @3 | variant picked on the phone |
+|---|---|---|---|
+| `/` (`screen`) | 723 KB | 723 KB | w=3840 → the 1600px cap |
+| `/about` | 603 KB | 379 KB | w=1200 |
+| `/investors`, `/insights`, `/partners` | 492 KB | 298 KB | w=1200 |
+| `/track-record` | 579 KB | 384 KB | w=1200 |
+| `/portfolio` | 1250 KB | 1055 KB | w=1200 |
+
+`/portfolio` is the page to watch, and its weight is the ten property-card thumbnails
+rather than the hero — it is inside the 1400KB budget but not by much, and it got *lighter*
+with the revert. Lighthouse in CI only loads `/`, so nothing gates that page today.
+
 **What pays for it instead is the preload window on the first paint.** Only the current
 slide and the one it is about to cross-fade to carry an `<img>` when the page loads; the
 slide being faded *out* stays mounted once there is one, so the steady state is three. That

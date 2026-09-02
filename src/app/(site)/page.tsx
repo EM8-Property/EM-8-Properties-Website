@@ -188,22 +188,24 @@ export default async function HomePage() {
   return (
     <>
       {/*
-        The photograph fills the first screen — edge to edge and the full height of the
-        viewport — with the headline on it and the header over the top of it. Every
-        section page opens this way now; this one is no longer the exception it was while
-        its hero was capped at the content column.
+        `screen` — and this page is the only one that asks for it.
 
-        The height came back last, and the earlier version of this comment said it never
-        would. What that was guarding against is a different layout: the band this grew
-        out of filled the viewport with the heading rendered *underneath* it, so the first
-        screen was a photograph and nothing else. The heading has sat ON the photograph
-        since the full-bleed change, so the first screen carries EM8's proposition at any
-        height, and the stat band below it is now reached by scrolling rather than by
-        having a tall enough monitor.
+        The photograph fills the first screen, the width of the viewport and the height of
+        it, with the headline laid on the image and the header over the top. The stat band
+        below is reached by scrolling rather than by having a tall enough monitor.
+
+        The copy sits at a fixed inset from the edge of the photograph rather than on the
+        1200px content measure the rest of this page uses. That is deliberate and it is
+        specific to this page: for a day the copy was on the measure here too, which put
+        the headline in line with the section headings below but pulled it away from the
+        picture it is written on. The other six section pages went the other way, because
+        their hero is a page header rather than a proposition. `HeroCarousel`'s SHAPE map
+        holds both sets of numbers.
       */}
       <PageHero
         copy={copy.hero}
         slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
+        variant="screen"
       />
 
       {stats.length > 0 && (

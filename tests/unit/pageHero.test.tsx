@@ -34,88 +34,81 @@ beforeEach(() => {
 })
 
 /**
- * The photograph now fills the whole first screen on every section page — the width of the
- * viewport and the height of it — with that page's own title laid over it.
+ * The band has two shapes, and which page gets which is a design decision rather than a
+ * technical one.
  *
- * The height was withheld for two revisions, so it is worth being exact about what changed
- * rather than reading the older comments as still true. The band this grew out of was
- * `100vh` *with the heading rendered underneath it*, and that is what put EM8's
- * proposition below the fold — the height was never the defect, the stacking was. The
- * title has sat ON the photograph since the full-bleed change, so filling the viewport now
- * means the first screen is a photograph carrying the page's own words.
+ * `screen` — the homepage only. The photograph fills the whole first screen, the width of
+ * the viewport and the height of it, and the copy floats on the image at a fixed inset
+ * from its edge rather than on the site's content column. It is a picture with words on
+ * it, and the page is scrolled to reach anything else.
  *
- * Two properties survive from the contained hero and are still load-bearing:
+ * `band` — the other six section pages. The photograph is 420/500/560px tall by
+ * breakpoint and the copy sits on the content measure, so the page title lines up with
+ * every heading and paragraph below it. It is a page header that happens to be
+ * photographic.
  *
- *   - The copy clears the overlaid header. Full height gives it far more room, so this is
- *     slack rather than the near miss it was — but the reservation stays, because a
- *     landscape phone is 375px tall and puts it straight back.
+ * Both shapes existed separately for a day each, applied to all seven pages, before
+ * Hunter looked at the two and split them this way. Which is why the variant is one prop
+ * with two named values and not two booleans: `screen` height with `band` copy is the
+ * combination that was live yesterday and was rejected, and there is no reason to keep it
+ * reachable.
+ *
+ * Three properties hold in BOTH shapes, and each was a regression once:
+ *
+ *   - The copy clears the overlaid header. `screen` has slack; `band` is where the near
+ *     miss was measured, at 375px with the eyebrow at y=62 under a header ending at y=68.
  *   - The box grows rather than clipping. `min-h`, never `h`: the copy comes from the CMS,
  *     is unbounded, and is bottom-aligned, so a fixed height clips from the TOP — the
- *     eyebrow first, then the headline.
+ *     eyebrow first, then the headline. In `band` this is routine rather than defensive:
+ *     420px does not hold the homepage's copy at 375px wide, and the box really does grow.
+ *   - `sizes` describes the width the image is PAINTED at, which `object-cover` makes a
+ *     function of the box's HEIGHT. The two shapes therefore need different hints, and
+ *     that is the one place the variant reaches beyond CSS.
  */
-describe('full-bleed hero geometry', () => {
-  it('spans the viewport rather than the content column', () => {
-    const { container } = render(<HeroCarousel slides={SLIDES} />)
-    const cls = container.firstElementChild!.className
-    expect(cls).toMatch(/\bw-full\b/)
-    // A max-width here would be the contained hero again under another name.
-    expect(cls).not.toMatch(/max-w-/)
-    // Rounded corners belong to a block on a page, not to a band that reaches both edges.
-    expect(cls).not.toMatch(/rounded-card/)
+describe('hero geometry, both shapes', () => {
+  // `band` is the default because six of the seven pages use it. The homepage asks for
+  // `screen` explicitly, which is also how it reads at the call site.
+  const cls = (props?: { variant?: 'screen' | 'band' }) =>
+    render(<HeroCarousel slides={SLIDES} {...props} />).container.firstElementChild!
+      .className
+  const img = (props?: { variant?: 'screen' | 'band' }) =>
+    render(<HeroCarousel slides={SLIDES} {...props} />).container.querySelector('img')!
+
+  it('spans the viewport rather than the content column, in both shapes', () => {
+    for (const variant of ['screen', 'band'] as const) {
+      const c = cls({ variant })
+      expect(c, variant).toMatch(/\bw-full\b/)
+      // A max-width here would be the contained hero again under another name. The
+      // measure belongs to the copy on the photograph, never to the photograph.
+      expect(c, variant).not.toMatch(/max-w-/)
+      // Rounded corners belong to a block on a page, not to a band that reaches both
+      // edges.
+      expect(c, variant).not.toMatch(/rounded-card/)
+    }
   })
 
-  it('describes the width the image is PAINTED at, not the width of the box', () => {
-    /*
-     * The single most expensive line in this component, and full height changed what the
-     * honest answer to it is.
-     *
-     * `sizes` is the width the browser should assume the image occupies, and with
-     * `object-cover` on a box that is taller than the photograph is shaped, that is not
-     * the width of the box. The image is scaled until it covers the box's HEIGHT and the
-     * overflow is cropped off the sides, so the painted width is the viewport height
-     * times the crop's aspect ratio — about 1.8 times. On a portrait phone that is
-     * roughly four times the width of the screen.
-     *
-     * `sizes="100vw"` was accurate while the band was 420px tall. Measured at 375x812
-     * with it still in place: the browser fetched the 1200w variant and painted it across
-     * 1444 CSS px, so the photograph was upscaled 3.6x on a phone — visibly soft, on the
-     * whole of the first screen, and invisible to every other check. Desktop was
-     * unaffected, because there the box is wider than it is tall and width still drives.
-     *
-     * So the phone breakpoints ask for the painted width. What keeps that from becoming a
-     * byte regression is the crop cap: every variant at or above 1600w resolves to the
-     * same 1600x900 asset, measured at 133KB against 84KB for the 1200w it was fetching
-     * before. See docs/resource-budget.md.
-     */
-    const { container } = render(<HeroCarousel slides={SLIDES} />)
-    const sizes = container.querySelector('img')!.getAttribute('sizes')!
-    // A phone is asked for several times its own width, because that is what it paints.
-    const phone = sizes.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
-    expect(phone, 'no narrow-viewport clause').not.toBeNull()
-    expect(Number(phone![1])).toBeGreaterThanOrEqual(300)
-    // And a tablet, by less, because it is less tall relative to its width. Asserted
-    // because without it the middle clause can be deleted with every test still green,
-    // and a 768x1024 viewport is the one that falls furthest between the other two.
-    const tablet = sizes.match(/\(max-width:\s*1024px\)\s*(\d+)vw/)
-    expect(tablet, 'no tablet clause').not.toBeNull()
-    expect(Number(tablet![1])).toBeGreaterThan(100)
-    expect(Number(tablet![1])).toBeLessThan(Number(phone![1]))
-    // Desktop is width-driven, so it stays honest at the width of the viewport.
-    expect(sizes.endsWith('100vw')).toBe(true)
+  it('fills the screen in `screen`, and is 420/500/560 in `band`', () => {
+    expect(cls({ variant: 'screen' })).toMatch(/\bmin-h-svh\b/)
+
+    const band = cls({ variant: 'band' })
+    expect(band).not.toMatch(/svh/)
+    // The three heights this band had before the homepage took the full screen. They are
+    // asserted literally because they are a design decision, not a derived value.
+    expect(band).toMatch(/\bmin-h-\[420px\]/)
+    expect(band).toMatch(/\bsm:min-h-\[500px\]/)
+    expect(band).toMatch(/\blg:min-h-\[560px\]/)
   })
 
-  it('fills the height of the first screen, so the page has to be scrolled', () => {
-    const { container } = render(<HeroCarousel slides={SLIDES} />)
-    expect(container.firstElementChild!.className).toMatch(/\bmin-h-svh\b/)
+  it('defaults to `band`, which is what six of the seven pages want', () => {
+    expect(cls()).toBe(cls({ variant: 'band' }))
   })
 
   it('rejects vh and dvh, which are the two wrong ways to measure a screen', () => {
     /*
-     * A forward guard rather than a check on this change: the base class string satisfied
-     * both of these assertions too, because it named no viewport unit at all. What pins
-     * the change is `min-h-svh` in the test above; this one exists so that a later edit
-     * cannot swap the unit for one of the two that misbehave. Three units, and the
-     * difference between them shows up only on a phone.
+     * A forward guard rather than a check on any one change: a class string naming no
+     * viewport unit at all satisfies both assertions too. What pins `screen` is
+     * `min-h-svh` above; this exists so a later edit cannot swap the unit for one of the
+     * two that misbehave. The difference between the three shows up only on a phone.
      *
      * `vh` ignores mobile browser chrome, so 100vh is taller than what can be seen: the
      * bottom of the photograph, and the slide dots with it, sit behind the address bar.
@@ -128,27 +121,71 @@ describe('full-bleed hero geometry', () => {
      * it loads. Its own cost is that a sliver of the next section shows once the chrome
      * collapses — which happens while the reader is already scrolling.
      */
-    const cls = render(<HeroCarousel slides={SLIDES} />).container.firstElementChild!
-      .className
-    expect(cls).not.toMatch(/100vh|min-h-screen/)
-    expect(cls).not.toMatch(/dvh/)
+    for (const variant of ['screen', 'band'] as const) {
+      expect(cls({ variant }), variant).not.toMatch(/100vh|min-h-screen/)
+      expect(cls({ variant }), variant).not.toMatch(/dvh/)
+    }
   })
 
-  it('grows rather than clipping, because the copy is unbounded CMS text', () => {
-    const cls = render(<HeroCarousel slides={SLIDES} />).container.firstElementChild!
-      .className
+  it('describes the width the image is PAINTED at, which differs by shape', () => {
+    /*
+     * The single most expensive line in this component, and the one place the variant
+     * reaches past CSS.
+     *
+     * `sizes` is the width the browser should assume the image occupies, and with
+     * `object-cover` on a box taller than the crop is shaped that is NOT the width of the
+     * box: the image is scaled until it covers the box's HEIGHT and the overflow is
+     * cropped off the sides. So the painted width is the box height times the crop's
+     * aspect, about 1.8x.
+     *
+     * In `screen` the box is the height of the viewport, so on a portrait phone the
+     * painted width is around four times the width of the screen. Measured at 375x812
+     * with `100vw`: the browser fetched the 1200w variant and painted it across 1444 CSS
+     * px — an upscale at any DPR, visibly soft, over the whole first screen.
+     *
+     * In `band` the box is 420px on a phone, so the painted width is about 747 CSS px.
+     * `100vw` understates that too, by roughly half — but the 1200w variant it picks is
+     * still WIDER than the 747 px it paints, so there is no upscale and nothing visible.
+     * That is the whole difference between the two, and it is why `band` keeps the
+     * cheaper hint rather than the more accurate one: the accurate one would cost 49KB a
+     * crop on six pages to fix an artefact that is not there.
+     */
+    const screen = img({ variant: 'screen' }).getAttribute('sizes')!
+    // A phone is asked for several times its own width, because that is what it paints.
+    const phone = screen.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
+    expect(phone, 'no narrow-viewport clause').not.toBeNull()
+    expect(Number(phone![1])).toBeGreaterThanOrEqual(300)
+    // And a tablet, by less, because it is less tall relative to its width. Asserted
+    // because without it the middle clause can be deleted with every test still green.
+    const tablet = screen.match(/\(max-width:\s*1024px\)\s*(\d+)vw/)
+    expect(tablet, 'no tablet clause').not.toBeNull()
+    expect(Number(tablet![1])).toBeGreaterThan(100)
+    expect(Number(tablet![1])).toBeLessThan(Number(phone![1]))
+    // Desktop is width-driven either way, so it stays at the width of the viewport.
+    expect(screen.endsWith('100vw')).toBe(true)
+
+    expect(img({ variant: 'band' }).getAttribute('sizes')).toBe('100vw')
+  })
+
+  it('grows rather than clipping in both shapes, because the copy is CMS text', () => {
     // min-h, never a fixed height: the copy is bottom-aligned, so a fixed height clips
-    // from the TOP — the eyebrow first, then the headline. A landscape phone is 375px
-    // tall, which is less than the header reservation plus four lines of CMS copy, so
-    // this is reachable rather than theoretical.
+    // from the TOP — the eyebrow first, then the headline.
+    //
+    // This is not defensive in `band`. 420px does not hold the homepage's own copy at
+    // 375px wide — measured, that box renders 477px tall — so the growth path is the
+    // normal one there rather than an edge case. In `screen` it is the landscape phone,
+    // 375px tall, which is less than the header reservation plus four lines of copy.
     //
     // The positive assertion matters as much as the negatives: without it this passes
     // against a component carrying no height utility at all, which is a different bug
     // with the same shape.
-    expect(cls).toMatch(/\bmin-h-/)
-    expect(cls).not.toMatch(/(?:^|\s)h-\[\d+px\]/)
-    expect(cls).not.toMatch(/(?:^|\s)h-svh\b/)
-    expect(cls).not.toMatch(/(?:^|\s)h-screen\b/)
+    for (const variant of ['screen', 'band'] as const) {
+      const c = cls({ variant })
+      expect(c, variant).toMatch(/\bmin-h-/)
+      expect(c, variant).not.toMatch(/(?:^|\s)h-\[\d+px\]/)
+      expect(c, variant).not.toMatch(/(?:^|\s)h-svh\b/)
+      expect(c, variant).not.toMatch(/(?:^|\s)h-screen\b/)
+    }
   })
 
   it('keeps the outgoing slide mounted while it fades out', async () => {
@@ -222,38 +259,49 @@ describe('PageHero copy', () => {
     expect(screen.getByText(COPY.intro)).toBeDefined()
   })
 
-  it('holds the same measure as the copy below it', () => {
+  it('holds the content measure in `band`, and the image edge in `screen`', () => {
     /*
-     * The photograph is full-bleed; the words on it are not.
+     * Where the words sit is the other half of the variant, and it has been settled twice.
      *
-     * This reverses what this test asserted a day earlier, so the history is worth
-     * keeping. When the band first went edge to edge, the copy was deliberately left at a
-     * fixed inset from the *image* rather than snapped to the content column, on the
-     * reasoning that re-imposing the measure would undo the change for everything except
-     * the picture. Hunter looked at it and asked for the opposite: the hero's first line
-     * should start on the same vertical as every heading, paragraph and the wordmark
-     * below it.
+     * When the band first went edge to edge, the copy was left at a fixed inset from the
+     * *image* on all seven pages, on the reasoning that snapping it to the content column
+     * would undo the full-bleed change for everything except the picture. Measured, that
+     * put the eyebrow and h1 at x=40 at every width above 640px while the column ran at
+     * x=180 on a 1512px viewport, x=144 at 1440 and x=64 at 1280 — and at 1024 and below,
+     * where the column is flush at x=24, it put the hero copy FURTHER in than the body
+     * text. So it went onto the measure on all seven.
      *
-     * Measured before: the eyebrow and the h1 began at x=40 at every width above 640px,
-     * while the content column began at x=180 on a 1512px viewport, x=144 at 1440 and
-     * x=64 at 1280 — and at x=24 at 1024 and below, where the hero copy was actually
-     * inset FURTHER than the body text. The two only agreed on a phone.
+     * Hunter then split them: on the homepage the copy goes back to the image edge, and
+     * on the other six it stays on the measure. That reads as one decision rather than
+     * two once you look at what each page is. The homepage hero is a photograph with a
+     * proposition laid on it — the words belong to the picture, and hanging them on the
+     * body grid pulls them away from it. The other six are page headers that happen to be
+     * photographic, and their job is to title the page below, so their first line lines up
+     * with every heading under it.
      *
      * `mx-auto max-w-[1200px] px-6` is the measure, spelled the same way in Band,
-     * SectionHeading's callers, SiteHeader, SiteFooter and this component's own
-     * no-photography fallback. Written as those three utilities rather than as a shared
-     * constant because that is how the rest of the codebase writes it; a wrapper would
-     * have to be adopted everywhere to be worth anything.
+     * SiteHeader, SiteFooter, every page container and this component's own no-photography
+     * fallback. Written as those three utilities rather than as a shared constant because
+     * that is how the rest of the codebase writes it.
      */
-    const { container } = render(<PageHero copy={COPY} slides={SLIDES} />)
-    const overlay = container.querySelector('[data-hero-overlay]')!
-    expect(overlay.className).toMatch(/\bmx-auto\b/)
-    expect(overlay.className).toMatch(/max-w-\[1200px\]/)
-    expect(overlay.className).toMatch(/\bpx-6\b/)
-    // The old fixed inset, which is what put the copy out of line. `sm:p-10` also set the
-    // vertical padding, so it cannot simply be narrowed to `sm:px-10`.
-    expect(overlay.className).not.toMatch(/sm:p-10/)
-    expect(overlay.className).not.toMatch(/(?:^|\s)p-6\b/)
+    const overlay = (variant: 'screen' | 'band') =>
+      render(<PageHero copy={COPY} slides={SLIDES} variant={variant} />)
+        .container.querySelector('[data-hero-overlay]')!.className
+
+    const band = overlay('band')
+    expect(band).toMatch(/\bmx-auto\b/)
+    expect(band).toMatch(/max-w-\[1200px\]/)
+    expect(band).toMatch(/\bpx-6\b/)
+
+    const screen = overlay('screen')
+    // Not the measure: the words stay on the photograph rather than on the body grid.
+    expect(screen).not.toMatch(/\bmx-auto\b/)
+    expect(screen).not.toMatch(/max-w-\[1200px\]/)
+    // The inset the homepage had before it went onto the measure. `p-6`/`sm:p-10` set the
+    // vertical padding too, which the two overrides below then replace — so this cannot
+    // be narrowed to `px-`, and the vertical values have to stay after it in the string.
+    expect(screen).toMatch(/(?:^|\s)p-6\b/)
+    expect(screen).toMatch(/\bsm:p-10\b/)
   })
 
   it('reserves room at the top for the header that now sits over it', () => {
