@@ -215,6 +215,38 @@ All of these bit during the build and are documented in the plan's Revisions sec
   `lh.json` has already been written by then — run `node scripts/lighthouse-report.mjs`
   against it rather than concluding the audit failed.
 
+### Found on 2026-09-02
+
+- **`sizes` describes the width the image is PAINTED at, not the width of its box.** With
+  `object-cover` on a box taller than the crop is shaped, the photograph is scaled until it
+  covers the height and the overflow is cropped off the sides — so the painted width is the
+  viewport height times the crop's aspect. Making the hero full-height turned `100vw` from
+  accurate into a fourfold understatement on a phone: measured at 375x812, the browser
+  fetched the 1200w variant and painted it across 1444 CSS px, a 3.6x upscale over the
+  entire first screen. Nothing sees this. Lighthouse's "properly size images" audit only
+  looks for images that are too *large*, `tsc` and lint have no opinion, and desktop is
+  genuinely unaffected because there the box is wider than the crop and width drives the
+  cover. Check `naturalWidth` against the painted width, not against the box.
+- **`naturalWidth` is reported in CSS pixels, not bitmap pixels, on an image with a
+  `srcset`.** The UA divides by the density it derived from `sizes`, so an image that
+  decoded at 1600px wide reports 625. Two measurements were misread as catastrophic
+  upscaling before this was spotted. The bitmap width is the `w=` of `currentSrc`, capped by
+  the source asset.
+- **Use `svh` for a full-screen band, not `vh` or `dvh`.** `vh` ignores mobile browser
+  chrome, so the bottom of the band — and anything positioned against it, here the slide
+  dots — sits behind the address bar. `dvh` tracks the chrome as it collapses, which resizes
+  the band mid-scroll and slides bottom-aligned copy down the screen while the reader is
+  moving. `svh` is the viewport as it is when the page loads.
+- **A hidden Browser pane never loads a lazily-loaded image.** `loading="lazy"` needs the
+  page to be visible, so in a hidden pane every non-priority carousel slide stays at
+  `naturalWidth: 0` and the band screenshots as a bare grey scrim. That reads exactly like
+  a broken image or an over-dark overlay. Check `tabs_context` for "the Browser pane is
+  currently hidden" before diagnosing what you see, or measure with Playwright instead.
+- **Two hero source images are too small for a full-screen band**: Antioch Industrial at
+  620x426 and Oak Forest K at 1222x811, against 1600x900 requested. Sanity's `fit=max`
+  never upscales, so those two slides are served below the crop cap on every viewport.
+  Antioch is already on the list of photography EM8 owes.
+
 ## Status
 
 Tasks 1–15 complete. Task 14 descoped (see the plan). Task 16's infrastructure is built;

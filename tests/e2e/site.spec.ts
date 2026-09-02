@@ -277,6 +277,13 @@ test('every section page opens on a full-bleed photograph with its own title on 
     )
     // It reaches the top of the page, which is what the overlaid header requires.
     expect(box.y, `${route} band does not reach the top`).toBeLessThanOrEqual(1)
+    // And it fills the screen, on all seven rather than only the one measured below. The
+    // band is one shared component, so a page that lost this would have lost it to its
+    // own wrapper constraining the height.
+    const innerHeight = await page.evaluate(() => window.innerHeight)
+    expect(box.height, `${route} band is shorter than the screen`).toBeGreaterThanOrEqual(
+      innerHeight - 1,
+    )
 
     // The page's own h1 is inside the band, laid over the photograph.
     const h1 = page.getByRole('heading', { level: 1 })

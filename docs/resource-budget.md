@@ -45,11 +45,56 @@ Later the same day the hero was capped at the 1200px content column and the numb
 width, on all seven section pages rather than only the homepage, because that was the
 design Hunter asked for.
 
-So `sizes` is the lever, and it now reads `100vw` again — honestly, because the band really
-is the width of the viewport. That is the expensive answer: at a 1512px viewport the
-browser fetches a variant sized for it, which docs measured at 567 KB for one crop. The
-saving that used to come from `(min-width: 1200px) 1152px` is gone, and it cannot be
+So `sizes` is the lever, and on 2026-09-01 it read `100vw` — honestly, because the band
+really was the width of the viewport. That is the expensive answer: at a 1512px viewport
+the browser fetches a variant sized for it, which docs measured at 567 KB for one crop.
+The saving that used to come from `(min-width: 1200px) 1152px` is gone, and it cannot be
 recovered without lying about the layout, which buys bytes by shipping a blurry image.
+
+### 2026-09-02 — the band fills the screen, and `100vw` stopped being the honest answer
+
+The hero now runs the full height of the viewport as well as its width (`min-h-svh`), and
+that changed what `sizes` should say — on phones only.
+
+`sizes` is the width the browser should assume the image occupies. With `object-cover` on
+a box **taller than the crop is shaped**, that is not the width of the box: the photograph
+is scaled until it covers the box's height and the overflow is cropped off the sides, so
+the painted width is the viewport height times the crop's aspect — about 1.8x. At 375x812
+that is 1444 CSS px against a 375px box, nearly four times as wide.
+
+Measured at 375x812 with `100vw` still in place: the browser chose the 1200w variant and
+painted it across those 1444 CSS px. A 3.6x upscale, over the whole first screen of a
+phone, invisible to the build, tsc, lint, the unit tests, and to Lighthouse — whose
+"properly size images" audit only looks for images that are too *large*. Desktop was
+unaffected, and this is why: there the box is wider than the crop is shaped, so width
+drives the cover and `100vw` is exactly right.
+
+It now reads `(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw`.
+
+**What it costs, measured on the same localhost runner before and after** (Lighthouse's
+mobile form factor, 412x823 at DPR 1.75):
+
+| | `main` at f22fc2b | full-screen hero |
+|---|---|---|
+| image | 363 KB | 725 KB |
+| total | 716 KB | 1079 KB |
+| budget | 1400 / 2200 KB | 1400 / 2200 KB — no overage |
+
+So a phone now pays what a desktop already paid — 723 KB of images was the documented
+first-paint figure for the contained-height band, and the 1600px crop cap is why the two
+converge rather than diverge. Every variant at or above 1600w resolves to the same asset,
+so once the hint clears that cap it cannot ask for more.
+
+**That cap is the lever if this budget ever fails**, and the alternative is worth writing
+down before someone reaches for `sizes` again: requesting a **taller crop** — 4:3 rather
+than 16:9 — would make a portrait phone paint about 1080 CSS px instead of 1444, which is
+both sharper for the bytes and fewer of them. It is not done here because it re-frames
+every photograph on every page, cropping the top and bottom on desktop instead of the
+sides on mobile, and that is a design decision rather than a performance one.
+
+Perf score and LCP, five localhost samples: `main` returned 95/95 with LCP 3.0s twice;
+the full-screen band returned 98, 96, 95, 92 with LCP 2.3s, 2.8s, 3.0s, 3.3s. That spread
+is the noise this document warns about, not a delta. CLS stayed 0.
 
 **What pays for it instead is the preload window on the first paint.** Only the current
 slide and the one it is about to cross-fade to carry an `<img>` when the page loads; the
@@ -98,9 +143,11 @@ Both times it has failed so far, the cause was real and the fix was in the code:
    two crops, and the third slot is spent only on the slide that is actually fading out.
    Narrowing it any further breaks the crossfade — see above.
 
-   So if you are reading this because the budget failed, check in this order: `sizes` (it
-   should say `100vw` and the band should genuinely be full width), then the window, then
-   whether someone uploaded a camera original.
+   So if you are reading this because the budget failed, check in this order: the 1600px
+   crop cap (that is what bounds every hint above it), then `sizes` — it should describe
+   the width the image is *painted* at, which since 2026-09-02 is several times the
+   viewport width on a phone, not `100vw` — then the window, then whether someone
+   uploaded a camera original.
 
 ## Two traps worth knowing
 
