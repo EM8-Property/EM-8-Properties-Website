@@ -94,19 +94,46 @@ export function HeroCarousel({
       aria-roledescription="carousel"
       aria-label="Featured properties"
       /*
-       * min-h, not h, and the overlay sits in flow rather than absolutely.
+       * `min-h-svh`: the first screen is the photograph, and the page is scrolled to
+       * reach anything else.
        *
-       * With a fixed height the section clips whatever does not fit, and because the copy
-       * is bottom-aligned it clips from the TOP — the eyebrow first, then the headline.
-       * The copy comes from the CMS and is unbounded, so a longer intro or a third
-       * sentence would silently truncate a page's own proposition with no build error and
-       * no failing test. The box grows instead.
+       * min-h, not h, and the overlay sits in flow rather than absolutely, which is what
+       * lets the box grow past the screen when it has to. With a fixed height the section
+       * clips whatever does not fit, and because the copy is bottom-aligned it clips from
+       * the TOP — the eyebrow first, then the headline. The copy comes from the CMS and is
+       * unbounded, so a longer intro or a third sentence would silently truncate a page's
+       * own proposition with no build error and no failing test. A landscape phone is
+       * 375px tall, which is less than the header reservation plus four lines of copy, so
+       * this is a real case and not a theoretical one. The box grows instead.
        *
-       * Deliberately not viewport height. The band this replaces was `100vh`, which is
-       * what put the headline below the fold — the width was only ever half of that
-       * problem, and it is the half being restored here.
+       * svh, not vh and not dvh. `vh` ignores mobile browser chrome, so the bottom of the
+       * photograph — and the slide dots with it — would sit behind the address bar. `dvh`
+       * tracks that chrome as it collapses, which resizes the band mid-scroll and slides
+       * the bottom-aligned copy down the screen while the reader is moving. `svh` is the
+       * viewport with the chrome showing, which is the state the page loads in.
+       *
+       * `svh` has its own cost, and it is the one worth paying: once that chrome collapses
+       * the visible viewport is taller than `svh`, so a sliver of the next section shows
+       * above the fold. That happens while the reader is already scrolling. The `dvh`
+       * alternative moves the copy under their thumb instead.
+       *
+       * One consequence of the height that is not a CSS decision: every slide is a `<Link>`
+       * at `absolute inset-0`, so the whole of the first screen is now a click target whose
+       * destination changes every six seconds, on all seven pages, where before it was a
+       * 420-560px band. Hovering pauses the rotation, which covers a mouse; a touch has no
+       * hover, so a tap on empty sky opens whichever building is showing. That is inherited
+       * behaviour rather than new, and it is deliberately left alone — but it grew about
+       * fourfold in surface area here, so it is written down rather than assumed.
+       *
+       * The height was withheld through the two revisions before this one, and the older
+       * comments read as though it always should be. What they were describing is a
+       * different layout: the band was `100vh` with the heading rendered *underneath* it,
+       * so the first screen was a photograph and nothing else and EM8's proposition was
+       * below the fold. The stacking was the defect, not the height. The title has sat ON
+       * the photograph since the full-bleed change, so the first screen now carries the
+       * page's own words at any height.
        */
-      className="relative flex w-full flex-col justify-end overflow-hidden bg-panel min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]"
+      className="relative flex w-full flex-col justify-end overflow-hidden bg-panel min-h-svh"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -133,9 +160,13 @@ export function HeroCarousel({
          * is worth having on the *first* paint, which is why `prev` starts null — nothing
          * has faded out yet, so nothing behind is worth fetching before it is needed.
          *
-         * Measured on this build: first paint is two crops, 723KB of images against a
-         * 1400KB budget, and Lighthouse reported no overage. Including the backward
-         * neighbour up front instead would fetch a third before anything has moved.
+         * First paint is two crops, and what they cost depends on the form factor now
+         * that `sizes` differs by breakpoint: 725KB of images against a 1400KB budget on
+         * Lighthouse's mobile runner, and the same 723KB it measured on desktop before
+         * this band grew to full height. The before-and-after table is in
+         * docs/resource-budget.md; the two numbers being one apart is a coincidence worth
+         * not misreading. Including the backward neighbour up front instead would fetch a
+         * third crop before anything has moved.
          */
         const forward = (i - index + usable.length) % usable.length
         const loaded = forward <= 1 || i === prev
@@ -159,14 +190,40 @@ export function HeroCarousel({
                 width={1600}
                 height={900}
                 /*
-                  The band really is the width of the viewport now, so this really is
-                  100vw — and that is the most expensive line in this file.
-                  docs/resource-budget.md records a single crop at 567KB when the browser
-                  was left to guess. The honest hint is the cheap one here; the levers that
-                  defend the image budget are the preload window above and the 1600px crop
-                  below, not a `sizes` value that misdescribes the layout.
+                  The width the image is PAINTED at, which is not the width of the box.
+
+                  `object-cover` on a box taller than the crop is shaped scales the
+                  photograph until it covers the HEIGHT and crops the overflow off the
+                  sides, so the painted width is the viewport height times the crop's
+                  aspect — about 1.8x. On a portrait phone that is roughly four times the
+                  width of the screen, and `100vw` understates it by that much.
+
+                  It did not while this band was 420px tall, which is why it used to say
+                  100vw. Measured at 375x812 with full height and the old hint still in
+                  place: the browser chose the 1200w variant and painted it across 1444
+                  CSS px — a 3.6x upscale, over the whole first screen of a phone, and
+                  invisible to the build, tsc, lint, the unit tests and Lighthouse alike.
+                  Desktop was unaffected: there the box is wider than the crop is shaped,
+                  so width still drives and 100vw is exactly right.
+
+                  What stops this becoming a byte regression is the crop cap below. Every
+                  variant at or above 1600w resolves to the same 1600x900 asset — measured
+                  at 133KB, against 84KB for the 1200w a phone was fetching before, so the
+                  whole cost is 49KB per crop and two crops on the first paint. The levers
+                  that defend the image budget are still the preload window above and that
+                  cap; this line only stops the browser guessing low. See
+                  docs/resource-budget.md.
+
+                  The multipliers are approximations, and they have to be: `sizes` takes
+                  media queries on WIDTH, and the quantity being described depends on
+                  HEIGHT. 400vw is calibrated on a 375x812 phone, where 812 * 1.778 / 375
+                  is 3.85. A shorter 375x667 phone really wants 316vw and a 768x1024 tablet
+                  wants 237vw against the 200vw declared. Neither matters while the cap
+                  binds — every over-ask lands on the same 1600px asset and every under-ask
+                  here still clears it at any plausible DPR. If the cap is ever raised,
+                  these numbers stop being free and want re-deriving.
                 */
-                sizes="100vw"
+                sizes="(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw"
                 /*
                   Below Next's default of 75, and declared in `images.qualities` in
                   next.config.ts — Next 16 silently ignores any quality not on that list
@@ -200,16 +257,29 @@ export function HeroCarousel({
           re-enables them on its own buttons. Without this the title would swallow clicks
           meant for the slide it sits on.
 
-          No `mx-auto max-w-[1200px]` here, deliberately. The words are held a similar
-          distance in from the edge of the image as they were when that image was a 1152px
-          block — they are not snapped back to the content column, which would undo the
-          full-bleed change for everything except the photograph itself.
+          `mx-auto max-w-[1200px] px-6` is the site's content measure, spelled the same
+          way in Band, SiteHeader, SiteFooter, every page's own container and this
+          component's no-photography fallback. The photograph is full-bleed; the words on
+          it are not — the hero's first line starts on the same vertical as every heading,
+          paragraph and the wordmark above it.
 
-          pb clears the slide dots, which sit at `bottom-4 end-6`. With eight slides that
-          row is ~136px wide, and at a narrow viewport a wrapped second row of buttons ran
-          underneath it.
+          This is the opposite of what the comment here said a day earlier, so the reason
+          is worth keeping. When the band first went edge to edge the copy was left at a
+          fixed inset from the *image*, on the reasoning that snapping it to the column
+          would undo the full-bleed change for everything except the photograph. What that
+          actually produced was copy at x=40 at every width above 640px while the column
+          ran at x=180 on a 1512px viewport, x=144 at 1440 and x=64 at 1280 — and at 1024
+          and below, where the column is flush at x=24, the hero copy was inset *further*
+          than the body text it was meant to sit outside of. Hunter asked for it in line.
 
-          pt clears the header, which now sits *over* this band on every page. Measured at
+          The slide dots are deliberately NOT moved with it. They sit at `bottom-4 end-6`,
+          against the edge of the photograph, because they are a control on the image
+          rather than a line of the page's copy.
+
+          pb clears those dots. With eight slides that row is ~136px wide, and at a narrow
+          viewport a wrapped second row of buttons ran underneath it.
+
+          pt clears the header, which sits *over* this band on every page. Measured at
           375px: the eyebrow's first line began at y=62 while the header ran to y=68, so
           the top line of copy rendered underneath it. The copy is bottom-aligned, so it
           climbs as it grows — and it comes from the CMS, so a longer intro would push it
@@ -217,7 +287,7 @@ export function HeroCarousel({
         */
         <div
           data-hero-overlay
-          className="pointer-events-none relative w-full p-6 pb-12 pt-24 sm:p-10 sm:pb-14 sm:pt-28"
+          className="pointer-events-none relative mx-auto w-full max-w-[1200px] px-6 pb-12 pt-24 sm:pb-14 sm:pt-28"
         >
           {overlay}
         </div>
