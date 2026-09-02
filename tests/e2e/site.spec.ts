@@ -337,9 +337,16 @@ test('every section page opens on a full-bleed photograph with its own title on 
     if (isScreen) {
       // Hugging the edge of the photograph — 24px, or 40px from the `sm` breakpoint up —
       // rather than sitting on the grid. Asserted as a bound rather than against the
-      // wordmark because the sign of that difference flips: the column is further in than
-      // 40px above ~1090px wide and flush at 24px below it, so at some viewport widths the
-      // two coincide by arithmetic rather than by intent.
+      // wordmark because the sign of that difference flips: the content column is flush at
+      // 24px up to a 1200px viewport and only passes 40px above 1232, where
+      // (viewport - 1200) / 2 + 24 exceeds the inset. Measured, the two coincide at 40px
+      // at 1231-1232.
+      //
+      // Which means this bound stops discriminating anywhere from 1024px to 1232px: in
+      // that window the column is at or below 40px too, and a hero that had been snapped
+      // back onto the measure would satisfy it. This loop runs at Playwright's default
+      // 1280x720, where the column is at 64px, so it discriminates by 24px. Do not
+      // retarget it into that window without changing the assertion.
       expect(
         Math.round(h1Box.x),
         'the homepage h1 has left the edge of the photograph',
@@ -400,9 +407,11 @@ test('the homepage keeps its copy on the photograph, not on the measure', async 
    * only a measurement can confirm — the classes differ by three utilities and the page
    * looks plausible either way.
    *
-   * At 1512px the difference is 140px. Below about 1090px the measure is flush at 24px
-   * and the inset is 40px, so the two swap which is further in; the assertion is written
-   * as "not the column" plus a bound on the inset rather than as a direction.
+   * At 1512px the difference is 140px. Up to a 1200px viewport the measure is flush at
+   * 24px while the inset is 40px, so the two swap which is further in and coincide at 40px
+   * at 1231-1232; the assertion is written as "not the column" plus a bound on the inset
+   * rather than as a direction. The three widths here are all above that crossover, which
+   * is what makes the `not.toBe(column)` half meaningful.
    */
   for (const width of [1512, 1440, 1280]) {
     await page.setViewportSize({ width, height: 900 })
@@ -425,21 +434,48 @@ test('the homepage keeps its copy on the photograph, not on the measure', async 
   }
 })
 
-test('the hero clears the header on a narrow viewport too', async ({ page }) => {
-  // The defect only appeared below ~640px: the copy is bottom-aligned, so it climbs as it
-  // wraps, and three headline lines plus a four-line intro is enough to reach the header.
-  await page.setViewportSize({ width: 375, height: 812 })
-  await page.goto('/')
+/*
+ * The hero clears the overlaid header, on both shapes and at the narrow viewports where
+ * it does not.
+ *
+ * The original defect appeared below ~640px: the copy is bottom-aligned, so it climbs as
+ * it wraps, and at 375px the eyebrow began at y=62 while the header ran to y=68.
+ *
+ * The two shapes are nowhere near each other in how much of the `pt-24` reservation they
+ * actually need, which is why this runs on both. Measured clearance between the bottom of
+ * the header and the top of the eyebrow:
+ *
+ *   /        375px   363px    — `screen`, all the slack in the world
+ *   /about   375px    48px
+ *   /about   360px     28px   — the tightest on the site
+ *   /about   320px     28px
+ *
+ * Below 375px the band's overlay has grown past the 420px floor, so the box is exactly as
+ * tall as the copy and bottom-alignment leaves no slack at all: `pt-24` minus the header
+ * is the entire margin. Which means the vulnerable shape is `band` at a narrow viewport,
+ * and for a day this test covered only the homepage — verified: dropping the reservation
+ * to `pt-14` still clears the header at 1280px and at 375px, and only fails at 320px on a
+ * band page.
+ */
+for (const [route, width] of [
+  ['/', 375],
+  ['/about', 320],
+] as const) {
+  test(`the hero clears the header at ${width}px on ${route}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 812 })
+    await page.goto(route)
 
-  const headerBox = (await page.locator('header').boundingBox())!
-  // The eyebrow is the first line of copy, so it is the one that goes under the header.
-  const eyebrow = page.locator('[data-hero-overlay] p').first()
-  const eyebrowBox = (await eyebrow.boundingBox())!
+    const headerBox = (await page.locator('header').boundingBox())!
+    // The eyebrow is the first line of copy, so it is the one that goes under the header.
+    const eyebrow = page.locator('[data-hero-overlay] p').first()
+    const eyebrowBox = (await eyebrow.boundingBox())!
 
-  expect(eyebrowBox.y, 'the eyebrow renders under the overlaid header').toBeGreaterThanOrEqual(
-    headerBox.y + headerBox.height,
-  )
-})
+    expect(
+      eyebrowBox.y,
+      `the eyebrow renders under the overlaid header on ${route} at ${width}px`,
+    ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
+  })
+}
 
 /*
  * The homepage hero fills the first screen, measured on the rendered page.
@@ -500,7 +536,8 @@ for (const viewport of [
      * the four factors and the team all below the fold.
      *
      * Asserted as "something else is visible" rather than against a pixel height, because
-     * the band grows with its CMS copy — at 375px wide the 420px floor renders 477px tall.
+     * the band grows with its CMS copy: /about renders exactly 420px at 375px wide, 423px
+     * at 360px and 456px at 320px.
      */
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
     await page.goto('/about')

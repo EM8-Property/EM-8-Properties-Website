@@ -118,12 +118,14 @@ describe('HeroCarousel — resource budget', () => {
     //
     // Honest therefore differs. `object-cover` on a box taller than the crop is shaped
     // paints the photograph wider than the box and crops the sides off, so the painted
-    // width is the box height times about 1.8. At full screen on a portrait phone that is
-    // around four times the width of the screen — measured, a 1200w variant stretched
-    // across 1444 CSS px at 375x812, which is an upscale at any DPR. In the band the same
-    // phone paints about 747 CSS px, which the 1200w variant still covers, so `100vw`
-    // understates it without producing an artefact and the cheaper hint stays. The window
-    // above and the 1600px crop cap are what hold the image budget either way.
+    // width is the box height times 1.78. At 375x812 that is 1444 CSS px at full screen
+    // and 747 CSS px in the band — 3.85x and 1.99x the viewport width, so `100vw`
+    // understates both. What separates them is the variant the browser then picks: in the
+    // band it lands 1.87x short of the device pixels at DPR 3 and 1.17x over at DPR 1,
+    // while at full screen the same 1200w variant was painted across 1444 CSS px — 3.6x
+    // short at DPR 3 and an upscale even at DPR 1, over the whole first screen. The
+    // window above and the 1600px crop cap hold the image budget either way; the cap is
+    // also why the corrected hint still leaves full screen 2.71x short.
     const sizesFor = (variant: 'screen' | 'band') =>
       render(<HeroCarousel slides={many} variant={variant} />)
         .container.querySelector('img')!

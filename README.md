@@ -220,18 +220,25 @@ All of these bit during the build and are documented in the plan's Revisions sec
 - **`sizes` describes the width the image is PAINTED at, not the width of its box.** With
   `object-cover` on a box taller than the crop is shaped, the photograph is scaled until it
   covers the height and the overflow is cropped off the sides — so the painted width is the
-  box height times the crop's aspect. Making the hero full-height turned `100vw` from
-  accurate into a fourfold understatement on a phone: measured at 375x812, the browser
-  fetched the 1200w variant and painted it across 1444 CSS px, a 3.6x upscale over the
-  entire first screen. Nothing sees this. Lighthouse's "properly size images" audit only
-  looks for images that are too *large*, `tsc` and lint have no opinion, and desktop is
-  genuinely unaffected because there the box is wider than the crop and width drives the
-  cover. Check `naturalWidth` against the painted width, not against the box.
-  **But an understatement is only a defect if it changes the variant chosen.** The same
-  phone in the 420px band paints ~747 CSS px and still gets the 1200w variant, which is
-  wider than that — no upscale, nothing to see, and correcting the hint there would buy
-  49KB a crop of nothing. `HeroCarousel`'s `SHAPE` map is where the two hints live, next to
-  the two box heights they belong to.
+  box height times the crop's aspect (1.78 here). At 375x812 a full-screen box paints 1444
+  CSS px and a 420px band paints 747, so `100vw` understates both, by 3.85x and 1.99x.
+  **The understatement is not the defect; the variant it makes the browser pick is.** At
+  full screen that meant fetching 1200w and painting it across 1444 CSS px — upscaled even
+  at DPR 1, 3.6x short at DPR 3, over the whole first screen and visibly soft. In the band
+  the same hint fetches 640w at DPR 1, 750w at DPR 2 and 1200w at DPR 3, landing 1.87x
+  short at worst and 1.17x upscaled at best, on a 420px strip. So the hint was corrected
+  for the homepage and left alone for the six band pages, which is a judgement about
+  proportion rather than a rule: even corrected, the homepage is 2.71x short at DPR 3
+  because the 1600px crop cap sits below the 4332 device px that box wants.
+  Nothing sees any of this. Lighthouse's "properly size images" audit only looks for images
+  that are too *large*, `tsc` and lint have no opinion, and desktop is genuinely unaffected
+  because there the box is wider than the crop and width drives the cover. Check
+  `naturalWidth` against the painted width, not against the box.
+  **And measure the cost per photograph, not per crop.** Correcting the hint moves one of
+  the homepage's two first-paint crops from 85KB to 134KB and the other from 173KB to
+  314KB — 49KB and 141KB, because one source is 1600x917 and the other 4160x3117. A "49KB
+  a crop" figure was quoted for a day off the cheaper of the two. `HeroCarousel`'s `SHAPE`
+  map is where the two hints live, next to the two box heights they belong to.
 - **`naturalWidth` is reported in CSS pixels, not bitmap pixels, on an image with a
   `srcset`.** The UA divides by the density it derived from `sizes`, so an image that
   decoded at 1600px wide reports 625. Two measurements were misread as catastrophic

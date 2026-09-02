@@ -136,19 +136,26 @@ describe('hero geometry, both shapes', () => {
      * `object-cover` on a box taller than the crop is shaped that is NOT the width of the
      * box: the image is scaled until it covers the box's HEIGHT and the overflow is
      * cropped off the sides. So the painted width is the box height times the crop's
-     * aspect, about 1.8x.
+     * aspect, and the crop is 1600x900, so that factor is 1.78.
      *
-     * In `screen` the box is the height of the viewport, so on a portrait phone the
-     * painted width is around four times the width of the screen. Measured at 375x812
-     * with `100vw`: the browser fetched the 1200w variant and painted it across 1444 CSS
-     * px — an upscale at any DPR, visibly soft, over the whole first screen.
+     * At 375x812 that is 1444 CSS px in `screen` and 747 CSS px in `band` — 3.85x and
+     * 1.99x the width of the viewport. `100vw` understates the paint in BOTH shapes, so
+     * the understatement is not what decides this. What decides it is how far short of
+     * the paint the chosen variant falls.
      *
-     * In `band` the box is 420px on a phone, so the painted width is about 747 CSS px.
-     * `100vw` understates that too, by roughly half — but the 1200w variant it picks is
-     * still WIDER than the 747 px it paints, so there is no upscale and nothing visible.
-     * That is the whole difference between the two, and it is why `band` keeps the
-     * cheaper hint rather than the more accurate one: the accurate one would cost 49KB a
-     * crop on six pages to fix an artefact that is not there.
+     * With `100vw` in `band` the browser picks 640w at DPR 1, 750w at DPR 2 and 1200w at
+     * DPR 3 — worst case 1.87x short of the 2241 device px that box wants, and at DPR 1 a
+     * 1.17x upscale. With `100vw` in `screen` the same 1200w was painted across 1444 CSS
+     * px, so it was upscaled at DPR 1 too and 3.6x short at DPR 3, over the whole first
+     * screen and visibly soft.
+     *
+     * So `screen`'s hint is corrected and `band`'s is not, and the reason is proportion
+     * rather than a clean line: even corrected, `screen` is 2.71x short at DPR 3 because
+     * the 1600px crop cap is below the 4332 device px it wants, which leaves `band` at
+     * 1.87x already sharper than the page that got the expensive hint. Correcting `band`
+     * as well would cost 49KB and 141KB for the two crops of a first paint — the spread
+     * is the photographs, not the widths — on six pages, for about a third of a linear
+     * pixel.
      */
     const screen = img({ variant: 'screen' }).getAttribute('sizes')!
     // A phone is asked for several times its own width, because that is what it paints.
@@ -171,10 +178,12 @@ describe('hero geometry, both shapes', () => {
     // min-h, never a fixed height: the copy is bottom-aligned, so a fixed height clips
     // from the TOP — the eyebrow first, then the headline.
     //
-    // This is not defensive in `band`. 420px does not hold the homepage's own copy at
-    // 375px wide — measured, that box renders 477px tall — so the growth path is the
-    // normal one there rather than an edge case. In `screen` it is the landscape phone,
-    // 375px tall, which is less than the header reservation plus four lines of copy.
+    // Measured rather than assumed, and it is close in `band`: /about's copy needs 400px
+    // inside the 420px floor at 375px wide, and stops fitting just below that — 423px at
+    // 360px wide and 456px at 320px, both of which grow the box. The homepage's copy is
+    // longer and needs 477px at 375px wide, which is what made this the clipping case
+    // while it ran at this height. In `screen` it is the landscape phone, 375px tall,
+    // which is less than the header reservation plus four lines of copy.
     //
     // The positive assertion matters as much as the negatives: without it this passes
     // against a component carrying no height utility at all, which is a different bug

@@ -41,22 +41,28 @@ export type HeroVariant = 'screen' | 'band'
  * Everything the two shapes disagree about, in one place, so the differences can be read
  * side by side rather than hunted through three ternaries.
  *
+ * Only what differs. The vertical padding that reserves room for the overlaid header and
+ * the slide dots is shared, so it lives in the JSX with the other shared classes — a
+ * comment claiming the two are the same is worth nothing next to two strings that have to
+ * be kept in step by hand.
+ *
  * `sizes` is in here and not in the JSX because it is not a styling choice: it is the
  * width the browser should assume the image occupies, and `object-cover` makes that a
- * function of the box's HEIGHT. See the note at the <Image> below for the measurements.
+ * function of the box's HEIGHT. See the note at the <Image> for the measurements.
  */
 const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string }> = {
   screen: {
     box: 'min-h-svh',
-    copy: 'p-6 pb-12 pt-24 sm:p-10 sm:pb-14 sm:pt-28',
+    copy: 'p-6 sm:p-10',
     sizes: '(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw',
   },
   band: {
     box: 'min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]',
-    copy: 'mx-auto max-w-[1200px] px-6 pb-12 pt-24 sm:pb-14 sm:pt-28',
+    copy: 'mx-auto max-w-[1200px] px-6',
     sizes: '100vw',
   },
 }
+
 /**
  * The full-bleed photograph every section page opens on, with that page's own title laid
  * over it by `PageHero`.
@@ -100,7 +106,7 @@ export function HeroCarousel({
    */
   overlay?: React.ReactNode
   /**
-   * Which of the two shapes this band takes. See `SHAPE` below for what each one is and
+   * Which of the two shapes this band takes. See `SHAPE` above for what each one is and
    * why the two are one prop rather than two.
    *
    * Defaults to `band`, which is what six of the seven section pages want. Only the
@@ -155,10 +161,13 @@ export function HeroCarousel({
        * clips whatever does not fit, and because the copy is bottom-aligned it clips from
        * the TOP — the eyebrow first, then the headline. The copy comes from the CMS and is
        * unbounded, so a longer intro or a third sentence would silently truncate a page's
-       * own proposition with no build error and no failing test. This is not defensive: in
-       * `band` the homepage's own copy renders 477px tall against a 420px floor at 375px
-       * wide, so the growth path is the normal one. In `screen` it is a landscape phone,
-       * 375px tall, which is less than the header reservation plus four lines of copy.
+       * own proposition with no build error and no failing test.
+       *
+       * Measured, so the growth path is a real one rather than a precaution: /about's copy
+       * fits inside the 420px floor at 375px wide (the overlay is 400px) and stops fitting
+       * just below it — 423px at 360px wide, 456px at 320px, both of which grow the box.
+       * The homepage's copy is longer and needs 477px at 375px wide, which is why it was
+       * this component's clipping case for as long as it ran at this height.
        *
        * `screen` measures the viewport with svh, not vh and not dvh. `vh` ignores mobile
        * browser chrome, so the bottom of the photograph — and the slide dots with it —
@@ -169,11 +178,17 @@ export function HeroCarousel({
        * shows once the chrome collapses — which happens while the reader is already
        * scrolling, where `dvh`'s cost lands under their thumb.
        *
-       * `band`'s three heights are a design decision rather than a derived value, and they
-       * are the ones this band had before the homepage took the full screen. It kept them
-       * through a day at full screen on all seven pages: at that height the six pages
-       * opened on a photograph and a title with the page's actual content entirely below
-       * the fold.
+       * `band`'s three heights are a design decision rather than a derived value: they are
+       * the ones this band ran at before the homepage took the full screen, restored here.
+       * What full screen cost those six pages is that the page's actual content — the
+       * purpose, the portfolio grid, the realized deals — sat entirely below the fold
+       * behind a photograph and a title.
+       *
+       * That argument does not extend to a landscape phone, and it is worth being honest
+       * about: at 812x375 the `sm` breakpoint applies, so the band is 500px against a
+       * 375px viewport and the content is below the fold anyway. It is the shape these six
+       * pages have always had rather than something this change introduced, and no test
+       * covers that orientation.
        *
        * One consequence of `screen` that is not a CSS decision: every slide is a `<Link>`
        * at `absolute inset-0`, so on the homepage the whole of the first screen is a click
@@ -182,13 +197,6 @@ export function HeroCarousel({
        * building is showing. That is inherited behaviour rather than new — the band has
        * always been one link — but at full screen it is about four times the area, so it is
        * written down rather than assumed.
-       *
-       * A note on the older comments in this file's history, because they read as though
-       * viewport height were permanently ruled out. What they were describing is a third
-       * layout: the band was `100vh` with the heading rendered *underneath* it, so the
-       * first screen was a photograph and nothing else and EM8's proposition was below the
-       * fold. The stacking was the defect, not the height. Every page's title has sat ON
-       * the photograph since the full-bleed change.
        */
       className={`relative flex w-full flex-col justify-end overflow-hidden bg-panel ${SHAPE[variant].box}`}
       onMouseEnter={() => setPaused(true)}
@@ -248,47 +256,60 @@ export function HeroCarousel({
                 height={900}
                 /*
                   The width the image is PAINTED at, which is not the width of the box —
-                  and it is the one thing `SHAPE` decides that is not a styling choice.
+                  and the one thing `SHAPE` decides that is not a styling choice.
 
                   `object-cover` on a box taller than the crop is shaped scales the
                   photograph until it covers the HEIGHT and crops the overflow off the
-                  sides, so the painted width is the box height times the crop's aspect,
-                  about 1.8x.
+                  sides, so the painted width is the box height times the crop's aspect.
+                  The crop is 1600x900, so that factor is 1.78.
 
-                  In `screen` the box is the height of the viewport, so on a portrait phone
-                  that is roughly four times the width of the screen. Measured at 375x812
-                  with `100vw`: the browser chose the 1200w variant and painted it across
-                  1444 CSS px — an upscale at any DPR, visibly soft, over the whole first
-                  screen, and invisible to the build, tsc, lint, the unit tests and
-                  Lighthouse alike, whose "properly size images" audit only looks for
-                  images that are too large.
+                  Measured at 375x812, which is where the two shapes diverge:
 
-                  In `band` the box is 420px on that same phone, so the painted width is
-                  about 747 CSS px. `100vw` understates that too — by roughly half — and it
-                  does not matter: the 1200w variant the browser picks is WIDER than the
-                  747 px it paints, so there is no upscale and nothing to see. That is the
-                  whole difference between the two hints. The accurate one would cost 49KB
-                  a crop on six pages to correct an artefact that is not there.
+                    screen   box 812  paints 1444 CSS px  = 3.85x the viewport width
+                    band     box 420  paints  747 CSS px  = 1.99x the viewport width
 
-                  So the question is never whether `100vw` is accurate. It is whether the
-                  variant it makes the browser pick is narrower than the width the image is
-                  painted at.
+                  So `100vw` understates the paint in BOTH shapes. What decides whether
+                  that matters is not the size of the understatement but which variant the
+                  browser ends up choosing, and how far short of the paint it falls:
 
-                  Desktop is width-driven in both shapes — the box is wider than the crop is
-                  shaped — so both hints end at `100vw`, and that is exactly right there.
+                    band, sizes=100vw     DPR 1 -> w=640   DPR 2 -> w=750   DPR 3 -> w=1200
+                    screen, sizes=100vw   DPR 3 -> w=1200 painted across 1444 CSS px
 
-                  What stops `screen`'s hint becoming a byte regression is the crop cap
-                  below. Every variant at or above 1600w resolves to the same 1600x900
-                  asset — measured at 133KB, against 84KB for the 1200w a phone was
-                  fetching before, so the whole cost is 49KB per crop and two crops on the
-                  first paint, on one page. The levers that defend the image budget are
-                  still the preload window above and that cap; this line only stops the
-                  browser guessing low. See docs/resource-budget.md.
+                  In `band` the worst case is DPR 3, where a 1200px bitmap covers 2241
+                  device px — 1.87x short. At DPR 1 it picks 640 against 747 CSS px, which
+                  is a 1.17x upscale: real, but a sixth of a pixel per pixel, on a 420px
+                  band. In `screen` with the same hint the 1200px bitmap was painted across
+                  1444 CSS px, so it was upscaled at DPR 1 too and 3.6x short at DPR 3 —
+                  over the whole first screen, and visibly soft.
+
+                  The hint is corrected for `screen` and left alone for `band`, and the
+                  honest reason is proportion rather than a clean line. Even corrected,
+                  `screen` is still 2.71x short at DPR 3, because the 1600px crop cap is
+                  below the 4332 device px that box wants — so `band` at 1.87x is already
+                  sharper than the page that got the expensive hint. Correcting `band` as
+                  well would buy about a third of a linear pixel on six pages, for the
+                  bytes below.
+
+                  Desktop is width-driven in both shapes — the box is wider than the crop
+                  is shaped — so both hints end at `100vw`, and that is exactly right there.
+
+                  What the correction costs, measured on the two crops the band mounts on
+                  first paint, w=1200 against the 1600 cap: 85KB -> 134KB for one and
+                  173KB -> 314KB for the other. So 49KB and 141KB, 190KB for the page, and
+                  the spread is the photographs rather than the sizes — one source is
+                  1600x917 and the other 4160x3117, and the detailed one costs three times
+                  as much to serve at the same width. Do not carry "49KB a crop" anywhere:
+                  it is the cheaper of the two.
+
+                  Every variant at or above 1600w resolves to the same asset, which is what
+                  bounds the whole thing. The levers that defend the image budget are still
+                  the preload window above and that cap; this line only stops the browser
+                  guessing low. See docs/resource-budget.md.
 
                   `screen`'s multipliers are approximations, and they have to be: `sizes`
                   takes media queries on WIDTH, and the quantity being described depends on
-                  HEIGHT. 400vw is calibrated on a 375x812 phone, where 812 * 1.778 / 375
-                  is 3.85. A shorter 375x667 phone really wants 316vw and a 768x1024 tablet
+                  HEIGHT. 400vw is calibrated on a 375x812 phone, where 812 * 1.78 / 375 is
+                  3.85. A shorter 375x667 phone really wants 316vw and a 768x1024 tablet
                   wants 237vw against the 200vw declared. Neither matters while the cap
                   binds — every over-ask lands on the same 1600px asset and every under-ask
                   still clears it at any plausible DPR. If the cap is ever raised, these
@@ -360,12 +381,18 @@ export function HeroCarousel({
           the top line of copy rendered underneath it. The copy is bottom-aligned, so it
           climbs as it grows — and it comes from the CMS, so a longer intro would push it
           further up with no build error and nothing to catch it. The header is ~68px.
-          Both shapes carry the same reservation: `screen` has slack, `band` is where it
-          was measured.
+
+          The reservation is shared rather than per-shape, which is why it is spelled in
+          the class below instead of in `SHAPE`, and the two shapes are nowhere near each
+          other in how much of it they need. Measured clearance between the header and the
+          eyebrow: 363px on the homepage at 375px wide, 48px on /about at the same width,
+          and 28px on /about at 360px and 320px — where the overlay has grown to fill the
+          band, so bottom-alignment leaves no slack at all and `pt-24` minus the header is
+          the entire margin. `band` at a narrow viewport is the case to test.
         */
         <div
           data-hero-overlay
-          className={`pointer-events-none relative w-full ${SHAPE[variant].copy}`}
+          className={`pointer-events-none relative w-full pb-12 pt-24 sm:pb-14 sm:pt-28 ${SHAPE[variant].copy}`}
         >
           {overlay}
         </div>
