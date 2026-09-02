@@ -111,21 +111,31 @@ describe('HeroCarousel — resource budget', () => {
     expect(imgs.length, `rendered ${imgs.length} images for 8 slides`).toBeLessThanOrEqual(3)
   })
 
-  it('describes its width honestly, which is what decides the bytes fetched', () => {
-    // There were two variants here, and the contained one claimed a 1152px box. Both are
-    // gone: the band is the width of the viewport on every page, and the height of it too.
+  it('describes its width honestly in each shape, which decides the bytes fetched', () => {
+    // There were two variants here once, and the contained one claimed a 1152px box.
+    // There are two again, and the difference between them is a height rather than a
+    // width: `screen` is the viewport, `band` is 420/500/560px.
     //
-    // Honest is not the same as 100vw any more. `object-cover` on a box taller than the
-    // crop is shaped paints the photograph wider than the box and crops the sides off, so
-    // on a portrait phone the painted width is around four times the width of the screen
-    // — measured, a 1200w variant stretched across 1444 CSS px at 375x812. The narrow
-    // clauses ask for what is actually painted; desktop is width-driven and stays at
-    // 100vw. The window above and the 1600px crop are what hold the image budget, and the
-    // cap is why the correction costs 49KB a crop rather than a multiple.
-    const { container } = render(<HeroCarousel slides={many} />)
-    const sizes = container.querySelector('img')!.getAttribute('sizes')!
-    expect(sizes).toMatch(/\(max-width:\s*640px\)\s*[34]\d\dvw/)
-    expect(sizes.endsWith('100vw')).toBe(true)
+    // Honest therefore differs. `object-cover` on a box taller than the crop is shaped
+    // paints the photograph wider than the box and crops the sides off, so the painted
+    // width is the box height times 1.78. At 375x812 that is 1444 CSS px at full screen
+    // and 747 CSS px in the band — 3.85x and 1.99x the viewport width, so `100vw`
+    // understates both. What separates them is the variant the browser then picks: in the
+    // band it lands 1.87x short of the device pixels at DPR 3 and 1.17x over at DPR 1,
+    // while at full screen the same 1200w variant was painted across 1444 CSS px — 3.6x
+    // short at DPR 3 and an upscale even at DPR 1, over the whole first screen. The
+    // window above and the 1600px crop cap hold the image budget either way; the cap is
+    // also why the corrected hint still leaves full screen 2.71x short.
+    const sizesFor = (variant: 'screen' | 'band') =>
+      render(<HeroCarousel slides={many} variant={variant} />)
+        .container.querySelector('img')!
+        .getAttribute('sizes')!
+
+    const screen = sizesFor('screen')
+    expect(screen).toMatch(/\(max-width:\s*640px\)\s*[34]\d\dvw/)
+    expect(screen.endsWith('100vw')).toBe(true)
+
+    expect(sizesFor('band')).toBe('100vw')
   })
 
   it('still preloads the slide it is about to advance to', () => {

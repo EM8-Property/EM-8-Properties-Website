@@ -104,6 +104,90 @@ Perf score and LCP, five localhost samples: `main` returned 95/95 with LCP 3.0s 
 the full-screen band returned 98, 96, 95, 92 with LCP 2.3s, 2.8s, 3.0s, 3.3s. That spread
 is the noise this document warns about, not a delta. CLS stayed 0.
 
+### 2026-09-02, later — the full screen is the homepage only, and `sizes` splits with it
+
+Hunter looked at all seven pages at full screen and kept it on one. The homepage stays
+`screen`; the other six went back to the 420/500/560px `band`, because on those pages a
+full-screen photograph put the page's actual content — the purpose, the portfolio grid,
+the realized deals — entirely below the fold behind a picture and a title.
+
+The two shapes now carry different hints, and this is the one place the variant reaches
+past CSS. `HeroCarousel`'s `SHAPE` map holds both.
+
+| | box | `sizes` |
+|---|---|---|
+| `screen` (homepage) | `min-h-svh` | `(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw` |
+| `band` (six pages) | `min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]` | `100vw` |
+
+**Why `band` keeps the cheaper hint, when the section above argues for the accurate one.**
+
+The painted width is the box height times the crop's aspect, and the crop is 1600x900, so
+that factor is 1.78. At 375x812:
+
+| | box | paints | as a fraction of the viewport width |
+|---|---|---|---|
+| `screen` | 812 px | 1444 CSS px | 3.85x |
+| `band` | 420 px | 747 CSS px | 1.99x |
+
+So `100vw` understates the paint in **both** shapes, and the size of the understatement is
+not what decides this. What decides it is how far short of the paint the variant the
+browser actually picks falls — measured on `/about` at 375x812:
+
+| DPR | variant picked | bitmap ÷ painted CSS px | device px wanted | short by |
+|---|---|---|---|---|
+| 1 | w=640 | 0.86x | 747 | — (a 1.17x upscale) |
+| 2 | w=750 | 1.00x | 1494 | 1.99x |
+| 3 | w=1200 | 1.61x | 2241 | 1.87x |
+
+Against `screen` with the same `100vw`, where the 1200w variant was painted across 1444
+CSS px: upscaled at DPR 1 as well, and 3.6x short at DPR 3, over the whole first screen.
+
+**An earlier version of this section claimed the band's 1200w variant was simply wider
+than the 747 px it paints, so there was "no upscale and nothing to see". That is true only
+at DPR 3.** At DPR 1 the browser picks 640w, which is narrower than the paint. The rule
+below still holds; the band just satisfies it less cleanly than first written.
+
+The honest reason to leave `band` alone is proportion. Even with the corrected hint,
+`screen` is **2.71x short at DPR 3** — the 1600px crop cap is far below the 4332 device px
+that box wants — which leaves `band` at 1.87x *already sharper than the page that got the
+expensive hint*. Correcting `band` too would buy about a third of a linear pixel on six
+pages, for the bytes below.
+
+That is the general rule worth taking from this: the question is never whether `100vw` is
+*accurate*, it is whether the variant it makes the browser pick is narrower than the width
+the image is painted at — and then by how much, against what the alternative would cost.
+
+**What the correction costs.** Measured on the two crops the band mounts on first paint,
+w=1200 against the 1600 cap:
+
+| source asset | w=1200 | capped at 1600 | delta |
+|---|---|---|---|
+| 1600x917 | 85 KB | 134 KB | 49 KB |
+| 4160x3117 | 173 KB | 314 KB | 141 KB |
+
+**Do not quote "49KB a crop" — that is the cheaper of the two.** The spread is the
+photographs rather than the widths: the detailed 4160x3117 source costs nearly three times
+as much to serve at the same width. Per page load the correction is ~190KB, which is what
+the homepage pays and what each of the six would have paid.
+
+**Measured after the split, first paint, images only.** The CI gate audits `/` on
+Lighthouse's mobile runner (412x823 at DPR 1.75), where it reports 725KB; the two columns
+below are measured at DPR 1 and DPR 3 and bracket it.
+
+| page | 1512x900 @1 | 375x812 @3 | variant picked on the phone |
+|---|---|---|---|
+| `/` (`screen`) | 723 KB | 723 KB | w=3840 → the 1600px cap |
+| `/about` | 603 KB | 379 KB | w=1200 |
+| `/investors`, `/insights`, `/partners` | 492 KB | 298 KB | w=1200 |
+| `/track-record` | 579 KB | 384 KB | w=1200 |
+| `/portfolio` | 1250 KB | 1055 KB | w=1200 |
+
+`/portfolio` is the page to watch, and its weight is the ten property-card thumbnails
+rather than the hero — it is inside the 1400KB budget but not by much. It got *lighter*
+with the revert on the phone; on desktop both shapes end at `100vw` and fetch the same
+variant, so nothing changed there. Lighthouse in CI only loads `/`, so nothing gates that
+page today.
+
 **What pays for it instead is the preload window on the first paint.** Only the current
 slide and the one it is about to cross-fade to carry an `<img>` when the page loads; the
 slide being faded *out* stays mounted once there is one, so the steady state is three. That

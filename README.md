@@ -220,13 +220,25 @@ All of these bit during the build and are documented in the plan's Revisions sec
 - **`sizes` describes the width the image is PAINTED at, not the width of its box.** With
   `object-cover` on a box taller than the crop is shaped, the photograph is scaled until it
   covers the height and the overflow is cropped off the sides — so the painted width is the
-  viewport height times the crop's aspect. Making the hero full-height turned `100vw` from
-  accurate into a fourfold understatement on a phone: measured at 375x812, the browser
-  fetched the 1200w variant and painted it across 1444 CSS px, a 3.6x upscale over the
-  entire first screen. Nothing sees this. Lighthouse's "properly size images" audit only
-  looks for images that are too *large*, `tsc` and lint have no opinion, and desktop is
-  genuinely unaffected because there the box is wider than the crop and width drives the
-  cover. Check `naturalWidth` against the painted width, not against the box.
+  box height times the crop's aspect (1.78 here). At 375x812 a full-screen box paints 1444
+  CSS px and a 420px band paints 747, so `100vw` understates both, by 3.85x and 1.99x.
+  **The understatement is not the defect; the variant it makes the browser pick is.** At
+  full screen that meant fetching 1200w and painting it across 1444 CSS px — upscaled even
+  at DPR 1, 3.6x short at DPR 3, over the whole first screen and visibly soft. In the band
+  the same hint fetches 640w at DPR 1, 750w at DPR 2 and 1200w at DPR 3, landing 1.87x
+  short at worst and 1.17x upscaled at best, on a 420px strip. So the hint was corrected
+  for the homepage and left alone for the six band pages, which is a judgement about
+  proportion rather than a rule: even corrected, the homepage is 2.71x short at DPR 3
+  because the 1600px crop cap sits below the 4332 device px that box wants.
+  Nothing sees any of this. Lighthouse's "properly size images" audit only looks for images
+  that are too *large*, `tsc` and lint have no opinion, and desktop is genuinely unaffected
+  because there the box is wider than the crop and width drives the cover. Check
+  `naturalWidth` against the painted width, not against the box.
+  **And measure the cost per photograph, not per crop.** Correcting the hint moves one of
+  the homepage's two first-paint crops from 85KB to 134KB and the other from 173KB to
+  314KB — 49KB and 141KB, because one source is 1600x917 and the other 4160x3117. A "49KB
+  a crop" figure was quoted for a day off the cheaper of the two. `HeroCarousel`'s `SHAPE`
+  map is where the two hints live, next to the two box heights they belong to.
 - **`naturalWidth` is reported in CSS pixels, not bitmap pixels, on an image with a
   `srcset`.** The UA divides by the density it derived from `sizes`, so an image that
   decoded at 1600px wide reports 625. Two measurements were misread as catastrophic
@@ -236,7 +248,14 @@ All of these bit during the build and are documented in the plan's Revisions sec
   chrome, so the bottom of the band — and anything positioned against it, here the slide
   dots — sits behind the address bar. `dvh` tracks the chrome as it collapses, which resizes
   the band mid-scroll and slides bottom-aligned copy down the screen while the reader is
-  moving. `svh` is the viewport as it is when the page loads.
+  moving. `svh` is the viewport as it is when the page loads, and its own cost is that a
+  sliver of the next section shows once that chrome collapses.
+- **The hero band has two shapes, and only the homepage gets the full screen.**
+  `HeroCarousel`'s `variant` is `screen` on `/` and `band` — 420/500/560px, copy on the
+  content measure — on the other six section pages. Both were briefly applied to all seven,
+  in both directions, before they were split this way; `SHAPE` in that file records what
+  each one is and why the pair is one prop rather than two booleans. If you are changing
+  either, change it there, not at a call site.
 - **A hidden Browser pane never loads a lazily-loaded image.** `loading="lazy"` needs the
   page to be visible, so in a hidden pane every non-priority carousel slide stays at
   `naturalWidth: 0` and the band screenshots as a bare grey scrim. That reads exactly like

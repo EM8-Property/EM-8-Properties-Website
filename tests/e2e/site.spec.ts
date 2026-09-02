@@ -241,16 +241,20 @@ test('every content route declares the canonical it should, and a large card', a
 })
 
 /*
- * The full-bleed hero, measured on the rendered page rather than inferred from a class.
+ * The hero, measured on the rendered page rather than inferred from a class.
  *
- * This is the check that would have caught the two defects this change actually shipped
- * with: a headline sitting *under* the overlaid header at 375px, and — twice — a stale
- * server still serving the previous build while every unit test passed. Neither was
- * visible to the build, tsc, lint or Lighthouse.
+ * This is the check that caught the defects this band actually shipped with: a headline
+ * sitting *under* the overlaid header at 375px, and — twice — a stale server still serving
+ * the previous build while every unit test passed. Neither was visible to the build, tsc,
+ * lint or Lighthouse.
+ *
+ * The band now has two shapes, so the properties split three ways: what holds everywhere,
+ * what only the homepage's `screen` does, and what only the other six pages' `band` does.
  */
 test('every section page opens on a full-bleed photograph with its own title on it', async ({
   page,
 }) => {
+  // The homepage is `screen`; the rest are `band`.
   const routes = [
     '/',
     '/about',
@@ -262,6 +266,7 @@ test('every section page opens on a full-bleed photograph with its own title on 
   ]
 
   for (const route of routes) {
+    const isScreen = route === '/'
     await page.goto(route)
     const band = page.locator('section[aria-roledescription="carousel"]').first()
     await expect(band, `${route} has no photo band`).toBeVisible()
@@ -277,13 +282,28 @@ test('every section page opens on a full-bleed photograph with its own title on 
     )
     // It reaches the top of the page, which is what the overlaid header requires.
     expect(box.y, `${route} band does not reach the top`).toBeLessThanOrEqual(1)
-    // And it fills the screen, on all seven rather than only the one measured below. The
-    // band is one shared component, so a page that lost this would have lost it to its
-    // own wrapper constraining the height.
+
     const innerHeight = await page.evaluate(() => window.innerHeight)
-    expect(box.height, `${route} band is shorter than the screen`).toBeGreaterThanOrEqual(
-      innerHeight - 1,
-    )
+    if (isScreen) {
+      // The homepage fills the screen. Measured in full in its own test below.
+      expect(box.height, 'the homepage band is shorter than the screen').toBeGreaterThanOrEqual(
+        innerHeight - 1,
+      )
+    } else {
+      /*
+       * The other six do NOT, and this is the assertion that pins the revert.
+       *
+       * All seven filled the screen for a day. On these six that put a page's whole
+       * content below the fold — a photograph and a title, and nothing telling the reader
+       * there was a portfolio underneath it. The band is 420/500/560px by breakpoint and
+       * grows with its copy, so the bound here is loose on purpose: what matters is that
+       * something other than the photograph is visible on load.
+       */
+      expect(box.height, `${route} band fills the screen`).toBeLessThan(innerHeight)
+      expect(box.height, `${route} band is thinner than the 420px floor`).toBeGreaterThanOrEqual(
+        420,
+      )
+    }
 
     // The page's own h1 is inside the band, laid over the photograph.
     const h1 = page.getByRole('heading', { level: 1 })
@@ -300,7 +320,7 @@ test('every section page opens on a full-bleed photograph with its own title on 
     ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
 
     /*
-     * And it starts on the same vertical as the copy below it.
+     * Where the copy starts horizontally is the other half of the variant.
      *
      * The wordmark is the anchor because it is on every page and sits in the same
      * `mx-auto max-w-[1200px] px-6` container as every heading and paragraph in the body,
@@ -308,27 +328,51 @@ test('every section page opens on a full-bleed photograph with its own title on 
      * the overlay could carry the right utilities and still be pushed out of line by the
      * band around it.
      *
-     * Measured before this was fixed: the h1 began at x=40 at every width above 640px
-     * while the column began at 180 on a 1512px viewport, 144 at 1440 and 64 at 1280.
+     * The six `band` pages line up with it. The homepage deliberately does not — its copy
+     * belongs to the photograph, and at a 1280px viewport the measure would move it 24px
+     * further in. Both directions are asserted, because "out of line" is the intended
+     * state on exactly one page and a defect on the other six.
      */
     const wordmarkBox = (await page.locator('header a').first().boundingBox())!
-    expect(
-      Math.round(h1Box.x),
-      `${route} h1 is out of line with the content column`,
-    ).toBe(Math.round(wordmarkBox.x))
+    if (isScreen) {
+      // Hugging the edge of the photograph — 24px, or 40px from the `sm` breakpoint up —
+      // rather than sitting on the grid. Asserted as a bound rather than against the
+      // wordmark because the sign of that difference flips: the content column is flush at
+      // 24px up to a 1200px viewport and only passes 40px above 1232, where
+      // (viewport - 1200) / 2 + 24 exceeds the inset. Measured, the two coincide at 40px
+      // at 1231-1232.
+      //
+      // Which means this bound stops discriminating anywhere from 1024px to 1232px: in
+      // that window the column is at or below 40px too, and a hero that had been snapped
+      // back onto the measure would satisfy it. This loop runs at Playwright's default
+      // 1280x720, where the column is at 64px, so it discriminates by 24px. Do not
+      // retarget it into that window without changing the assertion.
+      expect(
+        Math.round(h1Box.x),
+        'the homepage h1 has left the edge of the photograph',
+      ).toBeLessThanOrEqual(40)
+    } else {
+      expect(
+        Math.round(h1Box.x),
+        `${route} h1 is out of line with the content column`,
+      ).toBe(Math.round(wordmarkBox.x))
+    }
   }
 })
 
-test('the hero copy lines up with the section copy below it, at every width', async ({
+test('a band page lines its hero copy up with the section copy below it, at every width', async ({
   page,
 }) => {
   // The wordmark is the anchor in the loop above; this is the other end of the same
   // claim, measured against body copy on the page rather than chrome, and at the widths
   // where the column is doing something different: centred with wide gutters, centred
-  // with narrow ones, and flush at the phone width where the two already agreed.
+  // with narrow ones, and flush at the phone width.
+  //
+  // /about rather than / — the homepage is the one page whose copy is deliberately NOT on
+  // the measure, and it gets the opposite assertion in the test below.
   for (const width of [1512, 1440, 1280, 1024, 768, 375]) {
     await page.setViewportSize({ width, height: 900 })
-    await page.goto('/')
+    await page.goto('/about')
 
     const x = await page.evaluate(() => {
       const at = (el: Element | null) => (el ? Math.round(el.getBoundingClientRect().x) : null)
@@ -354,35 +398,101 @@ test('the hero copy lines up with the section copy below it, at every width', as
   }
 })
 
-test('the hero clears the header on a narrow viewport too', async ({ page }) => {
-  // The defect only appeared below ~640px: the copy is bottom-aligned, so it climbs as it
-  // wraps, and three headline lines plus a four-line intro is enough to reach the header.
-  await page.setViewportSize({ width: 375, height: 812 })
-  await page.goto('/')
+test('the homepage keeps its copy on the photograph, not on the measure', async ({
+  page,
+}) => {
+  /*
+   * The explicit ask, and the reason it needs its own test: for a day the homepage copy
+   * was on the content measure like the other six, and putting it back is a change that
+   * only a measurement can confirm — the classes differ by three utilities and the page
+   * looks plausible either way.
+   *
+   * At 1512px the difference is 140px. Up to a 1200px viewport the measure is flush at
+   * 24px while the inset is 40px, so the two swap which is further in and coincide at 40px
+   * at 1231-1232; the assertion is written as "not the column" plus a bound on the inset
+   * rather than as a direction. The three widths here are all above that crossover, which
+   * is what makes the `not.toBe(column)` half meaningful.
+   */
+  for (const width of [1512, 1440, 1280]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/')
 
-  const headerBox = (await page.locator('header').boundingBox())!
-  // The eyebrow is the first line of copy, so it is the one that goes under the header.
-  const eyebrow = page.locator('[data-hero-overlay] p').first()
-  const eyebrowBox = (await eyebrow.boundingBox())!
+    const x = await page.evaluate(() => {
+      const at = (el: Element | null) => (el ? Math.round(el.getBoundingClientRect().x) : null)
+      return {
+        h1: at(document.querySelector('h1')),
+        firstLine: at(document.querySelector('[data-hero-overlay] p')),
+        column: at(document.querySelector('main h2')),
+      }
+    })
 
-  expect(eyebrowBox.y, 'the eyebrow renders under the overlaid header').toBeGreaterThanOrEqual(
-    headerBox.y + headerBox.height,
-  )
+    expect(x.column, `no section heading found at ${width}px`).not.toBeNull()
+    expect(x.h1, `the homepage h1 is on the content column at ${width}px`).not.toBe(x.column)
+    // 40px is `sm:p-10`, the inset from the edge of the photograph.
+    expect(x.h1, `the homepage h1 has left the photograph's edge at ${width}px`).toBe(40)
+    expect(x.firstLine, `the eyebrow disagrees with the h1 at ${width}px`).toBe(40)
+  }
 })
 
 /*
- * The hero fills the first screen, measured on the rendered page.
+ * The hero clears the overlaid header, on both shapes and at the narrow viewports where
+ * it does not.
+ *
+ * The original defect appeared below ~640px: the copy is bottom-aligned, so it climbs as
+ * it wraps, and at 375px the eyebrow began at y=62 while the header ran to y=68.
+ *
+ * The two shapes are nowhere near each other in how much of the `pt-24` reservation they
+ * actually need, which is why this runs on both. Measured clearance between the bottom of
+ * the header and the top of the eyebrow:
+ *
+ *   /        375px   363px    — `screen`, all the slack in the world
+ *   /about   375px    48px
+ *   /about   360px     28px   — the tightest on the site
+ *   /about   320px     28px
+ *
+ * Below 375px the band's overlay has grown past the 420px floor, so the box is exactly as
+ * tall as the copy and bottom-alignment leaves no slack at all: `pt-24` minus the header
+ * is the entire margin. Which means the vulnerable shape is `band` at a narrow viewport,
+ * and for a day this test covered only the homepage — verified: dropping the reservation
+ * to `pt-14` still clears the header at 1280px and at 375px, and only fails at 320px on a
+ * band page.
+ */
+for (const [route, width] of [
+  ['/', 375],
+  ['/about', 320],
+] as const) {
+  test(`the hero clears the header at ${width}px on ${route}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 812 })
+    await page.goto(route)
+
+    const headerBox = (await page.locator('header').boundingBox())!
+    // The eyebrow is the first line of copy, so it is the one that goes under the header.
+    const eyebrow = page.locator('[data-hero-overlay] p').first()
+    const eyebrowBox = (await eyebrow.boundingBox())!
+
+    expect(
+      eyebrowBox.y,
+      `the eyebrow renders under the overlaid header on ${route} at ${width}px`,
+    ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
+  })
+}
+
+/*
+ * The homepage hero fills the first screen, measured on the rendered page.
  *
  * A class assertion cannot see this: `min-h-svh` is one Tailwind utility away from
  * `min-h-[100vh]`, which looks identical in a unit test and identical on a desktop
  * browser, and differs only on a phone with an address bar. It also cannot see a parent
  * that constrains the band, or a scrollbar-versus-viewport discrepancy.
+ *
+ * Homepage only. The other six pages are asserted the other way in the loop above, and
+ * `/about` carries the band's own version of this below.
  */
 for (const viewport of [
   { name: 'desktop', width: 1280, height: 720 },
   { name: 'mobile', width: 375, height: 812 },
 ]) {
-  test(`the hero fills the first screen on ${viewport.name}, and the page scrolls`, async ({
+  test(`the homepage hero fills the first screen on ${viewport.name}, and the page scrolls`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height })
@@ -415,5 +525,31 @@ for (const viewport of [
     // "So you have to scroll down" — there has to be somewhere to scroll to.
     const scrollHeight = await page.evaluate(() => document.documentElement.scrollHeight)
     expect(scrollHeight, 'the page does not scroll').toBeGreaterThan(innerHeight)
+  })
+
+  test(`a band page shows its content below the photograph on ${viewport.name}`, async ({
+    page,
+  }) => {
+    /*
+     * The inverse, and the reason the six pages were reverted: at full screen a reader
+     * landing on /about saw a photograph and a title and nothing else, with the purpose,
+     * the four factors and the team all below the fold.
+     *
+     * Asserted as "something else is visible" rather than against a pixel height, because
+     * the band grows with its CMS copy: /about renders exactly 420px at 375px wide, 423px
+     * at 360px and 456px at 320px.
+     */
+    await page.setViewportSize({ width: viewport.width, height: viewport.height })
+    await page.goto('/about')
+
+    const innerHeight = await page.evaluate(() => window.innerHeight)
+    const band = page.locator('section[aria-roledescription="carousel"]').first()
+    const box = (await band.boundingBox())!
+
+    expect(box.height, 'the band fills the screen').toBeLessThan(innerHeight)
+
+    const nextSection = page.locator('section[aria-roledescription="carousel"] ~ *').first()
+    const nextBox = (await nextSection.boundingBox())!
+    expect(nextBox.y, 'nothing below the band is visible on load').toBeLessThan(innerHeight)
   })
 }
