@@ -18,9 +18,12 @@ import { SiteHeader } from '@/components/layout/SiteHeader'
  */
 const NAV_LABELS = ['Portfolio', 'Track Record', 'Insights', 'Partners', 'About']
 
+/** The header's call to action comes from siteSettings now, so the tests supply one. */
+const CTA = { label: 'Invest With Us', href: '/investors' }
+
 describe('SiteHeader on small viewports', () => {
   it('offers a menu button that starts collapsed', () => {
-    render(<SiteHeader agoraUrl="https://x.test" />)
+    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
     const button = screen.getByRole('button', { name: /menu/i })
     expect(button.getAttribute('aria-expanded')).toBe('false')
     expect(button.getAttribute('aria-controls')).toBe('site-nav')
@@ -28,7 +31,7 @@ describe('SiteHeader on small viewports', () => {
 
   it('expands and collapses on click', async () => {
     const user = userEvent.setup()
-    render(<SiteHeader agoraUrl="https://x.test" />)
+    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
     const button = screen.getByRole('button', { name: /menu/i })
 
     await user.click(button)
@@ -38,7 +41,7 @@ describe('SiteHeader on small viewports', () => {
   })
 
   it('hides the nav by default but always shows it from the md breakpoint up', () => {
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
     const nav = container.querySelector('#site-nav')!
     expect(nav.className).toContain('hidden')
     expect(nav.className).toContain('md:flex')
@@ -46,20 +49,20 @@ describe('SiteHeader on small viewports', () => {
 
   it('reveals the nav once expanded', async () => {
     const user = userEvent.setup()
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
     await user.click(screen.getByRole('button', { name: /menu/i }))
     const nav = container.querySelector('#site-nav')!
     expect(nav.className).not.toContain('hidden')
   })
 
   it('keeps the menu button itself off the desktop layout', () => {
-    render(<SiteHeader agoraUrl="https://x.test" />)
+    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
     expect(screen.getByRole('button', { name: /menu/i }).className).toContain('md:hidden')
   })
 
   it('renders every destination exactly once, including the two CTAs', () => {
-    render(<SiteHeader agoraUrl="https://x.test" />)
-    for (const label of [...NAV_LABELS, 'Investor Login', 'Get Started']) {
+    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
+    for (const label of [...NAV_LABELS, 'Investor Login', CTA.label]) {
       // getAllBy + length assertion rather than getBy: this is the duplicate-DOM
       // regression guard, and getBy would throw before it could be asserted on.
       expect(screen.getAllByRole('link', { name: label })).toHaveLength(1)

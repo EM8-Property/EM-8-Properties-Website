@@ -409,6 +409,79 @@ async function moveCtaBandToSettings(apply) {
   console.log('  cta band  done')
 }
 
+/**
+ * Fills `siteSettings.headerCta` — the dark button at the end of the top navigation.
+ *
+ * It was the literal "Get Started" in SiteHeader.tsx, pointing at a literal /investors:
+ * the last visible copy anywhere in the site chrome that needed a developer and a deploy
+ * to reword, after revision D4 moved every page's copy into Sanity.
+ *
+ * An ADDITION, so this is safe to apply before the code that reads it deploys — deployed
+ * code ignores fields it does not know about. It is also *required* to run first: the
+ * layout throws when either leaf is missing, so shipping the code ahead of this would
+ * fail the build on every route. See docs/deploys-and-migrations.md.
+ *
+ * Per leaf and `setIfMissing`, for the two reasons the rest of this file is: a headerCta
+ * holding a label and no href is a present object, so an object-level check would report
+ * "already has one" forever while the build failed on it; and the words belong to the
+ * team now, so this only ever fills a blank.
+ */
+async function backfillHeaderCta(apply) {
+  const existing = await query('*[_id=="siteSettings"][0].headerCta')
+
+  /*
+   * Absence of the document is reported rather than folded into "nothing to do". A
+   * missing siteSettings matches no filter, so keying on the field alone would print a
+   * clean dry run for a dataset the site cannot build against at all. The full run hides
+   * this because it patches siteSettings first; a scoped run does not.
+   */
+  const settingsExists = await query('count(*[_id=="siteSettings"])')
+  if (!settingsExists) {
+    throw new Error(
+      'headercta: no siteSettings document. Every page throws without one — create it ' +
+        'in the Studio first.',
+    )
+  }
+
+  const missing = ['label', 'href'].filter((leaf) => !existing?.[leaf])
+  if (missing.length === 0) {
+    console.log('  header cta  already set — left untouched')
+    return
+  }
+
+  console.log(
+    existing
+      ? `  header cta  filling ${missing.join(' and ')} on the existing object`
+      : `  header cta  seeding "${SITE_SETTINGS.headerCta.label}" -> ${SITE_SETTINGS.headerCta.href}`,
+  )
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: [
+        // The parent object first: a leaf path cannot be set inside an object that does
+        // not exist yet, and this is a no-op when it already does.
+        { patch: { id: 'siteSettings', setIfMissing: { headerCta: {} } } },
+        {
+          patch: {
+            id: 'siteSettings',
+            setIfMissing: {
+              'headerCta.label': SITE_SETTINGS.headerCta.label,
+              'headerCta.href': SITE_SETTINGS.headerCta.href,
+            },
+          },
+        },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`header cta backfill failed ${res.status}: ${await res.text()}`)
+  }
+  console.log('  header cta  backfilled')
+}
+
 async function seedCarouselIfEmpty(apply) {
   const existing = await query('*[_id=="siteSettings"][0].heroCarousel')
   if (Array.isArray(existing) && existing.length > 0) {
@@ -607,7 +680,7 @@ async function buildDocuments() {
 /**
  * The independently runnable steps, for `--only=`.
  *
- * Four of these are **additions**, and additions are safe to apply before the code that
+ * Five of these are **additions**, and additions are safe to apply before the code that
  * reads them deploys — deployed code ignores fields it does not know about.
  *
  * `cta` is not one of them, and the distinction matters more than the shared list makes it
@@ -622,6 +695,7 @@ const STEPS = {
   pages: seedPagesIfMissing,
   seo: backfillPageSeo,
   headings: backfillPageHeadings,
+  headercta: backfillHeaderCta,
   cta: moveCtaBandToSettings,
 }
 
@@ -670,6 +744,7 @@ async function main() {
     await seedPagesIfMissing(false)
     await backfillPageSeo(false)
     await backfillPageHeadings(false)
+    await backfillHeaderCta(false)
     await moveCtaBandToSettings(false)
     console.log('\nDry run complete. Nothing was written. Re-run with --apply.')
     return
@@ -705,6 +780,7 @@ async function main() {
   await seedPagesIfMissing(true)
   await backfillPageSeo(true)
   await backfillPageHeadings(true)
+  await backfillHeaderCta(true)
   await moveCtaBandToSettings(true)
   const body = await res.json()
   console.log(`\nWrote ${body.results?.length ?? 0} documents.`)

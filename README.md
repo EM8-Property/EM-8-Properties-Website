@@ -31,13 +31,13 @@ npm run dev                  # production dataset
 | `npm run dev` | Dev server against the `production` dataset |
 | `bash scripts/dev-preview.sh` | Dev server against `preview` — sample content for design review |
 | `npm run build` | Production build. **Fails if `siteSettings` is missing** — that is deliberate |
-| `npm test` | Unit suite (422 tests). Never touches the network |
+| `npm test` | Unit suite (431 tests). Never touches the network |
 | `npm run test:content` | Content gate against the live dataset. Run before any content release |
 | `npm run test:e2e` | Playwright. Set `E2E_BASE_URL` to run against a deployed URL |
 | `npm run lighthouse` | Lighthouse + resource budget against a running `npm start` |
 | `npm run typegen` | Regenerate Sanity types. **Run after every schema change** |
 | `node --env-file=.env.local scripts/migrate-content.mjs` | Re-write content from `scripts/content/em8-content.mjs`. Dry run; add `--apply` to write |
-| `… scripts/migrate-content.mjs --only=<step>` | Run **one** backfill: `carousel`, `pages`, `seo`, `headings`, `cta`. Prefer this after the initial load — see below |
+| `… scripts/migrate-content.mjs --only=<step>` | Run **one** backfill: `carousel`, `pages`, `seo`, `headings`, `headercta`, `cta`. Prefer this after the initial load — see below |
 | `bash scripts/deploy-studio.sh` | Redeploy the hosted Studio. **Run after every schema change** |
 
 ## Environment
@@ -66,7 +66,9 @@ Same project, same dataset, same schema, two front doors. Redeploy the hosted on
 `bash scripts/deploy-studio.sh` whenever the schema changes, or editors will be filling in
 a stale set of fields.
 
-`siteSettings` is a pinned singleton — one document, not creatable twice.
+`siteSettings` is a pinned singleton — one document, not creatable twice. It holds the
+two buttons in the site header — Investor Login and `headerCta`, the dark button beside it
+— so both can be reworded and re-aimed without a deploy.
 
 ## Non-negotiables
 

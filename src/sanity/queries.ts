@@ -114,6 +114,7 @@ export const CURRENT_OFFERINGS_QUERY = defineQuery(`
 export const SITE_SETTINGS_QUERY = defineQuery(
   `*[_type == "siteSettings"][0] {
     agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,
+    headerCta { label, href },
     ctaBand {
       heading { eyebrow, title, intro },
       submitLabel, successMessage, callTitle, callBody, callLabel

@@ -5,6 +5,7 @@ import {
   SOLD_PROPERTIES_QUERY,
   POST_BY_SLUG_QUERY,
   TESTIMONIALS_QUERY,
+  SITE_SETTINGS_QUERY,
 } from '@/sanity/queries'
 
 describe('GROQ queries', () => {
@@ -37,6 +38,13 @@ describe('GROQ queries', () => {
       expect(q).toContain('unitCount')
       expect(q).toContain('retailUnitCount')
     }
+  })
+
+  it('selects both leaves of the header button, not just the object', () => {
+    // A projection naming only `headerCta` would type as `unknown` and give the header
+    // nothing to render. Both fields are named, and named explicitly rather than through
+    // a fragment, because typegen only discovers queries written that way.
+    expect(SITE_SETTINGS_QUERY).toContain('headerCta { label, href }')
   })
 
   it('track record does not create a second set of property URLs', () => {

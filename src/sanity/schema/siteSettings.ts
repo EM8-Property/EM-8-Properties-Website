@@ -15,6 +15,28 @@ export const siteSettings = defineType({
       type: 'url',
       validation: (r) => r.required(),
     }),
+    /**
+     * The dark button at the end of the header, next to Investor Login.
+     *
+     * Sits beside `agoraPortalUrl` because the two are the header's only buttons and are
+     * read as a pair. It shipped as the literal "Get Started" pointing at a literal
+     * /investors — the last visible copy in the site chrome that still needed a developer
+     * and a deploy to reword, after revision D4 moved every page's copy into Sanity.
+     *
+     * `required()` here is a courtesy to the editor; the guard that matters is in
+     * `(site)/layout.tsx`, which throws per leaf, and the release gate is in
+     * content-integrity. Sanity's required() gates the Publish button and nothing else.
+     */
+    defineField({
+      name: 'headerCta',
+      title: 'Header button',
+      type: 'ctaLink',
+      description:
+        'The dark button at the end of the top navigation. Appears on every page, so keep ' +
+        'the label short — two or three words. It is the primary call to action for the ' +
+        'whole site.',
+      validation: (r) => r.required(),
+    }),
     defineField({ name: 'contactEmail', type: 'string', validation: (r) => r.required() }),
     defineField({
       name: 'bookACallUrl',

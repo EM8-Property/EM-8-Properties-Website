@@ -109,6 +109,29 @@ describe('testimonial schema', () => {
   })
 })
 
+describe('siteSettings schema', () => {
+  const settings = byName('siteSettings')
+
+  it('holds the header call to action, reusing the button block', () => {
+    // ctaLink rather than a bare string: the label and its destination are edited
+    // together, and reusing the block means the Studio shows the same two fields here as
+    // it does for every other button on the site.
+    const cta = field(settings, 'headerCta')
+    expect(cta).toBeDefined()
+    expect(cta.type).toBe('ctaLink')
+  })
+
+  it('makes it required, because the layout throws without it', () => {
+    // Studio-side only, as ever — the real guard is in (site)/layout.tsx and the release
+    // gate is in content-integrity. This is here so an editor is told before publishing
+    // rather than after the build fails.
+    expect(captureValidation(field(settings, 'headerCta').validation)).toContainEqual({
+      method: 'required',
+      arg: undefined,
+    })
+  })
+})
+
 describe('schema completeness', () => {
   it('registers every document type the site needs', () => {
     const names = schemaTypes.map((t: any) => t.name)

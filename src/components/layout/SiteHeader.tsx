@@ -36,7 +36,18 @@ const NAV = [
  */
 export const HEADER_SCRIM = 0.85
 
-export function SiteHeader({ agoraUrl }: { agoraUrl: string }) {
+/**
+ * The header's own call to action: its words and its destination, both from the CMS.
+ *
+ * It was the literal "Get Started" pointing at a literal /investors — the last visible
+ * copy in the site chrome that needed a developer and a deploy to reword, after revision
+ * D4 moved every page's copy into Sanity. The label and the href travel together because
+ * rewording a button usually means re-aiming it: "Invest With Us" and "Book a Call" do
+ * not want the same page, and splitting them would let one change without the other.
+ */
+export type HeaderCta = { label: string; href: string }
+
+export function SiteHeader({ agoraUrl, cta }: { agoraUrl: string; cta: HeaderCta }) {
   const [open, setOpen] = useState(false)
   /*
    * On the pages that open on a photograph, the header sits over it so the image runs to
@@ -111,11 +122,11 @@ export function SiteHeader({ agoraUrl }: { agoraUrl: string }) {
             Investor Login
           </a>
           <Link
-            href="/investors"
+            href={cta.href}
             onClick={() => setOpen(false)}
             className="rounded-control bg-ink px-3 py-1.5 font-semibold uppercase tracking-wide text-white"
           >
-            Get Started
+            {cta.label}
           </Link>
         </nav>
       </div>
