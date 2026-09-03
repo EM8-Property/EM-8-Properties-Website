@@ -15,6 +15,63 @@ export const siteSettings = defineType({
       type: 'url',
       validation: (r) => r.required(),
     }),
+    /**
+     * The dark button at the end of the header. The canonical account of this field.
+     *
+     * Sits beside `agoraPortalUrl` because the two are the header's only buttons and are
+     * read as a pair. It shipped as the literal "Get Started" pointing at a literal
+     * /investors, and it is now the only *label* in the site chrome the team can change
+     * without a developer.
+     *
+     * Not "the last hardcoded string in the chrome" — the five nav labels and the words
+     * "Investor Login" are still literals in SiteHeader.tsx, and deliberately: those
+     * name routes and a third-party product rather than carrying marketing copy, so
+     * changing them is a change to the site's structure, not to its wording. Only
+     * `agoraPortalUrl`, Investor Login's *destination*, was already in the CMS. This
+     * button is the one thing in the header that is copy, and copy belongs to the team.
+     *
+     * `required()` here is a courtesy to the editor; the guard that matters is in
+     * `(site)/layout.tsx`, which throws per leaf, and the release gate is in
+     * content-integrity. Sanity's required() gates the Publish button and nothing else.
+     */
+    defineField({
+      name: 'headerCta',
+      title: 'Header button',
+      type: 'ctaLink',
+      description:
+        'The dark button at the end of the top navigation. Appears on every page, so keep ' +
+        'the label short — two or three words. It is the primary call to action for the ' +
+        'whole site.',
+      /*
+       * 20, where ctaLink's own cap is 40.
+       *
+       * 40 is right for a button in a page body and wrong for this one: the header is a
+       * single flex-wrap row holding the wordmark, five nav links, Investor Login and
+       * this button, so the label is what decides how tall the header is. Measured on
+       * /about at the md breakpoint, which is the tightest:
+       *
+       *   768px   11 chars -> header 62px    14 -> 102px    39 -> 118px
+       *   820px   18 chars -> header 62px    21 -> 102px
+       *   900px   25 chars -> header 62px    39 -> 102px
+       *
+       * Nothing collides at any length the schema allows — even 39 chars leaves 45px
+       * between the header and the hero eyebrow — so this is a guardrail on the design,
+       * not on correctness. It keeps the header from going three rows deep on a tablet.
+       *
+       * A field-level rule, not a tighter max() on ctaLink: narrowing the shared block
+       * would move the cap on every other button on the site.
+       */
+      validation: (r) =>
+        r
+          .required()
+          // Typed here because `ctaLink` is a named object type, so Sanity resolves the
+          // rule's value to `{}` and the label is invisible to it.
+          .custom((v: { label?: string } | undefined) =>
+            !v?.label || v.label.length <= 20
+              ? true
+              : 'Keep the header button to 20 characters — it shares one row with the whole nav',
+          ),
+    }),
     defineField({ name: 'contactEmail', type: 'string', validation: (r) => r.required() }),
     defineField({
       name: 'bookACallUrl',

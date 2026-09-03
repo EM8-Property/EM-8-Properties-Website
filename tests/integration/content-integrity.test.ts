@@ -142,6 +142,41 @@ describe('published content', () => {
   })
 
   /**
+   * The header button, checked per leaf.
+   *
+   * `(site)/layout.tsx` throws when either field is empty, and that throw is in the
+   * layout — so it takes every page down at build time, not one route. Same blast radius
+   * as the `seo` and `heading` gates below, and the same reason to meet it here.
+   *
+   * Per leaf because a `headerCta` object with two null fields is still a truthy object.
+   * The shallow version of this check passes while the build fails.
+   */
+  it('has both leaves of the header button', async () => {
+    const settings = await client.fetch<{ label?: string; href?: string }[]>(
+      `*[_type == "siteSettings" && ${PUBLISHED}]{ "label": headerCta.label, "href": headerCta.href }`,
+    )
+    expect(settings).toHaveLength(1)
+    expect(
+      settings[0]?.label,
+      'siteSettings has no headerCta.label — the layout throws and next build fails',
+    ).toBeTruthy()
+    expect(
+      settings[0]?.href,
+      'siteSettings has no headerCta.href — the layout throws and next build fails',
+    ).toBeTruthy()
+
+    // The schema caps this at 20, but Sanity's validation is Studio-side only: it gates
+    // the Publish button and nothing written through Vision, the CLI or a script. The
+    // cap is a design guardrail rather than a correctness one — a long label wraps the
+    // header rather than breaking it — so this belongs on the release gate, not in a
+    // throw.
+    expect(
+      (settings[0]?.label ?? '').length,
+      'headerCta.label is longer than 20 characters — it will wrap the header on a tablet',
+    ).toBeLessThanOrEqual(20)
+  })
+
+  /**
    * Every page singleton needs a complete `seo` block, because `seoMetadata` throws
    * without one — and that throw happens during `next build`, so a single cleared field
    * in the Studio takes down the whole site's build, not just that route.

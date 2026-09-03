@@ -618,6 +618,13 @@ export const TESTIMONIALS = [
 export const SITE_SETTINGS = {
   contactEmail: 'info@em-8.com',
   bookACallUrl: 'https://calendar.app.google/mJNPKxULTGh8NMTq9',
+  /**
+   * The dark button at the end of the header. "Get Started" was the literal in the JSX.
+   *
+   * Backfilled by `--only=header-button`, per leaf and only where the leaf is blank, so
+   * once an editor has changed either field in the Studio the step leaves it alone.
+   */
+  headerCta: { label: 'Invest With Us', href: '/investors' },
 }
 
 /**

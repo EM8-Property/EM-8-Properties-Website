@@ -109,6 +109,59 @@ describe('testimonial schema', () => {
   })
 })
 
+describe('siteSettings schema', () => {
+  const settings = byName('siteSettings')
+
+  it('holds the header call to action, reusing the button block', () => {
+    // ctaLink rather than a bare string: the label and its destination are edited
+    // together, and reusing the block means the Studio shows the same two fields here as
+    // it does for every other button on the site.
+    const cta = field(settings, 'headerCta')
+    expect(cta).toBeDefined()
+    expect(cta.type).toBe('ctaLink')
+  })
+
+  it('caps the label shorter than ctaLink does, because it shares a row with the nav', () => {
+    /*
+     * ctaLink allows 40, which is right for a button in a page body and wrong here. The
+     * header is one flex-wrap row holding the wordmark, five nav links, Investor Login
+     * and this button, so the label decides how tall the header is. Measured on /about
+     * at the md breakpoint, where it is tightest:
+     *
+     *   768px   11 chars -> header 62px    14 -> 102px    39 -> 118px
+     *   820px   18 chars -> header 62px    21 -> 102px
+     *   900px   25 chars -> header 62px    39 -> 102px
+     *
+     * Nothing here collides — even 39 chars leaves 45px between the header and the hero
+     * eyebrow — so this is a design guardrail, not a correctness fix. It stops a header
+     * three rows deep on a tablet, and it gives the editor a live character counter at
+     * the length the design actually wants.
+     *
+     * A field-level custom rule rather than a tighter max on ctaLink: narrowing the
+     * shared block would move the cap on every other button on the site.
+     */
+    const rule = field(settings, 'headerCta').validation
+    const custom = captureValidation(rule).find((c) => c.method === 'custom')
+    expect(custom, 'headerCta has no length rule of its own').toBeDefined()
+
+    const check = custom!.arg as (v: unknown) => true | string
+    expect(check({ label: 'Invest With Us', href: '/investors' })).toBe(true)
+    expect(check({ label: 'Register Your Interest In Our Offerings', href: '/investors' })).toEqual(
+      expect.stringContaining('20'),
+    )
+  })
+
+  it('makes it required, because the layout throws without it', () => {
+    // Studio-side only, as ever — the real guard is in (site)/layout.tsx and the release
+    // gate is in content-integrity. This is here so an editor is told before publishing
+    // rather than after the build fails.
+    expect(captureValidation(field(settings, 'headerCta').validation)).toContainEqual({
+      method: 'required',
+      arg: undefined,
+    })
+  })
+})
+
 describe('schema completeness', () => {
   it('registers every document type the site needs', () => {
     const names = schemaTypes.map((t: any) => t.name)

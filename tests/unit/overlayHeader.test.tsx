@@ -22,9 +22,12 @@ beforeEach(() => {
  * put #1A1A1A on whatever happens to be behind it. A mostly-opaque white scrim keeps the
  * photo visible while holding the text at a contrast that cannot depend on the image.
  */
+/** The header's call to action comes from siteSettings now, so the tests supply one. */
+const CTA = { label: 'Invest With Us', href: '/investors' }
+
 describe('SiteHeader overlay', () => {
   it('overlays the page when the carousel is present', () => {
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
     expect(container.firstElementChild!.className).toMatch(/absolute|fixed/)
   })
 
@@ -44,7 +47,7 @@ describe('SiteHeader overlay', () => {
     ]) {
       cleanup()
       mockPath.mockReturnValue(path)
-      const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+      const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
       expect(
         container.firstElementChild!.className,
         `expected the header to overlay on ${path}`,
@@ -59,7 +62,7 @@ describe('SiteHeader overlay', () => {
     for (const path of ['/portfolio/oak-forest-k', '/insights/some-article']) {
       cleanup()
       mockPath.mockReturnValue(path)
-      const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+      const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
       const cls = container.firstElementChild!.className
       expect(cls, `expected normal flow on ${path}`).not.toMatch(/\babsolute\b/)
       expect(cls).toContain('border-b')
@@ -76,14 +79,14 @@ describe('SiteHeader overlay', () => {
   })
 
   it('still exposes every destination while overlaid', () => {
-    render(<SiteHeader agoraUrl="https://x.test" />)
+    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
     for (const label of ['Portfolio', 'Track Record', 'Insights', 'Partners', 'About']) {
       expect(screen.getByRole('link', { name: label })).toBeDefined()
     }
   })
 
   it('uses no physical-direction utilities', () => {
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" />)
+    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
     expect(container.innerHTML).not.toMatch(
       /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/,
     )

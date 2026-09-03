@@ -342,4 +342,24 @@ describe('migration payload — site settings', () => {
   it('carries a scheduling link over https', () => {
     expect(SITE_SETTINGS.bookACallUrl).toMatch(/^https:\/\//)
   })
+
+  it('seeds the header button with both leaves filled', () => {
+    // The layout throws on either one, and the migration only ever fills a blank — so a
+    // half-filled constant here is a build failure on the machine that runs the backfill.
+    expect(SITE_SETTINGS.headerCta.label).toBeTruthy()
+    expect(SITE_SETTINGS.headerCta.href).toBeTruthy()
+  })
+
+  it('points the header button at a path on this site rather than an external URL', () => {
+    // It renders through next/link, which is for in-app navigation. An https:// value
+    // would still resolve but would lose the client-side transition and the prefetch.
+    expect(SITE_SETTINGS.headerCta.href.startsWith('/')).toBe(true)
+  })
+
+  it('keeps the header label short enough for the nav row', () => {
+    // ctaLink caps a label at 40 characters, which is right for a button in a page
+    // body. This one shares one flex row with five nav links and Investor Login, and
+    // wraps the header at 375px well before 40. "Invest With Us" is 14.
+    expect(SITE_SETTINGS.headerCta.label.length).toBeLessThanOrEqual(20)
+  })
 })

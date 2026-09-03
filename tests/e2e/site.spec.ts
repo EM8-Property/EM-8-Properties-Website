@@ -1,8 +1,21 @@
 import { test, expect } from '@playwright/test'
 
+/*
+ * The headline is CMS copy, so this asserts the shape of the sentence rather than its
+ * exact wording.
+ *
+ * It pinned /choose to live in/i, matching the approved spec, and went red on 2026-09-03
+ * when the accent was edited in the Studio to "chose to live in" — confirmed with Hunter
+ * as intentional. A test that fails whenever someone rewords their own marketing copy is
+ * a test that trains people to ignore it, and what is worth protecting here is that the
+ * homepage still leads with the purpose at all: an <h1> about communities and living,
+ * rather than an empty one or a fallback.
+ */
 test('homepage leads with the purpose', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(/choose to live in/i)
+  const h1 = page.getByRole('heading', { level: 1 })
+  await expect(h1).toContainText(/creating communities/i)
+  await expect(h1).toContainText(/to live in/i)
 })
 
 /*
@@ -74,7 +87,17 @@ test('an insights article resolves and carries share metadata', async ({ page })
   test.skip((await articles.count()) === 0, 'no posts published yet — enter content (Task 15)')
 
   await articles.first().click()
-  await expect(page).toHaveURL(/\/insights\/[a-z0-9-]+$/)
+  /*
+   * Case-insensitive, deliberately.
+   *
+   * Property slugs are all lowercase and their own test keeps the stricter pattern.
+   * Two articles published on 2026-09-03 carry capitals — NITA-case-for-TOD and
+   * EM8-the-Boulevard — and Hunter confirmed he wants them that way, both being
+   * acronyms that read wrong lowercased. What this assertion is for is that the feed
+   * links to a real article route rather than to a hash, a query string or an absolute
+   * URL, and that survives the relaxation.
+   */
+  await expect(page).toHaveURL(/\/insights\/[A-Za-z0-9-]+$/)
   // og:title is not synthesised from <title> by Next — this asserts it is set explicitly.
   await expect(page.locator('meta[property="og:title"]')).toHaveCount(1)
   // metadataBase must resolve the generated share card to an absolute, non-localhost URL.
@@ -95,6 +118,35 @@ test('track record links back to canonical property URLs, not its own', async ({
   }
   // No property may be addressable under /track-record/.
   await expect(page.locator('a[href^="/track-record/"]')).toHaveCount(0)
+})
+
+/*
+ * The header button renders the CMS record, on a real build against the real dataset.
+ *
+ * The unit suite proves the component renders whatever it is handed; this proves the
+ * chain that hands it to it — schema, GROQ projection, the layout's guard, the prop —
+ * survives a production build. Nothing else in the suite covers that: the build succeeds
+ * either way, and a projection that silently returned null would render the guard's
+ * throw, not a wrong label.
+ *
+ * Asserted as "not the old literal, and a non-empty label pointing somewhere" rather
+ * than as the exact words, because the words are now editable and the point of this
+ * change is that changing them needs no code. "Get Started" is worth naming explicitly:
+ * that string coming back means the deployed build predates this, which is exactly the
+ * question you ask after triggering a Railway deploy.
+ */
+test('the header button comes from the CMS, not from a literal', async ({ page }) => {
+  await page.goto('/')
+  const cta = page.locator('#site-nav a').last()
+
+  const label = (await cta.innerText()).trim()
+  expect(label.length, 'the header button rendered with no words in it').toBeGreaterThan(0)
+  expect(label, 'the header still shows the hardcoded label — is the deploy stale?').not.toMatch(
+    /get started/i,
+  )
+
+  const href = await cta.getAttribute('href')
+  expect(href, 'the header button points nowhere').toBeTruthy()
 })
 
 test('Investor Login points off-site to Agora', async ({ page }) => {

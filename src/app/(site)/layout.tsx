@@ -30,17 +30,27 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   // page rendering `SectionHeading` with no props: an empty <h2> above a bare email box.
   // That is exactly the headless band this was moved to siteSettings to fix, silently
   // reinstated on every page instead of eleven.
+  //
+  // `headerCta` is checked the same way and for a sharper version of the same reason: an
+  // empty label renders the header's only call to action as a dark rounded box with no
+  // words in it, on every page, and nothing in the build, the tests, lint or Lighthouse
+  // sees a button with no text. Both leaves are checked, because a `headerCta` object
+  // whose two fields are null still projects to a truthy object — checking the parent
+  // would wave that straight through.
   if (
     !settings?.agoraPortalUrl ||
     !settings?.disclaimer ||
     !settings?.contactEmail ||
+    !settings?.headerCta?.label ||
+    !settings?.headerCta?.href ||
     !settings?.ctaBand?.heading?.title ||
     !settings?.ctaBand?.submitLabel
   ) {
     throw new Error(
       'siteSettings is missing or incomplete. Publish a siteSettings document with ' +
-        'agoraPortalUrl, contactEmail, disclaimer and a complete ctaBand set — at ' +
-        '/studio, or at https://em-8-properties.sanity.studio',
+        'agoraPortalUrl, contactEmail, disclaimer, a headerCta with both a label and a ' +
+        'destination, and a complete ctaBand set — at /studio, or at ' +
+        'https://em-8-properties.sanity.studio',
     )
   }
 
@@ -72,7 +82,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         the div takes the header's height and the page follows beneath it as before.
       */}
       <div className="relative">
-        <SiteHeader agoraUrl={settings.agoraPortalUrl} />
+        <SiteHeader
+          agoraUrl={settings.agoraPortalUrl}
+          cta={{ label: settings.headerCta.label, href: settings.headerCta.href }}
+        />
       </div>
       <main className="flex-1">{children}</main>
       <SiteFooter disclaimer={settings.disclaimer} contactEmail={settings.contactEmail} />
