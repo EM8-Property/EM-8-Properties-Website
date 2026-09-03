@@ -107,6 +107,32 @@ describe('testimonial schema', () => {
     expect(consent.type).toBe('boolean')
     expect(consent.initialValue).toBe(false)
   })
+
+  it('refuses to publish one without consent, rather than letting the query hide it', () => {
+    /*
+     * `required()` on a boolean is not this check. It rejects null and undefined and
+     * accepts `false` — which is the default — so on its own it permits exactly the
+     * mistake that matters.
+     *
+     * And the mistake is silent everywhere else. TESTIMONIALS_QUERY filters on
+     * `consentOnRecord == true`, so an unconsented testimonial publishes cleanly,
+     * validates, reports success, and then simply never appears, on any page, with no
+     * message anywhere. That happened on 2026-09-03 to a real, wanted testimonial. The
+     * release gate does catch it, but only when someone runs `npm run test:content`,
+     * which is a release step and not an edit step.
+     *
+     * So the refusal belongs at the moment of the mistake. The consent box is the one
+     * field where the honest default is "no" and the Studio should say so out loud.
+     */
+    const rule = field(byName('testimonial'), 'consentOnRecord').validation
+    const custom = captureValidation(rule).find((c) => c.method === 'custom')
+    expect(custom, 'consentOnRecord has no rule that actually requires true').toBeDefined()
+
+    const check = custom!.arg as (v: unknown) => true | string
+    expect(check(true)).toBe(true)
+    expect(check(false)).toEqual(expect.stringContaining('consent'))
+    expect(check(undefined)).toEqual(expect.stringContaining('consent'))
+  })
 })
 
 describe('siteSettings schema', () => {

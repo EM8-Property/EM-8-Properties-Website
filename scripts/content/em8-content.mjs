@@ -611,6 +611,27 @@ export const TESTIMONIALS = [
 ]
 
 /**
+ * Which sample drafts the migration is still allowed to write.
+ *
+ * A sample draft on an empty dataset is a helpful thing to practise on. The same draft
+ * written over a published testimonial someone has already replaced with real words is
+ * actively harmful — and harmful in a shape nothing catches: the published document is
+ * untouched, so the site keeps rendering the real testimonial and the build, the tests,
+ * lint, Lighthouse and the deployed page are all unaffected. But the Studio shows the
+ * draft when one exists, so the person who wrote the real testimonial opens it and finds
+ * placeholder scaffolding. That is what happened between 2026-08-31 and 2026-09-03.
+ *
+ * Matched on the sample ids only, so a real testimonial written from scratch in the
+ * Studio — which gets a generated id — never suppresses a sample it has nothing to do
+ * with.
+ *
+ * @param {Set<string>} publishedIds ids of testimonials already published in the dataset
+ */
+export function sampleTestimonialDrafts(publishedIds) {
+  return TESTIMONIALS.filter((t) => !publishedIds.has(t._id))
+}
+
+/**
  * The singleton. `contactEmail` moved from hunter@ to info@ so the address on the site
  * belongs to the company rather than a person, and it now actually renders — the footer
  * queried this field and then displayed nothing.

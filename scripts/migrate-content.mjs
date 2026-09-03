@@ -27,6 +27,7 @@ import {
   POSTS,
   TESTIMONIALS,
   SITE_SETTINGS,
+  sampleTestimonialDrafts,
   PAGE_COPY,
   PAGE_SEO,
   CTA_BAND,
@@ -648,7 +649,8 @@ async function buildDocuments() {
   }
 
   /**
-   * Testimonials are written as DRAFTS, on purpose.
+   * Testimonials are written as DRAFTS, on purpose — and only while nobody has published
+   * over them.
    *
    * These are samples to practise editing against, not investors. Spec §11 requires
    * written consent before publishing any investor's name, so `consentOnRecord` stays
@@ -656,11 +658,28 @@ async function buildDocuments() {
    * way. The draft prefix is the second layer: the release gate inspects published
    * documents only, so a sample never has to be explained to it.
    *
+   * The skip is the part that was missing, and it cost three days of a real testimonial
+   * looking broken. `createOrReplace` on `drafts.testimonial-sample-1` does not touch
+   * the published document — so when someone had already replaced that published
+   * document with their own words, this wrote placeholder scaffolding on top of it in the
+   * Studio while the site went on rendering the real thing. Nothing anywhere reported it:
+   * not the build, the tests, lint, Lighthouse, or the deployed page. Only the Studio
+   * showed it, to the one person who had written the testimonial.
+   *
    * To use one: replace the quote and attribution with the real investor's words, tick
    * the consent box once the written permission is genuinely on file, and publish. The
    * homepage and /investors sections appear by themselves once a consented one exists.
    */
+  const publishedTestimonials = new Set(
+    (await query(`*[_type == "testimonial" && !(_id in path("drafts.**"))]._id`)) ?? [],
+  )
+  const samples = sampleTestimonialDrafts(publishedTestimonials)
   for (const t of TESTIMONIALS) {
+    if (!samples.includes(t)) {
+      console.log(`  skip      testimonial ${t._id} — already published over, leaving it alone`)
+    }
+  }
+  for (const t of samples) {
     console.log(`  draft     testimonial ${t.attribution}`)
     docs.push({
       _id: `drafts.${t._id}`,

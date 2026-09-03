@@ -11,6 +11,7 @@ import {
   POSTS,
   TESTIMONIALS,
   SITE_SETTINGS,
+  sampleTestimonialDrafts,
   portable,
   PAGE_COPY,
   PAGE_SEO,
@@ -361,5 +362,45 @@ describe('migration payload — site settings', () => {
     // body. This one shares one flex row with five nav links and Investor Login, and
     // wraps the header at 375px well before 40. "Invest With Us" is 14.
     expect(SITE_SETTINGS.headerCta.label.length).toBeLessThanOrEqual(20)
+  })
+})
+
+/**
+ * The sample testimonial drafts, and when they must NOT be written.
+ *
+ * They exist to be practised on, and they are written to `drafts.testimonial-sample-N`
+ * so the release gate never sees an unconsented published document. That is fine on an
+ * empty dataset and harmful afterwards: once someone has replaced the *published*
+ * document with a real testimonial, seeding a placeholder draft on top of it is what the
+ * Studio then shows them. Their own words are still live on the site and still in the
+ * dataset, so nothing is lost and nothing looks wrong — the build, the tests, lint,
+ * Lighthouse and the deployed page are all completely unaffected. It is only visible by
+ * opening the Studio, which is exactly why it went unnoticed from 2026-08-31 to
+ * 2026-09-03.
+ */
+describe('migration payload — sample testimonial drafts', () => {
+  it('seeds both when nothing has been published over them', () => {
+    expect(sampleTestimonialDrafts(new Set()).map((t) => t._id)).toEqual([
+      'testimonial-sample-1',
+      'testimonial-sample-2',
+    ])
+  })
+
+  it('skips the one whose published document already holds real content', () => {
+    expect(sampleTestimonialDrafts(new Set(['testimonial-sample-1'])).map((t) => t._id)).toEqual([
+      'testimonial-sample-2',
+    ])
+  })
+
+  it('writes nothing once both have been replaced', () => {
+    const published = new Set(['testimonial-sample-1', 'testimonial-sample-2'])
+    expect(sampleTestimonialDrafts(published)).toEqual([])
+  })
+
+  it('ignores an unrelated published testimonial', () => {
+    // A real testimonial written from scratch in the Studio gets a generated id, which
+    // has nothing to do with the sample ids and must not suppress the samples.
+    const published = new Set(['91c23bf9-f790-43aa-8948-b88b3310ee64'])
+    expect(sampleTestimonialDrafts(published)).toHaveLength(2)
   })
 })
