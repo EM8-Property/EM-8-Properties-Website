@@ -412,47 +412,69 @@ async function moveCtaBandToSettings(apply) {
 /**
  * Fills `siteSettings.headerCta` — the dark button at the end of the top navigation.
  *
- * It was the literal "Get Started" in SiteHeader.tsx, pointing at a literal /investors:
- * the last visible copy anywhere in the site chrome that needed a developer and a deploy
- * to reword, after revision D4 moved every page's copy into Sanity.
+ * It was the literal "Get Started" in SiteHeader.tsx, pointing at a literal /investors.
+ * Why it moved is on the field itself, in src/sanity/schema/siteSettings.ts.
  *
  * An ADDITION, so this is safe to apply before the code that reads it deploys — deployed
  * code ignores fields it does not know about. It is also *required* to run first: the
  * layout throws when either leaf is missing, so shipping the code ahead of this would
  * fail the build on every route. See docs/deploys-and-migrations.md.
  *
- * Per leaf and `setIfMissing`, for the two reasons the rest of this file is: a headerCta
- * holding a label and no href is a present object, so an object-level check would report
- * "already has one" forever while the build failed on it; and the words belong to the
- * team now, so this only ever fills a blank.
+ * Per leaf, for the reason the rest of this file is: a headerCta holding a label and no
+ * href is a present object, so an object-level check would report "already has one"
+ * forever while the build failed on it. And only ever on a blank leaf — the words belong
+ * to the team once they have typed them.
  */
 async function backfillHeaderCta(apply) {
-  const existing = await query('*[_id=="siteSettings"][0].headerCta')
-
   /*
-   * Absence of the document is reported rather than folded into "nothing to do". A
-   * missing siteSettings matches no filter, so keying on the field alone would print a
-   * clean dry run for a dataset the site cannot build against at all. The full run hides
-   * this because it patches siteSettings first; a scoped run does not.
+   * One query, and the document itself rather than the field.
+   *
+   * `[0]{ headerCta }` returns `null` for a missing document and `{ headerCta: null }`
+   * for a present one with the field empty, which separates the two cases that need
+   * separating without a second round trip.
+   *
+   * Absence of the document is reported rather than folded into "nothing to do": it
+   * matches no filter, so keying on the field alone would print a clean dry run for a
+   * dataset the site cannot build against at all. The full run hides this because it
+   * patches siteSettings before this step; a scoped run does not.
    */
-  const settingsExists = await query('count(*[_id=="siteSettings"])')
-  if (!settingsExists) {
+  const doc = await query('*[_id=="siteSettings"][0]{ headerCta }')
+  if (!doc) {
     throw new Error(
-      'headercta: no siteSettings document. Every page throws without one — create it ' +
-        'in the Studio first.',
+      'header-button: no siteSettings document. Every page throws without one — create ' +
+        'it in the Studio first.',
     )
   }
+  const existing = doc.headerCta
 
-  const missing = ['label', 'href'].filter((leaf) => !existing?.[leaf])
-  if (missing.length === 0) {
-    console.log('  header cta  already set — left untouched')
+  /*
+   * `set` on the blank leaves, not `setIfMissing` on both.
+   *
+   * The check below is falsiness, because falsiness is what the layout throws on — and
+   * `setIfMissing` keys on *absence*. An empty string is falsy but present, so pairing
+   * the two would report "filling label", write nothing, print "backfilled", and say the
+   * same thing on every future run while the build stayed broken on that empty string.
+   * A migration that claims to have repaired something it did not is worse than one that
+   * does nothing, which is the whole lesson of the setIfMissing-on-an-object note in
+   * docs/deploys-and-migrations.md, one level further down.
+   *
+   * Scoped to the blank leaves so the guarantee that matters holds: a leaf an editor has
+   * actually filled is never touched, whatever state its sibling is in.
+   */
+  const fill = {}
+  for (const leaf of ['label', 'href']) {
+    if (!existing?.[leaf]) fill[`headerCta.${leaf}`] = SITE_SETTINGS.headerCta[leaf]
+  }
+
+  if (Object.keys(fill).length === 0) {
+    console.log('  header button  already set — left untouched')
     return
   }
 
   console.log(
     existing
-      ? `  header cta  filling ${missing.join(' and ')} on the existing object`
-      : `  header cta  seeding "${SITE_SETTINGS.headerCta.label}" -> ${SITE_SETTINGS.headerCta.href}`,
+      ? `  header button  filling ${Object.keys(fill).join(' and ')} on the existing object`
+      : `  header button  seeding "${SITE_SETTINGS.headerCta.label}" -> ${SITE_SETTINGS.headerCta.href}`,
   )
   if (!apply) return
 
@@ -464,22 +486,14 @@ async function backfillHeaderCta(apply) {
         // The parent object first: a leaf path cannot be set inside an object that does
         // not exist yet, and this is a no-op when it already does.
         { patch: { id: 'siteSettings', setIfMissing: { headerCta: {} } } },
-        {
-          patch: {
-            id: 'siteSettings',
-            setIfMissing: {
-              'headerCta.label': SITE_SETTINGS.headerCta.label,
-              'headerCta.href': SITE_SETTINGS.headerCta.href,
-            },
-          },
-        },
+        { patch: { id: 'siteSettings', set: fill } },
       ],
     }),
   })
   if (!res.ok) {
-    throw new Error(`header cta backfill failed ${res.status}: ${await res.text()}`)
+    throw new Error(`header button backfill failed ${res.status}: ${await res.text()}`)
   }
-  console.log('  header cta  backfilled')
+  console.log('  header button  backfilled')
 }
 
 async function seedCarouselIfEmpty(apply) {
@@ -695,7 +709,7 @@ const STEPS = {
   pages: seedPagesIfMissing,
   seo: backfillPageSeo,
   headings: backfillPageHeadings,
-  headercta: backfillHeaderCta,
+  'header-button': backfillHeaderCta,
   cta: moveCtaBandToSettings,
 }
 
@@ -762,7 +776,9 @@ async function main() {
    *
    * The singleton also holds the disclaimer and the Agora portal URL — the disclaimer is
    * pending securities counsel and the portal URL is the Investor Login destination.
-   * createOrReplace would drop both, so only the two fields this migration owns are set.
+   * createOrReplace would drop both, so only the fields this migration owns are set —
+   * and note that `set`, unlike the scoped `--only=header-button` path, does overwrite
+   * an editor's headerCta wording. That is what an unscoped --apply means.
    */
   const settingsRes = await fetch(`${API}/data/mutate/${dataset}`, {
     method: 'POST',

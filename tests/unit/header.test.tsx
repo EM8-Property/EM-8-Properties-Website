@@ -5,12 +5,9 @@ import { SiteHeader } from '@/components/layout/SiteHeader'
 const PHYSICAL = /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/
 
 /**
- * The one call to action in the site chrome, so its words belong in the CMS.
- *
- * It shipped as the literal "Get Started" — the last piece of visible copy anywhere in
- * the chrome that needed a developer and a deploy to reword, after revision D4 moved
- * every page's copy into Sanity. It is also the header's only conversion path, which
- * makes it the copy most likely to be reworded.
+ * The header's only editable label, and its only conversion path — which is what makes
+ * it the copy most likely to be reworded. The nav labels and "Investor Login" stay
+ * literals on purpose; see `headerCta` in src/sanity/schema/siteSettings.ts.
  */
 const CTA = { label: 'Invest With Us', href: '/investors' }
 

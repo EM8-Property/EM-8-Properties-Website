@@ -164,6 +164,16 @@ describe('published content', () => {
       settings[0]?.href,
       'siteSettings has no headerCta.href — the layout throws and next build fails',
     ).toBeTruthy()
+
+    // The schema caps this at 20, but Sanity's validation is Studio-side only: it gates
+    // the Publish button and nothing written through Vision, the CLI or a script. The
+    // cap is a design guardrail rather than a correctness one — a long label wraps the
+    // header rather than breaking it — so this belongs on the release gate, not in a
+    // throw.
+    expect(
+      (settings[0]?.label ?? '').length,
+      'headerCta.label is longer than 20 characters — it will wrap the header on a tablet',
+    ).toBeLessThanOrEqual(20)
   })
 
   /**

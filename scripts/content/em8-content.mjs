@@ -619,14 +619,10 @@ export const SITE_SETTINGS = {
   contactEmail: 'info@em-8.com',
   bookACallUrl: 'https://calendar.app.google/mJNPKxULTGh8NMTq9',
   /**
-   * The dark button at the end of the header.
+   * The dark button at the end of the header. "Get Started" was the literal in the JSX.
    *
-   * "Get Started" was the literal in the JSX; "Invest With Us" is what it says now, and
-   * saying it in the CMS is the point — this was the last piece of visible copy in the
-   * site chrome that needed a developer to reword.
-   *
-   * Backfilled by `--only=headercta`, per leaf, with setIfMissing: once an editor has
-   * changed either field in the Studio, re-running the step leaves it alone.
+   * Backfilled by `--only=header-button`, per leaf and only where the leaf is blank, so
+   * once an editor has changed either field in the Studio the step leaves it alone.
    */
   headerCta: { label: 'Invest With Us', href: '/investors' },
 }

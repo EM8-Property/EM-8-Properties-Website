@@ -39,11 +39,13 @@ export const HEADER_SCRIM = 0.85
 /**
  * The header's own call to action: its words and its destination, both from the CMS.
  *
- * It was the literal "Get Started" pointing at a literal /investors — the last visible
- * copy in the site chrome that needed a developer and a deploy to reword, after revision
- * D4 moved every page's copy into Sanity. The label and the href travel together because
- * rewording a button usually means re-aiming it: "Invest With Us" and "Book a Call" do
- * not want the same page, and splitting them would let one change without the other.
+ * The label and the href travel together because rewording a button usually means
+ * re-aiming it — "Invest With Us" and "Book a Call" do not want the same page — and
+ * splitting them into two props would let one change without the other.
+ *
+ * The nav labels above and the words "Investor Login" below are still literals, which is
+ * the intended split: they name routes and a third-party product, not copy. Why this one
+ * is different is written out on `headerCta` in src/sanity/schema/siteSettings.ts.
  */
 export type HeaderCta = { label: string; href: string }
 
