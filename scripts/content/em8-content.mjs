@@ -611,6 +611,75 @@ export const TESTIMONIALS = [
 ]
 
 /**
+ * Which sample testimonials the migration is still allowed to seed.
+ *
+ * A sample draft on an empty dataset is a useful thing to practise on. The same draft
+ * written over anything that already exists at that id is destructive, and the write is a
+ * `createOrReplace`, so there are three cases and they are not equally bad:
+ *
+ *   1. The PUBLISHED document holds a real testimonial. Seeding the draft lays
+ *      placeholder text over it in the Studio while the site keeps rendering the real
+ *      thing. Cosmetic — nothing is lost — but invisible to the build, the tests, lint,
+ *      Lighthouse, the release gate and the deployed page, which is how it went unnoticed
+ *      from 2026-08-31 to 2026-09-03.
+ *   2. The testimonial was UNPUBLISHED. Sanity's unpublish moves the document to
+ *      `drafts.` and deletes the published one, so the draft is the only copy there is.
+ *      Seeding over it destroys a real testimonial.
+ *   3. An editor is part-way through the draft, which is exactly what this seed's own
+ *      instructions tell them to do, and has not published yet. Seeding replaces their
+ *      work.
+ *
+ * So the question is "does anything exist at this id, in either form?" — not "has anyone
+ * published over it?". The first version of this guard asked only the narrower question
+ * and therefore closed only case 1, leaving two paths that lose content rather than merely
+ * shadowing it.
+ *
+ * Matched on the sample ids alone, so a real testimonial written from scratch in the
+ * Studio — which gets a generated id — never suppresses a sample it has nothing to do
+ * with.
+ *
+ * @param {Set<string>} existingIds every testimonial id in the dataset, drafts included,
+ *   exactly as stored — so `testimonial-sample-1` and `drafts.testimonial-sample-1` are
+ *   two different members and either one is enough to skip the sample.
+ */
+export function samplesToSeed(existingIds) {
+  return TESTIMONIALS.filter(
+    (t) => !existingIds.has(t._id) && !existingIds.has(`drafts.${t._id}`),
+  )
+}
+
+/** The attribution every seeded sample carries, and the only reliable way to spot one. */
+const SEED_ATTRIBUTION = 'Sample entry — replace with a real name'
+
+/**
+ * Seed drafts sitting on top of a published testimonial — the fault this whole guard
+ * exists to prevent, detected after the fact.
+ *
+ * The release gate excludes drafts on purpose: failing a release because somebody is
+ * mid-edit would be wrong. But one draft is never legitimate, and it is this one — the
+ * seed's own scaffolding shadowing a published testimonial. That is not a person editing;
+ * it is a migration having replaced what the Studio shows them, while the site goes on
+ * rendering the real thing and every other check stays green.
+ *
+ * Deliberately narrow. It matches the seed's exact attribution rather than anything
+ * vaguer, so an editor part-way through rewriting a live testimonial — a normal thing to
+ * do, and indistinguishable by id alone — does not fail a release.
+ *
+ * @param {string[]} publishedIds ids of published testimonials
+ * @param {{_id: string, attribution?: string}[]} drafts draft testimonials, `drafts.`-prefixed
+ * @returns {string[]} the ids of drafts that should not exist
+ */
+export function shadowingSeedDrafts(publishedIds, drafts) {
+  const published = new Set(publishedIds)
+  return drafts
+    .filter(
+      (d) =>
+        d.attribution === SEED_ATTRIBUTION && published.has(d._id.replace(/^drafts./, '')),
+    )
+    .map((d) => d._id)
+}
+
+/**
  * The singleton. `contactEmail` moved from hunter@ to info@ so the address on the site
  * belongs to the company rather than a person, and it now actually renders — the footer
  * queried this field and then displayed nothing.

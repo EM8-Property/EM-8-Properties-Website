@@ -116,6 +116,71 @@ A pre-deploy check belongs in `tests/integration/content-integrity.test.ts`, whi
 the live dataset. That turns "the build will fail at deploy time" into "the release gate
 failed", which is a much better place to meet it.
 
+### And on a boolean it is weaker still
+
+`required()` on a boolean rejects `null` and `undefined` and **accepts `false`**. So on a
+field whose `initialValue` is `false`, it permits the untouched default — which is
+usually the exact value you were trying to prevent.
+
+That is what happened to `testimonial.consentOnRecord` on 2026-09-03. The field carried
+`required()`, looked gated, and was not: a real testimonial published with consent
+unticked, validated, reported success, and then appeared on no page at all, because
+`TESTIMONIALS_QUERY` filters on `consentOnRecord == true`. No error, no warning, no
+rendered fallback — just absence. The release gate caught it, which is that gate working
+correctly, but a release gate meets the mistake days after the edit that caused it.
+
+If a field must hold a *particular* value rather than merely some value, `required()` is
+not the rule. `.custom()` is, and its message is the only place the editor will ever be
+told why. It still only binds the Studio — see the top of this section — so the query
+filter and the content gate remain the things that actually protect the site.
+
+---
+
+## A draft can hide a published document without touching it
+
+Sanity's Studio shows the **draft** of a document whenever one exists. A mutation that
+writes `drafts.<id>` therefore changes what an editor sees while leaving the published
+document — the one the site renders — completely alone.
+
+That combination defeats every check this project has. On 2026-08-31 the content
+migration seeded its two sample testimonials to `drafts.testimonial-sample-1` and `-2`,
+as it is designed to. But the *published* documents of those ids had already been
+replaced with real testimonials, so the effect was placeholder scaffolding laid over
+somebody's real work in the editing surface. The site kept rendering the real
+testimonials. `next build`, the unit suite, ESLint, Lighthouse, the release gate and the
+deployed pages were all unaffected and all green. It was visible only by opening that
+document in the Studio, and it sat there for three days.
+
+Two things follow:
+
+1. **Never seed a sample over an id that already has a published document.**
+   `samplesToSeed(existingIds)` in `scripts/content/em8-content.mjs` is that guard, and
+   `buildDocuments` consults it. **The predicate has to ask "does anything exist at this
+   id, in either form?" and not "has anyone published over it?"** — an unpublished
+   document lives only under `drafts.`, and so does one an editor has started and not
+   published, and `createOrReplace` destroys either. Those two paths lose content, where
+   the shadowing case merely hides it. The sample documents are also written with
+   `createIfNotExists` rather than `createOrReplace`, so the gap between the check and
+   the write cannot be raced — the same pairing `seedPagesIfMissing` uses.
+2. **When someone reports that the CMS is showing them the wrong content, query for
+   drafts before anything else:**
+
+   ```groq
+   *[_id in path("drafts.**")]{ _id, _type, _updatedAt }
+   ```
+
+   A draft nobody remembers creating is the likeliest explanation, and it is invisible
+   from every other direction.
+3. **There is now one automated backstop, and it is the only one.**
+   `shadowingSeedDrafts` in the content module finds seed scaffolding sitting on top of a
+   published testimonial, and `content-integrity` runs it against the live dataset. It is
+   the only check in that file that looks at drafts at all — every other one is scoped to
+   published documents, because failing a release while somebody is mid-edit would be
+   wrong. It matches the seed's exact attribution string for the same reason: an editor
+   genuinely rewriting a live testimonial is indistinguishable by id alone and must not
+   trip it. Replayed against the state that existed on 2026-08-31, it fires on both
+   drafts.
+
 ---
 
 ## `setIfMissing` on an object is all-or-nothing
@@ -137,6 +202,23 @@ field granularity rather than object granularity, and makes the migration *repai
 rather than merely idempotent. Both `backfillPageSeo` and `moveCtaBandToSettings` work this
 way, and it is worth verifying against the real dataset by breaking one field deliberately
 and watching the migration put it back while leaving a customised sibling alone.
+
+### It keys on absence at leaf level too, which is not the same as falsiness
+
+The same trap one level down: `setIfMissing: { 'headerCta.label': … }` fills the path when
+it is **absent** and does nothing when it holds `''`. An empty string is falsy but
+present.
+
+So a step that decides what is missing by falsiness — which is what the code guards throw
+on — and then writes it with `setIfMissing` will report "filling label", write nothing,
+print "backfilled", and say the same thing on every future run while the build stays broken
+on that empty string. A migration that claims a repair it did not make is worse than one
+that does nothing, because it is believed.
+
+Match the predicate to the mutation. Either push the check into GROQ as `!defined(...)`,
+which is what `backfillPageSeo` and `backfillPageHeadings` do, or keep the falsiness check
+and `set` exactly the leaves it found blank, which is what `backfillHeaderCta` does — that
+version also repairs an empty string rather than only an absent key.
 
 ---
 
@@ -166,3 +248,6 @@ Before applying a migration to the production dataset:
 - [ ] Read the affected page on the **live site**, not the build output.
 - [ ] Schema changed? `bash scripts/deploy-studio.sh`, and check
       `SANITY_STUDIO_PROJECT_ID` appears in the inlined-variables list.
+- [ ] Does anything you are writing target a `drafts.` id? If so, check whether that id
+      already has a **published** document. Seeding a sample over real work is invisible to
+      every automated check — see "A draft can hide a published document" above.

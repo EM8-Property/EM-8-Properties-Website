@@ -27,6 +27,7 @@ import {
   POSTS,
   TESTIMONIALS,
   SITE_SETTINGS,
+  samplesToSeed,
   PAGE_COPY,
   PAGE_SEO,
   CTA_BAND,
@@ -78,6 +79,15 @@ if (!projectId || !dataset || !token) {
 }
 
 const API = `https://${projectId}.api.sanity.io/v2024-01-01`
+
+/**
+ * Marks a document that must be *created* if absent rather than replaced.
+ *
+ * A Symbol key so it cannot collide with a Sanity field name and cannot be serialised by
+ * accident — it is destructured off each document immediately before the mutation is
+ * built, so what reaches the API is exactly the document and nothing else.
+ */
+const SEED_ONLY = Symbol('seedOnly')
 const auth = { Authorization: `Bearer ${token}` }
 
 async function query(groq) {
@@ -648,7 +658,8 @@ async function buildDocuments() {
   }
 
   /**
-   * Testimonials are written as DRAFTS, on purpose.
+   * Testimonials are written as DRAFTS, on purpose — and only while nobody has published
+   * over them.
    *
    * These are samples to practise editing against, not investors. Spec §11 requires
    * written consent before publishing any investor's name, so `consentOnRecord` stays
@@ -656,13 +667,38 @@ async function buildDocuments() {
    * way. The draft prefix is the second layer: the release gate inspects published
    * documents only, so a sample never has to be explained to it.
    *
+   * The skip is the part that was missing, and it cost three days of a real testimonial
+   * looking broken. `createOrReplace` on `drafts.testimonial-sample-1` does not touch
+   * the published document — so when someone had already replaced that published
+   * document with their own words, this wrote placeholder scaffolding on top of it in the
+   * Studio while the site went on rendering the real thing. Nothing anywhere reported it:
+   * not the build, the tests, lint, Lighthouse, or the deployed page. Only the Studio
+   * showed it, to the one person who had written the testimonial.
+   *
    * To use one: replace the quote and attribution with the real investor's words, tick
    * the consent box once the written permission is genuinely on file, and publish. The
    * homepage and /investors sections appear by themselves once a consented one exists.
    */
+  // Every testimonial id in the dataset, drafts INCLUDED. The draft ids are the whole
+  // point: an unpublished testimonial lives only in `drafts.`, and so does one an editor
+  // has started but not published, and `createOrReplace` would destroy either.
+  const existingTestimonials = new Set((await query(`*[_type == "testimonial"]._id`)) ?? [])
+  const samples = samplesToSeed(existingTestimonials)
+  // Compared by id rather than by reference. `filter` happens to preserve references
+  // today, so `includes(t)` worked, but a predicate that ever mapped or cloned would make
+  // every comparison miss and print "skip" for a testimonial it was simultaneously
+  // writing. A log line that lies is how the original fault stayed hidden for three days.
+  const seeding = new Set(samples.map((t) => t._id))
   for (const t of TESTIMONIALS) {
+    if (!seeding.has(t._id)) {
+      console.log(`  skip      testimonial ${t._id} — something already exists there`)
+    }
+  }
+  for (const t of samples) {
     console.log(`  draft     testimonial ${t.attribution}`)
     docs.push({
+      // Seeded, not replaced — see SEED_ONLY where the mutations are built.
+      [SEED_ONLY]: true,
       _id: `drafts.${t._id}`,
       _type: 'testimonial',
       quote: t.quote,
@@ -767,7 +803,16 @@ async function main() {
   const res = await fetch(`${API}/data/mutate/${dataset}?returnIds=true`, {
     method: 'POST',
     headers: { ...auth, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mutations: docs.map((doc) => ({ createOrReplace: doc })) }),
+    body: JSON.stringify({
+      mutations: docs.map(({ [SEED_ONLY]: seedOnly, ...doc }) =>
+        // createIfNotExists for the sample testimonials, belt and braces alongside the
+        // check in buildDocuments — the same pairing seedPagesIfMissing uses, and for the
+        // same reason: the check and the write are separate round trips, so a race could
+        // otherwise clobber something created in between. Everything else really is meant
+        // to be replaced; that is what an unscoped --apply means.
+        seedOnly ? { createIfNotExists: doc } : { createOrReplace: doc },
+      ),
+    }),
   })
   if (!res.ok) throw new Error(`mutate failed ${res.status}: ${await res.text()}`)
 

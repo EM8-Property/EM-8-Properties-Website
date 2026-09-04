@@ -11,6 +11,8 @@ import {
   POSTS,
   TESTIMONIALS,
   SITE_SETTINGS,
+  samplesToSeed,
+  shadowingSeedDrafts,
   portable,
   PAGE_COPY,
   PAGE_SEO,
@@ -361,5 +363,125 @@ describe('migration payload — site settings', () => {
     // body. This one shares one flex row with five nav links and Investor Login, and
     // wraps the header at 375px well before 40. "Invest With Us" is 14.
     expect(SITE_SETTINGS.headerCta.label.length).toBeLessThanOrEqual(20)
+  })
+})
+
+/**
+ * The sample testimonial drafts, and when they must NOT be written.
+ *
+ * They exist to be practised on, and they are written to `drafts.testimonial-sample-N`
+ * so the release gate never sees an unconsented published document. That is fine on an
+ * empty dataset and harmful afterwards: once someone has replaced the *published*
+ * document with a real testimonial, seeding a placeholder draft on top of it is what the
+ * Studio then shows them. Their own words are still live on the site and still in the
+ * dataset, so nothing is lost and nothing looks wrong — the build, the tests, lint,
+ * Lighthouse and the deployed page are all completely unaffected. It is only visible by
+ * opening the Studio, which is exactly why it went unnoticed from 2026-08-31 to
+ * 2026-09-03.
+ */
+describe('migration payload — sample testimonial drafts', () => {
+  /**
+   * When the sample testimonial drafts may be written, and when they must not be.
+   *
+   * They exist to be practised on, and they are written to `drafts.testimonial-sample-N`
+   * so the release gate never sees an unconsented published document. That is right on an
+   * empty dataset and destructive afterwards, in three distinct ways — and the predicate
+   * has to close all three, because the write is a `createOrReplace`:
+   *
+   *   1. Someone replaced the PUBLISHED document with a real testimonial. Seeding the
+   *      draft then lays placeholder text over their work in the Studio while the site
+   *      goes on rendering the real thing. This is the fault reported on 2026-09-03 and
+   *      it is cosmetic — nothing is lost.
+   *   2. Someone UNPUBLISHED a real testimonial. Sanity's unpublish moves the document to
+   *      `drafts.` and deletes the published one, so the draft is now the only copy.
+   *      Seeding over it destroys it. Not cosmetic.
+   *   3. Someone is part-way through editing the draft — which is exactly what the seed's
+   *      own instructions tell them to do — and has not published yet. Seeding replaces
+   *      their work in progress. Also not cosmetic.
+   *
+   * So the question is not "has anyone published over this?" but "does anything exist
+   * here at all, in either form?". Cases 2 and 3 are indistinguishable to the predicate
+   * and are covered by the same rule; they are written separately because the reasons a
+   * reader needs to understand them are different.
+   */
+  const both = ['testimonial-sample-1', 'testimonial-sample-2']
+
+  it('seeds both when the dataset holds nothing at either id', () => {
+    expect(samplesToSeed(new Set()).map((t) => t._id)).toEqual(both)
+  })
+
+  it('skips one whose published document holds real content', () => {
+    // Case 1 — the fault reported on 2026-09-03.
+    expect(samplesToSeed(new Set(['testimonial-sample-1'])).map((t) => t._id)).toEqual([
+      'testimonial-sample-2',
+    ])
+  })
+
+  it('skips one that has been unpublished, where the draft is the only copy left', () => {
+    // Case 2. Nothing is published at that id, so a published-only check waves this
+    // through and createOrReplace destroys the last copy of a real testimonial.
+    expect(samplesToSeed(new Set(['drafts.testimonial-sample-1'])).map((t) => t._id)).toEqual([
+      'testimonial-sample-2',
+    ])
+  })
+
+  it('skips one an editor is still working on in draft', () => {
+    // Case 3. Same rule as case 2, different cause: the seed tells the editor to edit the
+    // draft, so a migration run mid-edit must not overwrite it.
+    const existing = new Set(['drafts.testimonial-sample-2'])
+    expect(samplesToSeed(existing).map((t) => t._id)).toEqual(['testimonial-sample-1'])
+  })
+
+  it('writes nothing once both exist in any form', () => {
+    const existing = new Set(['testimonial-sample-1', 'drafts.testimonial-sample-2'])
+    expect(samplesToSeed(existing)).toEqual([])
+  })
+
+  it('ignores an unrelated testimonial', () => {
+    // A real testimonial written from scratch in the Studio gets a generated id, which
+    // has nothing to do with the sample ids and must not suppress the samples. This is
+    // what fails if anyone reaches for `existing.size > 0` or a count.
+    expect(samplesToSeed(new Set(['91c23bf9-f790-43aa-8948-b88b3310ee64']))).toHaveLength(2)
+  })
+})
+
+/**
+ * The backstop for the fault that took three days to find.
+ *
+ * A draft is legitimate work in progress, so the release gate deliberately excludes
+ * drafts — failing a release because somebody is mid-edit would be wrong. But there is one
+ * draft that is never legitimate: a draft sitting on top of a published testimonial and
+ * containing the seed's own scaffolding. That is not a person editing, it is a migration
+ * having overwritten what the Studio shows them.
+ *
+ * Narrow on purpose. It matches the seed's attribution text rather than anything vaguer,
+ * so an editor part-way through writing a real testimonial over a published one — which
+ * is a perfectly normal thing to do — does not trip it.
+ */
+describe('shadowing seed drafts', () => {
+  const seeded = (id: string) => ({
+    _id: `drafts.${id}`,
+    attribution: 'Sample entry — replace with a real name',
+  })
+
+  it('finds a seed draft shadowing a published testimonial', () => {
+    const found = shadowingSeedDrafts(['testimonial-sample-1'], [seeded('testimonial-sample-1')])
+    expect(found).toEqual(['drafts.testimonial-sample-1'])
+  })
+
+  it('leaves a seed draft alone when nothing is published under it', () => {
+    // This is the seed working as designed on a fresh dataset. Not a fault.
+    expect(shadowingSeedDrafts([], [seeded('testimonial-sample-1')])).toEqual([])
+  })
+
+  it('leaves a real draft over a published testimonial alone', () => {
+    // An editor rewriting a live testimonial. Normal, and must not fail a release.
+    const drafts = [{ _id: 'drafts.testimonial-sample-1', attribution: 'Paul Ruane' }]
+    expect(shadowingSeedDrafts(['testimonial-sample-1'], drafts)).toEqual([])
+  })
+
+  it('tolerates a draft with no attribution at all', () => {
+    const drafts = [{ _id: 'drafts.testimonial-sample-1' }]
+    expect(shadowingSeedDrafts(['testimonial-sample-1'], drafts)).toEqual([])
   })
 })
