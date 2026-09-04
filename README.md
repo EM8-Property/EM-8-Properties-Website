@@ -32,7 +32,7 @@ npm run dev                  # production dataset
 | `npm run dev` | Dev server against the `production` dataset |
 | `bash scripts/dev-preview.sh` | Dev server against `preview` — sample content for design review |
 | `npm run build` | Production build. **Fails if `siteSettings` is missing** — that is deliberate |
-| `npm test` | Unit suite (437 tests). Never touches the network |
+| `npm test` | Unit suite (443 tests). Never touches the network |
 | `npm run test:content` | Content gate against the live dataset. Run before any content release |
 | `npm run test:e2e` | Playwright. Set `E2E_BASE_URL` to run against a deployed URL |
 | `npm run lighthouse` | Lighthouse + resource budget against a running `npm start` |
@@ -293,7 +293,15 @@ first two entries together — they are the same lesson from opposite ends.
   unaffected and all green. It is visible only by opening the Studio, and only to whoever
   opens that document; this sat unnoticed from 2026-08-31 to 2026-09-03. **If someone says
   the CMS is showing them the wrong content, query `*[_id in path("drafts.**")]` first.**
-  The seed now skips any sample whose published document already exists.
+  The seed now skips a sample if **anything** exists at that id, in either form. Asking
+  only "has someone published over it?" is not enough: an *unpublished* testimonial lives
+  only in `drafts.`, and so does one an editor has started and not published, and
+  `createOrReplace` destroys either — which is worse than the shadowing it was written to
+  prevent. `samplesToSeed` in `scripts/content/em8-content.mjs`, plus
+  `createIfNotExists` on those documents so the gap between the check and the write
+  cannot be raced. `shadowingSeedDrafts` is the after-the-fact backstop, checked against
+  the live dataset by `npm run test:content` — the only automated detection there is for
+  this fault, and it fires on the exact state that existed on 2026-08-31.
 - **`setIfMissing` keys on absence, not on falsiness.** A leaf holding `''` is falsy but
   present, so a backfill that decides what to fill by falsiness and then writes it with
   `setIfMissing` reports a repair it did not make — and reports it again on every future

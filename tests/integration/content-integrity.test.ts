@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { createClient } from 'next-sanity'
 import { SPEC_9_PLACEHOLDERS } from '../shared/placeholders'
+// Plain ESM data module, shared with scripts/migrate-content.mjs and the unit suite.
+import { shadowingSeedDrafts } from '../../scripts/content/em8-content.mjs'
 
 /**
  * Runs against the live dataset, so it is excluded from `npm test` and run with
@@ -96,6 +98,41 @@ describe('published content', () => {
       `*[_type == "testimonial" && ${PUBLISHED} && consentOnRecord != true]`,
     )
     expect(unconsented).toHaveLength(0)
+  })
+
+  /**
+   * The one draft that is never legitimate: the seed's own scaffolding on top of a
+   * published testimonial.
+   *
+   * This is the only automated detection for the fault reported on 2026-09-03, and it is
+   * the only check in this file that looks at drafts at all — every other one is scoped to
+   * `PUBLISHED`, because failing a release while somebody is mid-edit would be wrong.
+   *
+   * The fault it catches is invisible from every other direction. The published document
+   * is untouched, so the site renders correctly and `next build`, the unit suite, ESLint,
+   * Lighthouse and the deployed pages are all unaffected and all green. Only the Studio
+   * shows it, and only to whoever opens that document. It sat in this dataset from
+   * 2026-08-31 to 2026-09-03 and was found by a person, not by a test.
+   *
+   * The matching logic is a pure function in the content module, unit-tested there for the
+   * false-positive case that matters: an editor genuinely rewriting a live testimonial
+   * must not trip this.
+   */
+  it('has no seed scaffolding shadowing a published testimonial', async () => {
+    const [publishedIds, drafts] = await Promise.all([
+      client.fetch<string[]>(`*[_type == "testimonial" && ${PUBLISHED}]._id`),
+      client.fetch<{ _id: string; attribution?: string }[]>(
+        `*[_type == "testimonial" && _id in path("drafts.**")]{ _id, attribution }`,
+      ),
+    ])
+
+    const shadowed = shadowingSeedDrafts(publishedIds, drafts) as string[]
+    expect(
+      shadowed,
+      'a sample draft is sitting on top of a real testimonial — the Studio is showing ' +
+        'placeholder text for it while the site renders the real thing. Discard these ' +
+        `drafts: ${shadowed.join(', ')}`,
+    ).toEqual([])
   })
 
   it('uses no promissory return language in any document', async () => {

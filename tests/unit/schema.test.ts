@@ -131,7 +131,9 @@ describe('testimonial schema', () => {
     const check = custom!.arg as (v: unknown) => true | string
     expect(check(true)).toBe(true)
     expect(check(false)).toEqual(expect.stringContaining('consent'))
-    expect(check(undefined)).toEqual(expect.stringContaining('consent'))
+    // undefined is required()'s case, not this rule's. Reporting it here too would put
+    // two errors on one field for one problem.
+    expect(check(undefined)).toBe(true)
   })
 })
 

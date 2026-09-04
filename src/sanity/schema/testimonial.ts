@@ -30,6 +30,20 @@ export const testimonial = defineType({
      * A draft is where a testimonial waits for its consent to arrive. Publishing one is
      * the claim that it is ready to be public, and this is the field that decides whether
      * that claim is true, so the Studio should say no at the moment of the click.
+     *
+     * **What this does not close.** Sanity validation is Studio-side only: it gates the
+     * Publish button and nothing else — not the API, not GROQ, not `next build`, and not
+     * Vision, the CLI, a script or an import. So this closes the path a human editor
+     * takes, which is the path the 2026-09-03 fault came down, and nothing more. What
+     * actually protects the site is still `TESTIMONIALS_QUERY` filtering the flag, and
+     * what catches a document written around the Studio is still the release gate in
+     * `tests/integration/content-integrity.test.ts`. See "`required()` is a lie, for this
+     * purpose" in docs/deploys-and-migrations.md.
+     *
+     * **And it reaches editors only once the Studio is redeployed** —
+     * `bash scripts/deploy-studio.sh`, from merged code. Until then the hosted Studio is
+     * still serving the schema without this rule, and the whole fix is inert for the
+     * people it is for.
      */
     defineField({
       name: 'consentOnRecord',
@@ -43,10 +57,12 @@ export const testimonial = defineType({
       validation: (r) =>
         r
           .required()
+          // `undefined` passes to `required()` rather than being reported twice: two
+          // errors on one field for one problem reads as two problems.
           .custom((v) =>
-            v === true
-              ? true
-              : 'This testimonial has no written consent on file, so the site will never show it. Tick the box once you hold the permission, or leave this as a draft.',
+            v === false
+              ? 'This testimonial has no written consent on file, so the site will never show it. Tick the box once you hold the permission, or leave this as a draft.'
+              : true,
           ),
     }),
     defineField({ name: 'featured', type: 'boolean', initialValue: false }),

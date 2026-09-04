@@ -154,8 +154,14 @@ document in the Studio, and it sat there for three days.
 Two things follow:
 
 1. **Never seed a sample over an id that already has a published document.**
-   `sampleTestimonialDrafts(publishedIds)` in `scripts/content/em8-content.mjs` is that
-   guard, and `buildDocuments` consults it.
+   `samplesToSeed(existingIds)` in `scripts/content/em8-content.mjs` is that guard, and
+   `buildDocuments` consults it. **The predicate has to ask "does anything exist at this
+   id, in either form?" and not "has anyone published over it?"** — an unpublished
+   document lives only under `drafts.`, and so does one an editor has started and not
+   published, and `createOrReplace` destroys either. Those two paths lose content, where
+   the shadowing case merely hides it. The sample documents are also written with
+   `createIfNotExists` rather than `createOrReplace`, so the gap between the check and
+   the write cannot be raced — the same pairing `seedPagesIfMissing` uses.
 2. **When someone reports that the CMS is showing them the wrong content, query for
    drafts before anything else:**
 
@@ -165,6 +171,15 @@ Two things follow:
 
    A draft nobody remembers creating is the likeliest explanation, and it is invisible
    from every other direction.
+3. **There is now one automated backstop, and it is the only one.**
+   `shadowingSeedDrafts` in the content module finds seed scaffolding sitting on top of a
+   published testimonial, and `content-integrity` runs it against the live dataset. It is
+   the only check in that file that looks at drafts at all — every other one is scoped to
+   published documents, because failing a release while somebody is mid-edit would be
+   wrong. It matches the seed's exact attribution string for the same reason: an editor
+   genuinely rewriting a live testimonial is indistinguishable by id alone and must not
+   trip it. Replayed against the state that existed on 2026-08-31, it fires on both
+   drafts.
 
 ---
 
