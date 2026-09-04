@@ -17,6 +17,7 @@ record, or a blog.
 | `docs/disclaimer-draft.md` | Unreviewed draft footer disclaimer, pending securities counsel. |
 | `docs/deploys-and-migrations.md` | How the dataset and the code ship separately, and the ordering rule that keeps the live site up. Read before applying any migration. |
 | `docs/resource-budget.md` | Why the Lighthouse budget is where it is, and two image traps. |
+| `docs/handover-2026-09-03.md` | Current state, what shipped, and what is still open with an owner for each. The only handover in version control — earlier ones were untracked and went stale in place. |
 
 ## Getting started
 
@@ -31,7 +32,7 @@ npm run dev                  # production dataset
 | `npm run dev` | Dev server against the `production` dataset |
 | `bash scripts/dev-preview.sh` | Dev server against `preview` — sample content for design review |
 | `npm run build` | Production build. **Fails if `siteSettings` is missing** — that is deliberate |
-| `npm test` | Unit suite (431 tests). Never touches the network |
+| `npm test` | Unit suite (437 tests). Never touches the network |
 | `npm run test:content` | Content gate against the live dataset. Run before any content release |
 | `npm run test:e2e` | Playwright. Set `E2E_BASE_URL` to run against a deployed URL |
 | `npm run lighthouse` | Lighthouse + resource budget against a running `npm start` |
@@ -269,6 +270,56 @@ All of these bit during the build and are documented in the plan's Revisions sec
   620x426 and Oak Forest K at 1222x811, against 1600x900 requested. Sanity's `fit=max`
   never upscales, so those two slides are served below the crop cap on every viewport.
   Antioch is already on the list of photography EM8 owes.
+
+### Found on 2026-09-03
+
+Both of this day's faults were in the **testimonial** section, both were reported by a
+person rather than by a check, and every automated gate was green the whole time. Read the
+first two entries together — they are the same lesson from opposite ends.
+
+- **`required()` on a boolean accepts `false`.** It rejects `null` and `undefined` and
+  nothing else. On `consentOnRecord` the ungated value was also the `initialValue`, so a
+  real testimonial published with consent unticked, validated, reported success, and then
+  appeared on no page with no message anywhere — `TESTIMONIALS_QUERY` filters the flag.
+  `npm run test:content` did catch it, which is that gate working, but it runs at release
+  rather than at the edit, so it caught the mistake days later. If a field must hold a
+  particular value, `required()` is not the rule you want; `.custom()` is.
+- **A migration that writes a DRAFT can hide a published document without touching it.**
+  `buildDocuments` seeds the sample testimonials to `drafts.testimonial-sample-N`. Once
+  someone has replaced the **published** documents of those ids with real testimonials,
+  that write lays placeholder scaffolding over their work — and the Studio shows the draft
+  whenever one exists. The published document is intact, so the site renders correctly and
+  the build, unit suite, lint, Lighthouse, the release gate and the deployed page are all
+  unaffected and all green. It is visible only by opening the Studio, and only to whoever
+  opens that document; this sat unnoticed from 2026-08-31 to 2026-09-03. **If someone says
+  the CMS is showing them the wrong content, query `*[_id in path("drafts.**")]` first.**
+  The seed now skips any sample whose published document already exists.
+- **`setIfMissing` keys on absence, not on falsiness.** A leaf holding `''` is falsy but
+  present, so a backfill that decides what to fill by falsiness and then writes it with
+  `setIfMissing` reports a repair it did not make — and reports it again on every future
+  run, which is worse than doing nothing because it is trusted. Match the predicate to the
+  mutation (`!defined()` in GROQ), or `set` the leaves you found blank.
+- **A longer header label wraps the header, at one width only.** The header is a single
+  `flex-wrap gap-y-3` row holding the wordmark, five nav links, Investor Login and
+  `headerCta`. "Invest With Us" is 14 characters and takes the header from 62px to 102px at
+  768-799px, putting the wordmark on its own row; 39 characters reaches 118px. It wraps the
+  way that container was written to wrap and still clears the hero eyebrow by 61px, so it
+  is not a defect — but it is a visible change at iPad-portrait width that no test, audit
+  or typecheck reports, and desktop is unaffected. `headerCta.label` is capped at 20 for
+  this reason; the measurements are in the schema comment beside the cap.
+- **A test that pins CMS copy fails when someone edits their own copy.** Two E2E tests went
+  red from Studio edits rather than from any code change: the homepage headline accent was
+  edited to "chose to live in" where the test pinned "choose", and two articles were
+  published with capitals in their slugs against a lowercase-only pattern. Both were
+  intentional. Assert the *shape* of CMS content — an `<h1>` about communities and living,
+  a slug that is a real route segment — not the wording, or the suite trains people to
+  ignore it.
+- **The handover you were handed may not be the current one.** This session opened on a
+  prompt naming `f22fc2b` as both `main` and the deployed commit; `main` was two commits
+  further on and the build was 29 pages rather than 28. Handovers were untracked until
+  `docs/handover-2026-09-03.md`, so they went stale in place. Run
+  `git log --oneline -1 origin/main` and query Railway for the deployed hash before
+  trusting any SHA written in prose.
 
 ## Status
 
