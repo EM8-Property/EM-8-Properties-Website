@@ -96,7 +96,6 @@ options on the upper bar" arriving alongside items that were already in it, and 
 | Alexander Riegler off the IR title | `teamMember.role` |
 | Oak Forest K's city involvement and partnership | `property.overview` |
 | The trailer park, when it is ready to name | new `property` |
-| "Case Studies" as `/track-record`'s visible heading | `trackRecordPage.heading` |
 
 ### Owed by people
 
@@ -122,6 +121,15 @@ pages carry Type and Strategy as separate facts ("Type: Multifamily, Strategy:
 Development"). As an added field it could go to production ahead of its code under the
 rule in `docs/deploys-and-migrations.md`; replacing `assetClass` could not. A display-only
 chip with no filter is the cheap middle ground.
+
+### Decided, with the reasoning recorded so nobody "fixes" it
+
+**Antioch Shopping Plaza stays out of the portfolio grid.** It is the only property with
+`showInPortfolio: false`, which looks like an oversight — it is the one publicly offered
+deal, and Hunter has said the live offering may be public. It is deliberate: EM8 is under
+contract, not on title, and a portfolio is a claim of ownership. Hunter confirmed on
+2026-09-08. It keeps its own page at `/portfolio/antioch-shopping-plaza` and its offering
+block; it simply is not listed among assets EM8 owns.
 
 ### Held
 
@@ -176,7 +184,7 @@ chosen against an image rather than against the ground.
 ## 5. Navigation
 
 ```
-About ▾        Portfolio     Case Studies    Insights          Investor Login   [Invest With Us]
+About ▾        Portfolio      Insights                        Investor Login   [Invest With Us]
   About EM8
   Our Team
   Why EM8
@@ -194,25 +202,64 @@ The routes, so nothing about this is inferred at implementation time:
 | — Why EM8 | `/why-em8` **(new)** |
 | — Why Midwest | `/why-midwest` **(new)** |
 | — Partners | `/partners` |
-| Portfolio | `/portfolio` |
-| Case Studies | `/track-record` — label change only |
+| Portfolio | `/portfolio` — now includes the realized deals |
 | Insights | `/insights` |
 | Investor Login | `siteSettings.agoraPortalUrl`, off-site |
 | Invest With Us | `siteSettings.headerCta` |
 
 `/about#team` needs an `id` on the team section, which `/about` does not carry today.
 
-Four top-level items where there are five today, and eight destinations reachable from the
-bar instead of five — ten counting Investor Login and the button. This is Buligo's
-mechanism: they fit About Us ▾, Strategy,
+**Three top-level items where there are five today** — Hunter's instruction on 2026-09-08
+removed Case Studies from the bar entirely, and Track Record goes with it (see below). Seven
+destinations are reachable from the bar against five now, nine counting Investor Login and
+the button. This is Buligo's mechanism: they fit About Us ▾, Strategy,
 Portfolio, Sectors ▾, Case Studies, Shareholders, Media ▾, Investor Login, a Hebrew
 toggle and Contact Us into one narrow bar, and the minimalism Etamar admires comes from the
 dropdowns rather than from having fewer pages.
 
-**"Case Studies" is a label, not a URL.** `/track-record` keeps its path, so no link
-breaks and no redirect is needed. Buligo do the same in reverse — nav label "Case Studies",
-page heading "Buligo Capital Track Record". The heading is already a Sanity field, so the
-visible title is a Studio edit.
+### `/track-record` is deleted, and the realized deals live in the portfolio
+
+Hunter's instruction, 2026-09-08: remove Case Studies from the header, put those properties
+in the portfolio, keep the Sold label. An earlier draft of this section proposed renaming
+`/track-record` to "Case Studies" in the bar. That is replaced by deleting it.
+
+**Two-thirds of the instruction is already shipped, verified on the live site:** both
+realized deals are already in the `/portfolio` grid — `ALL_PROPERTIES_QUERY` filters on
+`showInPortfolio != false`, not on status — each carrying a **Sold** chip, and the status
+filter already offers "Sold". So there is nothing to add, only something to remove.
+
+**What must move before the route goes.** `/track-record` is the *only* consumer of
+`dealStory`: `PROPERTY_BY_SLUG_QUERY` already selects it and the property page never
+renders it, so deleting the route as it stands would take the Acquired → Executed → Exited
+narrative and the 1.99× / 1.37× multiples off the site entirely — the very "return metrics"
+Etamar asked for. So `DealStory` moves onto `/portfolio/[slug]`, gated on `status ==
+'sold'`, which is one import and one line because the data is already fetched.
+
+**No redirect.** Hunter's call: nothing links to the site externally yet. The route is
+removed from `sitemap.ts` in the same change, so the 404 is never advertised. If an inbound
+link ever turns up, a redirect is a two-line addition.
+
+The file list, since a route deletion touches more than a route:
+
+| file | change |
+|---|---|
+| `app/(site)/track-record/page.tsx` | delete |
+| `SiteHeader.tsx` · `SiteFooter.tsx` | drop the nav entry |
+| `sitemap.ts` | drop the URL (currently priority 0.9) |
+| `lib/heroPages.ts` | drop from `HERO_PATHS` — it is one of the seven hero pages |
+| `lib/seo.ts` · `lib/rateLimit.ts` | drop from the doc comments listing routes |
+| `sanity/queries.ts` | delete `SOLD_PROPERTIES_QUERY` and `TRACK_RECORD_PAGE_QUERY` |
+| `tests/e2e/site.spec.ts` | three references, including the test asserting no property is addressable under `/track-record/` |
+| `portfolio/[slug]/page.tsx` | render `DealStory` |
+
+**Ordering, because this removes CMS reads.** The `trackRecordPage` document stays in the
+dataset until the code that reads it is deployed — removing it first is the mistake
+`docs/deploys-and-migrations.md` exists to prevent. Delete the document afterwards, or leave
+it: an unread document costs nothing and is the cheapest possible rollback.
+
+One consequence worth stating: **`/portfolio` becomes the only index of EM8's assets**, so
+non-negotiable #4 gets stronger rather than weaker — one canonical URL per property, and now
+one place that lists them.
 
 **Why EM8 and Why Midwest** are new routes with new page documents — but read §12 before
 building two of them, which proposes folding Midwest into EM8 as a section. Following the
@@ -249,36 +296,36 @@ visible on mobile.** That settles the open question and it overrides the caution
 draft carried here — that Buligo hides its phone nav too, so hiding ours was defensible.
 It is what he asked for; the design problem is fitting it.
 
-The four top-level labels are 38 characters — `About · Portfolio · Case Studies ·
-Insights`. At the 11px semibold the header already uses, that is roughly 300px of text
-before gaps, against 390px of viewport with a wordmark and a button also on the bar. It
-does not fit on one row.
+**Removing Case Studies from the bar made this much easier**, and that is worth noticing
+rather than passing over. An earlier draft sized this for four labels at 38 characters and
+concluded the fit was tight enough to need fallbacks. There are now three —
+`About · Portfolio · Insights`, **28 characters** — which is comfortable at 390px and still
+fits at 320px.
 
-**So the phone header becomes two rows:**
+**The phone header becomes two rows:**
 
 ```
 EM8 PROPERTIES                    [Invest With Us]
-About    Portfolio   Case Studies   Insights
+About      Portfolio      Insights
 ```
 
-Row one is the wordmark and the primary action; row two is the nav. `About` opens the
-group as a sheet rather than a hover panel, since there is no hover on a phone.
+Row one is the wordmark and the primary action; row two is the nav. `About` opens the group
+as a sheet rather than a hover panel, since there is no hover on a phone.
 
-Three consequences, all measurable and none guessed:
+Two rows rather than one because the wordmark and the button already fill a 390px row on
+their own — three short labels are not what makes a single row impossible. Two consequences,
+both to be measured rather than assumed:
 
-- **The header grows from 68px to roughly 100px.** The hero reserves `pt-24` (96px) for
-  it, and at 320px a band page has only 28px of clearance between the header and the
-  eyebrow today. A 100px header spends all of it. **The reservation has to grow with the
-  header**, and the E2E assertion at 320px is what proves it.
-- **A taller header costs a little of the scroll §8 is trying to reclaim** — about 32px
-  per page, against the 3,000-odd px §8 removes. Worth it, but state it rather than
-  discover it.
-- **At 320px even four labels may not fit.** If the measurement says so, `Case Studies`
-  shortens to `Deals` or the row scrolls — decided against the measurement, not now.
+- **The header grows from 68px to roughly 100px.** The hero reserves `pt-24` (96px) for it,
+  and at 320px a band page has only 28px of clearance between the header and the eyebrow
+  today. A 100px header spends all of it. **The reservation has to grow with the header**,
+  and the E2E assertion at 320px is what proves it did.
+- **A taller header costs a little of the scroll §6 is trying to reclaim** — about 32px per
+  page, against the 3,000-odd px §6 removes.
 
-What is still **not** proposed: a horizontally scrolling strip as the *only* answer. It
-reads as a tab bar, which misrepresents a five-page marketing site, and horizontal scroll
-containers are a known accessibility problem. It stays the fallback for 320px alone.
+A horizontally scrolling strip is **not** proposed at any width. It reads as a tab bar,
+which misrepresents a small marketing site, and horizontal scroll containers are a known
+accessibility problem. With three labels there is no width at which it is needed.
 
 ## 6. Homepage
 
@@ -358,48 +405,42 @@ CI budget already runs (412×823 at DPR 1.75).
 Hunter's decision, 2026-09-08: the live offering, the deals in progress and the realized
 results may all be public.
 
-- **Realized deals** already carry real figures — Burbank 1.99× exiting 2022, Embassy
-  1.37× exiting 2023 — and already render on `/track-record`. They gain a fact rail on the
-  property page itself.
+**No new schema. Both halves already exist**, and an earlier draft of this section
+proposed a `returns` object that would have duplicated them — the most expensive kind of
+mistake to make in a CMS, because two fields holding the same figure eventually disagree.
 
-The field shape, on `property`, so the schema is not invented during implementation:
+| | field | renderer | data today |
+|---|---|---|---|
+| realized | `property.dealStory` — narrative, `equityMultiple`, `exitYear` | `DealStory` | **populated**: 1.99× / 2022, 1.37× / 2023 |
+| targeted | `property.offering` — `targetIrr`, `targetEquityMultiple`, `targetHoldYears`, `dealRoomUrl` | `OfferingBlock` | schema present, figures empty |
 
-```
-returns {
-  basis: 'realized' | 'targeted'      // decides the label and the tense
-  equityMultiple: string              // "1.99x"
-  period: string                      // "2019-2022" realized, "5-7 years" targeted
-  note: text                          // required when basis is 'targeted'
-}
-```
+Both are already better designed than what was proposed for them. `dealStory` is hidden in
+the Studio unless `status == 'sold'`; `offering` is hidden unless `publiclyOffered`;
+`DealStory`'s own comment records why its labels say "Realized" and why forward-looking
+words would misstate a closed result. `OfferingBlock` is already rendered on the property
+page and already gated.
 
-**Four fields, not six.** An earlier draft carried `irr` and `cashOnCash` as optional
-extras. EM8 has neither figure for the two realized deals, so both would ship empty on
-every property and stay empty — and an empty optional field on a schema that a compliance
-gate scans is a liability rather than an affordance. Add either the day there is data for
-it; that is a one-field migration under rule #1.
+So the whole of the realized half is **one import and one line** — render `DealStory` on
+`/portfolio/[slug]`, which §5 requires anyway before `/track-record` can be deleted. The
+targeted half is **zero code**: the fields, the renderer and the gate all exist, and what
+is missing is the figures, which is Studio work.
 
-Strings rather than numbers, deliberately: these are published figures whose formatting
-carries meaning ("1.99x", "12-14%", "~18%"), and a number field would force the component
-to reinvent that formatting and lose the range. The trade is that no arithmetic can be done
-on them, which is correct — nothing on this site should compute a return.
-
-`basis` is the field that keeps the compliance line: `realized` renders in the past tense
-under a "Realized" heading, `targeted` renders under "Targeted" with the qualifying
-language the permitted vocabulary requires. A property with `basis: 'targeted'` and no
-`note` should fail the content gate rather than render an unqualified projection.
-- **In-progress and offered deals** gain targeted figures, in the permitted vocabulary
-  only: *targeted, projected, underwritten, estimated, pro forma*. The compliance scan in
-  `tests/shared/placeholders.ts` and the source-and-CMS promissory-language check both
-  already cover this and must stay green.
-- **No figure is invented.** Spec §13's denylist is unchanged and the fields ship empty.
+The permitted vocabulary — *targeted, projected, underwritten, estimated, pro forma* — is
+enforced by the compliance scan in `tests/shared/placeholders.ts` and the source-and-CMS
+promissory-language check. Both already cover these fields and must stay green.
+- **No figure is invented.** The denylist in §9 of `2026-08-28-em8-website-design.md`
+  ("Placeholders requiring real values") is unchanged, and the fields ship empty.
 
 ### The founder's prior deals need their own frame
 
-Etamar's personal past sales are not EM8's track record. A reader on `/track-record`
-fairly assumes every deal there is the firm's; Buligo's case studies are all Buligo's.
-These render under an explicit heading naming the sponsor — "Prior experience of our
-founder" or similar — and never merge into EM8's realized results.
+Etamar's personal past sales are not EM8's track record, and deleting `/track-record`
+makes this sharper rather than softer: `/portfolio` becomes the site's only index of
+assets, so anything listed in it reads as EM8's. Buligo's case studies are all Buligo's
+deals.
+
+So these do **not** go in the portfolio grid, and they are not `property` documents. They
+render on their own page or section, under a heading naming the sponsor — "Prior experience
+of our founder" or similar — and never merge into EM8's realized results.
 
 Modelled from the spreadsheet's real columns when it arrives, not from a guess at them.
 
@@ -500,16 +541,22 @@ own background.
 | | workstream | blocked on |
 |---|---|---|
 | PR 1 | Palette centralization (§4) · `field-border` (§9) · team bios on click | — |
-| PR 2 | Nav: dropdowns, two-row phone bar, Case Studies label, Why EM8 page (§5) | copy, but ships empty |
+| PR 2 | Nav: dropdowns, two-row phone bar, delete `/track-record`, `DealStory` onto the property page, Why EM8 page (§5) | copy, but ships empty |
 | PR 3 | Homepage compression (§6) | — |
 | PR 4 | Typography + hero resolution (§7) | — |
-| PR 5 | Return metrics (§8) | figures; the spreadsheet for the second half |
+| PR 5 | The founder's prior deals (§8) | the spreadsheet |
 | — | Dark re-theme (§9) | Etamar seeing PRs 1–5 |
 
 PR 1 leads with the colours because §4 is a prerequisite rather than a nicety: the no-hex
 lint rule cannot be turned on until the seven stragglers are centralized, and everything
 after PR 1 should be written against that rule rather than retrofitted to it. Team bios
 ride along because they are small and touch nothing the others touch.
+
+**PR 5 shrank to almost nothing** once §8 established that both return-metric fields
+already exist with renderers and gates. Its realized half is one line and has moved into
+PR 2, where it is a precondition for deleting `/track-record`; its targeted half is Studio
+work. What is left is the founder's prior deals, which is the only genuinely new schema in
+this document and is blocked on the spreadsheet.
 
 ## 11. Every PR is reviewed on a phone
 
@@ -556,8 +603,11 @@ The dropdown is what keeps the phone bar legible, so it earns its complexity.
   proves it did. This is the highest-risk item in §5 and the one most likely to need a
   second measurement pass.
 - **Stats-on-hero may increase phone scroll rather than reduce it.** See §6.
-- **Four nav labels may not fit one row at 320px.** The fallbacks — shorter labels, or a
-  scrolling row at that width alone — are in §5 and both are decided by measurement.
+- **Deleting a route is the least reversible thing in this document.** `/track-record` goes
+  with no redirect on Hunter's call that nothing links in yet. The mitigations are that
+  `DealStory` moves to the property page first, so no content is lost, and that the
+  `trackRecordPage` document stays in the dataset — restoring the page is a revert rather
+  than a re-write.
 - **Hero resolution against the image budget.** `docs/resource-budget.md` says in terms
   not to raise a budget to make something pass, and the 1600px crop cap is what holds the
   image budget. Raising it to 2400 roughly doubles the 314KB detailed crop. Expect to land
