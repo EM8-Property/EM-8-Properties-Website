@@ -35,6 +35,42 @@ short at DPR 3**, because the painted width of a full-screen `object-cover` box 
 viewport height times 1.78 and the crop caps at 1600px. He is describing an artefact that
 exists.
 
+## 1a. He was reviewing on a phone
+
+Confirmed by Hunter on 2026-09-08, and it is the single most useful fact in this document:
+**the review surface was a phone, and the requirement is that the site look equally good
+on a phone and on a desktop.** Measured on a 390×844 viewport at DPR 3 with an iOS user
+agent:
+
+| | Buligo (his reference) | ours | em-8.com ("the original") |
+|---|---|---|---|
+| homepage length | **4.3 screens** | **8.2 screens** | **15.8 screens** |
+| phone header | wordmark + hamburger | wordmark + hamburger | wordmark + Investor Portal + hamburger |
+| `h1` | — | **30px** | **60px** |
+| hero bitmap served | — | 1600px (cap) | 2070px |
+| hero image quality | — | `q=68` | `q=80` |
+
+Four things follow, and two of them contradict what §§4–5 of this document said before
+this measurement:
+
+1. **He genuinely could not see the nav.** Our phone header is `EM8 Properties · Menu` —
+   two items. Every link he asked us to add is already there, one tap away, inside the
+   panel: Portfolio · Track Record · Insights · Partners · About · Investor Login · Invest
+   With Us. "Add case studies and insights to the upper bar" is a report that the bar is
+   empty on a phone, not that the site lacks those pages.
+2. **"More options on the upper bar" cannot be answered on a phone by copying Buligo.**
+   Buligo's phone header is *also* wordmark + hamburger. Their minimalism is a
+   dropdown-rich bar on the desktop and a page half our length on the phone.
+3. **"Less scroll down" is not a comparison with em-8.com.** The old site is 15.8 screens
+   on a phone, nearly twice ours. The reference is Buligo at 4.3.
+4. **The resolution gap is narrower than it looks, and partly about compression.** On a
+   DPR-3 phone both sites undersample — ours about 2.8× short of the device pixels, the old
+   site about 2.5× — because a full-height `object-cover` box paints far wider than the
+   viewport. The difference he can actually see is more likely `q=68` against `q=80`.
+   Quality is therefore a third lever alongside the crop cap and `sizes`, and it is the
+   cheapest: 75 is already allowlisted in `next.config.ts`, so raising 68→75 needs no
+   config change. Measure the bytes; do not assume.
+
 ## 2. Sorting the feedback
 
 ### Already true on the live site — show him, do not build
@@ -181,7 +217,35 @@ requirements rather than styling ones:
 `SiteHeader` becomes a client component only if it must. It already is one — it calls
 `usePathname()` for the overlay decision — so this adds no boundary.
 
+### The phone bar, which is the surface he was actually on
+
+The dropdowns above are a **desktop** answer. On a phone there is no room for them and no
+precedent worth copying: Buligo's phone header is wordmark + hamburger, exactly like ours.
+So the phone gets three changes instead, in order of how much they answer his note:
+
+1. **The page gets shorter** (§5). This is the real fix; a phone bar cannot hold nine
+   destinations no matter how it is styled.
+2. **`Invest With Us` becomes visible in the phone bar**, beside the hamburger, rather
+   than living inside the panel. em-8.com does exactly this with "Investor Portal" — three
+   items on a phone against our two — and it is the one option on the bar that is worth
+   more than a link. Measured cost: the header is 68px today and the schema caps the label
+   at 20 characters for a reason recorded on the field; a third item at 390px needs
+   re-measuring against that cap, and the cap may have to come down.
+3. **The panel gets the same grouping as the desktop dropdowns** — About / Portfolio /
+   Case Studies / Insights as headed groups rather than one flat list of seven, so the
+   structure he wants to see is legible once opened.
+
+What is explicitly **not** proposed: a horizontally scrolling strip of nav links under the
+phone header. It puts options on the bar in the literal sense and reads as a tab bar,
+which misrepresents a five-page marketing site, and horizontal scroll containers are a
+known accessibility problem.
+
 ## 5. Homepage
+
+**The target is a number, not a feeling: 8.2 screens on a phone down to roughly 4.5,
+which is where Buligo sits.** Desktop is 5.0 screens today and matters less — he was on a
+phone, and a phone is where a band costs the most, because every grid collapses to one
+column.
 
 Nine bands become six.
 
@@ -194,12 +258,60 @@ Nine bands become six.
 - What remains: hero with stats → the four factors → portfolio → current offerings →
   testimonials → CTA.
 
+Removing the two teasers and absorbing the stat band should recover something like 2.5–3
+screens on a phone, landing near 5.4. **That is short of the 4.5 target, so one more lever
+is needed** and the honest candidate is the portfolio band: it renders its cards in one
+column on a phone, so each card is close to half a screen. Capping the homepage grid at
+three cards with a "View all" link — the full grid is one tap away at `/portfolio`, which
+is in the bar — is what closes the gap. Decide it against a measurement, not in advance.
+
 **Measure before committing to stats-on-hero.** The hero copy is bottom-aligned inside a
 `min-h-svh` box with a `pt-24` header reservation, and at 375px wide the overlay already
 renders 477px tall. Five stats below the buttons is perhaps another 200px in an 812px
 viewport. It fits on paper and paper is not the test — the E2E suite already asserts
 header clearance at 320px on a band page, where there is 28px of it, and that assertion is
 the one that will fail first.
+
+There is also a real chance stats-on-hero **costs** scroll on a phone rather than saving
+it: the hero is `min-h-svh`, so it grows with its content, and five stats inside it may
+simply make the first screen taller instead of removing a band. Measure the phone screen
+count before and after; if it does not fall, keep the stat band where it is and take the
+scroll out of the portfolio grid instead.
+
+## 5a. Typography and resolution
+
+This is the "it just looks better (fonts, resolution)" note, and it is a **mobile change
+first** — the gap is widest on the phone he was holding.
+
+### Type scale
+
+| | ours | em-8.com |
+|---|---|---|
+| phone | **30px** | **60px** |
+| desktop | 48px | 72px |
+
+The headline goes to roughly **40 / 60 / 72px** from today's 30 / 36 / 48. The mobile step
+is the important one: doubling 30 to 60 at 390px is a bigger change than it sounds, since
+the headline is CMS copy of unbounded length sitting in a bottom-aligned box under a 68px
+overlaid header. Re-measure header clearance at 320px, where a band page has 28px of it
+today, and expect the phone value to land below 60 if the measurement says so.
+
+### Resolution — three levers, cheapest first
+
+1. **`quality` 68 → 75.** 75 is already in `next.config.ts`'s `qualities` allowlist, so
+   this is a one-word change with no config edit. It is also the lever most likely to
+   explain what he saw, since em-8.com serves its hero at `q=80` and we serve 68. Note the
+   trap recorded in `docs/resource-budget.md`: a quality not on the allowlist is silently
+   ignored and falls back to 75, so verify the bytes actually change.
+2. **`sizes`** — already honest for the `screen` variant since 2026-09-02, and already
+   asking for the cap on a phone.
+3. **The 1600px crop cap**, which carries the real tension. `docs/resource-budget.md` says
+   in terms not to raise a budget to make something pass, and the cap is what holds the
+   image budget: a 2400px crop of the detailed 4160×3117 source roughly doubles its 314KB.
+
+Expect to land on quality 75 plus a cap near **2048**, measured rather than promised. And
+measure on the **phone** form factor — it is both the review surface and where Lighthouse's
+CI budget already runs (412×823 at DPR 1.75).
 
 ## 6. Return metrics
 
@@ -352,10 +464,27 @@ own background.
 The ESLint no-hex-literals rule from §3 lands in PR 1, so everything after it is written
 against the constraint rather than retrofitted to it.
 
+## 8a. Every PR is reviewed on a phone
+
+He was on a phone, and the requirement Hunter set is that it look equally good on both. So
+for each of these PRs the acceptance evidence is a **390×844 DPR-3 measurement and
+screenshot, not a desktop one** — and the E2E suite already runs its hero assertions at
+375×812, so the habit exists.
+
+Specifically: the screen count before and after for §5, header clearance at 320px for
+§5a, the phone header's item count and height for §4, and the bitmap width served to a
+DPR-3 phone for §5a. Desktop stays a regression check rather than the primary one.
+
 ## 9. Risks
 
 - **The artifact is unread.** Every layout decision here is inferred from em-8.com and
   Buligo. If the artifact disagrees, §§4–5 change.
+- **"More options on the upper bar" may not be satisfiable on a phone**, and that is the
+  surface he judged it on. Buligo's phone header carries two items, exactly as ours does.
+  §4's answer is a shorter page, the CTA promoted into the bar, and a grouped panel — which
+  is a good answer to the underlying problem and *not* literally what he asked for. Worth
+  telling him that directly rather than shipping it and hoping the note goes away.
+- **Stats-on-hero may increase phone scroll rather than reduce it.** See §5.
 - **Hero resolution against the image budget.** `docs/resource-budget.md` says in terms
   not to raise a budget to make something pass, and the 1600px crop cap is what holds the
   image budget. Raising it to 2400 roughly doubles the 314KB detailed crop. Expect to land
