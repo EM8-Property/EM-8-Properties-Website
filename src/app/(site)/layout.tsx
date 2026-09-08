@@ -6,6 +6,7 @@ import type { SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { organizationJsonLd } from '@/lib/structuredData'
 import { siteUrl } from '@/lib/siteUrl'
+import { missingLeaves } from '@/lib/requiredContent'
 
 /**
  * Chrome and the required-content guard for every visitor-facing page.
@@ -17,42 +18,32 @@ import { siteUrl } from '@/lib/siteUrl'
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const settings = await fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY)
 
-  // Deliberate. Missing required content fails the build loudly rather than rendering a
-  // shell with an empty footer and a dead Investor Login button. Silent fallback content
-  // is the exact failure mode the old site's constants.ts created, and it is why nobody
-  // noticed the site had drifted from its own CMS.
-  //
-  // This throws only for content routes. /studio sits outside this group precisely so
-  // that the tool needed to create the missing document stays reachable.
-  // `ctaBand` is checked here for a reason worth stating: Sanity's `required()` is
-  // Studio-side only. It does not gate the API, the query, or the build — so a `ctaBand`
-  // cleared through Vision, the CLI, or a stale draft being published would leave every
-  // page rendering `SectionHeading` with no props: an empty <h2> above a bare email box.
-  // That is exactly the headless band this was moved to siteSettings to fix, silently
-  // reinstated on every page instead of eleven.
-  //
-  // `headerCta` is checked the same way and for a sharper version of the same reason: an
-  // empty label renders the header's only call to action as a dark rounded box with no
-  // words in it, on every page, and nothing in the build, the tests, lint or Lighthouse
-  // sees a button with no text. Both leaves are checked, because a `headerCta` object
-  // whose two fields are null still projects to a truthy object — checking the parent
-  // would wave that straight through.
-  if (
-    !settings?.agoraPortalUrl ||
-    !settings?.disclaimer ||
-    !settings?.contactEmail ||
-    !settings?.headerCta?.label ||
-    !settings?.headerCta?.href ||
-    !settings?.ctaBand?.heading?.title ||
-    !settings?.ctaBand?.submitLabel
-  ) {
+  /*
+   * Missing required content fails the build loudly rather than rendering a broken shell.
+   * That is the failure mode the old constants.ts fallback created, and it is why this
+   * throws instead of defaulting.
+   *
+   * The list lives in src/lib/requiredContent.ts because `content-integrity` needs the
+   * same one — it used to be written out twice and the two had already diverged by three
+   * leaves. Sanity's `required()` gates the Publish button and nothing else: not the API,
+   * not a GROQ query, not `next build`.
+   *
+   * This throws only for content routes. /studio sits outside this route group precisely
+   * so that the tool needed to create the missing document stays reachable.
+   */
+  const missing = missingLeaves(settings)
+  if (missing.length > 0) {
     throw new Error(
-      'siteSettings is missing or incomplete. Publish a siteSettings document with ' +
-        'agoraPortalUrl, contactEmail, disclaimer, a headerCta with both a label and a ' +
-        'destination, and a complete ctaBand set — at /studio, or at ' +
-        'https://em-8-properties.sanity.studio',
+      'siteSettings is missing or incomplete. Publish a siteSettings document with:\n' +
+        missing.map((leaf) => `  - ${leaf.describe}`).join('\n') +
+        '\nEdit it at /studio, or at https://em-8-properties.sanity.studio',
     )
   }
+
+  // Non-null past this point: `missingLeaves` returns every leaf for a null document or a
+  // null/empty field, so the throw above covers it. TypeScript cannot see that through the
+  // array, hence `site` and the `!` on each required leaf accessed below.
+  const site = settings!
 
   return (
     <>
@@ -64,7 +55,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <JsonLd
         data={organizationJsonLd({
           siteUrl: siteUrl(),
-          contactEmail: settings.contactEmail,
+          contactEmail: site.contactEmail!,
         })}
       />
       {/*
@@ -83,12 +74,12 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       */}
       <div className="relative">
         <SiteHeader
-          agoraUrl={settings.agoraPortalUrl}
-          cta={{ label: settings.headerCta.label, href: settings.headerCta.href }}
+          agoraUrl={site.agoraPortalUrl!}
+          cta={{ label: site.headerCta!.label!, href: site.headerCta!.href! }}
         />
       </div>
       <main className="flex-1">{children}</main>
-      <SiteFooter disclaimer={settings.disclaimer} contactEmail={settings.contactEmail} />
+      <SiteFooter disclaimer={site.disclaimer!} contactEmail={site.contactEmail!} />
     </>
   )
 }

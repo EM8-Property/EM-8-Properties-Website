@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { stripComments } from '../shared/sourceScan'
 import { REQUIRED_SITE_SETTINGS, missingLeaves } from '@/lib/requiredContent'
 
 const COMPLETE = {
@@ -59,5 +62,35 @@ describe('required siteSettings leaves', () => {
       expect(leaf.groq, `${leaf.path} has no groq projection`).toBeTruthy()
       expect(leaf.describe, `${leaf.path} has no description`).toBeTruthy()
     }
+  })
+})
+
+describe('the layout consumes the array rather than repeating it', () => {
+  /*
+   * `resolve(import.meta.dirname, ...)` and `stripComments`, both copied from the
+   * repo's existing scanners, because this file has been bitten by each: a scanner
+   * resolving `src/` from the working directory silently reads nothing, and an assertion
+   * that a string is ABSENT matches the comment discussing it and passes for the wrong
+   * reason. `\r\n` is normalised for the same class of reason — core.autocrlf is on.
+   */
+  const layout = stripComments(
+    readFileSync(
+      resolve(import.meta.dirname, '../../src/app/(site)/layout.tsx'),
+      'utf8',
+    ),
+  ).replace(/\r\n/g, '\n')
+
+  it('imports the shared guard', () => {
+    expect(layout).toMatch(/from '@\/lib\/requiredContent'/)
+  })
+
+  it('no longer checks leaves by hand', () => {
+    /*
+     * A source assertion, which is weak, and it is the right weak test here: the drift
+     * this PR fixes was two lists of strings, and the only way to stop them growing back
+     * is to notice when someone adds an eighth `!settings?....` beside the loop.
+     */
+    expect(layout).not.toMatch(/!settings\?\.headerCta\?\.label/)
+    expect(layout).not.toMatch(/!settings\?\.ctaBand\?\.heading\?\.title/)
   })
 })
