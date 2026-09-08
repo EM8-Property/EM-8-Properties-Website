@@ -135,7 +135,7 @@ export function InvestorPopup({ copy }: { copy?: PopupCopy }) {
         aria-hidden="true"
         tabIndex={-1}
         onClick={dismiss}
-        className="absolute inset-0 bg-ink/55"
+        className="absolute inset-0 bg-scrim/55"
       />
 
       <div

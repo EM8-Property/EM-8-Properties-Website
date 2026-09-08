@@ -28,6 +28,18 @@ export const palette = Object.freeze({
    * a 1.43:1 field border today; that is the defect this split fixes.
    */
   fieldBorder: '#959590',
+  /**
+   * A photographic scrim, not body text — it darkens whatever photograph sits behind it
+   * so the white copy laid on top of that photograph stays legible. It happens to equal
+   * `ink` today, both #1A1A1A, but it is a different role wearing the same value by
+   * coincidence.
+   *
+   * That is why it is its own token rather than a reuse of `ink`: spec §9's dark re-theme
+   * moves `ink` to #EDEDEB, and a scrim at #EDEDEB under white hero copy measures about
+   * 1.5:1 — the scrim would have gone from darkening the photograph to washing it out.
+   * `scrim` stays put when `ink` moves, which is the whole point of splitting them.
+   */
+  scrim: '#1A1A1A',
 })
 
 function channel(v: number): number {

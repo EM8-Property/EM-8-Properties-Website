@@ -24,6 +24,8 @@
   --color-danger: #C0392B;
   --color-teal-hover: #3AA8A0;
   --color-field-border: #959590;
+  /* A photographic scrim, not body text — see src/lib/tokens.ts for why it does not move with `ink`. */
+  --color-scrim: #1A1A1A;
 
   --radius-chip: 4px;
   --radius-control: 8px;

@@ -71,6 +71,14 @@ describe('chip fills', () => {
         .join('\n  ')}`,
     ).toEqual([])
   })
+
+  it('holds the fallback colour to the same 3:1-against-ground standard', () => {
+    // The loop above only iterates CHIP_COLORS, so CHIP_FALLBACK_COLOR escapes it exactly
+    // as it escaped the 4.5:1 test above until that one got its own companion assertion.
+    // #455A64 is 2.40:1 against #1A1A1A, so the fallback would fail silently at re-theme
+    // while this file stayed green.
+    expect(contrastRatio(CHIP_FALLBACK_COLOR, palette.ground)).toBeGreaterThanOrEqual(3)
+  })
 })
 
 describe('teal-filled controls', () => {

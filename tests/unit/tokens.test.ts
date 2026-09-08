@@ -55,4 +55,14 @@ describe('tokens that were literals in components', () => {
     expect(contrastRatio(palette.fieldBorder, palette.ground)).toBeGreaterThanOrEqual(3)
     expect(contrastRatio(palette.rule, palette.ground)).toBeLessThan(3)
   })
+
+  it('carries a scrim dark enough to hold white hero copy, separately from ink', () => {
+    // `scrim` and `ink` are both #1A1A1A today, but they are not the same role, and this
+    // assertion is what proves the role rather than the value: a scrim exists to keep
+    // white photograph copy legible, so it is measured against white text, not against
+    // `ink`. Asserting `palette.scrim === palette.ink` instead would re-couple exactly
+    // what this token split is for — spec §9 moves `ink` to #EDEDEB and leaves `scrim`
+    // where it is.
+    expect(contrastRatio(palette.scrim, '#FFFFFF')).toBeGreaterThanOrEqual(4.5)
+  })
 })

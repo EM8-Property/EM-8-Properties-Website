@@ -77,6 +77,36 @@ describe('LeadForm', () => {
     expect(await screen.findByText(/thank you/i)).toBeDefined()
   })
 
+  it('pins the field border and error colour to their tokens, not a literal', () => {
+    // No lint rule can see a revert of these: the classes carry no colour literal, so the
+    // no-literals-under-src rule is blind to `border-field-border` going back to
+    // `border-rule`, and tokens.test.ts only proves a token named fieldBorder measures
+    // 3.01:1 — it says nothing about whether LeadForm actually uses it. This is the only
+    // check standing between the site and a silent return to the live 1.43:1 WCAG 1.4.11
+    // failure that shipped until 2026-09-08.
+    render(<LeadForm source="keep-in-touch" fields={fields} submitLabel="Send" />)
+    const first = screen.getByLabelText('First name')
+    const email = screen.getByLabelText('Email')
+    for (const input of [first, email]) {
+      expect(input.className).toMatch(/border-field-border/)
+      expect(input.className).not.toMatch(/\bborder-rule\b/)
+    }
+  })
+
+  it('pins the error message to the danger token', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ ok: false, error: 'Nope' }), { status: 400 })),
+    )
+    const user = userEvent.setup()
+
+    render(<LeadForm source="keep-in-touch" fields={fields} submitLabel="Send" />)
+    await fillAndSubmit(user)
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.className).toMatch(/text-danger/)
+  })
+
   it('carries a honeypot field that is hidden from people and assistive tech', () => {
     const { container } = render(
       <LeadForm source="keep-in-touch" fields={fields} submitLabel="Send" />,
