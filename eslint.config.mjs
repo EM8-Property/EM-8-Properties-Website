@@ -31,6 +31,13 @@ const PHYSICAL_STYLE_MESSAGE =
   "paddingInlineStart/End, borderInlineStart/End, insetInlineStart/End, and " +
   "textAlign: 'start'|'end'. Phase 2 mirrors this layout for Hebrew.";
 
+const COLOR_LITERAL = "#[0-9a-fA-F]{3,8}\\b|rgba?\\(";
+const COLOR_LITERAL_MESSAGE =
+  "Colour literals belong in src/lib/tokens.ts (or chipColors.ts), not in a " +
+  "component. The dark re-theme is a token swap, and a swap only moves what is in " +
+  "the palette. Use a token class (text-danger, bg-teal-hover, border-field-border) " +
+  "or an opacity modifier on one (bg-ink/55).";
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -70,8 +77,41 @@ const eslintConfig = defineConfig([
             "JSXAttribute[name.name='style'] Property[key.name='textAlign'][value.value=/^(left|right)$/]",
           message: PHYSICAL_STYLE_MESSAGE,
         },
+        // Added 2026-09-08. Seven colour decisions were living as Tailwind arbitrary
+        // values and inline styles across eleven files, so the palette was not actually
+        // centralized and a token swap would have missed all of them — including
+        // LeadForm's error text, which measures 3.20:1 on a dark ground.
+        //
+        // Same shape as the logical-properties rule above and for the same reason: the
+        // guard has to see how this codebase really writes classes, which is often in a
+        // variable rather than in a className attribute.
+        //
+        // Cost: strings containing "#" followed by digits, like "Unit #204" or "Suite #100",
+        // may trip it (digits are valid hex characters). The pattern cannot distinguish them from
+        // valid CSS shorthand colours like #204. Escape hatch: a one-line eslint-disable on that
+        // string, cheap against a token swap that would otherwise miss a colour.
+        {
+          selector: `Literal[value=/${COLOR_LITERAL}/]`,
+          message: COLOR_LITERAL_MESSAGE,
+        },
+        {
+          selector: `TemplateElement[value.raw=/${COLOR_LITERAL}/]`,
+          message: COLOR_LITERAL_MESSAGE,
+        },
       ],
     },
+  },
+  {
+    /*
+     * The palette's own home, and the boundary that renders without it.
+     *
+     * tokens.ts and chipColors.ts ARE the centralized palette — the rule exists to push
+     * colours into them. global-error.tsx is the error boundary that renders when the
+     * stylesheet has failed to load, so its colours have to be inline: a token it cannot
+     * resolve is a black page.
+     */
+    files: ["src/lib/tokens.ts", "src/lib/chipColors.ts", "src/app/global-error.tsx"],
+    rules: { "no-restricted-syntax": "off" },
   },
   // Override default ignores of eslint-config-next.
   globalIgnores([
