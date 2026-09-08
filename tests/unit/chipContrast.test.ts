@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CHIP_COLORS, CHIP_FALLBACK_COLOR } from '@/components/ui/Chip'
+import { CHIP_COLORS, CHIP_FALLBACK_COLOR } from '@/lib/chipColors'
 import { ASSET_CLASSES, STATUSES } from '@/lib/propertyTaxonomy'
 import { palette, contrastRatio } from '@/lib/tokens'
 
@@ -45,6 +45,39 @@ describe('chip fills', () => {
     // #4ABDB5 measures 2.27:1 against white. It is a large-figure and button colour,
     // not a background for 10px uppercase text.
     expect(Object.values(CHIP_COLORS)).not.toContain(palette.teal)
+  })
+
+  it('keeps every fill distinguishable from the page ground', () => {
+    /*
+     * The gap this closes: the assertions above check the white text ON each fill and say
+     * nothing about the fill against the page. So a re-theme could move the ground and
+     * leave every chip a dark rectangle on a dark page with this file still green.
+     *
+     * Against the current white ground the fills run 5.07:1 to 9.39:1, so this passes
+     * today with room. Against #1A1A1A four of the eight unique fills fall below 3:1 —
+     * retail #6A1B9A worst at 1.85 — which is the work the dark re-theme has to do, and
+     * the reason this assertion lands before it rather than after.
+     *
+     * 3:1 rather than 4.5:1 because a chip's edge is a non-text boundary: WCAG 1.4.11,
+     * the same bar `fieldBorder` is held to.
+     */
+    const failures = Object.entries(CHIP_COLORS)
+      .map(([kind, hex]) => ({ kind, hex, ratio: contrastRatio(hex, palette.ground) }))
+      .filter(({ ratio }) => ratio < 3)
+    expect(
+      failures,
+      `chip fills below 3:1 against the page ground (${palette.ground}):\n  ${failures
+        .map((f) => `${f.kind} ${f.hex} = ${f.ratio.toFixed(2)}:1`)
+        .join('\n  ')}`,
+    ).toEqual([])
+  })
+
+  it('holds the fallback colour to the same 3:1-against-ground standard', () => {
+    // The loop above only iterates CHIP_COLORS, so CHIP_FALLBACK_COLOR escapes it exactly
+    // as it escaped the 4.5:1 test above until that one got its own companion assertion.
+    // #455A64 is 2.40:1 against #1A1A1A, so the fallback would fail silently at re-theme
+    // while this file stayed green.
+    expect(contrastRatio(CHIP_FALLBACK_COLOR, palette.ground)).toBeGreaterThanOrEqual(3)
   })
 })
 

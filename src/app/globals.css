@@ -20,6 +20,13 @@
   /* Required below 24px. #4ABDB5 measures ~2.2:1 on white and fails WCAG AA. */
   --color-teal-text: #2C7A74;
 
+  /* Mirrors src/lib/tokens.ts. See the comments there for why each one exists. */
+  --color-danger: #C0392B;
+  --color-teal-hover: #3AA8A0;
+  --color-field-border: #959590;
+  /* A photographic scrim, not body text — see src/lib/tokens.ts for why it does not move with `ink`. */
+  --color-scrim: #1A1A1A;
+
   --radius-chip: 4px;
   --radius-control: 8px;
   --radius-card: 12px;

@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import { SiteHeader } from '@/components/layout/SiteHeader'
-import { HEADER_SCRIM } from '@/components/layout/SiteHeader'
 import { contrastRatio } from '@/lib/tokens'
 import { palette } from '@/lib/tokens'
 
@@ -72,10 +71,23 @@ describe('SiteHeader overlay', () => {
   it('keeps ink text legible over the darkest possible photograph', () => {
     // Worst case: the scrim sits over pure black. Whatever shows through has to leave the
     // ink text above 4.5:1, or the header becomes unreadable on a dark lobby shot.
-    const alpha = HEADER_SCRIM
+    // Mirrors the `bg-ground/85` class in SiteHeader — kept as a local constant rather than
+    // an import so this assertion still exercises the real WCAG property even though the
+    // opacity now lives only in a class name.
+    const alpha = 0.85
     const overBlack = Math.round(255 * alpha)
     const hex = '#' + [overBlack, overBlack, overBlack].map((n) => n.toString(16).padStart(2, '0')).join('')
     expect(contrastRatio(palette.ink, hex)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('draws the overlay scrim from the ground token at 0.85, not an inline style', () => {
+    // Pins the class to the constant above so the two cannot drift apart: if someone
+    // changes `bg-ground/85` in SiteHeader without updating the alpha here (or vice
+    // versa), this test — not just a visual check — catches it.
+    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
+    const header = container.firstElementChild!
+    expect(header.className).toMatch(/bg-ground\/85/)
+    expect((header as HTMLElement).getAttribute('style')).toBeNull()
   })
 
   it('still exposes every destination while overlaid', () => {

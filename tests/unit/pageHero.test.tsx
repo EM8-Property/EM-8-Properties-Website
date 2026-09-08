@@ -252,6 +252,29 @@ describe('hero geometry, both shapes', () => {
     // The slide behind is not worth a full-bleed crop up front.
     expect(alts).not.toContain('a7')
   })
+
+  it('draws the scrim from the scrim token rather than an rgba literal', () => {
+    /*
+     * The scrim is `scrim` at three opacities. Written as `rgba(26,26,26,...)` it is that
+     * value copied by hand into three places in one class string, which a token swap
+     * cannot follow.
+     *
+     * It is bound to `scrim`, not `ink`, on purpose: `scrim` is a distinct role from `ink`
+     * precisely so that spec §9's re-theme, which moves `ink` to #EDEDEB, does not lighten
+     * it too. A scrim's job is to darken the photograph behind the white hero copy — if it
+     * had stayed bound to `ink` it would have gone near-white right along with body text,
+     * and the white copy on top would have measured about 1.5:1 instead of staying legible.
+     *
+     * Tailwind v4 takes an opacity modifier on a theme colour, so `from-scrim/90` is the
+     * same pixels and moves with the token.
+     */
+    const { container } = render(<HeroCarousel slides={SLIDES} />)
+    const scrim = container.querySelector('span[class*="bg-gradient-to-t"]')!
+    expect(scrim.className).toMatch(/from-scrim\/90/)
+    expect(scrim.className).toMatch(/via-scrim\/55/)
+    expect(scrim.className).toMatch(/to-scrim\/25/)
+    expect(scrim.className).not.toMatch(/rgba/)
+  })
 })
 
 describe('PageHero copy', () => {

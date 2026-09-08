@@ -132,7 +132,7 @@ export default async function AboutPage() {
                       <div className="p-4">
                         <h3 className="text-sm font-semibold text-ink">{m.name}</h3>
                         {m.role && <Eyebrow>{m.role}</Eyebrow>}
-                        <TeamBio bio={m.bio} />
+                        <TeamBio bio={m.bio} name={m.name ?? ''} />
                       </div>
                     </Card>
                   ))}

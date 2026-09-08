@@ -27,16 +27,6 @@ const NAV = [
  * what makes `getByRole` ambiguous for anything testing this component.
  */
 /**
- * Opacity of the white scrim behind the header when it overlays photography.
- *
- * Exported so a test can hold it to the contrast floor. This is a light-institutional
- * design and the header carries ink text, not white, so a fully transparent header would
- * put #1A1A1A on whatever the photograph happens to be. At 0.85 the worst case — pure
- * black behind it — still measures 12.3:1, so legibility never depends on the image.
- */
-export const HEADER_SCRIM = 0.85
-
-/**
  * The header's own call to action: its words and its destination, both from the CMS.
  *
  * The label and the href travel together because rewording a button usually means
@@ -66,10 +56,15 @@ export function SiteHeader({ agoraUrl, cta }: { agoraUrl: string; cta: HeaderCta
     <header
       className={
         overlay
-          ? `absolute inset-x-0 top-0 z-40 backdrop-blur-sm`
+          ? /*
+             * 0.85, not 1: the header sits over a photograph on the hero pages, and a fully
+             * opaque bar would cut a hard line across it. `bg-ground/85` rather than an inline
+             * rgba, so the ground token carries it — at 0.85 the worst case is still legible
+             * ink on a near-ground field.
+             */
+            `absolute inset-x-0 top-0 z-40 backdrop-blur-sm bg-ground/85`
           : `border-b border-rule`
       }
-      style={overlay ? { backgroundColor: `rgba(255, 255, 255, ${HEADER_SCRIM})` } : undefined}
     >
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-y-3 px-6 py-4">
         <Link

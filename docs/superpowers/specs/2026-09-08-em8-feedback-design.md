@@ -621,11 +621,20 @@ measures 7.66, so that half of the rule survives verbatim.
 | rule | `#D8D8D4` | `#333333` | matches the light palette's own ratio — see below |
 | teal | `#4ABDB5` | `#4ABDB5` | unchanged, now legal at any size |
 | teal-text | `#2C7A74` | retired | repointed at `teal` |
+| scrim | `#1A1A1A` | `#1A1A1A` | **does not move.** See below |
+
+`scrim` was added in PR 1 and is the one token that must stay put. It equals `ink` today,
+which is exactly why it needed its own name: it darkens a *photograph* so the white copy on
+top stays legible, and the copy on top is `text-white` in both themes. Binding the hero
+gradient and the modal backdrop to `ink` would send them to `#EDEDEB` and take white hero
+copy from 17.93:1 to **1.47:1**. A missed literal would at least have stayed dark, so this
+is the one place where centralizing a colour could have made the swap worse than leaving it
+alone.
 
 Token *names* do not change. They are role names — "ink" is the body-text colour — and
 renaming them would touch every file for no gain.
 
-### Two things a token swap alone gets wrong
+### Three things a token swap alone gets wrong
 
 1. **`#555555` secondary text measures 2.33:1 on the dark ground.** Every
    `text-ink-secondary` on the site is unreadable until this value is replaced. This is the
@@ -654,6 +663,26 @@ renaming them would touch every file for no gain.
    `chipContrast.test.ts` asserts text-on-fill only, so **it would stay green while four
    chips lost their edges.** Extend it to assert fill-against-ground on whichever ground
    is current, then re-derive those four.
+
+   *Done in PR 1:* the fill-against-ground assertion now exists and reads `palette.ground`,
+   so it will fail loudly naming each fill and its ratio the moment the ground moves. The
+   fallback colour is covered too. Re-deriving the four values is still owed.
+
+3. **`text-white` paired with a token that moves.** The colour-literal lint rule added in
+   PR 1 cannot see any of these, because `white` is not a hex literal — so unlike the seven
+   in §4, nothing counts them for you. Seven pairings, verified against the tree at PR 1:
+
+   | pairing | where | today | after the swap |
+   |---|---|---|---|
+   | `bg-teal-text text-white` | `about:76`, `investors:108`, `InsightsFilter:31`, `PortfolioFilter:28` | 5.07 ✓ | **2.27 ✗** — `teal-text` retires onto `teal`, and three of these are 10px |
+   | `bg-ink text-white` | `investors:96`, `SiteHeader:124` | 17.40 ✓ | **1.17 ✗** — the button label vanishes |
+   | `bg-white` dialog panel | `InvestorPopup:147` | 17.40 ✓ | **1.17 ✗** — a white card on a dark page, and its `text-ink` body goes near-white |
+
+   `text-white` on the photographic scrims stays correct and must not be swept up in this:
+   `HeroCarousel`'s copy and dots, `Button`'s ghost variant, `Chip`, `Eyebrow` and
+   `PageHero` are all choosing a colour against an *image*, not against the ground. That is
+   the distinction §4 was drawing when it said `text-white` stays legal — it was written
+   about hero copy, and it does not license the seven above.
 
 ### The rule colour: match the ratio, not an absolute bar
 

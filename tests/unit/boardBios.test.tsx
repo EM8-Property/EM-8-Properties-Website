@@ -43,7 +43,7 @@ describe('TeamBio', () => {
   it('keeps paragraph breaks instead of running them together', () => {
     // `bio` is a plain text field, so its newlines collapse under normal HTML whitespace
     // handling and a three-paragraph career reads as one unbroken wall.
-    const { container } = render(<TeamBio bio={TWO_PARAS} />)
+    const { container } = render(<TeamBio bio={TWO_PARAS} name="Test Person" />)
     const paras = container.querySelectorAll('p')
     expect(paras).toHaveLength(2)
     expect(paras[0]!.textContent).toBe('First paragraph about the person.')
@@ -51,22 +51,22 @@ describe('TeamBio', () => {
   })
 
   it('renders a single-paragraph bio as one paragraph', () => {
-    const { container } = render(<TeamBio bio="Just the one line." />)
+    const { container } = render(<TeamBio bio="Just the one line." name="Test Person" />)
     expect(container.querySelectorAll('p')).toHaveLength(1)
   })
 
   it('renders nothing when there is no bio', () => {
-    const { container } = render(<TeamBio bio={null} />)
+    const { container } = render(<TeamBio bio={null} name="Test Person" />)
     expect(container.innerHTML).toBe('')
   })
 
   it('ignores blank lines rather than emitting empty paragraphs', () => {
-    const { container } = render(<TeamBio bio={'One.\n\n\n\nTwo.'} />)
+    const { container } = render(<TeamBio bio={'One.\n\n\n\nTwo.'} name="Test Person" />)
     expect(container.querySelectorAll('p')).toHaveLength(2)
   })
 
   it('does not use physical-direction utilities', () => {
-    const { container } = render(<TeamBio bio={TWO_PARAS} />)
+    const { container } = render(<TeamBio bio={TWO_PARAS} name="Test Person" />)
     expect(container.innerHTML).not.toMatch(/\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|text-left|text-right)-?\b/)
   })
 })
