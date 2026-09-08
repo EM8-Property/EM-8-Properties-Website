@@ -3,6 +3,8 @@ import { createClient } from 'next-sanity'
 import { SPEC_9_PLACEHOLDERS } from '../shared/placeholders'
 // Plain ESM data module, shared with scripts/migrate-content.mjs and the unit suite.
 import { shadowingSeedDrafts } from '../../scripts/content/em8-content.mjs'
+import { REQUIRED_SITE_SETTINGS, missingLeaves } from '@/lib/requiredContent'
+import { SITE_SETTINGS_QUERY } from '@/sanity/queries'
 
 /**
  * Runs against the live dataset, so it is excluded from `npm test` and run with
@@ -169,46 +171,94 @@ describe('published content', () => {
     ).toBe(0)
   })
 
-  it('has the siteSettings singleton the build requires', async () => {
-    const settings = await client.fetch<{ agoraPortalUrl?: string; disclaimer?: string }[]>(
-      `*[_type == "siteSettings" && ${PUBLISHED}]{ agoraPortalUrl, disclaimer }`,
+  it('publishes a siteSettings document with every leaf the site cannot render without', async () => {
+    /*
+     * The same array the layout throws on, so the gate and the build can no longer
+     * disagree. They did: this file checked four leaves and the layout threw on seven, so
+     * a document missing contactEmail, ctaBand.heading.title or ctaBand.submitLabel passed
+     * here and failed `next build` at deploy time instead.
+     *
+     * Projected by alias so a nested leaf arrives flat, then rebuilt into the nested shape
+     * and checked with the same predicate the layout uses — including the empty-string
+     * case, which `required()` permits and `setIfMissing` will not repair.
+     */
+    const projection = REQUIRED_SITE_SETTINGS.map((leaf) => leaf.groq).join(', ')
+    const rows = await client.fetch<Record<string, unknown>[]>(
+      `*[_type == "siteSettings" && ${PUBLISHED}]{ ${projection} }`,
     )
-    expect(settings, 'siteSettings must exist exactly once').toHaveLength(1)
-    expect(settings[0]?.agoraPortalUrl).toBeTruthy()
-    expect(settings[0]?.disclaimer).toBeTruthy()
+    expect(rows.length, 'no published siteSettings document').toBe(1)
+
+    const flat = rows[0]!
+    const settings: Record<string, unknown> = {}
+    for (const leaf of REQUIRED_SITE_SETTINGS) {
+      // '"headerCtaLabel": headerCta.label' -> 'headerCtaLabel'; 'disclaimer' -> itself.
+      const alias = leaf.groq.includes(':') ? leaf.groq.split('"')[1]! : leaf.path
+      const keys = leaf.path.split('.')
+      let cursor = settings
+      for (const key of keys.slice(0, -1)) {
+        cursor[key] = (cursor[key] as Record<string, unknown>) ?? {}
+        cursor = cursor[key] as Record<string, unknown>
+      }
+      cursor[keys.at(-1)!] = flat[alias]
+    }
+
+    const missing = missingLeaves(settings)
+    expect(
+      missing,
+      `siteSettings leaves that will fail next build:\n  ${missing
+        .map((leaf) => leaf.describe)
+        .join('\n  ')}`,
+    ).toEqual([])
   })
 
   /**
-   * The header button, checked per leaf.
+   * The test above proves the gate and the layout agree about the LIST of required
+   * leaves — both walk `REQUIRED_SITE_SETTINGS`. It does not prove they agree about the
+   * QUERY, because it builds its own projection from `leaf.groq` rather than fetching
+   * with `SITE_SETTINGS_QUERY` itself. A leaf added to the array without a matching edit
+   * to the query would still pass that test — the array's own projection fetches
+   * whatever the array says to fetch — while `(site)/layout.tsx`, which fetches with the
+   * real query, would see the leaf as always missing and fail `next build` on every page.
    *
-   * `(site)/layout.tsx` throws when either field is empty, and that throw is in the
-   * layout — so it takes every page down at build time, not one route. Same blast radius
-   * as the `seo` and `heading` gates below, and the same reason to meet it here.
-   *
-   * Per leaf because a `headerCta` object with two null fields is still a truthy object.
-   * The shallow version of this check passes while the build fails.
+   * This closes that gap by fetching with the exact query the layout runs, so what this
+   * test sees is exactly what the build will see: gate-red and build-red become the same
+   * condition.
    */
-  it('has both leaves of the header button', async () => {
-    const settings = await client.fetch<{ label?: string; href?: string }[]>(
-      `*[_type == "siteSettings" && ${PUBLISHED}]{ "label": headerCta.label, "href": headerCta.href }`,
-    )
-    expect(settings).toHaveLength(1)
+  it('checks what next build will actually see: missingLeaves against a real SITE_SETTINGS_QUERY fetch', async () => {
+    const settings = await client.fetch(SITE_SETTINGS_QUERY)
+    const missing = missingLeaves(settings)
     expect(
-      settings[0]?.label,
-      'siteSettings has no headerCta.label — the layout throws and next build fails',
-    ).toBeTruthy()
-    expect(
-      settings[0]?.href,
-      'siteSettings has no headerCta.href — the layout throws and next build fails',
-    ).toBeTruthy()
+      missing,
+      `SITE_SETTINGS_QUERY does not project leaves that next build requires:\n  ${missing
+        .map((leaf) => leaf.describe)
+        .join('\n  ')}`,
+    ).toEqual([])
+  })
 
-    // The schema caps this at 20, but Sanity's validation is Studio-side only: it gates
-    // the Publish button and nothing written through Vision, the CLI or a script. The
-    // cap is a design guardrail rather than a correctness one — a long label wraps the
-    // header rather than breaking it — so this belongs on the release gate, not in a
-    // throw.
+  /**
+   * Split out from the required-content test above, which used to end on this same
+   * check. Three reasons, each enough on its own:
+   *
+   * - that test's name and its `expect` are about required content, and a document
+   *   missing a required leaf short-circuits before this length check ever runs — the
+   *   site renders fine with a 25-character label, so this isn't the same failure;
+   * - the folded version read a hard-coded `flat.headerCtaLabel`, an alias generated in
+   *   REQUIRED_SITE_SETTINGS from `leaf.groq.split('"')[1]`. Rename that alias and this
+   *   silently degrades to checking `''.length <= 20` — a vacuous pass with no failing
+   *   test anywhere to catch it.
+   *
+   * The schema caps this at 20, but Sanity's validation is Studio-side only: it gates the
+   * Publish button and nothing written through Vision, the CLI or a script. The cap is a
+   * design guardrail rather than a correctness one — a long label wraps the header
+   * rather than breaking it — so it belongs on the release gate, not in a throw.
+   */
+  it('keeps the header button label short enough not to wrap the header', async () => {
+    const rows = await client.fetch<{ label?: string }[]>(
+      `*[_type == "siteSettings" && ${PUBLISHED}]{ "label": headerCta.label }`,
+    )
+    expect(rows.length, 'no published siteSettings document').toBe(1)
     expect(
-      (settings[0]?.label ?? '').length,
+      (rows[0]!.label ?? '').length,
       'headerCta.label is longer than 20 characters — it will wrap the header on a tablet',
     ).toBeLessThanOrEqual(20)
   })
