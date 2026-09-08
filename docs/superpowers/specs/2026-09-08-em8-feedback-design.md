@@ -101,8 +101,11 @@ options on the upper bar" arriving alongside items that were already in it, and 
 
 - The **Deshe prior-sales spreadsheet** (Hunter). Blocks §8's second half.
 - **Oak Forest partnership copy** — the city involvement Etamar says is missing.
-- **"Why EM8" and "Why Midwest" body copy.** §5 ships both pages with the structure in
-  place and the copy empty in the Studio, so this needs no developer.
+- **"Why EM8" and "Why Midwest" body copy.** §5 ships both as Sanity-backed sections —
+  `whyEm8` on the About page, and the `/strategy` page's body — with the structure in place
+  and the copy empty, so this needs no developer.
+- **The ten nav labels.** They become Studio fields in §5. They can ship with the labels
+  this document proposes and be edited later; nothing is blocked on them.
 - **Antioch's target-return figures.** Hunter confirmed on 2026-09-08 that the live
   offering, the deals in progress and the realized results may all be public. The figures
   themselves are still not in the dataset.
@@ -183,39 +186,163 @@ chosen against an image rather than against the ground.
 
 ## 5. Navigation
 
+Two dropdowns, two plain links, and the two actions:
+
 ```
-About ▾        Portfolio      Insights                        Investor Login   [Invest With Us]
-  About EM8
+About Us ▾        Strategy ▾        Portfolio   Insights      Investor Login  [Invest With Us]
+  About EM8         Why Midwest
+  Why EM8           Partners
   Our Team
-  Why EM8
-  Why Midwest
-  Partners
 ```
 
-The routes, so nothing about this is inferred at implementation time:
+Hunter's instruction, 2026-09-08. Why Midwest appears in both halves of how he phrased it
+— "Why EM8 and why midwest should fold into the about us", then "Why midwest and partners
+should go under a tab called Strategy" — and the second is read as the correction, so
+Midwest sits under Strategy. About Us is a tab in its own right, which it already was in
+this design; he may have been reading the mobile panel, where About sits directly above
+Investor Login and Invest With Us and can look nested under them.
 
-| bar item | destination |
-|---|---|
-| About ▾ | *(a button, not a link — see below)* |
-| — About EM8 | `/about` |
-| — Our Team | `/about#team` |
-| — Why EM8 | `/why-em8` **(new)** |
-| — Why Midwest | `/why-midwest` **(new)** |
-| — Partners | `/partners` |
-| Portfolio | `/portfolio` — now includes the realized deals |
-| Insights | `/insights` |
-| Investor Login | `siteSettings.agoraPortalUrl`, off-site |
-| Invest With Us | `siteSettings.headerCta` |
+### Two routes, not five
 
-`/about#team` needs an `id` on the team section, which `/about` does not carry today.
+**Why EM8 and Why Midwest are sections, not pages.** Hunter's word was "fold", and folding
+is what happens:
 
-**Three top-level items where there are five today** — Hunter's instruction on 2026-09-08
-removed Case Studies from the bar entirely, and Track Record goes with it (see below). Seven
-destinations are reachable from the bar against five now, nine counting Investor Login and
-the button. This is Buligo's mechanism: they fit About Us ▾, Strategy,
-Portfolio, Sectors ▾, Case Studies, Shareholders, Media ▾, Investor Login, a Hebrew
-toggle and Contact Us into one narrow bar, and the minimalism Etamar admires comes from the
-dropdowns rather than from having fewer pages.
+| bar item | destination | new? |
+|---|---|---|
+| About Us ▾ | button, not a link | |
+| — About EM8 | `/about` | exists |
+| — Why EM8 | `/about#why-em8` | **new section on an existing page** |
+| — Our Team | `/about#team` | exists, needs an `id` |
+| Strategy ▾ | `/strategy` | **new page** |
+| — Why Midwest | `/strategy` | its content |
+| — Partners | `/partners` | exists |
+| Portfolio | `/portfolio` | exists, now includes the realized deals |
+| Insights | `/insights` | exists |
+| Investor Login | `siteSettings.agoraPortalUrl` | off-site |
+| Invest With Us | `siteSettings.headerCta` | |
+
+So **one new route** — `/strategy` — against the four an earlier draft would have created.
+The two pages that would have started empty are now sections of pages that already have
+content, which is the difference between a thin page and a fuller one.
+
+`Strategy ▾` is a link *and* a parent, where `About Us ▾` is a button. That asymmetry is
+deliberate, and it is the awkward case the dropdown spec below has to handle: a parent that
+navigates cannot also open on first tap. It resolves the same way — the panel's first child
+is the parent's own page, so the destination is reachable without depending on how the
+parent behaves under a tap.
+
+### Everything on these pages is Sanity content
+
+Hunter's note: "these things need to be connected to Sanity.io". They are, and the pattern
+is established rather than invented here.
+
+`/strategy` gets a `strategyPage` document shaped like the others — `heading` (eyebrow,
+title, intro), a `body` for the Why Midwest argument, and `seo`. `/about` gains a `whyEm8`
+block with its own heading and body, guarded per leaf so a half-filled one renders nothing
+rather than an empty `<h2>`. Both are **added** fields and documents, so they can go to
+production ahead of the code that reads them under the rule in
+`docs/deploys-and-migrations.md`, and both are backfilled by a scoped `--only=` step.
+
+**A section whose body is absent renders nothing, and its nav entry goes with it.** An
+empty page in the bar is worse than a missing one — the same rule an earlier draft stated
+for the pages that are now sections.
+
+### Nav labels come from Sanity; the structure and the destinations do not
+
+Hunter's choice, 2026-09-08, over the recommendation to keep labels in code. So:
+
+- **In Sanity:** the visible text of each tab and child — `siteSettings.navLabels`, one
+  field per node.
+- **In code:** which nodes exist, how they nest, and where each points.
+
+The nodes carry stable keys and hrefs in code; Sanity supplies a label per key. That keeps
+the failure mode small: a bad edit makes a tab read oddly, but it cannot make a tab point
+somewhere else or drop out of the site's structure.
+
+Three consequences, and the first is the one to watch:
+
+- **A label can lie about its destination.** "Insights" pointing at `/partners` is a defect
+  no test can catch, because both halves are individually valid. Mitigated by keeping the
+  hrefs in code and by each Studio field description naming the destination it labels.
+  That is cheap, and it is the only guard available.
+- **Label length stops being a build-time fact**, which matters because the phone bar is
+  measured in characters. See below.
+- **Phase 2 gets easier**, unplanned but real: field-level localization makes the nav
+  translatable for Hebrew with no code change, where today the five labels are literals.
+
+**This is the change that should finally merge the two guard lists.** The 2026-09-03
+handover records that `(site)/layout.tsx`'s per-leaf guards and `content-integrity`'s gate
+list "are maintained separately and will drift", and that deriving both from one exported
+array "would make the next required field free". Adding ten nav labels and two documents to
+two hand-maintained lists is exactly the cost that note predicted. Do the derivation first.
+
+### The dropdown component
+
+The one genuinely new interactive piece, and its requirements are accessibility
+requirements rather than styling ones:
+
+- Pointer: opens on hover, and on focus for keyboard users.
+- Touch: opens on tap; a parent that is also a link must not navigate on that first tap.
+  `About Us` sidesteps this by being a button; `Strategy` cannot, so its panel repeats
+  `/strategy` as the first child.
+- Escape closes and returns focus to the parent. Arrow keys move within the panel. Tab
+  leaves it.
+- `aria-expanded` on the parent, `aria-controls` pointing at the panel.
+- The panel must not be the only route to a page. Every destination stays in the footer,
+  which is where a reader with JavaScript disabled and a crawler both find them.
+- On a phone the same group opens as a sheet rather than a hover panel — see below.
+
+`SiteHeader` becomes a client component only if it must. It already is one — it calls
+`usePathname()` for the overlay decision — so this adds no boundary.
+
+### The phone bar — the nav must be visible without a tap
+
+**Hunter's decision, 2026-09-08: the nav items are right as they are, and they have to be
+visible on mobile.** That settles the open question, and it overrides the caution an earlier
+draft carried here — that Buligo hides its phone nav too, so hiding ours was defensible.
+It is what he asked for; the design problem is fitting it.
+
+**The phone header becomes two rows:**
+
+```
+EM8 PROPERTIES                    [Invest With Us]
+About Us    Strategy    Portfolio    Insights
+```
+
+Row one is the wordmark and the primary action; row two is the nav. Two rows rather than
+one because the wordmark and the button already fill a 390px row between them.
+
+**Four labels, and now of unknown length.** `About Us · Strategy · Portfolio · Insights` is
+42 characters — more than the 38 an earlier draft called tight, and more than the 28 it had
+once Case Studies came out. And because the labels are Sanity fields now, the count is not
+knowable at build time: "Our Investment Strategy" is a legal edit.
+
+So the labels need a cap, the way `headerCta.label` already carries one for the same
+reason. The arithmetic, at the 11px semibold the bar uses and roughly 5.5px a character:
+
+| cap | four labels + gaps | fits 390px? | fits 320px? |
+|---|---|---|---|
+| 14 chars | ~356px | yes | no |
+| 12 chars | ~312px | yes | just |
+| 10 chars | ~268px | yes | yes |
+
+**Propose 12 and confirm by measurement.** The header is already `flex-wrap gap-y-3`, so an
+over-long set wraps to a third row rather than overflowing — graceful, but it grows the
+header again. Like `headerCta.label`'s cap, this is a guardrail on the design rather than on
+correctness.
+
+Two consequences, both to be measured rather than assumed:
+
+- **The header grows from 68px to roughly 100px.** The hero reserves `pt-24` (96px) for it,
+  and at 320px a band page has only 28px of clearance between the header and the eyebrow
+  today. A 100px header spends all of it. **The reservation has to grow with the header**,
+  and the E2E assertion at 320px is what proves it did.
+- **A taller header costs a little of the scroll §6 is trying to reclaim** — about 32px per
+  page, against the 3,000-odd px §6 removes.
+
+A horizontally scrolling strip is **not** proposed at any width. It reads as a tab bar,
+which misrepresents a small marketing site, and horizontal scroll containers are a known
+accessibility problem.
 
 ### `/track-record` is deleted, and the realized deals live in the portfolio
 
@@ -232,22 +359,22 @@ filter already offers "Sold". So there is nothing to add, only something to remo
 `dealStory`: `PROPERTY_BY_SLUG_QUERY` already selects it and the property page never
 renders it, so deleting the route as it stands would take the Acquired → Executed → Exited
 narrative and the 1.99× / 1.37× multiples off the site entirely — the very "return metrics"
-Etamar asked for. So `DealStory` moves onto `/portfolio/[slug]`, gated on `status ==
-'sold'`, which is one import and one line because the data is already fetched.
+Etamar asked for. So `DealStory` moves onto `/portfolio/[slug]`, gated on `status == 'sold'`,
+which is one import and one line because the data is already fetched.
 
-**No redirect.** Hunter's call: nothing links to the site externally yet. The route is
-removed from `sitemap.ts` in the same change, so the 404 is never advertised. If an inbound
-link ever turns up, a redirect is a two-line addition.
+**No redirect.** Hunter's call: nothing links to the site externally yet. The route leaves
+`sitemap.ts` in the same change, so the 404 is never advertised. If an inbound link ever
+turns up, a redirect is a two-line addition.
 
 The file list, since a route deletion touches more than a route:
 
 | file | change |
 |---|---|
 | `app/(site)/track-record/page.tsx` | delete |
-| `SiteHeader.tsx` · `SiteFooter.tsx` | drop the nav entry |
-| `sitemap.ts` | drop the URL (currently priority 0.9) |
-| `lib/heroPages.ts` | drop from `HERO_PATHS` — it is one of the seven hero pages |
-| `lib/seo.ts` · `lib/rateLimit.ts` | drop from the doc comments listing routes |
+| `SiteHeader.tsx` · `SiteFooter.tsx` | drop the entry; add Strategy |
+| `sitemap.ts` | drop the URL (currently priority 0.9), add `/strategy` |
+| `lib/heroPages.ts` | drop it, add `/strategy` — the hero-band list |
+| `lib/seo.ts` · `lib/rateLimit.ts` | update the doc comments listing routes |
 | `sanity/queries.ts` | delete `SOLD_PROPERTIES_QUERY` and `TRACK_RECORD_PAGE_QUERY` |
 | `tests/e2e/site.spec.ts` | three references, including the test asserting no property is addressable under `/track-record/` |
 | `portfolio/[slug]/page.tsx` | render `DealStory` |
@@ -260,73 +387,6 @@ it: an unread document costs nothing and is the cheapest possible rollback.
 One consequence worth stating: **`/portfolio` becomes the only index of EM8's assets**, so
 non-negotiable #4 gets stronger rather than weaker — one canonical URL per property, and now
 one place that lists them.
-
-**Why EM8 and Why Midwest** are new routes with new page documents — but read §12 before
-building two of them, which proposes folding Midwest into EM8 as a section. Following the
-established pattern: a `page`-shaped document carrying `heading` (eyebrow, title, intro)
-and `seo`, guarded per leaf in `(site)/layout.tsx`, gated in `content-integrity`, backfilled
-by a scoped `--only=` step. They ship with empty copy for the team to write. **A page whose
-`heading.title` is absent must not appear in the nav or the sitemap** — an empty page in the
-bar is worse than a missing one, and `heroPages.ts` already demonstrates the shape of a
-list two consumers share.
-
-### The dropdown component
-
-The one genuinely new interactive piece, and the requirements are accessibility
-requirements rather than styling ones:
-
-- Pointer: opens on hover, and on focus for keyboard users.
-- Touch: opens on tap; the parent must not navigate away on first tap if it is also a link.
-  Simplest correct answer — **the parent is a button, not a link**, and "About EM8" is the
-  first child.
-- Escape closes and returns focus to the parent. Arrow keys move within the panel. Tab
-  leaves it.
-- `aria-expanded` on the parent, `aria-controls` pointing at the panel.
-- The panel must not be the only route to a page. Every destination stays in the footer,
-  which is where a reader with JavaScript disabled and a crawler both find them.
-- On a phone the same group opens as a sheet rather than a hover panel — see below.
-
-`SiteHeader` becomes a client component only if it must. It already is one — it calls
-`usePathname()` for the overlay decision — so this adds no boundary.
-
-### The phone bar — the nav must be visible without a tap
-
-**Hunter's decision, 2026-09-08: the nav items are right as they are, and they have to be
-visible on mobile.** That settles the open question and it overrides the caution an earlier
-draft carried here — that Buligo hides its phone nav too, so hiding ours was defensible.
-It is what he asked for; the design problem is fitting it.
-
-**Removing Case Studies from the bar made this much easier**, and that is worth noticing
-rather than passing over. An earlier draft sized this for four labels at 38 characters and
-concluded the fit was tight enough to need fallbacks. There are now three —
-`About · Portfolio · Insights`, **28 characters** — which is comfortable at 390px and still
-fits at 320px.
-
-**The phone header becomes two rows:**
-
-```
-EM8 PROPERTIES                    [Invest With Us]
-About      Portfolio      Insights
-```
-
-Row one is the wordmark and the primary action; row two is the nav. `About` opens the group
-as a sheet rather than a hover panel, since there is no hover on a phone.
-
-Two rows rather than one because the wordmark and the button already fill a 390px row on
-their own — three short labels are not what makes a single row impossible. Two consequences,
-both to be measured rather than assumed:
-
-- **The header grows from 68px to roughly 100px.** The hero reserves `pt-24` (96px) for it,
-  and at 320px a band page has only 28px of clearance between the header and the eyebrow
-  today. A 100px header spends all of it. **The reservation has to grow with the header**,
-  and the E2E assertion at 320px is what proves it did.
-- **A taller header costs a little of the scroll §6 is trying to reclaim** — about 32px per
-  page, against the 3,000-odd px §6 removes.
-
-A horizontally scrolling strip is **not** proposed at any width. It reads as a tab bar,
-which misrepresents a small marketing site, and horizontal scroll containers are a known
-accessibility problem. With three labels there is no width at which it is needed.
-
 ## 6. Homepage
 
 **The target is a number, not a feeling: 8.2 screens on a phone down to roughly 4.5,
@@ -541,7 +601,8 @@ own background.
 | | workstream | blocked on |
 |---|---|---|
 | PR 1 | Palette centralization (§4) · `field-border` (§9) · team bios on click | — |
-| PR 2 | Nav: dropdowns, two-row phone bar, delete `/track-record`, `DealStory` onto the property page, Why EM8 page (§5) | copy, but ships empty |
+| PR 2a | Derive the guard list and the release gate from one array (§5) | — |
+| PR 2b | Nav: two dropdowns, Sanity labels, two-row phone bar, `/strategy` page, `whyEm8` section, delete `/track-record`, `DealStory` onto the property page (§5) | copy, but ships empty |
 | PR 3 | Homepage compression (§6) | — |
 | PR 4 | Typography + hero resolution (§7) | — |
 | PR 5 | The founder's prior deals (§8) | the spreadsheet |
@@ -552,9 +613,16 @@ lint rule cannot be turned on until the seven stragglers are centralized, and ev
 after PR 1 should be written against that rule rather than retrofitted to it. Team bios
 ride along because they are small and touch nothing the others touch.
 
+**PR 2 split in two**, and the small half goes first. PR 2b adds ten required nav labels
+and two documents; adding those to two hand-maintained guard lists is the drift the
+2026-09-03 handover predicted, so PR 2a derives both from one array first. It is a
+refactor with no visible effect, which is why it is worth doing while it is still cheap —
+and it is the difference between the nav change costing twelve careful edits and costing
+one.
+
 **PR 5 shrank to almost nothing** once §8 established that both return-metric fields
 already exist with renderers and gates. Its realized half is one line and has moved into
-PR 2, where it is a precondition for deleting `/track-record`; its targeted half is Studio
+PR 2b, where it is a precondition for deleting `/track-record`; its targeted half is Studio
 work. What is left is the founder's prior deals, which is the only genuinely new schema in
 this document and is blocked on the spreadsheet.
 
@@ -569,17 +637,12 @@ Specifically: the screen count before and after for §6, header clearance at 320
 §7, the phone header's item count and height for §5, and the bitmap width served to a
 DPR-3 phone for §7. Desktop stays a regression check rather than the primary one.
 
-## 12. Two simplifications worth taking
+## 12. One simplification left on the table
 
-Both cut a thing rather than adding one, and neither is required for anything above to
-work.
-
-**Fold "Why Midwest" into "Why EM8".** Two new routes, both empty, both answering a
-question that starts with "why", and one of them — why suburban Chicago — is the strongest
-argument the other one makes. One page with two sections is less to write, less to keep
-current, one fewer entry in the About group, and one fewer page that can sit empty in the
-sitemap. If it grows long enough to split later, splitting it is trivial; un-splitting two
-pages that have both been indexed is not.
+**Superseded: "fold Why Midwest into Why EM8".** This section proposed collapsing two thin
+new pages into one. Hunter's 2026-09-08 instruction went further and better — neither is a
+page at all now. Why EM8 is a section of `/about`, Why Midwest is the body of `/strategy`,
+and four proposed routes became one. Nothing left to simplify here.
 
 **Merge "current offerings" into the portfolio band.** The homepage carries them as two
 bands, but an offering is not a different kind of thing — it is a property with
@@ -588,10 +651,11 @@ instead of two, one concept instead of two, and it removes the case where the sa
 appears twice on one page. This also takes §6 closer to its 4.5-screen target without
 touching the card count.
 
-Not proposed, and worth saying why: **dropping the About dropdown for a flat five-item
-bar.** It sounds more minimal and it is worse here, because the mobile requirement in §5
-pulls the other way — four labels barely fit one row at 390px and five do not fit at all.
-The dropdown is what keeps the phone bar legible, so it earns its complexity.
+Not proposed, and worth saying why: **dropping the two dropdowns for a flat bar.** It
+sounds more minimal and it is the opposite here. The two panels collapse seven destinations
+into two tabs; flat, the bar would carry eight items, and §5's mobile requirement already
+makes four a tight fit at 42 characters. The dropdowns are what let the nav be visible on a
+phone at all, so they earn their complexity.
 
 ## 13. Risks
 
@@ -603,6 +667,18 @@ The dropdown is what keeps the phone bar legible, so it earns its complexity.
   proves it did. This is the highest-risk item in §5 and the one most likely to need a
   second measurement pass.
 - **Stats-on-hero may increase phone scroll rather than reduce it.** See §6.
+- **A Sanity-editable nav label can disagree with where it points.** "Insights" over a link
+  to `/partners` is valid on both halves and catchable by no test. Hrefs stay in code and
+  each Studio field description names its destination; beyond that it is a trust decision,
+  taken knowingly on 2026-09-08.
+- **Label length is no longer a build-time fact.** The phone bar is measured in characters,
+  and an editor can now change the count. §5 proposes a 12-character cap and the header
+  wraps rather than overflowing, so the failure is a taller header rather than a broken
+  one — but it is a failure nobody will be told about.
+- **Ten new required leaves land in two hand-maintained guard lists.** The 2026-09-03
+  handover predicted this drift. §5 makes deriving both from one array a precondition
+  rather than a cleanup, and if that slips, the nav labels are where the two lists first
+  disagree.
 - **Deleting a route is the least reversible thing in this document.** `/track-record` goes
   with no redirect on Hunter's call that nothing links in yet. The mitigations are that
   `DealStory` moves to the property page first, so no content is lost, and that the
