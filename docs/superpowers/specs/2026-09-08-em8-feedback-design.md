@@ -188,7 +188,9 @@ rather than classes, because Leaflet draws its vectors through an API; importing
 `tokens.ts` is what keeps them in the swap.
 
 Once the palette is whole, a lint rule keeps it whole: **no hex literal in `src/`**, with
-`src/lib/tokens.ts` the only exception. Two notes on scope, because an earlier draft got
+three exceptions — `src/lib/tokens.ts`, `src/lib/chipColors.ts` (where the implementation
+plan moves the chip fills, so the rule needs no exception shaped like a component) and
+`src/app/global-error.tsx`. Two notes on scope, because an earlier draft got
 this wrong too — ESLint does not read `globals.css`, so listing it as an exception was
 meaningless; and `global-error.tsx` must keep its inline hex, because it is the boundary
 that renders when the stylesheet itself has failed to load.
@@ -629,11 +631,29 @@ renaming them would touch every file for no gain.
    `text-ink-secondary` on the site is unreadable until this value is replaced. This is the
    single highest-risk line of the re-theme, because nothing fails: the build passes, the
    tests pass, and the page renders grey-on-grey.
-2. **The chip fills vanish against the dark ground.** White-on-fill stays fine (6.12–9.20
-   across all seven), but fill-against-ground falls to **1.89–2.85**, so every chip loses
-   its edge. `chipContrast.test.ts` asserts text-on-fill only — **it would stay green while
-   the chips became invisible.** Extend it to assert fill-against-ground at ≥3:1, then
-   re-derive the seven fills.
+2. **Half the chip fills lose their edge against the dark ground.** Measured against the
+   real palette in `Chip.tsx` — an earlier draft of this line quoted a range computed from
+   the wrong values and overstated the problem. There are **eight unique fills**, not
+   seven. White-on-fill is untouched by the re-theme (5.07–9.39 and it stays). Against the
+   *ground* they run **1.85 to 3.43**, and four fall below the 3:1 that WCAG 1.4.11 asks
+   of a non-text boundary:
+
+   | fill | kinds | vs white ground | vs `#1A1A1A` |
+   |---|---|---|---|
+   | `#6A1B9A` | retail | 9.39 | **1.85** ✗ |
+   | `#01579B` | mixed-use, under-construction | 7.40 | **2.35** ✗ |
+   | `#455A64` | senior, sold | 7.24 | **2.40** ✗ |
+   | `#8C5000` | under-contract | 6.44 | **2.70** ✗ |
+   | `#00707F` | multifamily | 5.79 | 3.00 ✓ |
+   | `#A64B00` | industrial | 5.79 | 3.01 ✓ |
+   | `#2E7D32` | townhomes, renovation-complete | 5.13 | 3.39 ✓ |
+   | `#2C7A74` | stabilized, lease-up | 5.07 | 3.43 ✓ |
+
+   Note the inversion: the fills that read best on white read worst on dark, because
+   contrast against a white ground and contrast against a dark one are opposites.
+   `chipContrast.test.ts` asserts text-on-fill only, so **it would stay green while four
+   chips lost their edges.** Extend it to assert fill-against-ground on whichever ground
+   is current, then re-derive those four.
 
 ### The rule colour: match the ratio, not an absolute bar
 
