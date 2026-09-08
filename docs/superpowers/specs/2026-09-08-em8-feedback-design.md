@@ -134,6 +134,10 @@ contract, not on title, and a portfolio is a claim of ownership. Hunter confirme
 2026-09-08. It keeps its own page at `/portfolio/antioch-shopping-plaza` and its offering
 block; it simply is not listed among assets EM8 owns.
 
+This looks like it collides with the Current Offerings section §6 puts on `/portfolio` —
+Antioch is the only publicly offered property, so that section is Antioch. It does not
+collide, because the two sections make different claims. §6 has the reasoning.
+
 ### Held
 
 **The dark re-theme (§9).** Specced here, deliberately not scheduled. Hunter's call on
@@ -387,14 +391,14 @@ it: an unread document costs nothing and is the cheapest possible rollback.
 One consequence worth stating: **`/portfolio` becomes the only index of EM8's assets**, so
 non-negotiable #4 gets stronger rather than weaker — one canonical URL per property, and now
 one place that lists them.
-## 6. Homepage
+## 6. Homepage and portfolio
 
 **The target is a number, not a feeling: 8.2 screens on a phone down to roughly 4.5,
 which is where Buligo sits.** Desktop is 5.0 screens today and matters less — he was on a
 phone, and a phone is where a band costs the most, because every grid collapses to one
 column.
 
-Nine bands become six.
+Nine bands become five.
 
 - **The five stats move onto the hero photograph**, as em-8.com does — the one change here
   that removes a band without removing any content. Whether it removes any *scroll* is a
@@ -402,8 +406,8 @@ Nine bands become six.
 - **The Insights and Partners teasers come out.** Both are one click away in the bar, and
   the insights teaser currently renders three cards of a feed that has three articles in
   it.
-- What remains: hero with stats → the four factors → portfolio → current offerings →
-  testimonials → CTA.
+- **Current offerings comes out too**, and moves to `/portfolio` — see below.
+- What remains: hero with stats → the four factors → portfolio → testimonials → CTA.
 
 Removing the two teasers and absorbing the stat band should recover something like 2.5–3
 screens on a phone, landing near 5.4. **That is short of the 4.5 target, so one more lever
@@ -424,6 +428,66 @@ it: the hero is `min-h-svh`, so it grows with its content, and five stats inside
 simply make the first screen taller instead of removing a band. Measure the phone screen
 count before and after; if it does not fall, keep the stat band where it is and take the
 scroll out of the portfolio grid instead.
+
+### Current Offerings moves to `/portfolio`, as its own section
+
+Hunter's instruction, 2026-09-08: merge current offerings into the portfolio, visible
+there, in a separate section called **Current Offerings**. So it is a section on
+`/portfolio` rather than the badge-on-one-grid that §12 proposed — two groups on one page,
+not one grid with a marker.
+
+**Order on the page: Current Offerings first, then the filters, then the portfolio grid.**
+Offerings are the actionable content and the reason a reader arriving from "Invest With Us"
+is on the page at all. The filters sit directly above the grid they belong to, so nothing
+about them appears to apply to the offerings above.
+
+**A section with nothing in it renders nothing** — no heading, no empty grid. Today
+`publiclyOffered == true` matches exactly one property, so this section will hold one card,
+and it will hold none the day Antioch closes.
+
+### This resolves the Antioch tension rather than reopening it
+
+§3 records that Antioch Shopping Plaza stays out of the portfolio grid because EM8 is under
+contract and not on title. That decision and this instruction look like they collide —
+Antioch is the *only* publicly offered property, so "offerings visible on /portfolio" means
+Antioch on `/portfolio`.
+
+They do not collide, because the two sections make different claims:
+
+| section | the claim it makes | source |
+|---|---|---|
+| Current Offerings | this is open to invest in | `publiclyOffered == true` |
+| the portfolio grid | EM8 owns this | `showInPortfolio != false` |
+
+Antioch belongs in the first and not the second, and needs no field change to land that
+way. `CURRENT_OFFERINGS_QUERY` already exists and already filters on `publiclyOffered`,
+which the code comments correctly describe as the Rule 506(c) gate.
+
+One follow-on: **`showInPortfolio` becomes a misleading field name** once a property can be
+absent from the grid and present on the page. Its meaning is "list among the assets EM8
+owns". Sharpen its Studio title and description to say so — **do not rename the field**, as
+a rename is a remove plus an add and therefore a breaking migration under the rule in
+`docs/deploys-and-migrations.md`.
+
+### The heading is a field MOVE, which is the dangerous kind
+
+The section's copy is `homePage.offeringsHeading` today. On `/portfolio` it belongs to
+`portfolioPage`. That is a move, and moves are what
+`docs/deploys-and-migrations.md` exists for — the last one took the live homepage's call to
+action down on 2026-08-31.
+
+The sequence is not optional:
+
+1. **Add** `portfolioPage.offeringsHeading` and fill it. An addition is safe ahead of code;
+   the deployed build ignores a field it does not know about.
+2. **Ship** the code that reads the new location and stops reading the old one, written to
+   tolerate the old field still being present.
+3. **Verify** on the live site that `/portfolio` renders the heading and the homepage has
+   lost the band.
+4. **Then** unset `homePage.offeringsHeading`, as a scoped `--only=` step.
+
+Doing 4 before 2 is precisely the failure that document records. The unset is cleanup and
+can wait indefinitely; an unread field costs nothing.
 
 ## 7. Typography and resolution
 
@@ -603,7 +667,7 @@ own background.
 | PR 1 | Palette centralization (§4) · `field-border` (§9) · team bios on click | — |
 | PR 2a | Derive the guard list and the release gate from one array (§5) | — |
 | PR 2b | Nav: two dropdowns, Sanity labels, two-row phone bar, `/strategy` page, `whyEm8` section, delete `/track-record`, `DealStory` onto the property page (§5) | copy, but ships empty |
-| PR 3 | Homepage compression (§6) | — |
+| PR 3 | Homepage compression · Current Offerings section on `/portfolio` (§6) | — |
 | PR 4 | Typography + hero resolution (§7) | — |
 | PR 5 | The founder's prior deals (§8) | the spreadsheet |
 | — | Dark re-theme (§9) | Etamar seeing PRs 1–5 |
@@ -637,19 +701,25 @@ Specifically: the screen count before and after for §6, header clearance at 320
 §7, the phone header's item count and height for §5, and the bitmap width served to a
 DPR-3 phone for §7. Desktop stays a regression check rather than the primary one.
 
-## 12. One simplification left on the table
+## 12. Both simplifications were decided — and neither survived as proposed
 
-**Superseded: "fold Why Midwest into Why EM8".** This section proposed collapsing two thin
-new pages into one. Hunter's 2026-09-08 instruction went further and better — neither is a
-page at all now. Why EM8 is a section of `/about`, Why Midwest is the body of `/strategy`,
-and four proposed routes became one. Nothing left to simplify here.
+Kept here because what replaced them is the useful part.
 
-**Merge "current offerings" into the portfolio band.** The homepage carries them as two
-bands, but an offering is not a different kind of thing — it is a property with
-`publiclyOffered` on. One grid where an offered property carries a badge is one band
-instead of two, one concept instead of two, and it removes the case where the same property
-appears twice on one page. This also takes §6 closer to its 4.5-screen target without
-touching the card count.
+**"Fold Why Midwest into Why EM8" — superseded.** This proposed collapsing two thin new
+pages into one. Hunter's instruction went further and better: neither is a page at all. Why
+EM8 is a section of `/about`, Why Midwest is the body of `/strategy`, and four proposed
+routes became one.
+
+**"Merge current offerings into the portfolio band" — adopted, in a different shape.** The
+proposal was one grid where an offered property carries a badge. Hunter's instruction is a
+separate section on `/portfolio` titled Current Offerings, which is better: a badge on a
+grid of owned assets would have implied EM8 owns the thing it is offering, and Antioch is
+under contract rather than on title. Two sections make two different claims where one grid
+would have blurred them. §6 carries it.
+
+So the lesson worth keeping from this section is that both proposals were aimed at the
+right target — fewer pages, fewer bands — and both were improved by someone who knew what
+the content actually asserts. Propose the cut; let the person who owns the claim shape it.
 
 Not proposed, and worth saying why: **dropping the two dropdowns for a flat bar.** It
 sounds more minimal and it is the opposite here. The two panels collapse seven destinations
@@ -679,6 +749,10 @@ phone at all, so they earn their complexity.
   handover predicted this drift. §5 makes deriving both from one array a precondition
   rather than a cleanup, and if that slips, the nav labels are where the two lists first
   disagree.
+- **PR 3 contains a field MOVE**, which is the only shape of migration that has taken this
+  site down. `homePage.offeringsHeading` becomes `portfolioPage.offeringsHeading`, and the
+  add / ship / verify / unset order in §6 is not optional. The last time it was done in the
+  wrong order the live homepage lost its call to action.
 - **Deleting a route is the least reversible thing in this document.** `/track-record` goes
   with no redirect on Hunter's call that nothing links in yet. The mitigations are that
   `DealStory` moves to the property page first, so no content is lost, and that the
