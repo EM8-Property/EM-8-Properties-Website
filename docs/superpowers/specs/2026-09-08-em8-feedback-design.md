@@ -10,7 +10,7 @@ Reconcile against the artifact when it is available.
 This document records what was decided, what was declined, what is held, and what is
 owed by people rather than by code. It supersedes nothing; it extends
 `2026-08-28-em8-website-design.md`, whose §2.3 palette is directly contradicted by the
-held workstream in §7 and by nothing else here.
+held workstream in §9 and by nothing else here.
 
 ---
 
@@ -30,12 +30,13 @@ it is measurable rather than a matter of taste:
 | hero stats | inside the hero, over the photograph | a separate band below it |
 
 Two of his five notes are therefore one note: our headline is a third smaller than his,
-and our hero photograph is genuinely undersampled — measured on 2026-09-02 at **2.71×
-short at DPR 3**, because the painted width of a full-screen `object-cover` box is the
-viewport height times 1.78 and the crop caps at 1600px. He is describing an artefact that
-exists.
+and our hero photograph is genuinely undersampled — **about 2.8× short of the device
+pixels on a DPR-3 phone**, because the painted width of a full-screen `object-cover` box
+is the viewport height times 1.78 while the crop caps at 1600px. (Measured 2.71× at
+375×812 on 2026-09-02 and 2.8× at 390×844 here; the number moves with the viewport, the
+shortfall does not.) He is describing an artefact that exists.
 
-## 1a. He was reviewing on a phone
+## 2. He was reviewing on a phone
 
 Confirmed by Hunter on 2026-09-08, and it is the single most useful fact in this document:
 **the review surface was a phone, and the requirement is that the site look equally good
@@ -50,7 +51,7 @@ agent:
 | hero bitmap served | — | 1600px (cap) | 2070px |
 | hero image quality | — | `q=68` | `q=80` |
 
-Four things follow, and two of them contradict what §§4–5 of this document said before
+Four things follow, and two of them contradict what §§5–6 of this document said before
 this measurement:
 
 1. **He genuinely could not see the nav.** Our phone header is `EM8 Properties · Menu` —
@@ -71,7 +72,7 @@ this measurement:
    cheapest: 75 is already allowlisted in `next.config.ts`, so raising 68→75 needs no
    config change. Measure the bytes; do not assume.
 
-## 2. Sorting the feedback
+## 3. Sorting the feedback
 
 ### Already true on the live site — show him, do not build
 
@@ -81,9 +82,10 @@ this measurement:
   `role: 'Board Member'`, both with photographs and bios.
 - **Team names are already all one size** — `text-sm font-semibold` in both groups.
 
-If he saw otherwise, he was on a phone, where the bar collapses to a hamburger and none of
-those five links is visible. That is worth checking with him, because it would also explain
-"more options on the upper bar" arriving alongside items that are already there.
+He saw otherwise because he was on a phone, where the bar collapses to a hamburger and
+none of those five links is visible — see §2. That is the whole explanation for "more
+options on the upper bar" arriving alongside items that were already in it, and it is why
+§5 fixes visibility rather than adding destinations.
 
 ### Studio edits — no deploy, no developer
 
@@ -98,9 +100,9 @@ those five links is visible. That is worth checking with him, because it would a
 
 ### Owed by people
 
-- The **Deshe prior-sales spreadsheet** (Hunter). Blocks §6's second half.
+- The **Deshe prior-sales spreadsheet** (Hunter). Blocks §8's second half.
 - **Oak Forest partnership copy** — the city involvement Etamar says is missing.
-- **"Why EM8" and "Why Midwest" body copy.** §4 ships both pages with the structure in
+- **"Why EM8" and "Why Midwest" body copy.** §5 ships both pages with the structure in
   place and the copy empty in the Studio, so this needs no developer.
 - **Antioch's target-return figures.** Hunter confirmed on 2026-09-08 that the live
   offering, the deals in progress and the realized results may all be public. The figures
@@ -123,33 +125,55 @@ chip with no filter is the cheap middle ground.
 
 ### Held
 
-**The dark re-theme (§7).** Specced here, deliberately not scheduled. Hunter's call on
+**The dark re-theme (§9).** Specced here, deliberately not scheduled. Hunter's call on
 2026-09-08: Etamar sees PRs 1–5 first. It is the largest item, the least reversible, and
 the only one that rewrites an approved design decision.
 
 ---
 
-## 3. The constraint that makes "theme last" affordable
+## 4. Centralize the palette before the theme moves
 
-The sequence chosen is cheap-wins-first, theme-last. The cost of that order is that every
-component built in §§4–6 gets re-touched by §7.
+The sequence chosen is cheap-wins-first, theme-last, so every component built in §§5–8
+gets re-touched by §9. The mitigation is that the re-theme should be a token swap.
 
-**Mitigation, and it is a requirement on all work before §7: no literal colour in
-`src/`.** Only the semantic tokens — `bg-ground`, `bg-panel`, `text-ink`,
-`text-ink-secondary`, `border-rule`, `text-teal`, `text-teal-text` — and no assumption
-about which ground is the lighter one.
+**It is not one today, and an earlier draft of this section was wrong to say so.** The
+grounds and the ink are centralized in `@theme` and mirrored in `tokens.ts`. Seven colour
+decisions are not — they live as Tailwind arbitrary values and inline styles in eleven
+files, so a token swap would miss every one of them, silently, on a dark ground:
 
-Enforced by a new ESLint rule forbidding hex literals under `src/`, with `src/lib/tokens.ts`
-and `src/app/globals.css` as the only exceptions. This mirrors the logical-properties rule,
-which is the thing that makes Phase 2 (Hebrew) additive rather than a rewrite; the same
-trick makes the re-theme a token swap rather than five rebuilds.
+| colour | where | on white | on `#1A1A1A` |
+|---|---|---|---|
+| `#C0392B` | `LeadForm` error text | 5.44 ✓ | **3.20 ✗ (text needs 4.5)** |
+| `#3AA8A0` | `Button`, `OfferingBlock` teal hover | 2.88 ✗ | 6.04 ✓ |
+| `#00707F` | Chip, multifamily | 5.79 ✓ | 3.00 ✓ |
+| `#01579B` | Chip, mixed-use | 7.40 ✓ | **2.35 ✗** |
+| `#2E7D32` | Chip, townhomes | 5.13 ✓ | 3.39 ✓ |
+| `#2C7A74` / `#4ABDB5` | `PropertyMap` marker | mixed | mixed |
 
-`text-white` stays legal: hero copy sits on a photographic scrim, and that is a colour
+The first row is the one that matters: **the lead form's error message falls below the
+text bar on a dark ground**, on the site's only conversion path, and nothing would catch
+it — it is an arbitrary value in a component, invisible to `tokens.test.ts` and to
+`chipContrast.test.ts` alike. The second row is a hover state that already fails on white
+today.
+
+So the prerequisite is a task, not a claim: **move those seven into `@theme` and
+`tokens.ts`** — as `danger`, `teal-hover`, the chip fills, and the map's two marker
+colours — and only then is the swap real. `PropertyMap` needs its values as JS strings
+rather than classes, because Leaflet draws its vectors through an API; importing them from
+`tokens.ts` is what keeps them in the swap.
+
+Once the palette is whole, a lint rule keeps it whole: **no hex literal in `src/`**, with
+`src/lib/tokens.ts` the only exception. Two notes on scope, because an earlier draft got
+this wrong too — ESLint does not read `globals.css`, so listing it as an exception was
+meaningless; and `global-error.tsx` must keep its inline hex, because it is the boundary
+that renders when the stylesheet itself has failed to load.
+
+`text-white` stays legal: hero copy sits on a photographic scrim, so that is a colour
 chosen against an image rather than against the ground.
 
 ---
 
-## 4. Navigation
+## 5. Navigation
 
 ```
 About ▾        Portfolio     Case Studies    Insights          Investor Login   [Invest With Us]
@@ -178,8 +202,9 @@ The routes, so nothing about this is inferred at implementation time:
 
 `/about#team` needs an `id` on the team section, which `/about` does not carry today.
 
-Four top-level items where there are five today, with nine destinations reachable in one
-glance instead of five. This is Buligo's mechanism: they fit About Us ▾, Strategy,
+Four top-level items where there are five today, and eight destinations reachable from the
+bar instead of five — ten counting Investor Login and the button. This is Buligo's
+mechanism: they fit About Us ▾, Strategy,
 Portfolio, Sectors ▾, Case Studies, Shareholders, Media ▾, Investor Login, a Hebrew
 toggle and Contact Us into one narrow bar, and the minimalism Etamar admires comes from the
 dropdowns rather than from having fewer pages.
@@ -189,7 +214,8 @@ breaks and no redirect is needed. Buligo do the same in reverse — nav label "C
 page heading "Buligo Capital Track Record". The heading is already a Sanity field, so the
 visible title is a Studio edit.
 
-**Why EM8 and Why Midwest** are new routes with new page documents, following the
+**Why EM8 and Why Midwest** are new routes with new page documents — but read §12 before
+building two of them, which proposes folding Midwest into EM8 as a section. Following the
 established pattern: a `page`-shaped document carrying `heading` (eyebrow, title, intro)
 and `seo`, guarded per leaf in `(site)/layout.tsx`, gated in `content-integrity`, backfilled
 by a scoped `--only=` step. They ship with empty copy for the team to write. **A page whose
@@ -211,36 +237,50 @@ requirements rather than styling ones:
 - `aria-expanded` on the parent, `aria-controls` pointing at the panel.
 - The panel must not be the only route to a page. Every destination stays in the footer,
   which is where a reader with JavaScript disabled and a crawler both find them.
-- Mobile keeps the existing hamburger; the groups render as headed sections inside it, not
-  as nested disclosures.
+- On a phone the same group opens as a sheet rather than a hover panel — see below.
 
 `SiteHeader` becomes a client component only if it must. It already is one — it calls
 `usePathname()` for the overlay decision — so this adds no boundary.
 
-### The phone bar, which is the surface he was actually on
+### The phone bar — the nav must be visible without a tap
 
-The dropdowns above are a **desktop** answer. On a phone there is no room for them and no
-precedent worth copying: Buligo's phone header is wordmark + hamburger, exactly like ours.
-So the phone gets three changes instead, in order of how much they answer his note:
+**Hunter's decision, 2026-09-08: the nav items are right as they are, and they have to be
+visible on mobile.** That settles the open question and it overrides the caution an earlier
+draft carried here — that Buligo hides its phone nav too, so hiding ours was defensible.
+It is what he asked for; the design problem is fitting it.
 
-1. **The page gets shorter** (§5). This is the real fix; a phone bar cannot hold nine
-   destinations no matter how it is styled.
-2. **`Invest With Us` becomes visible in the phone bar**, beside the hamburger, rather
-   than living inside the panel. em-8.com does exactly this with "Investor Portal" — three
-   items on a phone against our two — and it is the one option on the bar that is worth
-   more than a link. Measured cost: the header is 68px today and the schema caps the label
-   at 20 characters for a reason recorded on the field; a third item at 390px needs
-   re-measuring against that cap, and the cap may have to come down.
-3. **The panel gets the same grouping as the desktop dropdowns** — About / Portfolio /
-   Case Studies / Insights as headed groups rather than one flat list of seven, so the
-   structure he wants to see is legible once opened.
+The four top-level labels are 38 characters — `About · Portfolio · Case Studies ·
+Insights`. At the 11px semibold the header already uses, that is roughly 300px of text
+before gaps, against 390px of viewport with a wordmark and a button also on the bar. It
+does not fit on one row.
 
-What is explicitly **not** proposed: a horizontally scrolling strip of nav links under the
-phone header. It puts options on the bar in the literal sense and reads as a tab bar,
-which misrepresents a five-page marketing site, and horizontal scroll containers are a
-known accessibility problem.
+**So the phone header becomes two rows:**
 
-## 5. Homepage
+```
+EM8 PROPERTIES                    [Invest With Us]
+About    Portfolio   Case Studies   Insights
+```
+
+Row one is the wordmark and the primary action; row two is the nav. `About` opens the
+group as a sheet rather than a hover panel, since there is no hover on a phone.
+
+Three consequences, all measurable and none guessed:
+
+- **The header grows from 68px to roughly 100px.** The hero reserves `pt-24` (96px) for
+  it, and at 320px a band page has only 28px of clearance between the header and the
+  eyebrow today. A 100px header spends all of it. **The reservation has to grow with the
+  header**, and the E2E assertion at 320px is what proves it.
+- **A taller header costs a little of the scroll §8 is trying to reclaim** — about 32px
+  per page, against the 3,000-odd px §8 removes. Worth it, but state it rather than
+  discover it.
+- **At 320px even four labels may not fit.** If the measurement says so, `Case Studies`
+  shortens to `Deals` or the row scrolls — decided against the measurement, not now.
+
+What is still **not** proposed: a horizontally scrolling strip as the *only* answer. It
+reads as a tab bar, which misrepresents a five-page marketing site, and horizontal scroll
+containers are a known accessibility problem. It stays the fallback for 320px alone.
+
+## 6. Homepage
 
 **The target is a number, not a feeling: 8.2 screens on a phone down to roughly 4.5,
 which is where Buligo sits.** Desktop is 5.0 screens today and matters less — he was on a
@@ -249,9 +289,9 @@ column.
 
 Nine bands become six.
 
-- **The five stats move onto the hero photograph**, as em-8.com does. This is the single
-  change that most directly answers "less scroll down": it removes a full band without
-  removing any content.
+- **The five stats move onto the hero photograph**, as em-8.com does — the one change here
+  that removes a band without removing any content. Whether it removes any *scroll* is a
+  separate question, answered by measurement two paragraphs down.
 - **The Insights and Partners teasers come out.** Both are one click away in the bar, and
   the insights teaser currently renders three cards of a feed that has three articles in
   it.
@@ -278,7 +318,7 @@ simply make the first screen taller instead of removing a band. Measure the phon
 count before and after; if it does not fall, keep the stat band where it is and take the
 scroll out of the portfolio grid instead.
 
-## 5a. Typography and resolution
+## 7. Typography and resolution
 
 This is the "it just looks better (fonts, resolution)" note, and it is a **mobile change
 first** — the gap is widest on the phone he was holding.
@@ -313,7 +353,7 @@ Expect to land on quality 75 plus a cap near **2048**, measured rather than prom
 measure on the **phone** form factor — it is both the review surface and where Lighthouse's
 CI budget already runs (412×823 at DPR 1.75).
 
-## 6. Return metrics
+## 8. Return metrics
 
 Hunter's decision, 2026-09-08: the live offering, the deals in progress and the realized
 results may all be public.
@@ -328,12 +368,16 @@ The field shape, on `property`, so the schema is not invented during implementat
 returns {
   basis: 'realized' | 'targeted'      // decides the label and the tense
   equityMultiple: string              // "1.99x"
-  irr: string                         // optional
-  holdPeriod: string                  // optional, "2019-2022"
-  cashOnCash: string                  // optional
-  note: text                          // optional qualifying sentence
+  period: string                      // "2019-2022" realized, "5-7 years" targeted
+  note: text                          // required when basis is 'targeted'
 }
 ```
+
+**Four fields, not six.** An earlier draft carried `irr` and `cashOnCash` as optional
+extras. EM8 has neither figure for the two realized deals, so both would ship empty on
+every property and stay empty — and an empty optional field on a schema that a compliance
+gate scans is a liability rather than an affordance. Add either the day there is data for
+it; that is a one-field migration under rule #1.
 
 Strings rather than numbers, deliberately: these are published figures whose formatting
 carries meaning ("1.99x", "12-14%", "~18%"), and a number field would force the component
@@ -348,7 +392,7 @@ language the permitted vocabulary requires. A property with `basis: 'targeted'` 
   only: *targeted, projected, underwritten, estimated, pro forma*. The compliance scan in
   `tests/shared/placeholders.ts` and the source-and-CMS promissory-language check both
   already cover this and must stay green.
-- **No figure is invented.** Spec §9's denylist is unchanged and the fields ship empty.
+- **No figure is invented.** Spec §13's denylist is unchanged and the fields ship empty.
 
 ### The founder's prior deals need their own frame
 
@@ -368,7 +412,7 @@ offering *block* and not the *figures*, which is a 506(c)-relevant distinction. 
 open item 3 in the 2026-09-03 handover — counsel's version of the footer disclaimer — more
 load-bearing, not less.
 
-## 7. Dark re-theme — specced, not scheduled
+## 9. Dark re-theme — specced, not scheduled
 
 Always dark. No `prefers-color-scheme` block, for the same reason `globals.css` currently
 gives for not having one: one palette, half the contrast surface, and no split between the
@@ -440,9 +484,10 @@ Fix it by splitting the token rather than brightening every divider on the site:
 | light | `#D8D8D4` (1.43, fine) | `#959590` (3.01) |
 | dark | `#333333` (1.38, fine) | `#666666` (3.03) |
 
-Used by `LeadForm`'s inputs and anything else that draws a control's edge. Worth doing as
-its own small PR in the light theme before §7, since it is a live accessibility defect and
-does not depend on the re-theme at all.
+Used by `LeadForm`'s inputs and anything else that draws a control's edge. It is a live
+defect in the theme we ship today and does not depend on the re-theme, so it lands in
+**PR 1** alongside the palette centralization in §4 — the same PR, because both are "make
+the colours honest before moving them".
 
 Also: re-tune `.em8-basemap`, whose `grayscale/contrast/brightness` filter was chosen to
 sit quietly on a white page; and darken the two `next/og` share cards, which render their
@@ -450,46 +495,74 @@ own background.
 
 ---
 
-## 8. Sequence
+## 10. Sequence
 
 | | workstream | blocked on |
 |---|---|---|
-| PR 1 | Team bios on click · the no-hex ESLint rule · the `field-border` fix from §7 | — |
-| PR 2 | Nav dropdowns · Case Studies label · Why EM8 + Why Midwest pages | copy, but ships empty |
-| PR 3 | Homepage compression | — |
-| PR 4 | Typography + hero resolution | — |
-| PR 5 | Return metrics | figures; the spreadsheet for the second half |
-| — | Dark re-theme | Etamar seeing PRs 1–5 |
+| PR 1 | Palette centralization (§4) · `field-border` (§9) · team bios on click | — |
+| PR 2 | Nav: dropdowns, two-row phone bar, Case Studies label, Why EM8 page (§5) | copy, but ships empty |
+| PR 3 | Homepage compression (§6) | — |
+| PR 4 | Typography + hero resolution (§7) | — |
+| PR 5 | Return metrics (§8) | figures; the spreadsheet for the second half |
+| — | Dark re-theme (§9) | Etamar seeing PRs 1–5 |
 
-The ESLint no-hex-literals rule from §3 lands in PR 1, so everything after it is written
-against the constraint rather than retrofitted to it.
+PR 1 leads with the colours because §4 is a prerequisite rather than a nicety: the no-hex
+lint rule cannot be turned on until the seven stragglers are centralized, and everything
+after PR 1 should be written against that rule rather than retrofitted to it. Team bios
+ride along because they are small and touch nothing the others touch.
 
-## 8a. Every PR is reviewed on a phone
+## 11. Every PR is reviewed on a phone
 
 He was on a phone, and the requirement Hunter set is that it look equally good on both. So
 for each of these PRs the acceptance evidence is a **390×844 DPR-3 measurement and
 screenshot, not a desktop one** — and the E2E suite already runs its hero assertions at
 375×812, so the habit exists.
 
-Specifically: the screen count before and after for §5, header clearance at 320px for
-§5a, the phone header's item count and height for §4, and the bitmap width served to a
-DPR-3 phone for §5a. Desktop stays a regression check rather than the primary one.
+Specifically: the screen count before and after for §6, header clearance at 320px for
+§7, the phone header's item count and height for §5, and the bitmap width served to a
+DPR-3 phone for §7. Desktop stays a regression check rather than the primary one.
 
-## 9. Risks
+## 12. Two simplifications worth taking
+
+Both cut a thing rather than adding one, and neither is required for anything above to
+work.
+
+**Fold "Why Midwest" into "Why EM8".** Two new routes, both empty, both answering a
+question that starts with "why", and one of them — why suburban Chicago — is the strongest
+argument the other one makes. One page with two sections is less to write, less to keep
+current, one fewer entry in the About group, and one fewer page that can sit empty in the
+sitemap. If it grows long enough to split later, splitting it is trivial; un-splitting two
+pages that have both been indexed is not.
+
+**Merge "current offerings" into the portfolio band.** The homepage carries them as two
+bands, but an offering is not a different kind of thing — it is a property with
+`publiclyOffered` on. One grid where an offered property carries a badge is one band
+instead of two, one concept instead of two, and it removes the case where the same property
+appears twice on one page. This also takes §6 closer to its 4.5-screen target without
+touching the card count.
+
+Not proposed, and worth saying why: **dropping the About dropdown for a flat five-item
+bar.** It sounds more minimal and it is worse here, because the mobile requirement in §5
+pulls the other way — four labels barely fit one row at 390px and five do not fit at all.
+The dropdown is what keeps the phone bar legible, so it earns its complexity.
+
+## 13. Risks
 
 - **The artifact is unread.** Every layout decision here is inferred from em-8.com and
-  Buligo. If the artifact disagrees, §§4–5 change.
-- **"More options on the upper bar" may not be satisfiable on a phone**, and that is the
-  surface he judged it on. Buligo's phone header carries two items, exactly as ours does.
-  §4's answer is a shorter page, the CTA promoted into the bar, and a grouped panel — which
-  is a good answer to the underlying problem and *not* literally what he asked for. Worth
-  telling him that directly rather than shipping it and hoping the note goes away.
-- **Stats-on-hero may increase phone scroll rather than reduce it.** See §5.
+  Buligo. If the artifact disagrees, §§5–6 change.
+- **The two-row phone header spends the hero's clearance.** It grows the header from 68px
+  to roughly 100px against a `pt-24` (96px) reservation, and at 320px a band page has 28px
+  of clearance today. The reservation grows with it, and the 320px E2E assertion is what
+  proves it did. This is the highest-risk item in §5 and the one most likely to need a
+  second measurement pass.
+- **Stats-on-hero may increase phone scroll rather than reduce it.** See §6.
+- **Four nav labels may not fit one row at 320px.** The fallbacks — shorter labels, or a
+  scrolling row at that width alone — are in §5 and both are decided by measurement.
 - **Hero resolution against the image budget.** `docs/resource-budget.md` says in terms
   not to raise a budget to make something pass, and the 1600px crop cap is what holds the
   image budget. Raising it to 2400 roughly doubles the 314KB detailed crop. Expect to land
   near 2048 with a narrower `sizes`, and measure rather than promise.
 - **A 72px headline against the 320px header clearance.** There are 28px of clearance on a
   band page today. A larger headline eats into it, and the copy is CMS text that can grow.
-- **Stats on the hero at 375px.** See §5.
-- **Every intermediate PR gets re-touched by §7** unless §3's rule holds.
+- **Stats on the hero at 375px.** See §6.
+- **Every intermediate PR gets re-touched by §9** unless §4's rule holds.
