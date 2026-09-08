@@ -32,7 +32,7 @@ export function Button({
    */
   const style =
     variant === 'primary'
-      ? 'bg-teal text-ink hover:bg-[#3AA8A0]'
+      ? 'bg-teal text-ink hover:bg-teal-hover'
       : variant === 'onPhoto'
         ? 'border border-white/70 text-white hover:border-white hover:bg-white/10'
         : 'border border-rule text-ink hover:border-teal'

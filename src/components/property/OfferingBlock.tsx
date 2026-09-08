@@ -68,7 +68,7 @@ export function OfferingBlock({
           href={offering.dealRoomUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 inline-block rounded-control bg-teal px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-ink hover:bg-[#3AA8A0]"
+          className="mt-6 inline-block rounded-control bg-teal px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-ink hover:bg-teal-hover"
         >
           Enter the deal room →
         </a>

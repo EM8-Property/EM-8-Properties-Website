@@ -7,6 +7,7 @@
 import 'leaflet/dist/leaflet.css'
 
 import { useEffect, useRef } from 'react'
+import { palette } from '@/lib/tokens'
 
 export function PropertyMap({
   lat,
@@ -55,8 +56,11 @@ export function PropertyMap({
       L.circleMarker([lat, lng], {
         radius: 8,
         weight: 2,
-        color: '#2C7A74',
-        fillColor: '#4ABDB5',
+        // From tokens rather than literals: Leaflet draws its vectors through a JS API,
+        // so these cannot be Tailwind classes and would otherwise be the one pair of
+        // colours a token swap silently misses.
+        color: palette.tealText,
+        fillColor: palette.teal,
         fillOpacity: 0.9,
       })
         .addTo(map)

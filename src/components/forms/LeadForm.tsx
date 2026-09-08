@@ -12,7 +12,12 @@ export type FieldSpec = {
   options?: string[]
 }
 
-const inputClass = 'rounded-control border border-rule px-3 py-2 text-xs'
+/*
+ * `field-border`, not `rule`. An input's border conveys where the control is, so WCAG
+ * 1.4.11 holds it to 3:1; `rule` is 1.43:1 against white because it draws dividers, which
+ * 1.4.11 does not govern. This form shipped at 1.43:1 until 2026-09-08.
+ */
+const inputClass = 'rounded-control border border-field-border px-3 py-2 text-xs'
 
 export function LeadForm({
   source,
@@ -107,7 +112,7 @@ export function LeadForm({
       </div>
 
       {error && (
-        <p role="alert" className="text-xs text-[#C0392B]">
+        <p role="alert" className="text-xs text-danger">
           {error}
         </p>
       )}
