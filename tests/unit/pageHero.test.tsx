@@ -252,6 +252,24 @@ describe('hero geometry, both shapes', () => {
     // The slide behind is not worth a full-bleed crop up front.
     expect(alts).not.toContain('a7')
   })
+
+  it('draws the scrim from the ink token rather than an rgba literal', () => {
+    /*
+     * The scrim is ink at three opacities. Written as `rgba(26,26,26,...)` it is the ink
+     * value copied by hand into three places in one class string, which a token swap
+     * cannot follow — the photograph would keep a near-black scrim on a page whose ink
+     * had become near-white.
+     *
+     * Tailwind v4 takes an opacity modifier on a theme colour, so `from-ink/90` is the
+     * same pixels and moves with the token.
+     */
+    const { container } = render(<HeroCarousel slides={SLIDES} />)
+    const scrim = container.querySelector('span[class*="bg-gradient-to-t"]')!
+    expect(scrim.className).toMatch(/from-ink\/90/)
+    expect(scrim.className).toMatch(/via-ink\/55/)
+    expect(scrim.className).toMatch(/to-ink\/25/)
+    expect(scrim.className).not.toMatch(/rgba/)
+  })
 })
 
 describe('PageHero copy', () => {

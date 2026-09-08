@@ -338,7 +338,7 @@ export function HeroCarousel({
               the Studio field description for `heroCarousel` says so. Anyone swapping in a
               pale lobby shot has to check the title against it.
             */}
-            <span className="absolute inset-0 bg-gradient-to-t from-[rgba(26,26,26,0.90)] via-[rgba(26,26,26,0.55)] to-[rgba(26,26,26,0.25)]" />
+            <span className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/55 to-ink/25" />
           </Link>
         )
       })}
