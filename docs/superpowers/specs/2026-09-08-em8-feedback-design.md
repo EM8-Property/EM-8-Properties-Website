@@ -3,9 +3,14 @@
 Etamar Deshe reviewed the live Railway site against **em-8.com**, the site this rebuild
 replaces, and sent a list. He also had Claude build an artifact showing the changes he
 wants; that artifact could not be read from this session (`claude.ai` returns "reading
-public artifacts as a non-member reader is not enabled"), so **the layout decisions below
-are derived from em-8.com and from buligocapital.com, which he named as his reference.**
-Reconcile against the artifact when it is available.
+public artifacts as a non-member reader is not enabled").
+
+**Hunter closed that on 2026-09-08: the artifact is not needed.** It mattered while the
+layout here was inferred from em-8.com and from buligocapital.com, which Etamar named as
+his reference. It stopped mattering once he gave the information architecture directly —
+the two dropdowns, the sections rather than pages, the deleted `/track-record`, the
+Current Offerings section. §§5–6 are now built from instructions rather than from
+inference, which is why the artifact is no longer the first risk in this document.
 
 This document records what was decided, what was declined, what is held, and what is
 owed by people rather than by code. It supersedes nothing; it extends
@@ -99,7 +104,8 @@ options on the upper bar" arriving alongside items that were already in it, and 
 
 ### Owed by people
 
-- The **Deshe prior-sales spreadsheet** (Hunter). Blocks §8's second half.
+- The **Deshe prior-sales spreadsheet**. Deferred by Hunter on 2026-09-08 — those deals go
+  in later, so §8's second half is held rather than blocked, and nothing waits on it.
 - **Oak Forest partnership copy** — the city involvement Etamar says is missing.
 - **"Why EM8" and "Why Midwest" body copy.** §5 ships both as Sanity-backed sections —
   `whyEm8` on the About page, and the `/strategy` page's body — with the structure in place
@@ -141,8 +147,12 @@ collide, because the two sections make different claims. §6 has the reasoning.
 ### Held
 
 **The dark re-theme (§9).** Specced here, deliberately not scheduled. Hunter's call on
-2026-09-08: Etamar sees PRs 1–5 first. It is the largest item, the least reversible, and
+2026-09-08: Etamar sees PRs 1–4 first. It is the largest item, the least reversible, and
 the only one that rewrites an approved design decision.
+
+**The founder's prior deals (§8's second half).** Deferred by Hunter on 2026-09-08 — the
+spreadsheet comes later and those deals go in then. It is the only new schema this document
+would have added.
 
 ---
 
@@ -669,8 +679,8 @@ own background.
 | PR 2b | Nav: two dropdowns, Sanity labels, two-row phone bar, `/strategy` page, `whyEm8` section, delete `/track-record`, `DealStory` onto the property page (§5) | copy, but ships empty |
 | PR 3 | Homepage compression · Current Offerings section on `/portfolio` (§6) | — |
 | PR 4 | Typography + hero resolution (§7) | — |
-| PR 5 | The founder's prior deals (§8) | the spreadsheet |
-| — | Dark re-theme (§9) | Etamar seeing PRs 1–5 |
+| — | The founder's prior deals (§8) | deferred by Hunter; the spreadsheet comes later |
+| — | Dark re-theme (§9) | Etamar seeing PRs 1–4 |
 
 PR 1 leads with the colours because §4 is a prerequisite rather than a nicety: the no-hex
 lint rule cannot be turned on until the seven stragglers are centralized, and everything
@@ -684,11 +694,11 @@ refactor with no visible effect, which is why it is worth doing while it is stil
 and it is the difference between the nav change costing twelve careful edits and costing
 one.
 
-**PR 5 shrank to almost nothing** once §8 established that both return-metric fields
-already exist with renderers and gates. Its realized half is one line and has moved into
-PR 2b, where it is a precondition for deleting `/track-record`; its targeted half is Studio
-work. What is left is the founder's prior deals, which is the only genuinely new schema in
-this document and is blocked on the spreadsheet.
+**Return metrics stopped being a PR at all.** §8 established that both fields already exist
+with renderers and gates: the realized half is one line and lives in PR 2b, where it is a
+precondition for deleting `/track-record`, and the targeted half is Studio work. What was
+left — the founder's prior deals, the only genuinely new schema in this document — Hunter
+deferred on 2026-09-08. So four PRs, and every one of them is unblocked.
 
 ## 11. Every PR is reviewed on a phone
 
@@ -729,8 +739,12 @@ phone at all, so they earn their complexity.
 
 ## 13. Risks
 
-- **The artifact is unread.** Every layout decision here is inferred from em-8.com and
-  Buligo. If the artifact disagrees, §§5–6 change.
+- **Etamar has not seen this design; Hunter is relaying it.** The artifact risk is closed —
+  §§5–6 come from Hunter's instructions rather than from inference — but the person whose
+  feedback this answers has not reviewed the answer. Two of his notes are being handled
+  differently from how he phrased them: "more options on the upper bar" becomes a visible
+  two-row phone bar rather than more destinations, and "categories should be acquisition or
+  development" is declined. Both are better raised before the work than after it.
 - **The two-row phone header spends the hero's clearance.** It grows the header from 68px
   to roughly 100px against a `pt-24` (96px) reservation, and at 320px a band page has 28px
   of clearance today. The reservation grows with it, and the 320px E2E assertion is what
