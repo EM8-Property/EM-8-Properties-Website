@@ -3,6 +3,7 @@ import { createClient } from 'next-sanity'
 import { SPEC_9_PLACEHOLDERS } from '../shared/placeholders'
 // Plain ESM data module, shared with scripts/migrate-content.mjs and the unit suite.
 import { shadowingSeedDrafts } from '../../scripts/content/em8-content.mjs'
+import { REQUIRED_SITE_SETTINGS, missingLeaves } from '@/lib/requiredContent'
 
 /**
  * Runs against the live dataset, so it is excluded from `npm test` and run with
@@ -169,38 +170,44 @@ describe('published content', () => {
     ).toBe(0)
   })
 
-  it('has the siteSettings singleton the build requires', async () => {
-    const settings = await client.fetch<{ agoraPortalUrl?: string; disclaimer?: string }[]>(
-      `*[_type == "siteSettings" && ${PUBLISHED}]{ agoraPortalUrl, disclaimer }`,
+  it('publishes a siteSettings document with every leaf the site cannot render without', async () => {
+    /*
+     * The same array the layout throws on, so the gate and the build can no longer
+     * disagree. They did: this file checked four leaves and the layout threw on seven, so
+     * a document missing contactEmail, ctaBand.heading.title or ctaBand.submitLabel passed
+     * here and failed `next build` at deploy time instead.
+     *
+     * Projected by alias so a nested leaf arrives flat, then rebuilt into the nested shape
+     * and checked with the same predicate the layout uses — including the empty-string
+     * case, which `required()` permits and `setIfMissing` will not repair.
+     */
+    const projection = REQUIRED_SITE_SETTINGS.map((leaf) => leaf.groq).join(', ')
+    const rows = await client.fetch<Record<string, unknown>[]>(
+      `*[_type == "siteSettings" && ${PUBLISHED}]{ ${projection} }`,
     )
-    expect(settings, 'siteSettings must exist exactly once').toHaveLength(1)
-    expect(settings[0]?.agoraPortalUrl).toBeTruthy()
-    expect(settings[0]?.disclaimer).toBeTruthy()
-  })
+    expect(rows.length, 'no published siteSettings document').toBe(1)
 
-  /**
-   * The header button, checked per leaf.
-   *
-   * `(site)/layout.tsx` throws when either field is empty, and that throw is in the
-   * layout — so it takes every page down at build time, not one route. Same blast radius
-   * as the `seo` and `heading` gates below, and the same reason to meet it here.
-   *
-   * Per leaf because a `headerCta` object with two null fields is still a truthy object.
-   * The shallow version of this check passes while the build fails.
-   */
-  it('has both leaves of the header button', async () => {
-    const settings = await client.fetch<{ label?: string; href?: string }[]>(
-      `*[_type == "siteSettings" && ${PUBLISHED}]{ "label": headerCta.label, "href": headerCta.href }`,
-    )
-    expect(settings).toHaveLength(1)
+    const flat = rows[0]!
+    const settings: Record<string, unknown> = {}
+    for (const leaf of REQUIRED_SITE_SETTINGS) {
+      // '"headerCtaLabel": headerCta.label' -> 'headerCtaLabel'; 'disclaimer' -> itself.
+      const alias = leaf.groq.includes(':') ? leaf.groq.split('"')[1]! : leaf.path
+      const keys = leaf.path.split('.')
+      let cursor = settings
+      for (const key of keys.slice(0, -1)) {
+        cursor[key] = (cursor[key] as Record<string, unknown>) ?? {}
+        cursor = cursor[key] as Record<string, unknown>
+      }
+      cursor[keys.at(-1)!] = flat[alias]
+    }
+
+    const missing = missingLeaves(settings)
     expect(
-      settings[0]?.label,
-      'siteSettings has no headerCta.label — the layout throws and next build fails',
-    ).toBeTruthy()
-    expect(
-      settings[0]?.href,
-      'siteSettings has no headerCta.href — the layout throws and next build fails',
-    ).toBeTruthy()
+      missing,
+      `siteSettings leaves that will fail next build:\n  ${missing
+        .map((leaf) => leaf.describe)
+        .join('\n  ')}`,
+    ).toEqual([])
 
     // The schema caps this at 20, but Sanity's validation is Studio-side only: it gates
     // the Publish button and nothing written through Vision, the CLI or a script. The
@@ -208,7 +215,7 @@ describe('published content', () => {
     // header rather than breaking it — so this belongs on the release gate, not in a
     // throw.
     expect(
-      (settings[0]?.label ?? '').length,
+      ((flat.headerCtaLabel as string | undefined) ?? '').length,
       'headerCta.label is longer than 20 characters — it will wrap the header on a tablet',
     ).toBeLessThanOrEqual(20)
   })
