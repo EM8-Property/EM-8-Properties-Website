@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CHIP_COLORS, CHIP_FALLBACK_COLOR } from '@/components/ui/Chip'
+import { CHIP_COLORS, CHIP_FALLBACK_COLOR } from '@/lib/chipColors'
 import { ASSET_CLASSES, STATUSES } from '@/lib/propertyTaxonomy'
 import { palette, contrastRatio } from '@/lib/tokens'
 
