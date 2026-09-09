@@ -39,6 +39,7 @@ describe('page copy schema', () => {
       'partnersPage',
       'portfolioPage',
       'siteSettings',
+      'strategyPage',
       'trackRecordPage',
     ])
   })
@@ -56,6 +57,7 @@ describe('seeded page copy', () => {
       'investorsPage',
       'partnersPage',
       'portfolioPage',
+      'strategyPage',
       'trackRecordPage',
     ])
   })
@@ -100,6 +102,17 @@ describe('seeded page copy', () => {
         expect(h?.[field], `${id}.heading.${field} is empty`).toBeTruthy()
       }
     }
+  })
+
+  it('gives the strategy page a complete heading, since that page throws without one', () => {
+    // Same rule as /portfolio and /insights. `body` is deliberately absent from the seed:
+    // the Why Midwest copy is owed by people (§3), and the page renders its title with
+    // nothing under it until it arrives.
+    const strategy = (PAGE_COPY as any).strategyPage
+    for (const field of ['eyebrow', 'title', 'intro']) {
+      expect(strategy.heading?.[field], `strategyPage.heading.${field} is empty`).toBeTruthy()
+    }
+    expect(strategy.body, 'the Why Midwest body must ship empty, not invented').toBeUndefined()
   })
 
   it('reproduces the hero exactly as it shipped', () => {

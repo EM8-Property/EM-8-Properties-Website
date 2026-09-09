@@ -38,7 +38,7 @@ npm run dev                  # production dataset
 | `npm run lighthouse` | Lighthouse + resource budget against a running `npm start` |
 | `npm run typegen` | Regenerate Sanity types. **Run after every schema change** |
 | `node --env-file=.env.local scripts/migrate-content.mjs` | Re-write content from `scripts/content/em8-content.mjs`. Dry run; add `--apply` to write |
-| `… scripts/migrate-content.mjs --only=<step>` | Run **one** backfill: `carousel`, `pages`, `seo`, `headings`, `header-button`, `cta`. Prefer this after the initial load — see below |
+| `… scripts/migrate-content.mjs --only=<step>` | Run **one** backfill: `carousel`, `pages`, `seo`, `headings`, `header-button`, `nav-labels`, `cta`. Prefer this after the initial load — see below |
 | `bash scripts/deploy-studio.sh` | Redeploy the hosted Studio. **Run after every schema change** |
 
 ## Environment

@@ -458,6 +458,79 @@ describe('migration payload — sample testimonial drafts', () => {
  * so an editor part-way through writing a real testimonial over a published one — which
  * is a perfectly normal thing to do — does not trip it.
  */
+describe('the seeded nav labels', () => {
+  const KEYS = [
+    'aboutUs',
+    'aboutEm8',
+    'whyEm8',
+    'ourTeam',
+    'strategy',
+    'whyMidwest',
+    'partners',
+    'portfolio',
+    'insights',
+  ]
+
+  it('covers every nav node', () => {
+    expect(Object.keys((SITE_SETTINGS as any).navLabels ?? {})).toEqual(KEYS)
+  })
+
+  it('respects the caps the schema will reject past', () => {
+    /*
+     * A value that exceeds the cap seeds fine through the API and then fails validation in
+     * the Studio, where an editor meets it as an error on content they did not write. Same
+     * reason `pageSeo.test.ts` bounds the seeded titles.
+     *
+     * 12 for the four bar labels, 24 for the five panel labels — the split is in the
+     * schema and its reasoning is there.
+     */
+    const labels = (SITE_SETTINGS as any).navLabels
+    for (const bar of ['aboutUs', 'strategy', 'portfolio', 'insights']) {
+      expect(labels[bar].length, `${bar} = "${labels[bar]}"`).toBeLessThanOrEqual(12)
+    }
+    for (const child of ['aboutEm8', 'whyEm8', 'ourTeam', 'whyMidwest', 'partners']) {
+      expect(labels[child].length, `${child} = "${labels[child]}"`).toBeLessThanOrEqual(24)
+    }
+  })
+
+  it('fits the phone bar at its stated arithmetic', () => {
+    /*
+     * §5 measures the bar in characters: `About Us · Strategy · Portfolio · Insights` is
+     * 33 characters as seeded, against the 42 §5 called more than tight and the ~48 four
+     * 12-character labels would reach. This is the *seeded* case, so it is a sanity check
+     * on the words this PR chooses and not a guarantee about what an editor may type —
+     * the cap above is that, and Task 6's measurement is what confirms the cap.
+     */
+    const labels = (SITE_SETTINGS as any).navLabels
+    const bar = ['aboutUs', 'strategy', 'portfolio', 'insights']
+      .map((k) => labels[k])
+      .join('')
+    expect(bar.length).toBeLessThanOrEqual(36)
+  })
+
+  it('seeds the realized-results heading, so there is something to rewrite', () => {
+    /*
+     * Optional in the schema, so the site is correct without it — but an unseeded optional
+     * field is a field nobody knows exists. Hunter's instruction was that every string this
+     * PR writes be editable in the Studio, and a blank field is not editable copy, it is an
+     * absent feature.
+     *
+     * "Realized" and not "targeted" or "projected": these are closed results. The
+     * compliance scan below covers this string because SITE_SETTINGS is in the blob.
+     */
+    expect((SITE_SETTINGS as any).dealStoryHeading).toBeTruthy()
+    expect((SITE_SETTINGS as any).dealStoryHeading.length).toBeLessThanOrEqual(60)
+  })
+
+  it('says nothing promissory and invents no figure', () => {
+    // navLabels is inside SITE_SETTINGS, which is already in the `blob` this file scans,
+    // so the placeholder and compliance gates cover it for free. This asserts that
+    // coverage exists rather than trusting it — the same reason PAGE_COPY and PAGE_SEO
+    // were added to that blob.
+    expect(blob).toContain('navLabels')
+  })
+})
+
 describe('shadowing seed drafts', () => {
   const seeded = (id: string) => ({
     _id: `drafts.${id}`,
