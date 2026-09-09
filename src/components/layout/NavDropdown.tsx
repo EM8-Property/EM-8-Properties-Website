@@ -76,9 +76,24 @@ export function NavDropdown({
    * fires before `click` for every mouse click, not only a simulated one: without this,
    * the *first* click a mouse user ever makes on an unopened parent opens it via hover and
    * then immediately closes it via the click that hover made possible, and the panel never
-   * visibly appears. Cleared on the click it suppressed, and on every path that closes the
-   * panel, so it cannot outlive the gesture that set it and misfire on a later keyboard
-   * activation.
+   * visibly appears.
+   *
+   * This flag alone is not enough to scope the suppression correctly: it is set by
+   * `pointerenter` and consumed by whichever `click` happens to arrive next, and nothing
+   * guarantees that next click is the mouse click the hover produced. A keyboard user whose
+   * mouse happens to be resting over (or drifts onto) this parent — a trackpad, or a mouse
+   * left stationary while typing — can hover-open it, then Tab to the toggle and press
+   * Enter/Space with no intervening physical click in between: if this flag were consulted
+   * on its own, that keyboard activation would be silently swallowed on its first press,
+   * because nothing has consumed the flag yet.
+   *
+   * So `handleToggleClick` below also reads the `click` event's own `detail`: a mouse-driven
+   * click always carries `detail >= 1` (the click count), while a `click` synthesised by
+   * keyboard activation of a `<button>` carries `detail === 0`. Suppression only ever
+   * applies to a `detail > 0` click, so a keyboard Enter/Space is never swallowed regardless
+   * of whether this flag happens to be set — which removes the timing dependence rather than
+   * papering over it. The flag is cleared on every click (of either kind), and on every path
+   * that closes the panel, so it cannot leak into an unrelated later gesture either.
    */
   const suppressToggleRef = useRef(false)
 
@@ -92,13 +107,15 @@ export function NavDropdown({
     if (refocus) toggleRef.current?.focus()
   }
 
-  const handleToggleClick = () => {
-    if (suppressToggleRef.current) {
-      // This click is the tail end of the pointerenter that just opened the panel —
-      // consume the flag rather than the toggle.
-      suppressToggleRef.current = false
-      return
-    }
+  const handleToggleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // Only a pointer-driven click (detail >= 1) can be the tail end of the pointerenter
+    // that just opened the panel. A keyboard-synthesised click (detail === 0, from Enter or
+    // Space on a focused button) is never the gesture the flag was set for, so it always
+    // toggles — this is what keeps a hover-open-then-keyboard-Enter working on the first
+    // press even while the flag is still armed.
+    const suppress = suppressToggleRef.current && event.detail > 0
+    suppressToggleRef.current = false
+    if (suppress) return
     setOpen((v) => !v)
   }
 

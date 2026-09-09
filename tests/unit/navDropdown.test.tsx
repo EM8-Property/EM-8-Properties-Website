@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NavDropdown } from '@/components/layout/NavDropdown'
 import { NAV_TREE } from '@/lib/navigation'
@@ -83,6 +83,76 @@ describe('NavDropdown, a parent with no destination', () => {
 
     await user.pointer({ target: toggle, keys: '[TouchA]' })
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('mouse hover opens the panel, and the trailing mouse click does not close it', async () => {
+    /*
+     * The race `suppressToggleRef` exists for: a real mouse click always arrives with the
+     * pointer already over its target, so `pointerenter` (which opens the panel) fires
+     * before `click` (which would otherwise immediately toggle it shut again) for every
+     * mouse click, not only a simulated one. Without the guard, the very first click a
+     * mouse user ever makes on an unopened parent would open-then-instantly-close it.
+     */
+    const user = userEvent.setup()
+    render(<NavDropdown node={aboutUs} labels={LABELS} />)
+    const toggle = screen.getByRole('button', { name: /about us/i })
+
+    await user.hover(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+
+    await user.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('a second mouse click on the toggle does close it', async () => {
+    // The suppression is scoped to the one click the hover produced, not to every click
+    // that follows a hover-open — otherwise the toggle would be unusable by mouse at all.
+    const user = userEvent.setup()
+    render(<NavDropdown node={aboutUs} labels={LABELS} />)
+    const toggle = screen.getByRole('button', { name: /about us/i })
+
+    await user.hover(toggle)
+    await user.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+
+    await user.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('mouse hover-open, then keyboard Enter on the toggle toggles on the first press', async () => {
+    /*
+     * Regression test for the stale-`suppressToggleRef` defect: a mouse hover opens the
+     * panel and arms the flag (correctly — no click has happened yet), and then a keyboard
+     * Enter on the same toggle, with no intervening physical click, must still act on its
+     * first press rather than being silently swallowed by a flag armed for a click that
+     * never came. This fails against the code that consults the flag alone (no `detail`
+     * check) and passes once suppression is scoped to a pointer-driven (`detail > 0`) click.
+     */
+    const user = userEvent.setup()
+    render(<NavDropdown node={aboutUs} labels={LABELS} />)
+    const toggle = screen.getByRole('button', { name: /about us/i })
+
+    await user.hover(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+
+    toggle.focus()
+    await user.keyboard('{Enter}')
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('mouse hover-open, then keyboard Space on the toggle toggles on the first press', async () => {
+    // Same regression as the Enter case above, for the other activation key a button
+    // responds to.
+    const user = userEvent.setup()
+    render(<NavDropdown node={aboutUs} labels={LABELS} />)
+    const toggle = screen.getByRole('button', { name: /about us/i })
+
+    await user.hover(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+
+    toggle.focus()
+    await user.keyboard('{ }')
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
   })
 
   it('renders its three children as links once the panel is open', async () => {
@@ -171,6 +241,29 @@ describe('NavDropdown, a parent with no destination', () => {
     )
     await user.click(screen.getByRole('button', { name: /about us/i }))
     for (let i = 0; i < 4; i++) await user.tab()
+    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'After' }))
+  })
+
+  it('lets Tab leave a CLOSED toggle too, without ever touching the panel', async () => {
+    /*
+     * The test above opens the panel before tabbing, so it never exercises the closed
+     * state — and the closed state is where the `hidden` attribute is doing its real work
+     * of keeping the panel's links out of the tab order at all. This starts from a focused,
+     * never-opened toggle and asserts Tab lands on the element after the whole dropdown,
+     * not on one of the panel's (currently hidden) links.
+     */
+    const user = userEvent.setup()
+    render(
+      <>
+        <NavDropdown node={aboutUs} labels={LABELS} />
+        <a href="/after">After</a>
+      </>,
+    )
+    const toggle = screen.getByRole('button', { name: /about us/i })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+
+    toggle.focus()
+    await user.tab()
     expect(document.activeElement).toBe(screen.getByRole('link', { name: 'After' }))
   })
 
