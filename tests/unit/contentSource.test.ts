@@ -483,9 +483,9 @@ describe('the seeded nav labels', () => {
      * reason `pageSeo.test.ts` bounds the seeded titles.
      *
      * 10 for the four bar labels, 24 for the five panel labels — the split is in the
-     * schema and its reasoning is there. The bar cap was 12 until Task 6 measured all four
-     * bar labels padded to it and found the nav wrapping to two lines at 390px, not just
-     * the 320px the spec's own arithmetic expected; 10 is what that measurement settled on.
+     * schema and its reasoning is there. The About Us tab gaining its own chevron button
+     * pushed the nav to two lines at more widths than before, and 10 is what bounds it.
+     * See the fuller measurement and length-versus-width point in schema.test.ts.
      */
     const labels = (SITE_SETTINGS as any).navLabels
     for (const bar of ['aboutUs', 'strategy', 'portfolio', 'insights']) {

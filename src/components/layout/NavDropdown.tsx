@@ -35,12 +35,16 @@ import type { NavKey, NavLabels, NavNode } from '@/lib/navigation'
  * AND out of the tab order; a class can be overridden by a later rule and silently leave
  * focusable links inside a closed panel.
  *
- * **Two shapes of parent, and the asymmetry is spec §5's.** `About Us` has no destination
- * of its own, so one button carries the label and the disclosure. `Strategy` has one, so
- * its label is a link and the `▾` beside it is a separate button. §5 proposed one element
+ * **Two shapes of parent, only one of them live.** A parent with `href: null` renders one
+ * button that carries both the label and the disclosure — no real node uses that shape as
+ * of 2026-09-09 (Hunter's call: `About Us` was the last one, and now points at `/about`,
+ * the same as `Strategy` points at `/strategy`), but the type still permits it and this
+ * component still supports it, because a dropdown parent with no page of its own is a
+ * standard pattern a future node may need. A parent with an `href` gets a link for its
+ * label and a separate `▾` button beside it for the disclosure. §5 proposed one element
  * that was both; taken literally a tap on it navigates and the panel never opens, which
- * leaves /partners reachable only from the footer — the complaint this PR answers,
- * recreated one level down. The link and the extra control keep both.
+ * leaves the panel's destinations reachable only from the footer — the complaint this PR
+ * answers, recreated one level down. The link and the extra control keep both.
  *
  * Colours: `text-ink` on `bg-ground` with a `border-rule` edge. Deliberately not
  * `text-white` on anything — spec §9 lists seven `text-white`-on-a-moving-token pairings

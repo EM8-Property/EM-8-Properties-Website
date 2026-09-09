@@ -37,9 +37,11 @@ describe('SiteHeader', () => {
 
   it('exposes every primary route', () => {
     render(<SiteHeader {...props} />)
-    // About Us is a button, not a link: it has no destination of its own. Its three
-    // children are in its panel, which mobileNav.test.tsx covers.
-    expect(screen.getByRole('button', { name: 'About Us' })).toBeDefined()
+    // About Us navigates to /about now (Hunter's call, 2026-09-09), the same shape as
+    // Strategy: a link for the label plus a separately-named disclosure button for its
+    // panel. Its three children are in that panel, which mobileNav.test.tsx covers.
+    expect(screen.getByRole('link', { name: 'About Us' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Open the About Us menu' })).toBeDefined()
     for (const label of ['Strategy', 'Portfolio', 'Insights']) {
       expect(screen.getByRole('link', { name: label })).toBeDefined()
     }
