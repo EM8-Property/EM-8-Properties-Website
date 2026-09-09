@@ -535,24 +535,35 @@ test('the homepage keeps its copy on the photograph, not on the measure', async 
  *
  * The two shapes are nowhere near each other in how much of the reservation they actually
  * need, which is why this runs on both. Measured clearance, 2026-09-09, against
- * `HEADER_RESERVATION = 'pt-32 md:pt-28'` — the numbers this docblock used to quote were
- * the pre-§5 ones against `pt-24` and read as current:
+ * `HEADER_RESERVATION = 'pt-48 min-[390px]:pt-36 md:pt-28'` — the numbers this docblock
+ * used to quote were the ones against an abandoned four-breakpoint intermediate
+ * (`pt-48 min-[360px]:pt-36 min-[390px]:pt-32 md:pt-28`) that never shipped, and before
+ * that the ones against `pt-32 md:pt-28`, and before that the pre-§5 ones against `pt-24`,
+ * and none of them read as current:
  *
  *   /        375px   342.3px   — `screen`, all the slack in the world
- *   /about   375px    39.5px
- *   /about   360px    15.0px   — the tightest on the site
- *   /about   320px    15.0px
+ *   /about   320px    79.0px
+ *   /about   360px    79.0px
+ *   /about   375px   103.5px
+ *   /about   390px    55.5px   — the tightest on the site, webfonts loaded
  *
- * Below 375px the band's overlay has grown past the 420px floor, so the box is exactly as
+ * Below 390px the band's overlay has grown past the 420px floor, so the box is exactly as
  * tall as the copy and bottom-alignment leaves no slack at all: the reservation minus the
  * header is the entire margin. Which means the vulnerable shape is `band` at a narrow
  * viewport, and for a day this test covered only the homepage — verified: dropping the
  * reservation still clears the header at 1280px and at 375px, and fails first at 320px on
  * a band page.
  *
- * 15px, not 28px. A reader planning the next header change should budget the real slack:
- * the phone header has fifteen pixels of it, and `src/lib/headerReservation.ts` carries the
- * full table.
+ * 55.5px, not 79.0px and not 28px. A reader planning the next header change should budget
+ * the real slack: the tightest band-page width has fifty-five and a half pixels of it, and
+ * `src/lib/headerReservation.ts` carries the full table, including the fallback-font column
+ * these two tests cannot see (below).
+ *
+ * **These two tests run with the webfonts available, and that is a blind spot rather than
+ * a choice.** They cannot see the case that broke CI — the fallback face makes the header
+ * 40px taller at 320px (113.0px → 153.0px) — so the loop below this one blocks the font
+ * requests and asserts the same thing. Both are needed: this one is the case a warm visitor
+ * sees, that one is the case a cold visitor on a slow connection sees.
  */
 for (const [route, width] of [
   ['/', 375],
@@ -570,6 +581,46 @@ for (const [route, width] of [
     expect(
       eyebrowBox.y,
       `the eyebrow renders under the overlaid header on ${route} at ${width}px`,
+    ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
+  })
+}
+
+/*
+ * The same assertion, with the webfonts blocked — the case that actually broke CI, and the
+ * one the loop above cannot see because its browser has the fonts cached.
+ *
+ * CI renders with fallback fonts. The wider fallback face wraps the header's row one at
+ * 320px, taking the header from 113.0px to 153.0px, and against the FIXED
+ * `HEADER_RESERVATION` that ate the entire budget: /about and /insights went to −25.0px of
+ * clearance and /investors to −3.8px — the eyebrow rendered under a translucent bar. This
+ * is not a CI artifact: a real phone on a slow connection paints fallback fonts first, so
+ * the same underlap happens there during that flash. `HEADER_RESERVATION` is now sized
+ * against this exact case (see `src/lib/headerReservation.ts`), and re-measured here,
+ * 2026-09-09, at 320px with the fonts blocked: /about +39.0px, /insights +39.0px,
+ * /investors +39.0px — all three tie because all three share the same fallback-face header
+ * height and the same reservation; the site-specific slack lives in how far below the
+ * `min-h-[420px]` floor each page's copy sits, and none of the three do at 320px.
+ *
+ * These are the three worst routes from the CI failure, not an arbitrary sample.
+ */
+for (const route of ['/about', '/insights', '/investors'] as const) {
+  test(`the hero clears the header with the webfonts blocked at 320px on ${route}`, async ({
+    page,
+  }) => {
+    await page.route('**/*.{woff,woff2,ttf,otf}', (r) => r.abort())
+    await page.setViewportSize({ width: 320, height: 812 })
+    await page.goto(route)
+
+    const headerBox = (await page.locator('header').boundingBox())!
+    // The eyebrow is the first line of copy, so it is the one that goes under the header.
+    const eyebrow = page.locator('[data-hero-overlay] p').first()
+    const eyebrowBox = (await eyebrow.boundingBox())!
+
+    expect(
+      eyebrowBox.y,
+      `the eyebrow renders under the overlaid header on ${route} at 320px with the webfonts ` +
+        `blocked — the fallback face wraps the header's row one and grows it to 153px, which ` +
+        `is the case that broke CI (see src/lib/headerReservation.ts)`,
     ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
   })
 }

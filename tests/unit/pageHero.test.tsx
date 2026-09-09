@@ -349,10 +349,18 @@ describe('PageHero copy', () => {
      * the constant, including a value too small to clear the header. It still earns its
      * place: it pins that the overlay consumes the shared constant rather than spelling the
      * padding itself, which is the duplication this module was created to end. But the
-     * magnitude needs its own guard, so the `pt-32` assertion is here too: an edit that
+     * magnitude needs its own guard, so the base-token assertion is here too: an edit that
      * lowers the base reservation now fails in milliseconds at the unit level instead of
-     * only in the 320px Playwright clearance test, which is the real proof but is also the
-     * slowest and most easily skipped thing in the repo.
+     * only in the 320px Playwright clearance tests, which are the real proof but are also
+     * the slowest and most easily skipped thing in the repo.
+     *
+     * Asserted as the FIRST token being exactly `pt-48`, not as the string containing
+     * `pt-36`. The reservation reads `pt-48 min-[390px]:pt-36 md:pt-28` now, so
+     * `toContain('pt-36')` — which is a natural thing to reach for — matches the
+     * `min-[390px]:` variant regardless of what the base token is, and would go green even
+     * if the base were weakened to something like `pt-4`. The base is the unprefixed
+     * token, it is the one that governs 320px, and 320px is where the header is 153px in
+     * the fallback face.
      */
     const { container } = render(<PageHero copy={COPY} slides={SLIDES} />)
     const overlay = container.querySelector('[data-hero-overlay]')!
@@ -360,9 +368,9 @@ describe('PageHero copy', () => {
       expect(overlay.className).toContain(token)
     }
     expect(
-      HEADER_RESERVATION,
-      'the base reservation dropped below pt-32 — the 320px /about eyebrow has 15px of slack',
-    ).toContain('pt-32')
+      HEADER_RESERVATION.split(' ')[0],
+      'the base reservation left pt-48 — at 320px the fallback-font header is 153px tall',
+    ).toBe('pt-48')
   })
 
   it('renders buttons when the page supplies them, outside the slide links', () => {

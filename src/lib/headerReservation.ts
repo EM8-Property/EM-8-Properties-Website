@@ -11,43 +11,119 @@
  * Why it is a plain string of class names: Tailwind v4 scans source files for class tokens,
  * and it finds them in a string literal in a `.ts` file exactly as it finds them in JSX. A
  * computed class name would not be found and would silently produce no padding at all.
+ * That is also why the narrow breakpoint below is written out as a literal `min-[390px]:`
+ * token rather than assembled from a number.
  *
- * **The measurements. These are measured, on `npm run build && npm start`, against
- * `[data-hero-overlay] p` on /about — the tightest shape on the site.** The first version
- * of this table carried the plan's *predictions* instead (a 100px header and 28px of
- * clearance at every phone width) and every one of those three numbers was wrong. A wrong
- * number in the module created to be the single place these numbers live is worse than the
- * two-file duplication it replaced, so: 2026-09-09, `pt-32 md:pt-28`.
+ * **This reservation is sized against the FALLBACK-FONT header, not the webfont one, and
+ * that is the whole point of the numbers below.** A fixed `pt-` reserves space for a header
+ * whose height VARIES, and the largest single thing that varies it is not the viewport — it
+ * is whether Oswald and Inter have arrived yet. Before the webfonts land the browser paints
+ * the wordmark and the CTA in a wider fallback face, row one stops fitting at 320px, the
+ * header goes from 113.0px to 153.0px, and the eyebrow that had +15.0px of clearance has
+ * −25.0px of it: the first line of hero copy renders *underneath* a translucent bar. On a
+ * real phone on a slow connection that is what the page looks like until the fonts arrive.
+ * CI found it by accident — its runners have no webfonts cached and were painting the
+ * fallback — while `npm run test:e2e` stayed green on a warm laptop. The previous version
+ * of this table was measured with the fonts loaded and reported +15.0px at 320px as if that
+ * were the budget. It was never the budget; it was the best case.
  *
- *   width    header    reservation    /about clearance
- *   320px    113.0px   pt-32 = 128px  +15.0px   ← the tightest case on the site
- *   360px    113.0px   pt-32 = 128px  +15.0px
- *   375px     88.5px   pt-32 = 128px  +39.5px
- *   390px     88.5px   pt-32 = 128px  +39.5px
- *   640px     88.5px   pt-32 = 128px  +74.1px   ← the band that justifies `md` over `sm`
- *   767px     88.5px   pt-32 = 128px  +74.1px
- *   768px     62.0px   md:pt-28 = 112px  +100.6px
- *   1280px    62.0px   md:pt-28 = 112px   +50.0px
+ * **The measurements.** Measured on `npm run build && npm start`, against
+ * `[data-hero-overlay] p` on /about — the tightest shape on the site — at
+ * `HEADER_RESERVATION = 'pt-48 min-[390px]:pt-36 md:pt-28'`, 2026-09-09. "blocked" is
+ * Playwright aborting every request for a `.woff`, `.woff2`, `.ttf` or `.otf` file, which
+ * is the fallback-font case above; "loaded" is the warm case. Both columns matter, and each
+ * band is chosen by the worse of the two.
  *
- * The header is 113px rather than 88.5px below 375px because the nav's four labels wrap to
- * two lines there. 15px is the whole budget at 320px and 360px, and the reason it is not
- * larger is that below 375px the band's overlay has grown to fill the band —
- * bottom-alignment leaves no slack, so the reservation minus the header IS the margin. The
- * E2E assertion at 320px on /about is what proves this number is still right, and it is the
- * first thing that fails if the header grows again.
+ *   width    reservation                header            /about clearance
+ *                                       loaded  blocked   loaded    blocked
+ *   320px    pt-48 = 192px              113.0   153.0      +79.0     +39.0  ← row one wraps
+ *   360px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
+ *   375px    pt-48 = 192px               88.5   113.0     +103.5     +79.0
+ *   390px    min-[390px]:pt-36 = 144px    88.5    88.5      +55.5     +55.5  ← the tightest
+ *   640px    min-[390px]:pt-36 = 144px    88.5    88.5      +74.1     +55.5
+ *   767px    min-[390px]:pt-36 = 144px    88.5    88.5      +74.1     +55.5
+ *   768px    md:pt-28 = 112px             62.0    62.0     +100.6     +61.0
+ *   1280px   md:pt-28 = 112px             62.0    62.0      +50.0     +50.0
+ *
+ * Swept every integer width from 320px to 820px on /about, /insights and /investors, both
+ * ways: nothing falls below +39.0px blocked or +55.5px loaded. The floor to beat was 28px —
+ * what the hero had before the two-row phone header — so the whole range now clears it.
+ *
+ * **Why each band reserves for a header one line TALLER than the one it shows.** This is
+ * the part that keeps the table above from going stale on somebody else's machine. The
+ * header's height is a line count, and the two rows that can gain a line have almost no
+ * width to spare. Measured on /about with the fonts blocked, content needed against content
+ * available:
+ *
+ *   width    row one (wordmark + actions)   nav (four labels)      header
+ *   320px    288.9 / 272.0   −5.8%  wrapped  335.7 / 272.0  −19.0%  153.0px
+ *   360px    288.9 / 312.0   +8.0%           335.7 / 312.0   −7.1%  113.0px
+ *   375px    288.9 / 327.0  +13.2%           335.7 / 327.0   −2.6%  113.0px
+ *   390px    288.9 / 342.0  +18.4%           335.7 / 342.0   +1.9%   88.5px
+ *   420px    288.9 / 372.0  +28.8%           335.7 / 372.0  +10.8%   88.5px
+ *   640px    288.9 / 592.0 +104.9%           335.7 / 592.0  +76.4%   88.5px
+ *
+ * The fallback face costs 7.2% on row one (269.4 → 288.9px) and 3.8% on the nav (323.5 →
+ * 335.7px). Compare those to the slack: row one has 8.0% at 360px and the nav has 1.9% at
+ * 390px. Both are the same order as the difference between two fallback faces, so a CI
+ * runner whose default sans is a couple of percent wider than this machine's Arial gains
+ * the line that this machine does not. Reserving only for the height measured here would
+ * ship a reservation that is correct on this laptop and off by a line somewhere else, which
+ * is exactly the failure being fixed. So:
+ *
+ *   - Below 390px, reserve for 153.0px — row one wrapped AND the nav on two lines. It is
+ *     the measured height at 320px, and it is one row-one line away at 360px and 375px.
+ *     `pt-48` = 192px, +39.0px in the worst case measured and +79.0px at 360-375px.
+ *   - 390px to 767px, reserve for 113.0px — the nav on two lines, which is 1.9% of width
+ *     away at 390px. `pt-36` = 144px, so +31.0px if that line appears and +55.5px as
+ *     measured. Row one has 18.4% of slack here, so a three-row header at this width would
+ *     take a face nearly a fifth wider than Inter, and is not budgeted for.
+ *   - `md` and up, 62.0px in both faces, one row with 100%+ of slack on every element.
+ *     `md:pt-28` = 112px, unchanged from before this fix, +50.0px.
+ *
+ * The breakpoint is `md` at the top and a literal `min-[390px]:` below it, and neither is
+ * interchangeable with `sm`. 320px and 375px are BOTH below `sm` (640px) and need different
+ * reservations, so `sm` cannot make the cut that matters; and the 640-767px row above is
+ * why the relaxation at the top is at `md` rather than `sm` — the header is still 88.5px at
+ * 767px, so relaxing at 640px would cut that band's clearance for nothing.
+ *
+ * **What it costs.** Almost nothing where it is measured, because the hero copy is
+ * bottom-aligned inside a `min-h-[420px]` box: extra top padding only grows the box once
+ * padding plus copy exceeds that floor. At 390x844 DPR-3 with the fonts loaded — the review
+ * viewport — page length goes `/` 8.23 → 8.23 screens, /about 7.49 → 7.51 (+16px, the
+ * `pt-32` → `pt-36` step), /portfolio 5.38 → 5.38. The homepage and /portfolio have more
+ * slack above their copy than the step spends, so they do not move at all. Below 390px the
+ * band grows by up to 64px on the pages whose copy has already pushed it past the floor
+ * (/about, /insights, /investors, /portfolio); /partners and /strategy do not move even at
+ * 320px, because their copy is short enough that the box stays at the 420px floor.
+ *
+ * **What this cannot cover, and the reader should know it.** This is a fixed number sized
+ * against a measured worst case, and two inputs to that worst case are CMS-authored: the
+ * header CTA's label (`siteSettings.headerCta`) and the four nav labels
+ * (`siteSettings.navLabels`). A materially longer CTA label wraps row one at 360px too, and
+ * materially longer nav labels take the nav to three lines; either walks the header past
+ * what these numbers reserve, and it does it in the fallback face first. Stopping row one
+ * from wrapping in `SiteHeader` was the other available lever and was measured and
+ * rejected: at 320px row one needs 288.9px against 272px, so closing that 16.9px gap means
+ * shrinking the wordmark or the header's inset — a change to an approved design — and it
+ * would still not make the header's height stable, because CMS copy can wrap row one at
+ * 320px whatever the styling does. The reservation would have to survive a wrapped row one
+ * regardless, which is what it now does. The durable fix is a reservation that measures the
+ * header instead of guessing at it; that is a bigger change than a CI failure should carry.
  *
  * For the same reason, the header's height must not depend on an interaction. It has twice:
  * revealing Investor Login below `md` wrapped row one and took the header to 155px at
- * 320px, which is 27px of eyebrow *underneath* the bar against the 128px this reserves;
- * and opening a nav panel, which was an in-flow block below `md`, took it to 186px at
- * every phone width — 58px of eyebrow under the bar on /about and 24px on /insights. Both
- * disclosures are out of flow below `md` now, and both are pinned by an E2E height-delta
- * assertion — see `SiteHeader.tsx` and `NavDropdown.tsx`.
+ * 320px, and opening a nav panel, which was an in-flow block below `md`, took it to 186px
+ * at every phone width — 58px of eyebrow under the bar on /about and 24px on /insights.
+ * Both disclosures are out of flow below `md` now, in the fallback face as well as the
+ * webfont one (re-measured at 320px, 375px and 390px with the fonts blocked: 0px of height
+ * delta on all three disclosures), and both are pinned by an E2E height-delta assertion —
+ * see `SiteHeader.tsx` and `NavDropdown.tsx`.
  *
- * The breakpoint is `md`, not `sm`, and the 640-767px row above is what settles it. The
- * header is still 88.5px — two bands — at 767px. Relaxing the reservation at `sm` (640px)
- * would have shrunk it from 128px to 112px across that whole band while the header was at
- * its two-row height, cutting +74.1px to +58.1px for no reason. So the reservation changes
- * where the header changes, and `md:pt-28` leaves the desktop case what it has always been.
+ * The E2E tests that hold this number are `the hero clears the header at ...`, which runs
+ * with the fonts available, and `the hero clears the header with the webfonts blocked at
+ * ...`, which is the only one that can see the case this docblock is about. Both are
+ * needed: on a warm machine the first cannot fail on a fallback-font regression, because
+ * the webfonts are simply there.
  */
-export const HEADER_RESERVATION = 'pt-32 md:pt-28'
+export const HEADER_RESERVATION = 'pt-48 min-[390px]:pt-36 md:pt-28'
