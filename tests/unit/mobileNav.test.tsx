@@ -183,4 +183,17 @@ describe('the phone header', () => {
         .filter((a) => a.getAttribute('href') === '/strategy'),
     ).toHaveLength(2)
   })
+
+  it('drops the Why EM8 link while that section has no body', () => {
+    // The live state on the day this ships, not a hypothetical: §3 lists the copy under
+    // "Owed by people". A menu link to an anchor that is not on the page scrolls nowhere.
+    render(<SiteHeader {...props} sections={{ whyEm8: false }} />)
+    expect(screen.queryByRole('link', { name: 'Why EM8', hidden: true })).toBeNull()
+    expect(screen.getByRole('link', { name: 'Our Team', hidden: true })).toBeDefined()
+  })
+
+  it('shows it once the section has a body', () => {
+    render(<SiteHeader {...props} sections={{ whyEm8: true }} />)
+    expect(screen.getByRole('link', { name: 'Why EM8', hidden: true })).toBeDefined()
+  })
 })

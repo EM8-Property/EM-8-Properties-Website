@@ -704,10 +704,9 @@ test.describe(() => {
     await toggle.tap()
     await expect(toggle).toHaveAttribute('aria-expanded', 'true')
     await expect(page).toHaveURL(/\/$/)
-    // 3, not 2: `whyEm8` has no body in the dataset yet, and Task 8 is what gates it out
-    // of the panel. Until that gate lands all three of About Us's children render, so this
-    // is the pre-gate count — change it to 2 when Task 8's `sections` prop arrives.
-    await expect(page.locator('#nav-panel-aboutUs a')).toHaveCount(3)
+    // 2, not 3: `whyEm8` has no body in the dataset, so Task 8's nav gate hides it and
+    // only About EM8 and Our Team remain in the panel.
+    await expect(page.locator('#nav-panel-aboutUs a')).toHaveCount(2)
   })
 })
 

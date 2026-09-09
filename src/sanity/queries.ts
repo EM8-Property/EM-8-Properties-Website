@@ -156,8 +156,32 @@ export const ABOUT_PAGE_QUERY = defineQuery(`
     seo { title, description },
     hero { eyebrow, title, titleAccent, titleSuffix, intro },
     factorsHeading { eyebrow, title, intro },
+    whyEm8 { heading { eyebrow, title, intro }, body },
     leadershipTitle,
     boardTitle
+  }
+`)
+
+/**
+ * Which optional sections exist, for the navigation.
+ *
+ * One boolean today. It is here rather than folded into `SITE_SETTINGS_QUERY` — where it
+ * would cost no extra round trip — for a specific reason:
+ * `tests/unit/requiredContent.test.ts` proves that every required leaf is projected by
+ * looking for each dotted path segment as a substring of `SITE_SETTINGS_QUERY`, and its own
+ * comment concedes that a coincidental segment name elsewhere in the query would satisfy it
+ * wrongly. The string `whyEm8` appearing there for an unrelated reason manufactures exactly
+ * that coincidence, for exactly the leaf it would hide: `navLabels.whyEm8`. Keeping this
+ * apart keeps that guard honest, and Next's data cache serves the second fetch from the
+ * same request.
+ *
+ * `defined(whyEm8.body)` rather than the value: the layout needs to know whether to show a
+ * menu link, and pulling a whole portable-text array into the layout of all 29 pages to
+ * answer a yes-or-no question would be a real cost for no gain.
+ */
+export const NAV_SECTIONS_QUERY = defineQuery(`
+  *[_id == "aboutPage"][0] {
+    "whyEm8": defined(whyEm8.body)
   }
 `)
 

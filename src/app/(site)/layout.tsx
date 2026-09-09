@@ -1,8 +1,11 @@
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { fetchSanity } from '@/sanity/client'
-import { SITE_SETTINGS_QUERY } from '@/sanity/queries'
-import type { SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
+import { SITE_SETTINGS_QUERY, NAV_SECTIONS_QUERY } from '@/sanity/queries'
+import type {
+  SITE_SETTINGS_QUERY_RESULT,
+  NAV_SECTIONS_QUERY_RESULT,
+} from '@/sanity/types.generated'
 import type { NavLabels } from '@/lib/navigation'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { organizationJsonLd } from '@/lib/structuredData'
@@ -17,7 +20,10 @@ import { missingLeaves } from '@/lib/requiredContent'
  * and the API routes on the bare root layout.
  */
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const settings = await fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY)
+  const [settings, navSections] = await Promise.all([
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+    fetchSanity<NAV_SECTIONS_QUERY_RESULT>(NAV_SECTIONS_QUERY),
+  ])
 
   /*
    * Missing required content fails the build loudly rather than rendering a broken shell.
@@ -81,6 +87,11 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           // navLabels leaf for a null document or a null or empty field, so the throw
           // above covers all nine. TypeScript cannot see that through the array.
           labels={site.navLabels as NavLabels}
+          // A missing aboutPage projects to null, and this layout renders on all 29 pages —
+          // so the fallback is "the section is not there", which is true and which keeps an
+          // optional section on one page from taking the site down. `!!` because
+          // `defined()` returns a boolean but the projection types it nullable.
+          sections={{ whyEm8: !!navSections?.whyEm8 }}
         />
       </div>
       <main className="flex-1">{children}</main>
