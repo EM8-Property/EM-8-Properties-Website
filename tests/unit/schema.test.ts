@@ -241,13 +241,16 @@ describe('navLabels on siteSettings', () => {
     }
   })
 
-  it('caps the four bar labels at 12 characters and the panel labels at 24', () => {
+  it('caps the four bar labels at 10 characters and the panel labels at 24', () => {
     /*
-     * The phone bar is measured in characters and, now that the labels are CMS fields, the
-     * count is not knowable at build time — "Our Investment Strategy" is a legal edit.
-     * §5's arithmetic at the 11px semibold the bar uses: four 14-character labels reach
-     * ~356px, fitting 390px but not 320px; 12 characters reach ~312px and fit both. Task 6
-     * confirms 12 by measurement rather than by that arithmetic.
+     * 10, not the 12 this field's own comment used to claim and §5's arithmetic predicted.
+     * That arithmetic assumed the bar's width was decided by label text alone; Task 6
+     * measured the real header at all four bar labels padded to 12 characters and found the
+     * nav wrapped to two lines at 390px as well as 320px — the chevron toggles on About Us
+     * and Strategy, and the gaps between all four items, cost more width than a
+     * character-count estimate saw. 10 characters keeps a single nav line at 390px; both
+     * numbers are in the PR that lowered this, which is the point of measuring rather than
+     * trusting the arithmetic.
      *
      * The five children cap at 24 instead, because a panel row has the width of the panel
      * and none of the bar's problem. Same shape as `headerCta.label`'s cap of 20 against
@@ -258,7 +261,7 @@ describe('navLabels on siteSettings', () => {
       return captureValidation(f.validation).find((c: RuleCall) => c.method === 'max')?.arg
     }
     for (const bar of ['aboutUs', 'strategy', 'portfolio', 'insights']) {
-      expect(cap(bar), `navLabels.${bar} is a bar label and must cap at 12`).toBe(12)
+      expect(cap(bar), `navLabels.${bar} is a bar label and must cap at 10`).toBe(10)
     }
     for (const child of ['aboutEm8', 'whyEm8', 'ourTeam', 'whyMidwest', 'partners']) {
       expect(cap(child), `navLabels.${child} is a panel label and should cap at 24`).toBe(24)

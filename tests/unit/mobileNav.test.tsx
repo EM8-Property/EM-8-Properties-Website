@@ -1,71 +1,131 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { SiteHeader } from '@/components/layout/SiteHeader'
+import type { NavLabels } from '@/lib/navigation'
 
 /**
- * The header shipped as a single unwrapped flex row of seven items with no breakpoint and
- * no toggle, so on a phone "About", "Investor Login" and "Get Started" ran off the edge of
- * the screen — the primary call to action and the investor portal, both unreachable.
+ * The phone header, rewritten for spec §5.
  *
- * Lighthouse does not catch this: it is not a contrast, tap-target or overflow failure,
- * the elements are simply painted outside the viewport.
+ * What this file used to pin: one flex row, a hamburger, and a nav that was `hidden` until
+ * tapped. That shipped because the header before it had no responsive behaviour at all and
+ * painted "About", "Investor Login" and "Get Started" past the right edge — a real fix, and
+ * the reason the render-once-reveal-with-CSS pattern is still here.
  *
- * The links are rendered exactly once and revealed with CSS rather than duplicated into a
- * separate mobile menu. A second copy would put two nodes with the same accessible name in
- * the tree, which breaks `getByRole` for every consumer and makes the nav ambiguous to a
- * screen reader.
+ * What replaced it, and why: Etamar reviewed the site on a phone and reported that the nav
+ * was empty. It was not — every link was one tap away inside the panel — but a header
+ * reading `EM8 Properties · Menu` is indistinguishable from a site with no navigation.
+ * Hunter's decision of 2026-09-08: the items are right and they have to be visible.
+ *
+ * So the hamburger is gone. There is nothing left for it to hold: the four parents are in
+ * the bar and their children are in their own panels, each with its own disclosure.
  */
-const NAV_LABELS = ['Portfolio', 'Track Record', 'Insights', 'Partners', 'About']
-
-/** The header's call to action comes from siteSettings now, so the tests supply one. */
 const CTA = { label: 'Invest With Us', href: '/investors' }
 
-describe('SiteHeader on small viewports', () => {
-  it('offers a menu button that starts collapsed', () => {
-    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
-    const button = screen.getByRole('button', { name: /menu/i })
-    expect(button.getAttribute('aria-expanded')).toBe('false')
-    expect(button.getAttribute('aria-controls')).toBe('site-nav')
+const LABELS: NavLabels = {
+  aboutUs: 'About Us',
+  aboutEm8: 'About EM8',
+  whyEm8: 'Why EM8',
+  ourTeam: 'Our Team',
+  strategy: 'Strategy',
+  whyMidwest: 'Why Midwest',
+  partners: 'Partners',
+  portfolio: 'Portfolio',
+  insights: 'Insights',
+}
+
+const props = { agoraUrl: 'https://x.test', cta: CTA, labels: LABELS }
+
+describe('the phone header', () => {
+  it('shows all four nav parents without a tap', () => {
+    /*
+     * The assertion that answers the actual feedback. Every one of these is in the
+     * document and none of them is behind a disclosure — which is the whole difference
+     * between this header and the one that prompted "add case studies and insights to the
+     * upper bar" for links that were already there.
+     */
+    render(<SiteHeader {...props} />)
+    expect(screen.getByRole('button', { name: /about us/i })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Strategy' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Portfolio' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Insights' })).toBeDefined()
   })
 
-  it('expands and collapses on click', async () => {
-    const user = userEvent.setup()
-    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
-    const button = screen.getByRole('button', { name: /menu/i })
-
-    await user.click(button)
-    expect(button.getAttribute('aria-expanded')).toBe('true')
-    await user.click(button)
-    expect(button.getAttribute('aria-expanded')).toBe('false')
+  it('offers no hamburger at all', () => {
+    // Not "hides it on desktop" — it is gone. A menu button beside a visible nav is a
+    // control with nothing behind it, and it is the thing that made the nav look empty.
+    render(<SiteHeader {...props} />)
+    expect(screen.queryByRole('button', { name: /^menu$/i })).toBeNull()
   })
 
-  it('hides the nav by default but always shows it from the md breakpoint up', () => {
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
+  it('puts the nav on its own row from the phone up to the md breakpoint', () => {
+    /*
+     * Two rows rather than one because the wordmark, Investor Login and the CTA already
+     * fill a 390px row between them. `basis-full` is what forces the break; `md:basis-auto`
+     * is what returns the header to a single row on a desktop, where it has always been
+     * one.
+     */
+    const { container } = render(<SiteHeader {...props} />)
     const nav = container.querySelector('#site-nav')!
-    expect(nav.className).toContain('hidden')
-    expect(nav.className).toContain('md:flex')
+    expect(nav.className).toContain('basis-full')
+    expect(nav.className).toContain('md:basis-auto')
+    // And it is never hidden. This is the assertion that fails if someone reinstates a
+    // breakpoint-gated `hidden`, which is how this header looked empty in the first place.
+    expect(nav.className).not.toMatch(/\bhidden\b/)
   })
 
-  it('reveals the nav once expanded', async () => {
-    const user = userEvent.setup()
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
-    await user.click(screen.getByRole('button', { name: /menu/i }))
-    const nav = container.querySelector('#site-nav')!
-    expect(nav.className).not.toContain('hidden')
+  it('keeps Investor Login and the CTA reachable on a phone', () => {
+    /*
+     * §5's sketch of the phone header shows only the wordmark and Invest With Us on row
+     * one, and omits Investor Login. Dropping it entirely would re-open the exact defect
+     * the mobile nav work closed — "the primary CTA and the investor portal were both
+     * mobile-inaccessible" — so it is still one node in the tree here, findable by role and
+     * name regardless of viewport.
+     *
+     * It is not a plain row-one link any more, though. Step 6's measurement found that
+     * wordmark + Investor Login + the CTA measured 366px of content against 342px of
+     * content width at 390px wide — `flex-wrap`'s exact third-row case, where two flex
+     * children that do not fit together move to their own lines. Per §5's own fallback for
+     * that shape, Investor Login moved behind a small button below `md`; `md:flex`
+     * overrides that unconditionally from `md` up, so nothing changed on a desktop. This
+     * unit test cannot see that, because jsdom does not evaluate the stylesheet that makes
+     * the class conditional — see the E2E test in site.spec.ts for the assertion that does.
+     */
+    render(<SiteHeader {...props} />)
+    expect(screen.getByRole('link', { name: /investor login/i })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Invest With Us' })).toBeDefined()
   })
 
-  it('keeps the menu button itself off the desktop layout', () => {
-    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
-    expect(screen.getByRole('button', { name: /menu/i }).className).toContain('md:hidden')
-  })
-
-  it('renders every destination exactly once, including the two CTAs', () => {
-    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
-    for (const label of [...NAV_LABELS, 'Investor Login', CTA.label]) {
-      // getAllBy + length assertion rather than getBy: this is the duplicate-DOM
-      // regression guard, and getBy would throw before it could be asserted on.
-      expect(screen.getAllByRole('link', { name: label })).toHaveLength(1)
+  it('renders every destination exactly once, panels included', () => {
+    /*
+     * The duplicate-DOM regression guard, kept verbatim from the file this replaces and
+     * now covering nine labels instead of five. A second copy of the nav for a second
+     * breakpoint would put two nodes with the same accessible name in the tree, break
+     * `getByRole` for every consumer, and make the nav ambiguous to a screen reader.
+     *
+     * getAllBy plus a length assertion rather than getBy, because getBy throws on a
+     * duplicate before it can be asserted on.
+     */
+    render(<SiteHeader {...props} />)
+    for (const name of [
+      'About EM8',
+      'Why EM8',
+      'Our Team',
+      'Why Midwest',
+      'Partners',
+      'Portfolio',
+      'Insights',
+      'Investor Login',
+      CTA.label,
+    ]) {
+      expect(screen.getAllByRole('link', { name, hidden: true }), name).toHaveLength(1)
     }
+    // Strategy appears twice on purpose and with two different accessible names — the bar
+    // link and the panel's first child, which §5 requires so the destination survives a
+    // tap on the parent. Both point at the same place.
+    expect(
+      screen
+        .getAllByRole('link', { hidden: true })
+        .filter((a) => a.getAttribute('href') === '/strategy'),
+    ).toHaveLength(2)
   })
 })

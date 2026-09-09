@@ -3,6 +3,7 @@ import { SiteFooter } from '@/components/layout/SiteFooter'
 import { fetchSanity } from '@/sanity/client'
 import { SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type { SITE_SETTINGS_QUERY_RESULT } from '@/sanity/types.generated'
+import type { NavLabels } from '@/lib/navigation'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { organizationJsonLd } from '@/lib/structuredData'
 import { siteUrl } from '@/lib/siteUrl'
@@ -76,6 +77,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <SiteHeader
           agoraUrl={site.agoraPortalUrl!}
           cta={{ label: site.headerCta!.label!, href: site.headerCta!.href! }}
+          // Non-null for the same reason the two above are: `missingLeaves` returns every
+          // navLabels leaf for a null document or a null or empty field, so the throw
+          // above covers all nine. TypeScript cannot see that through the array.
+          labels={site.navLabels as NavLabels}
         />
       </div>
       <main className="flex-1">{children}</main>

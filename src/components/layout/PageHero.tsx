@@ -4,6 +4,7 @@ import { HeroCarousel, type HeroVariant } from '@/components/layout/HeroCarousel
 // From lib, not from HeroCarousel: that module is `'use client'`, and a server component
 // calling a function it exports fails the build outright.
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
+import { HEADER_RESERVATION } from '@/lib/headerReservation'
 
 /**
  * The title block every section page opens with.
@@ -126,13 +127,15 @@ export function PageHero({
   // has to render, so it falls back to the plain block on white.
   if (!hasPhoto) {
     return (
-      // pt-24, not pt-14, and for the same reason the overlay carries it: `showsHero` is
-      // decided by path while this branch is decided by content, so the header is still
-      // absolutely positioned over this page even though there is no photograph under it.
-      // At pt-14 (56px) the eyebrow rendered beneath a ~68px header. Nothing in the
-      // layout's required-content guard covers `heroCarousel`, so this branch is reachable
-      // on any of the seven pages the moment that list is emptied.
-      <div className="mx-auto max-w-[1200px] px-6 pb-10 pt-24 sm:pt-28">
+      // A real reservation, not pt-14, and for the same reason the overlay carries it:
+      // `showsHero` is decided by path while this branch is decided by content, so the
+      // header is still absolutely positioned over this page even though there is no
+      // photograph under it. See `src/lib/headerReservation.ts` for the measurements —
+      // the number has moved there, and this branch needs the reservation for the same
+      // reason the overlay does. Nothing in the layout's required-content guard covers
+      // `heroCarousel`, so this branch is reachable on any of the seven pages the moment
+      // that list is emptied.
+      <div className={`mx-auto max-w-[1200px] px-6 pb-10 ${HEADER_RESERVATION}`}>
         <div className="max-w-[42ch]">
           {copy.eyebrow && <Eyebrow>{copy.eyebrow}</Eyebrow>}
           <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-5xl">

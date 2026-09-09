@@ -530,6 +530,85 @@ for (const [route, width] of [
 }
 
 /*
+ * The nav is visible on a phone without a tap.
+ *
+ * This is the assertion that would have caught what Etamar reported, and nothing in the
+ * suite could have: the links were all in the DOM and all one tap away, so every unit test
+ * passed while the rendered header showed two items. Asserted on the rendered page at the
+ * review viewport for that reason (spec §11).
+ */
+test('the four nav parents are visible on a phone without a tap', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+
+  const header = page.locator('header')
+  const nav = header.locator('#site-nav')
+  await expect(nav).toBeVisible()
+
+  // Four children of the nav: two dropdown groups and two plain links. Counted on the nav
+  // rather than by label, because the labels are CMS content now and a test that pins
+  // wording fails when someone edits their own copy.
+  await expect(nav.locator(':scope > *')).toHaveCount(4)
+
+  for (const child of await nav.locator(':scope > *').all()) {
+    await expect(child).toBeVisible()
+    const box = (await child.boundingBox())!
+    expect(box.width, 'a nav item painted at zero width is invisible while "visible"').toBeGreaterThan(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(390)
+  }
+
+  // The CTA, which the earlier header painted off the edge of the screen, is still a
+  // plain visible link.
+  await expect(header.getByRole('link', { name: 'Invest With Us' })).toBeVisible()
+
+  /*
+   * Investor Login itself is a second-pass finding, not the first-pass design: row one
+   * (wordmark, Investor Login, the CTA) measured 366px of content against 342px of content
+   * width at 390px wide, which is `flex-wrap`'s exact third-row case — two flex children
+   * that do not fit together move to their own lines, so row one became two rows and the
+   * header three instead of two. Per §5's own fallback rule for exactly this shape,
+   * Investor Login moved behind a small button rather than staying a plain row-one link; it
+   * is reachable one tap away here (and always from the footer). SiteHeader.tsx's docblock
+   * has the full measurement.
+   */
+  const accountToggle = header.getByRole('button', { name: /investor login/i })
+  await expect(accountToggle).toBeVisible()
+  await accountToggle.click()
+  await expect(header.getByRole('link', { name: /investor login/i })).toBeVisible()
+})
+
+/*
+ * The panel opens on a tap and does not navigate on that tap.
+ *
+ * §5's requirement for a touch device, and the case a hover-only panel fails silently:
+ * on a phone there is no hover, so a CSS-driven panel simply never opens and its children
+ * are reachable only from the footer.
+ *
+ * `playwright.config.ts` does not set `hasTouch` on the chromium project (it only spreads
+ * `devices['Desktop Chrome']`), so `tap()` needs it turned on here or it throws. Declared
+ * with `test.use` rather than switched to a dispatchEvent+click fallback, since the point
+ * of this test is specifically a touch tap.
+ */
+test.describe(() => {
+  test.use({ hasTouch: true })
+
+  test('a nav panel opens on tap without leaving the page', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+
+    const toggle = page.locator('#site-nav button[aria-controls="nav-panel-aboutUs"]')
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await toggle.tap()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await expect(page).toHaveURL(/\/$/)
+    // 3, not 2: `whyEm8` has no body in the dataset yet, and Task 8 is what gates it out
+    // of the panel. Until that gate lands all three of About Us's children render, so this
+    // is the pre-gate count — change it to 2 when Task 8's `sections` prop arrives.
+    await expect(page.locator('#nav-panel-aboutUs a')).toHaveCount(3)
+  })
+})
+
+/*
  * The homepage hero fills the first screen, measured on the rendered page.
  *
  * A class assertion cannot see this: `min-h-svh` is one Tailwind utility away from

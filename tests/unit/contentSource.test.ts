@@ -482,12 +482,14 @@ describe('the seeded nav labels', () => {
      * the Studio, where an editor meets it as an error on content they did not write. Same
      * reason `pageSeo.test.ts` bounds the seeded titles.
      *
-     * 12 for the four bar labels, 24 for the five panel labels — the split is in the
-     * schema and its reasoning is there.
+     * 10 for the four bar labels, 24 for the five panel labels — the split is in the
+     * schema and its reasoning is there. The bar cap was 12 until Task 6 measured all four
+     * bar labels padded to it and found the nav wrapping to two lines at 390px, not just
+     * the 320px the spec's own arithmetic expected; 10 is what that measurement settled on.
      */
     const labels = (SITE_SETTINGS as any).navLabels
     for (const bar of ['aboutUs', 'strategy', 'portfolio', 'insights']) {
-      expect(labels[bar].length, `${bar} = "${labels[bar]}"`).toBeLessThanOrEqual(12)
+      expect(labels[bar].length, `${bar} = "${labels[bar]}"`).toBeLessThanOrEqual(10)
     }
     for (const child of ['aboutEm8', 'whyEm8', 'ourTeam', 'whyMidwest', 'partners']) {
       expect(labels[child].length, `${child} = "${labels[child]}"`).toBeLessThanOrEqual(24)
@@ -497,10 +499,10 @@ describe('the seeded nav labels', () => {
   it('fits the phone bar at its stated arithmetic', () => {
     /*
      * §5 measures the bar in characters: `About Us · Strategy · Portfolio · Insights` is
-     * 33 characters as seeded, against the 42 §5 called more than tight and the ~48 four
-     * 12-character labels would reach. This is the *seeded* case, so it is a sanity check
-     * on the words this PR chooses and not a guarantee about what an editor may type —
-     * the cap above is that, and Task 6's measurement is what confirms the cap.
+     * 33 characters as seeded, against the 42 §5 called more than tight. This is the
+     * *seeded* case, so it is a sanity check on the words this PR chooses and not a
+     * guarantee about what an editor may type — the cap above is that, and Task 6's
+     * measurement (not this arithmetic) is what confirms the cap.
      */
     const labels = (SITE_SETTINGS as any).navLabels
     const bar = ['aboutUs', 'strategy', 'portfolio', 'insights']

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { urlForImage } from '@/sanity/image'
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
+import { HEADER_RESERVATION } from '@/lib/headerReservation'
 
 /*
  * Re-exported so the seven pages can keep importing the type from the component they are
@@ -376,23 +377,14 @@ export function HeroCarousel({
           pb clears those dots. With eight slides that row is ~136px wide, and at a narrow
           viewport a wrapped second row of buttons ran underneath it.
 
-          pt clears the header, which sits *over* this band on every page. Measured at
-          375px: the eyebrow's first line began at y=62 while the header ran to y=68, so
-          the top line of copy rendered underneath it. The copy is bottom-aligned, so it
-          climbs as it grows — and it comes from the CMS, so a longer intro would push it
-          further up with no build error and nothing to catch it. The header is ~68px.
-
-          The reservation is shared rather than per-shape, which is why it is spelled in
-          the class below instead of in `SHAPE`, and the two shapes are nowhere near each
-          other in how much of it they need. Measured clearance between the header and the
-          eyebrow: 363px on the homepage at 375px wide, 48px on /about at the same width,
-          and 28px on /about at 360px and 320px — where the overlay has grown to fill the
-          band, so bottom-alignment leaves no slack at all and `pt-24` minus the header is
-          the entire margin. `band` at a narrow viewport is the case to test.
+          pt clears the header, which sits *over* this band on every page. The reservation
+          is shared rather than per-shape, which is why it is a constant instead of a
+          number spelled in `SHAPE`: see `src/lib/headerReservation.ts` for the
+          measurements and why the breakpoint it uses is `md`, not `sm`.
         */
         <div
           data-hero-overlay
-          className={`pointer-events-none relative w-full pb-12 pt-24 sm:pb-14 sm:pt-28 ${SHAPE[variant].copy}`}
+          className={`pointer-events-none relative w-full pb-12 sm:pb-14 ${HEADER_RESERVATION} ${SHAPE[variant].copy}`}
         >
           {overlay}
         </div>

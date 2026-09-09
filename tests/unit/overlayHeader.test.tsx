@@ -3,6 +3,7 @@ import { render, screen, cleanup } from '@testing-library/react'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import { contrastRatio } from '@/lib/tokens'
 import { palette } from '@/lib/tokens'
+import type { NavLabels } from '@/lib/navigation'
 
 const mockPath = vi.fn()
 vi.mock('next/navigation', () => ({ usePathname: () => mockPath() }))
@@ -24,9 +25,23 @@ beforeEach(() => {
 /** The header's call to action comes from siteSettings now, so the tests supply one. */
 const CTA = { label: 'Invest With Us', href: '/investors' }
 
+const LABELS: NavLabels = {
+  aboutUs: 'About Us',
+  aboutEm8: 'About EM8',
+  whyEm8: 'Why EM8',
+  ourTeam: 'Our Team',
+  strategy: 'Strategy',
+  whyMidwest: 'Why Midwest',
+  partners: 'Partners',
+  portfolio: 'Portfolio',
+  insights: 'Insights',
+}
+
+const props = { agoraUrl: 'https://x.test', cta: CTA, labels: LABELS }
+
 describe('SiteHeader overlay', () => {
   it('overlays the page when the carousel is present', () => {
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
+    const { container } = render(<SiteHeader {...props} />)
     expect(container.firstElementChild!.className).toMatch(/absolute|fixed/)
   })
 
@@ -46,7 +61,7 @@ describe('SiteHeader overlay', () => {
     ]) {
       cleanup()
       mockPath.mockReturnValue(path)
-      const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
+      const { container } = render(<SiteHeader {...props} />)
       expect(
         container.firstElementChild!.className,
         `expected the header to overlay on ${path}`,
@@ -61,7 +76,7 @@ describe('SiteHeader overlay', () => {
     for (const path of ['/portfolio/oak-forest-k', '/insights/some-article']) {
       cleanup()
       mockPath.mockReturnValue(path)
-      const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
+      const { container } = render(<SiteHeader {...props} />)
       const cls = container.firstElementChild!.className
       expect(cls, `expected normal flow on ${path}`).not.toMatch(/\babsolute\b/)
       expect(cls).toContain('border-b')
@@ -84,21 +99,24 @@ describe('SiteHeader overlay', () => {
     // Pins the class to the constant above so the two cannot drift apart: if someone
     // changes `bg-ground/85` in SiteHeader without updating the alpha here (or vice
     // versa), this test — not just a visual check — catches it.
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
+    const { container } = render(<SiteHeader {...props} />)
     const header = container.firstElementChild!
     expect(header.className).toMatch(/bg-ground\/85/)
     expect((header as HTMLElement).getAttribute('style')).toBeNull()
   })
 
   it('still exposes every destination while overlaid', () => {
-    render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
-    for (const label of ['Portfolio', 'Track Record', 'Insights', 'Partners', 'About']) {
+    render(<SiteHeader {...props} />)
+    // About Us is a button, not a link: it has no destination of its own. Its children
+    // are in its panel, which mobileNav.test.tsx covers.
+    expect(screen.getByRole('button', { name: 'About Us' })).toBeDefined()
+    for (const label of ['Strategy', 'Portfolio', 'Insights']) {
       expect(screen.getByRole('link', { name: label })).toBeDefined()
     }
   })
 
   it('uses no physical-direction utilities', () => {
-    const { container } = render(<SiteHeader agoraUrl="https://x.test" cta={CTA} />)
+    const { container } = render(<SiteHeader {...props} />)
     expect(container.innerHTML).not.toMatch(
       /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/,
     )

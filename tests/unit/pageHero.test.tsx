@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { PageHero } from '@/components/layout/PageHero'
 import { HeroCarousel } from '@/components/layout/HeroCarousel'
 import { HERO_PATHS, showsHero } from '@/lib/heroPages'
+import { HEADER_RESERVATION } from '@/lib/headerReservation'
 
 vi.mock('@/sanity/image', () => ({
   urlForImage: () => ({
@@ -338,18 +339,17 @@ describe('PageHero copy', () => {
 
   it('reserves room at the top for the header that now sits over it', () => {
     /*
-     * Measured, not guessed: at 375px the eyebrow's first line started at y=62 while the
-     * header ran to y=68, so the top line of copy rendered *under* the header.
-     *
-     * It only bites on a narrow viewport, which is why it survived a desktop check. The
-     * copy is bottom-aligned in a flex column, so it climbs as it grows — three wrapped
-     * headline lines plus a four-line intro is enough on mobile, and the copy comes from
-     * the CMS, so a longer intro pushes it further up with no build error and no failing
-     * test. The header is ~68px, so the padding clears it with room to spare.
+     * Measured, not guessed — and now shared with `HeroCarousel`'s overlay via
+     * `HEADER_RESERVATION` rather than spelled out here a second time, which is how the two
+     * went out of step in the first place. See src/lib/headerReservation.ts for the
+     * measurements: the header grew from one row to two on a phone (spec §5), and the
+     * reservation grew with it so the eyebrow still clears it.
      */
     const { container } = render(<PageHero copy={COPY} slides={SLIDES} />)
     const overlay = container.querySelector('[data-hero-overlay]')!
-    expect(overlay.className).toMatch(/\bpt-24\b/)
+    for (const token of HEADER_RESERVATION.split(' ')) {
+      expect(overlay.className).toContain(token)
+    }
   })
 
   it('renders buttons when the page supplies them, outside the slide links', () => {

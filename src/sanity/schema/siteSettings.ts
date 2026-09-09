@@ -164,13 +164,18 @@ export const siteSettings = defineType({
      * in `content-integrity`. The `required()` calls below gate the Publish button and
      * nothing else.
      *
-     * Caps: 12 on the four bar labels, 24 on the five panel labels. The bar is measured in
-     * characters and its four labels share one row on a phone, so their length decides how
-     * tall the header is — and because these are CMS fields now, that length is no longer a
-     * build-time fact. A panel row has the width of the panel and none of that problem.
-     * Measured at 390px and 320px with all four bar labels at their cap; the numbers are in
-     * the PR that added this. Like `headerCta.label`'s cap this is a guardrail on the
-     * design rather than on correctness — over-long labels wrap the header to a third row
+     * Caps: 10 on the four bar labels, 24 on the five panel labels. Originally 12 — this
+     * field's own comment said so, and so did the arithmetic in Task 6's spec — until Task
+     * 6 measured it rather than trusting that arithmetic: at all four bar labels padded out
+     * to 12 characters, the nav wrapped to two lines at 390px as well as 320px, not just at
+     * the narrow end the spec expected. 10 characters keeps a single nav line at 390px; the
+     * numbers for both are in the PR that lowered this.
+     *
+     * The bar is measured in characters and its four labels share one row on a phone, so
+     * their length decides how tall the header is — and because these are CMS fields now,
+     * that length is no longer a build-time fact. A panel row has the width of the panel
+     * and none of that problem. Like `headerCta.label`'s cap this is a guardrail on the
+     * design rather than on correctness — over-long labels wrap the nav to a second line
      * rather than overflowing it, which is graceful and which nobody would be told about.
      */
     defineField({
@@ -189,7 +194,7 @@ export const siteSettings = defineType({
           description:
             'The first tab. Opens a menu; it is not a link itself. Its three menu links ' +
             'go to /about, /about#why-em8 and /about#team.',
-          validation: (r) => r.required().max(12),
+          validation: (r) => r.required().max(10),
         }),
         defineField({
           name: 'aboutEm8',
@@ -220,7 +225,7 @@ export const siteSettings = defineType({
           type: 'string',
           description:
             'The second tab. Goes to /strategy, and also opens a menu of two links.',
-          validation: (r) => r.required().max(12),
+          validation: (r) => r.required().max(10),
         }),
         defineField({
           name: 'whyMidwest',
@@ -243,14 +248,14 @@ export const siteSettings = defineType({
           title: 'Portfolio (tab)',
           type: 'string',
           description: 'Goes to /portfolio. A plain link with no menu.',
-          validation: (r) => r.required().max(12),
+          validation: (r) => r.required().max(10),
         }),
         defineField({
           name: 'insights',
           title: 'Insights (tab)',
           type: 'string',
           description: 'Goes to /insights. A plain link with no menu.',
-          validation: (r) => r.required().max(12),
+          validation: (r) => r.required().max(10),
         }),
       ],
     }),
