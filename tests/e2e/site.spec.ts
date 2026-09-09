@@ -134,10 +134,24 @@ test('track record links back to canonical property URLs, not its own', async ({
  * change is that changing them needs no code. "Get Started" is worth naming explicitly:
  * that string coming back means the deployed build predates this, which is exactly the
  * question you ask after triggering a Railway deploy.
+ *
+ * Anchored to `#header-actions`, and the `toHaveCount(1)` below is load-bearing. This
+ * canary spent a task grading the wrong element: it used to take `#site-nav a` and `.last()`,
+ * which was the CTA until the two-row header moved the CTA out of the nav into its own
+ * row-one container — after which the selector resolved to the `Insights` nav link, whose
+ * label is non-empty, is not "Get Started" and has an href, so all three assertions below
+ * passed against it and the deploy-staleness canary was silently detached from its subject.
+ * A count assertion is what turns the next such move into a failure rather than a pass:
+ * `#header-actions` holds exactly one internal link, the CMS-driven CTA, because Investor
+ * Login is an off-site absolute URL.
  */
 test('the header button comes from the CMS, not from a literal', async ({ page }) => {
   await page.goto('/')
-  const cta = page.locator('#site-nav a').last()
+  const cta = page.locator('#header-actions a[href^="/"]')
+  await expect(
+    cta,
+    'the header CTA is no longer the one internal link in #header-actions — this canary is grading the wrong element',
+  ).toHaveCount(1)
 
   const label = (await cta.innerText()).trim()
   expect(label.length, 'the header button rendered with no words in it').toBeGreaterThan(0)
@@ -149,11 +163,31 @@ test('the header button comes from the CMS, not from a literal', async ({ page }
   expect(href, 'the header button points nowhere').toBeTruthy()
 })
 
+/*
+ * Investor Login on a desktop: off-site, and *visible* without a tap.
+ *
+ * `toBeVisible` is the addition, and it is the assertion that pins `md:flex` on the link
+ * and `md:hidden` on the phone-only disclosure button. Those two tokens are the entire
+ * reason "the desktop header does not change" is true after the two-row rewrite, and until
+ * this line nothing checked them at a real width: `toHaveAttribute` passes against a
+ * `display:none` element, and jsdom cannot see a media query at all. Delete `md:flex` and
+ * Investor Login vanishes from the desktop header with every other test green.
+ *
+ * The default project is `devices['Desktop Chrome']` at 1280px, which is above `md`.
+ */
 test('Investor Login points off-site to Agora', async ({ page }) => {
   await page.goto('/')
   const link = page.getByRole('link', { name: /investor login/i }).first()
+  await expect(link, 'Investor Login is not visible on a desktop — is `md:flex` still on it?').toBeVisible()
   await expect(link).toHaveAttribute('target', '_blank')
   await expect(link).toHaveAttribute('rel', /noopener/)
+
+  // The other half of the pair. The disclosure button is a phone affordance; on a desktop
+  // it must be gone, or two nodes carry the accessible name "Investor Login".
+  await expect(
+    page.locator('header button[aria-controls="investor-login-link"]'),
+    'the phone disclosure button is showing on a desktop — is `md:hidden` still on it?',
+  ).toBeHidden()
 })
 
 test('Keep in Touch submits and confirms', async ({ page }) => {
@@ -493,21 +527,26 @@ test('the homepage keeps its copy on the photograph, not on the measure', async 
  * The original defect appeared below ~640px: the copy is bottom-aligned, so it climbs as
  * it wraps, and at 375px the eyebrow began at y=62 while the header ran to y=68.
  *
- * The two shapes are nowhere near each other in how much of the `pt-24` reservation they
- * actually need, which is why this runs on both. Measured clearance between the bottom of
- * the header and the top of the eyebrow:
+ * The two shapes are nowhere near each other in how much of the reservation they actually
+ * need, which is why this runs on both. Measured clearance, 2026-09-09, against
+ * `HEADER_RESERVATION = 'pt-32 md:pt-28'` — the numbers this docblock used to quote were
+ * the pre-§5 ones against `pt-24` and read as current:
  *
- *   /        375px   363px    — `screen`, all the slack in the world
- *   /about   375px    48px
- *   /about   360px     28px   — the tightest on the site
- *   /about   320px     28px
+ *   /        375px   342.3px   — `screen`, all the slack in the world
+ *   /about   375px    39.5px
+ *   /about   360px    15.0px   — the tightest on the site
+ *   /about   320px    15.0px
  *
  * Below 375px the band's overlay has grown past the 420px floor, so the box is exactly as
- * tall as the copy and bottom-alignment leaves no slack at all: `pt-24` minus the header
- * is the entire margin. Which means the vulnerable shape is `band` at a narrow viewport,
- * and for a day this test covered only the homepage — verified: dropping the reservation
- * to `pt-14` still clears the header at 1280px and at 375px, and only fails at 320px on a
- * band page.
+ * tall as the copy and bottom-alignment leaves no slack at all: the reservation minus the
+ * header is the entire margin. Which means the vulnerable shape is `band` at a narrow
+ * viewport, and for a day this test covered only the homepage — verified: dropping the
+ * reservation still clears the header at 1280px and at 375px, and fails first at 320px on
+ * a band page.
+ *
+ * 15px, not 28px. A reader planning the next header change should budget the real slack:
+ * the phone header has fifteen pixels of it, and `src/lib/headerReservation.ts` carries the
+ * full table.
  */
 for (const [route, width] of [
   ['/', 375],
@@ -576,6 +615,70 @@ test('the four nav parents are visible on a phone without a tap', async ({ page 
   await accountToggle.click()
   await expect(header.getByRole('link', { name: /investor login/i })).toBeVisible()
 })
+
+/*
+ * Revealing Investor Login does not change the header's height — so the hero still clears
+ * it AFTER the tap, not only before.
+ *
+ * This test exists because its predecessor performed exactly this gesture and then checked
+ * nothing about the consequence, which is worse than no test: it looks like coverage. The
+ * disclosed link shipped as an in-flow flex sibling, row one cannot hold wordmark + link +
+ * CTA at any phone width (which is the whole reason the disclosure exists), so revealing it
+ * wrapped row one and the header grew 42px — 88.5→130.5px at 375px, 113→155px at 320px.
+ * The hero reserves a FIXED `pt-32`, so /about's eyebrow went to −2.5px and −27.0px of
+ * clearance: the first line of copy rendered under a translucent bar. `npm run build`,
+ * `tsc`, the 516 unit tests, ESLint and Lighthouse were all green through it, because the
+ * only way to see it is to measure the rendered page in the state a user produces.
+ *
+ * Asserted as a HEIGHT DELTA as well as a clearance, because those are two different
+ * regressions. A clearance-only assertion would go green again if someone raised
+ * `HEADER_RESERVATION` to paper over an interactive header height, which costs every mobile
+ * page 32px of hero even when the disclosure is closed. The requirement is that the header
+ * does not move.
+ *
+ * 320px and 375px: 320 is the tightest clearance on the site (15px), and 375 is where the
+ * nav stops wrapping to two lines, so the two widths cover both header heights.
+ */
+for (const width of [320, 375] as const) {
+  test(`revealing Investor Login does not change the header's height at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 812 })
+    await page.goto('/about')
+
+    const header = page.locator('header')
+    const eyebrow = page.locator('[data-hero-overlay] p').first()
+
+    const clearance = async () => {
+      const h = (await header.boundingBox())!
+      const e = (await eyebrow.boundingBox())!
+      return { height: h.height, clearance: e.y - (h.y + h.height) }
+    }
+
+    const before = await clearance()
+    expect(
+      before.clearance,
+      `the eyebrow is already under the header at ${width}px before any interaction`,
+    ).toBeGreaterThan(0)
+
+    const toggle = header.getByRole('button', { name: /investor login/i })
+    await expect(toggle).toBeVisible()
+    await toggle.click()
+
+    // The tap did what it is for: the link is reachable, not merely present.
+    await expect(header.getByRole('link', { name: /investor login/i })).toBeVisible()
+
+    const after = await clearance()
+    expect(
+      after.height,
+      `revealing Investor Login moved the header from ${before.height}px to ${after.height}px at ${width}px — it must be out of flow below md`,
+    ).toBeCloseTo(before.height, 1)
+    expect(
+      after.clearance,
+      `the eyebrow renders under the overlaid header at ${width}px once Investor Login is revealed`,
+    ).toBeGreaterThan(0)
+  })
+}
 
 /*
  * The panel opens on a tap and does not navigate on that tap.

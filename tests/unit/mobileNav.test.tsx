@@ -95,6 +95,61 @@ describe('the phone header', () => {
     expect(screen.getByRole('link', { name: 'Invest With Us' })).toBeDefined()
   })
 
+  it('pins the md:hidden / md:flex pair that keeps Investor Login on the desktop', () => {
+    /*
+     * The safety property of the whole disclosure, and until this test nothing held it.
+     *
+     * `md:hidden` on the button and `md:flex` on the link are the entire mechanism by which
+     * "the desktop header does not change" is true: from `md` up the button is display:none
+     * and the link is display:flex regardless of `accountOpen`. Delete either token and
+     * Investor Login disappears from the desktop header — or, worse, both the button and
+     * the link render there and two nodes carry the accessible name "Investor Login".
+     *
+     * Neither failure is visible to any other test in this repo. jsdom does not evaluate
+     * the stylesheet, so every `getByRole` in this file finds the link whatever its class
+     * says; the desktop E2E test asserted `toHaveAttribute` rather than `toBeVisible`. The
+     * pairing could be broken with all 516 unit tests and all 24 E2E tests green, which is
+     * why this asserts on the class strings — the one thing jsdom *can* see — and the E2E
+     * test now asserts visibility at 1280px, which is the thing jsdom cannot.
+     *
+     * `md:static` is asserted for a different reason: below `md` the disclosed link is
+     * `absolute`, so revealing it cannot change the header's height. `md:static` is what
+     * puts it back in flow on a desktop, where row one has always had room for it.
+     */
+    const { container } = render(<SiteHeader {...props} />)
+
+    const button = container.querySelector('button[aria-controls="investor-login-link"]')!
+    expect(button.className).toContain('md:hidden')
+
+    const link = container.querySelector('#investor-login-link')!
+    expect(link.className).toContain('md:flex')
+    expect(link.className).toContain('md:static')
+    // And out of flow below `md`, which is the Critical fix this pairing sits on top of.
+    expect(link.className).toContain('absolute')
+  })
+
+  it('lays the desktop bar out as wordmark, nav, actions', () => {
+    /*
+     * Source order in the component is wordmark, actions, nav — deliberately, so a screen
+     * reader and a keyboard reach the wordmark, then the two actions, then the nav, and so
+     * `order-last basis-full` can make the nav row two on a phone.
+     *
+     * Which means the desktop reading of wordmark, nav, actions is produced entirely by the
+     * `md:order-2` / `md:order-3` pair, and getting it wrong is silent: the first version of
+     * this header carried `md:order-none` on the nav and nothing on the actions, so all
+     * three resolved to `order: 0` and sorted by source order — putting the primary CTA at
+     * x=553 in the middle of a 1280px bar and the nav links at x=929 against the right
+     * edge. Every test was green, and the comment above the class string claimed the
+     * opposite of what it did.
+     *
+     * The wordmark's implicit `order: 0` sorts before 2 before 3. Measured at 1280px after
+     * the fix: wordmark x=64, nav x=440, actions x=929 with the CTA's right edge at 1216.
+     */
+    const { container } = render(<SiteHeader {...props} />)
+    expect(container.querySelector('#site-nav')!.className).toContain('md:order-2')
+    expect(container.querySelector('#header-actions')!.className).toContain('md:order-3')
+  })
+
   it('renders every destination exactly once, panels included', () => {
     /*
      * The duplicate-DOM regression guard, kept verbatim from the file this replaces and

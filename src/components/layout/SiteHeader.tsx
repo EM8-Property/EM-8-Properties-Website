@@ -55,6 +55,15 @@ export type HeaderCta = { label: string; href: string }
  * `accountOpen`, exactly as it always has been. Investor Login stays reachable from the
  * footer either way.
  *
+ * **And the disclosed link is a popover below `md`, not an in-flow sibling.** Revealing it
+ * in flow re-broke row one for the same arithmetic that put it behind a button in the
+ * first place: the header grew 42px on tap (88.5→130.5px at 390px, 113→155px at 320px)
+ * and drove /about's eyebrow 2.5px and 27px under the header, because the hero reserves a
+ * fixed amount of space for a header whose height had just become interactive. It is
+ * `absolute end-6 top-full` against the header now, so revealing it moves the header
+ * height by 0px at every width. The E2E test that taps the button re-measures the
+ * clearance afterwards, which the first version of it did not.
+ *
  * The nav labels come from `siteSettings.navLabels`; which nodes exist and where they point
  * comes from `src/lib/navigation.ts`. "Investor Login" is still a literal, deliberately: it
  * names a third-party product rather than carrying copy, which is the same rule stated on
@@ -108,7 +117,15 @@ export function SiteHeader({
              * an inline rgba, so the ground token carries it.
              */
             `absolute inset-x-0 top-0 z-40 backdrop-blur-sm bg-ground/85`
-          : `border-b border-rule`
+          : /*
+             * `relative` for one reason: the disclosed Investor Login link hangs off the
+             * header's bottom edge below `md`, so the header has to be its containing
+             * block. The overlay branch above is already `absolute` and so already is one
+             * — without this the two branches would resolve `top-full` against two
+             * different boxes, and the popover would land somewhere arbitrary on the
+             * pages with no photograph. `position: relative` with no insets moves nothing.
+             */
+            `relative border-b border-rule`
       }
     >
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-y-3 px-6 py-4">
@@ -123,8 +140,20 @@ export function SiteHeader({
           Row one's two actions, ordered as em-8.com orders them. They stay on the phone
           because the defect the mobile nav work closed was precisely that these two were
           unreachable there.
+
+          `md:order-3` puts this last on a desktop. Source order is wordmark, actions, nav
+          — see the `<nav>` below for why, and for the order pair that yields the desktop
+          reading of wordmark, nav, actions from it.
+
+          `id` so the E2E deploy-staleness canary can anchor to the CMS-driven CTA by its
+          container. It used to take the last `#site-nav a`, which was the CTA until this
+          task moved the CTA out of the nav — after which the canary silently graded
+          `Insights` instead and passed forever.
         */}
-        <div className="flex items-center gap-1.5 text-xs font-medium">
+        <div
+          id="header-actions"
+          className="flex items-center gap-1.5 text-xs font-medium md:order-3"
+        >
           {/*
             The small account button. Below `md` only — from `md` up the plain link beside
             it is always visible, so there is nothing for this to disclose there.
@@ -133,6 +162,14 @@ export function SiteHeader({
             271-289px of content at 320-390px wide against 272-342px available, so every
             pixel this button does not spend is a pixel the row does not have to find
             elsewhere. See the docblock above for the numbers.
+
+            `min-h-6 min-w-6` is WCAG 2.2 SC 2.5.8's 24px minimum. `p-1` around a 14px SVG
+            measured exactly 22x22px, which cleared the SC's *spacing* exception (a 24px
+            circle centred on it reached only 1px past its edges and intersected no other
+            target) and so was not a new conformance failure — but 22px is a comfort
+            problem regardless, and the two pixels fit: measured free space in row one at
+            320px was 4.6px. `inline-flex items-center justify-center` so the SVG stays
+            centred in the box the minimums grow rather than sitting against one corner.
           */}
           <button
             type="button"
@@ -140,7 +177,7 @@ export function SiteHeader({
             aria-expanded={accountOpen}
             aria-controls="investor-login-link"
             aria-label="Investor Login"
-            className="rounded-control p-1 text-ink-secondary hover:text-ink md:hidden"
+            className="inline-flex min-h-6 min-w-6 items-center justify-center rounded-control p-1 text-ink-secondary hover:text-ink md:hidden"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none">
               <circle cx="8" cy="5.5" r="2.75" stroke="currentColor" strokeWidth="1.3" />
@@ -161,13 +198,47 @@ export function SiteHeader({
             and `md:flex` overrides that unconditionally from `md` up, exactly as this link
             has always rendered there. A second, always-visible copy for the wide breakpoint
             would put two links named "Investor Login" in the tree.
+
+            **Out of flow below `md`, and that is a correctness requirement rather than a
+            styling choice.** As an in-flow flex sibling this link cost the header 42px the
+            moment it was revealed: row one cannot hold wordmark + link + CTA at any phone
+            width — that is the entire reason the disclosure exists — so showing it wrapped
+            row one, the header grew 88.5px to 130.5px at 390px and 113px to 155px at
+            320px, and the hero, which reserves a FIXED amount of space for the header,
+            put its eyebrow 2.5px and 27px UNDERNEATH a translucent bar. Measured on
+            /about, one tap into the control this fallback was added to provide.
+
+            `absolute end-6 top-full` against the header itself makes the open state a
+            popover hanging off the header's bottom edge, so revealing it changes the
+            header's height by exactly 0px at every width. `end-6` rather than `end-0` to
+            line its inline end up with the CTA's, which the container's `px-6` sets — and
+            `end-`, never `right-`: physical-direction utilities are what a Hebrew RTL
+            phase would have to rewrite, and ESLint rejects them under `src/`.
+
+            Anchored to the header rather than to the actions box, which was the first
+            attempt and looked worse than it measured: a popover hanging off row one lands
+            on top of row TWO, and at 390px it covered `Portfolio` and `Insights` — hiding
+            nav labels, in the task whose entire purpose is that the nav labels are
+            visible. Below the header it covers the top of the photograph instead, which
+            nothing depends on.
+
+            `bg-ground` because a bordered box with no fill is unreadable over the hero
+            photograph it now hangs over. `md:static md:mt-0 md:bg-transparent md:z-auto`
+            returns every one of those to its previous computed value from `md` up, where
+            the link is in flow and unconditionally visible and always has been.
+
+            The E2E test `revealing Investor Login does not change the header's height` is
+            what holds this: it taps the button at 320px and 375px and re-measures both the
+            height and the clearance. The version of that test that shipped with the
+            fallback tapped the button and then asserted only that the link had appeared,
+            which is why a negative clearance was green.
           */}
           <a
             id="investor-login-link"
             href={agoraUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`${accountOpen ? 'flex' : 'hidden'} rounded-control border border-rule px-3 py-1.5 text-ink hover:border-teal md:flex`}
+            className={`${accountOpen ? 'flex' : 'hidden'} absolute end-6 top-full z-50 mt-2 rounded-control border border-rule bg-ground px-3 py-1.5 text-ink shadow-sm hover:border-teal md:static md:z-auto md:mt-0 md:flex md:bg-transparent md:shadow-none`}
           >
             Investor Login
           </a>
@@ -176,10 +247,16 @@ export function SiteHeader({
             also does not have 4 more pixels a side to give this button at 320px. A small,
             deliberate change from the button's more common px-3 elsewhere, kept here rather
             than in a shared component so it does not narrow every other button on the site.
+
+            Scoped as `px-2 md:px-3` rather than `px-2`, because the row-one budget is a
+            phone problem and this task's premise is that the desktop header does not
+            change. Tailwind's `md:` variant is inert below 768px, so the desktop button
+            goes back to its previous 12px of inline padding without spending one pixel of
+            the 320px budget.
           */}
           <Link
             href={cta.href}
-            className="rounded-control bg-ink px-2 py-1.5 font-semibold uppercase tracking-wide text-white"
+            className="rounded-control bg-ink px-2 py-1.5 font-semibold uppercase tracking-wide text-white md:px-3"
           >
             {cta.label}
           </Link>
@@ -192,13 +269,23 @@ export function SiteHeader({
           this nav being invisible without a tap is the whole defect §5 exists to fix, and
           `mobileNav.test.tsx` asserts the class is absent for that reason.
 
-          `order-last md:order-none` keeps it after the two actions in the source — so a
-          screen reader and a keyboard reach the wordmark, then the actions, then the nav —
-          while placing it visually between the wordmark and the actions on a desktop.
+          `order-last` puts it after the two actions on a phone, which with `basis-full` is
+          what makes it row two.
+
+          `md:order-2` against the actions box's `md:order-3` is what places it between the
+          wordmark and the actions on a desktop. That pair is not decorative and it is not
+          interchangeable with `md:order-none`, which is what shipped first and which does
+          the opposite of what its comment claimed: source order here is wordmark, actions,
+          nav, so `order: 0` on all three resolves by source order to `wordmark, actions,
+          nav` — measured at 1280px, the CTA at x=553 in the middle of the bar and the nav
+          links at x=929 against the right edge, where before this task the CTA was at the
+          far right. The wordmark's implicit `order: 0` sorts before 2 before 3, so the
+          numbered pair reads wordmark, nav, actions and the CTA is at the far right again.
+          Verified by measuring x-positions at 1280px, not by reading the rule.
         */}
         <nav
           id="site-nav"
-          className="order-last flex basis-full flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold uppercase tracking-wide text-ink-secondary md:order-none md:basis-auto md:text-xs md:font-medium md:normal-case md:tracking-normal"
+          className="order-last flex basis-full flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold uppercase tracking-wide text-ink-secondary md:order-2 md:basis-auto md:text-xs md:font-medium md:normal-case md:tracking-normal"
         >
           {NAV_TREE.map((node: NavNode) =>
             node.children ? (
