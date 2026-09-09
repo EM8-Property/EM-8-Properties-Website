@@ -49,10 +49,11 @@ describe('SiteHeader overlay', () => {
     // Both were exceptions and neither is one any more. The homepage hero was a block
     // inside the content column with white above it, so overlaying would have floated the
     // header over nothing; /investors carried no photograph at all. Both now open on the
-    // same full-bleed band as the rest, so the header goes over all seven.
+    // same full-bleed band as the rest, so the header goes over all eight.
     for (const path of [
       '/',
       '/portfolio',
+      '/strategy',
       '/track-record',
       '/insights',
       '/partners',

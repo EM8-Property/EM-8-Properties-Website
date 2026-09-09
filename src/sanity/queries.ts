@@ -208,6 +208,21 @@ export const INSIGHTS_PAGE_QUERY = defineQuery(`
   }
 `)
 
+/**
+ * The Strategy page: spec §5's one new route.
+ *
+ * Shaped like `PORTFOLIO_PAGE_QUERY` above, plus `body` — the Why Midwest argument, which
+ * is the reason the page exists and which ships empty. Written out rather than built from
+ * a shared string for the same typegen reason as everywhere else in this file.
+ */
+export const STRATEGY_PAGE_QUERY = defineQuery(`
+  *[_id == "strategyPage"][0] {
+    seo { title, description },
+    heading { eyebrow, title, intro },
+    body
+  }
+`)
+
 export const TRACK_RECORD_PAGE_QUERY = defineQuery(`
   *[_id == "trackRecordPage"][0] {
     seo { title, description },

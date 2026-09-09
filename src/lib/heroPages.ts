@@ -8,8 +8,9 @@
  * This replaces CAROUSEL_PATHS, which answered a narrower question: which pages carried a
  * thin decorative photo strip *above* their title. Every page in that list now carries its
  * title *on* the photograph instead, the homepage has rejoined them, and /investors — which
- * had no photograph at all — has been added, so all seven section pages open on the
- * photograph.
+ * had no photograph at all — has been added, so all eight section pages open on the
+ * photograph. (Eight, not seven, until Task 10 removes /track-record and brings the count
+ * back down — /strategy is the one new route added ahead of that.)
  *
  * They do not all open at the same SIZE, and this list is deliberately indifferent to
  * that: the homepage runs the full screen and the other six a 420/500/560px band. That
@@ -26,6 +27,7 @@
 export const HERO_PATHS = [
   '/',
   '/portfolio',
+  '/strategy',
   '/track-record',
   '/insights',
   '/partners',

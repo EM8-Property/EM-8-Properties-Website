@@ -38,11 +38,13 @@ async function anonymousQuery(groq: string): Promise<{ status: number; count: nu
 
 const CONTENT_TYPES =
   '["property","post","teamMember","focusCard","testimonial","heroStat","siteSettings",' +
-  '"homePage","aboutPage","partnersPage","investorsPage","portfolioPage","insightsPage","trackRecordPage"]'
+  '"homePage","aboutPage","partnersPage","investorsPage","portfolioPage","insightsPage",' +
+  '"trackRecordPage","strategyPage"]'
 
 /** Every page singleton, each of which must carry a complete `seo` block. */
 const PAGE_IDS =
-  '["homePage","aboutPage","partnersPage","investorsPage","portfolioPage","insightsPage","trackRecordPage"]'
+  '["homePage","aboutPage","partnersPage","investorsPage","portfolioPage","insightsPage",' +
+  '"trackRecordPage","strategyPage"]'
 
 /**
  * Restricts every check below to *published* documents.
@@ -294,20 +296,20 @@ describe('published content', () => {
   })
 
   /**
-   * The same gate for `heading`, on the three pages whose components throw without one.
+   * The same gate for `heading`, on the four pages whose components throw without one.
    *
-   * /portfolio, /insights and /track-record render their title from the CMS now. Each one
-   * throws when `heading.title` is empty, and because that throw happens during
-   * `next build` it takes the whole deploy down rather than one route — the same blast
-   * radius as the `seo` case above, and the reason that check exists.
+   * /portfolio, /insights, /track-record and /strategy render their title from the CMS
+   * now. Each one throws when `heading.title` is empty, and because that throw happens
+   * during `next build` it takes the whole deploy down rather than one route — the same
+   * blast radius as the `seo` case above, and the reason that check exists.
    *
    * Checked per leaf, because a `heading` object with null fields is still an object: the
    * shallow version of this would pass while the page threw. `eyebrow` and `intro` are
    * asserted too — they do not throw, but `PageHero` renders both, so an empty one is a
    * silently degraded page rather than a loud failure, which is worse to discover late.
    */
-  it('has a complete heading on the three pages that render one from the CMS', async () => {
-    const ids = ['portfolioPage', 'insightsPage', 'trackRecordPage']
+  it('has a complete heading on the four pages that render one from the CMS', async () => {
+    const ids = ['portfolioPage', 'insightsPage', 'trackRecordPage', 'strategyPage']
 
     const pages = await client.fetch<
       { _id: string; eyebrow?: string; title?: string; intro?: string }[]

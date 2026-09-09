@@ -1618,6 +1618,100 @@ export type INSIGHTS_PAGE_QUERY_RESULT =
   | null;
 
 // Source: src/sanity/queries.ts
+// Variable: STRATEGY_PAGE_QUERY
+// Query: *[_id == "strategyPage"][0] {    seo { title, description },    heading { eyebrow, title, intro },    body  }
+export type STRATEGY_PAGE_QUERY_RESULT =
+  | {
+      seo: null;
+      heading: null;
+      body: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: null;
+      body: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      body: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      body: Array<{
+        children?: Array<{
+          marks?: Array<string>;
+          text?: string;
+          _type: "span";
+          _key: string;
+        }>;
+        style?:
+          "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+        listItem?: "bullet" | "number";
+        markDefs?: Array<{
+          href?: string;
+          _type: "link";
+          _key: string;
+        }>;
+        level?: number;
+        _type: "block";
+        _key: string;
+      }> | null;
+    }
+  | {
+      seo: null;
+      heading: null;
+      body: Array<
+        | {
+            children?: Array<{
+              marks?: Array<string>;
+              text?: string;
+              _type: "span";
+              _key: string;
+            }>;
+            style?:
+              "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+            listItem?: "bullet" | "number";
+            markDefs?: Array<{
+              href?: string;
+              _type: "link";
+              _key: string;
+            }>;
+            level?: number;
+            _type: "block";
+            _key: string;
+          }
+        | {
+            asset?: SanityImageAssetReference;
+            media?: unknown;
+            hotspot?: SanityImageHotspot;
+            crop?: SanityImageCrop;
+            _type: "image";
+            _key: string;
+          }
+      > | null;
+    }
+  | null;
+
+// Source: src/sanity/queries.ts
 // Variable: TRACK_RECORD_PAGE_QUERY
 // Query: *[_id == "trackRecordPage"][0] {    seo { title, description },    heading { eyebrow, title, intro }  }
 export type TRACK_RECORD_PAGE_QUERY_RESULT =
@@ -1668,6 +1762,7 @@ declare module "@sanity/client" {
     '\n  *[_id == "investorsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    loginLabel,\n    stepsTitle,\n    steps[] { title, body },\n    keepInTouchHeading { eyebrow, title, intro },\n    submitLabel,\n    testimonialsHeading { eyebrow, title, intro }\n  }\n': INVESTORS_PAGE_QUERY_RESULT;
     '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
     '\n  *[_id == "insightsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': INSIGHTS_PAGE_QUERY_RESULT;
+    '\n  *[_id == "strategyPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    body\n  }\n': STRATEGY_PAGE_QUERY_RESULT;
     '\n  *[_id == "trackRecordPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': TRACK_RECORD_PAGE_QUERY_RESULT;
   }
 }

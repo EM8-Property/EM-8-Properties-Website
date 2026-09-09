@@ -29,6 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // empty path, but there is no reason to publish the two in different forms.
     { url: base, changeFrequency: 'monthly', priority: 1 },
     { url: `${base}/portfolio`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${base}/strategy`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/track-record`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/insights`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/investors`, changeFrequency: 'monthly', priority: 0.9 },
