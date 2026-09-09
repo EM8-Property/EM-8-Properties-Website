@@ -47,6 +47,17 @@ describe('GROQ queries', () => {
     expect(SITE_SETTINGS_QUERY).toContain('headerCta { label, href }')
   })
 
+  it('projects the realized-results heading, which no guard would miss for you', () => {
+    /*
+     * `dealStoryHeading` is optional by design, so it is not in REQUIRED_SITE_SETTINGS —
+     * which means the layout's throw and the release gate both ignore it. Left out of the
+     * projection it is `undefined` on every property page no matter what the Studio holds,
+     * and the only symptom is a heading that never appears. This assertion is the whole of
+     * the protection.
+     */
+    expect(SITE_SETTINGS_QUERY).toContain('dealStoryHeading')
+  })
+
   it('track record does not create a second set of property URLs', () => {
     // /track-record is a view over sold properties. It selects the same slug the
     // canonical /portfolio/[slug] page uses; it must not invent a parallel path.

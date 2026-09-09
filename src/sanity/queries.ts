@@ -119,6 +119,7 @@ export const SITE_SETTINGS_QUERY = defineQuery(
       aboutUs, aboutEm8, whyEm8, ourTeam,
       strategy, whyMidwest, partners, portfolio, insights
     },
+    dealStoryHeading,
     ctaBand {
       heading { eyebrow, title, intro },
       submitLabel, successMessage, callTitle, callBody, callLabel
