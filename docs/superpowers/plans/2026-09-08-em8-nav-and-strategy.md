@@ -833,8 +833,8 @@ baked into a component:
      * already.
      *
      * On `siteSettings` because it is a section label every property page reads rather
-     * than a fact about any one property; `ctaBand` above carries the full account of that
-     * rule. Per-property it would be eleven copies of one phrase, drifting.
+     * than a fact about any one property; `ctaBand` further down this file carries the full
+     * account of that rule. Per-property it would be eleven copies of one phrase, drifting.
      *
      * Optional, unlike the nav labels, and the difference is what a blank one does. A
      * missing nav label renders a tab with no words in it, so the layout throws. A missing
