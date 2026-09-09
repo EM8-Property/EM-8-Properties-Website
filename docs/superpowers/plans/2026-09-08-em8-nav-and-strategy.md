@@ -445,14 +445,14 @@ export const NAV_TREE = [
  * cannot import this — it imports nothing, by design — so `navigation.test.ts` is what
  * joins the two lists, in both directions.
  */
-export const NAV_KEYS: readonly NavKey[] = NAV_TREE.flatMap((node) => [
+export const NAV_KEYS: readonly NavKey[] = NAV_TREE.flatMap((node: NavNode) => [
   node.key,
   ...(node.children ?? []).map((child) => child.key),
 ])
 
 /** Every href in the tree, parents included. Used to prove the footer covers them all. */
 export function navDestinations(): string[] {
-  return NAV_TREE.flatMap((node) => [
+  return NAV_TREE.flatMap((node: NavNode) => [
     ...(node.href ? [node.href] : []),
     ...(node.children ?? []).map((child) => child.href).filter((h): h is string => !!h),
   ])
@@ -465,11 +465,19 @@ annotation would widen `key` to `NavKey` and lose the literal types `NAV_KEYS` n
 bearing — drop either and either `NAV_KEYS` widens to `string[]` or a typo in a key
 compiles.
 
-- [ ] **Step 4: Run the test — seven of nine pass, and two must not**
+And note the `(node: NavNode)` annotations on both `flatMap` callbacks. They are not
+decoration: `as const` keeps `NAV_TREE` as a literal tuple, and two of its four elements
+(`portfolio`, `insights`) have no `children` key at all — so on the inferred union
+`node.children` is `Property 'children' does not exist on type '{ readonly key:
+"portfolio"; … }'` and the inner callbacks fall to `implicitly has an 'any' type`. Six
+errors from two missing annotations. `satisfies` guarantees every element IS a `NavNode`,
+so widening the parameter to it costs nothing and is what makes the strict build pass.
+
+- [ ] **Step 4: Run the test — six of eight pass, and two must not**
 
 Run: `npx vitest run tests/unit/navigation.test.ts`
 
-Expected: exactly two failures, and they are correct at this point:
+Expected: **2 failed | 6 passed (8)**, and both failures are correct at this point:
 
 - `requires a Sanity label for every key in the tree` — FAIL, `nav node "aboutUs" has no
   required siteSettings leaf`. Task 4 adds the leaves.
