@@ -178,9 +178,9 @@ function withKeys(items, prefix) {
 
 async function seedPagesIfMissing(apply) {
   // The union of both, not either alone. Every page appears in PAGE_SEO; PAGE_COPY holds
-  // whatever visible copy a page has beyond that, which for /portfolio, /insights and
-  // /track-record is a single heading each. Taking the union keeps this correct however
-  // those two lists diverge later.
+  // whatever visible copy a page has beyond that, which for /portfolio and /insights is a
+  // single heading each, and for /strategy a heading plus a body still owed by people.
+  // Taking the union keeps this correct however those two lists diverge later.
   const ids = [...new Set([...Object.keys(PAGE_COPY), ...Object.keys(PAGE_SEO)])]
   const present = new Set(
     (await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [],
@@ -276,13 +276,17 @@ async function backfillPageSeo(apply) {
 }
 
 /**
- * Adds `heading` to the three page documents that predate the field.
+ * Adds `heading` to page documents that might predate the field, or might otherwise exist
+ * with `seo` but no heading.
  *
- * /portfolio, /insights and /track-record held nothing but `seo`; their eyebrow, headline
- * and intro were literals in TSX. `seedPagesIfMissing` cannot do this — it seeds a whole
- * document only when none exists, and all three are already in the dataset — so without
- * this they would keep their missing `heading` forever while every one of those pages
- * threw at build time.
+ * /portfolio and /insights held nothing but `seo`; their eyebrow, headline and intro were
+ * literals in TSX. /track-record was the third such page until it was deleted in Task 10.
+ * /strategy takes its place in this list — not because it shares that history (it was
+ * seeded with a heading from the start, there being no TSX literal to move), but because it
+ * is a page of the same shape, and a document that somehow reached the dataset with `seo`
+ * and no `heading` would otherwise have no repair path. `seedPagesIfMissing` cannot do this
+ * either way — it seeds a whole document only when none exists — so without this entry a
+ * future `--only=headings` could not fix it.
  *
  * Per *leaf*, and this is the trap `backfillPageSeo` was rewritten to fix: `setIfMissing`
  * on the whole `heading` object is all-or-nothing at that key, so a document with an
@@ -296,10 +300,10 @@ async function backfillPageSeo(apply) {
  * Safe to apply before the code that reads it deploys. This is an addition, and deployed
  * code ignores fields it does not know about — see docs/deploys-and-migrations.md. It is
  * also *required* to run first: the pages throw when `heading` is absent, so shipping the
- * code first would take all three down.
+ * code first would take any of them down.
  */
 async function backfillPageHeadings(apply) {
-  const ids = ['portfolioPage', 'insightsPage', 'trackRecordPage']
+  const ids = ['portfolioPage', 'insightsPage', 'strategyPage']
 
   /*
    * Absence is reported, not folded into "nothing to do".
@@ -504,6 +508,83 @@ async function backfillHeaderCta(apply) {
     throw new Error(`header button backfill failed ${res.status}: ${await res.text()}`)
   }
   console.log('  header button  backfilled')
+}
+
+/**
+ * Fills `siteSettings.navLabels` — the nine labels on the top navigation.
+ *
+ * Modelled on `backfillHeaderCta` directly above, and for the same reasons, which are
+ * worth restating rather than cross-referencing because getting either wrong is silent:
+ *
+ *   - The document itself is queried, not the field, so a missing siteSettings is reported
+ *     rather than folded into "nothing to do". It matches no filter, so keying on the
+ *     field alone would print a clean dry run for a dataset the site cannot build against.
+ *     The full run hides this because it patches siteSettings first; a scoped run does not.
+ *   - `set` on the blank leaves, never `setIfMissing` on the object. `setIfMissing` keys on
+ *     absence and the guard throws on falsiness, so pairing them would report "filling
+ *     aboutUs", write nothing, print "backfilled", and say the same on every future run
+ *     while the build stayed broken on an empty string. A migration that claims a repair it
+ *     did not make is worse than one that does nothing, because it is believed.
+ *   - The parent object is `setIfMissing`-ed first: a leaf path cannot be set inside an
+ *     object that does not exist, and it is a no-op when it already does.
+ *
+ * An ADDITION, so safe to apply before the code that reads it deploys — and *required* to
+ * run first, because Task 4 makes all nine leaves required and the layout throws per leaf.
+ * Shipping the code ahead of this fails `next build` on all 29 pages.
+ * See docs/deploys-and-migrations.md.
+ */
+async function backfillNavLabels(apply) {
+  const doc = await query('*[_id=="siteSettings"][0]{ navLabels, dealStoryHeading }')
+  if (!doc) {
+    throw new Error(
+      'nav-labels: no siteSettings document. Every page throws without one — create it ' +
+        'in the Studio first.',
+    )
+  }
+
+  const fill = {}
+  for (const [leaf, value] of Object.entries(SITE_SETTINGS.navLabels)) {
+    if (!doc.navLabels?.[leaf]) fill[`navLabels.${leaf}`] = value
+  }
+  /*
+   * The realized-results heading rides along, because it is the same kind of change to the
+   * same document: one blank leaf of chrome copy, filled once, never overwritten. A step of
+   * its own would be a third scoped apply against production for one string.
+   *
+   * It is the one leaf here the site does not require — see the field in
+   * src/sanity/schema/siteSettings.ts — so a run that fills the nine labels and leaves this
+   * alone because an editor has already reworded it is a correct run, not a partial one.
+   */
+  if (!doc.dealStoryHeading) fill.dealStoryHeading = SITE_SETTINGS.dealStoryHeading
+
+  if (Object.keys(fill).length === 0) {
+    console.log('  nav labels  all nine labels and the deal heading already set — left untouched')
+    return
+  }
+
+  console.log(`  nav labels  filling ${Object.keys(fill).length} of 10:`)
+  for (const [path, value] of Object.entries(fill)) {
+    console.log(`              ${path} -> "${value}"`)
+  }
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: [
+        // The parent object first: a leaf path cannot be set inside an object that does
+        // not exist yet, and this is a no-op when it already does. `dealStoryHeading` is
+        // top-level and needs no parent, so this covers navLabels alone.
+        { patch: { id: 'siteSettings', setIfMissing: { navLabels: {} } } },
+        { patch: { id: 'siteSettings', set: fill } },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`nav labels backfill failed ${res.status}: ${await res.text()}`)
+  }
+  console.log('  nav labels  backfilled')
 }
 
 async function seedCarouselIfEmpty(apply) {
@@ -730,7 +811,7 @@ async function buildDocuments() {
 /**
  * The independently runnable steps, for `--only=`.
  *
- * Five of these are **additions**, and additions are safe to apply before the code that
+ * Six of these are **additions**, and additions are safe to apply before the code that
  * reads them deploys — deployed code ignores fields it does not know about.
  *
  * `cta` is not one of them, and the distinction matters more than the shared list makes it
@@ -746,6 +827,7 @@ const STEPS = {
   seo: backfillPageSeo,
   headings: backfillPageHeadings,
   'header-button': backfillHeaderCta,
+  'nav-labels': backfillNavLabels,
   cta: moveCtaBandToSettings,
 }
 
@@ -795,6 +877,7 @@ async function main() {
     await backfillPageSeo(false)
     await backfillPageHeadings(false)
     await backfillHeaderCta(false)
+    await backfillNavLabels(false)
     await moveCtaBandToSettings(false)
     console.log('\nDry run complete. Nothing was written. Re-run with --apply.')
     return
@@ -842,6 +925,7 @@ async function main() {
   await backfillPageSeo(true)
   await backfillPageHeadings(true)
   await backfillHeaderCta(true)
+  await backfillNavLabels(true)
   await moveCtaBandToSettings(true)
   const body = await res.json()
   console.log(`\nWrote ${body.results?.length ?? 0} documents.`)

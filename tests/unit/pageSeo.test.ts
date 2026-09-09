@@ -78,7 +78,7 @@ describe('the seeded page SEO copy', () => {
       'investorsPage',
       'partnersPage',
       'portfolioPage',
-      'trackRecordPage',
+      'strategyPage',
     ])
   })
 

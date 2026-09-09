@@ -125,7 +125,7 @@ describe('every content route declares its own canonical', () => {
       '/partners',
       '/portfolio',
       '/portfolio/[slug]',
-      '/track-record',
+      '/strategy',
     ])
   })
 

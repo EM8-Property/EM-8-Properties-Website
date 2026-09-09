@@ -10,6 +10,7 @@ import type {
 } from '@/sanity/types.generated'
 import { urlForImage } from '@/sanity/image'
 import { pageMetadata, SHARE_CARD, SITE_NAME, type ShareImage } from '@/lib/seo'
+import { DealStory } from '@/components/property/DealStory'
 import { FactRail } from '@/components/property/FactRail'
 import { PropertyMap } from '@/components/property/PropertyMap'
 import { Chip } from '@/components/ui/Chip'
@@ -61,7 +62,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   })
 }
 
-/** The canonical URL for an asset, whatever its status. /track-record links back here. */
+/**
+ * The canonical URL for an asset, whatever its status — and, since /track-record was
+ * deleted, the only place a realized deal's figures appear. Non-negotiable #4.
+ */
 export default async function PropertyPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const [p, settings] = await Promise.all([
@@ -111,6 +115,40 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
               <div className="mt-2 text-sm leading-relaxed text-ink-secondary">
                 <PortableText value={p.businessPlan} />
               </div>
+            </>
+          )}
+
+          {/*
+            The realized arc, which lived on /track-record until that route was deleted.
+            That page was the only consumer of `dealStory` — this query already selected
+            the field and this page never rendered it — so moving it here is what made
+            deleting the route a route deletion rather than a content deletion. Spec §8.
+
+            Gated on the deal being closed, and that gate is compliance rather than
+            styling: these labels say "Realized", so showing them for a property that has
+            not exited would describe an open position as a completed result, on the same
+            page where OfferingBlock labels every figure as targeted. `dealStory` is
+            checked too, or a sold property whose narrative is unwritten renders an empty
+            three-column grid.
+
+            Above OfferingBlock rather than below it because the two are mutually
+            exclusive in practice — `publiclyOffered` and `status == 'sold'` do not
+            co-occur — and this order reads chronologically if they ever did.
+          */}
+          {p.status === 'sold' && p.dealStory && (
+            <>
+              {/*
+                The heading is CMS copy and the figures are not conditional on it. The
+                field is optional, so an editor can clear it in one keystroke — and that
+                is how these figures looked on /track-record, which carried no heading
+                above them. Clearing the words must not take the multiple with them.
+              */}
+              {settings?.dealStoryHeading && (
+                <h2 className="mt-8 text-lg font-bold tracking-tight text-ink">
+                  {settings.dealStoryHeading}
+                </h2>
+              )}
+              <DealStory story={p.dealStory} />
             </>
           )}
 

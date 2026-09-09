@@ -8,9 +8,10 @@ import type {
 import { siteUrl } from '@/lib/siteUrl'
 
 /**
- * Every property appears once, at /portfolio/[slug]. /track-record is a view over sold
- * properties and mints no URLs of its own, so listing those pages again here would
- * reintroduce exactly the duplicate-URL split the content model was designed to avoid.
+ * Every property appears once, at /portfolio/[slug]. /track-record used to be a second
+ * view over sold properties and was deleted in Task 10 for exactly that reason — listing
+ * those pages twice would have split their search ranking. A sold asset now appears only
+ * in the /portfolio grid, with a Sold chip.
  *
  * /studio is excluded — it is an authenticated tool, not content.
  */
@@ -29,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // empty path, but there is no reason to publish the two in different forms.
     { url: base, changeFrequency: 'monthly', priority: 1 },
     { url: `${base}/portfolio`, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${base}/track-record`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${base}/strategy`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/insights`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/investors`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/partners`, changeFrequency: 'monthly', priority: 0.7 },

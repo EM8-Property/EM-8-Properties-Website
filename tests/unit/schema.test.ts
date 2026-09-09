@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { schemaTypes } from '@/sanity/schema'
+import { schemaTypes, SINGLETON_TYPES } from '@/sanity/schema'
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- asserting on raw schema shape */
 const byName = (n: string) => schemaTypes.find((t: any) => t.name === n) as any
@@ -200,5 +200,164 @@ describe('schema completeness', () => {
 
   it('does not register pullQuote — the Buffett quote was cut', () => {
     expect(schemaTypes.map((t: any) => t.name)).not.toContain('pullQuote')
+  })
+})
+
+describe('navLabels on siteSettings', () => {
+  const settings = byName('siteSettings')
+  const navLabels = field(settings, 'navLabels')
+  const KEYS = [
+    'aboutUs',
+    'aboutEm8',
+    'whyEm8',
+    'ourTeam',
+    'strategy',
+    'whyMidwest',
+    'partners',
+    'portfolio',
+    'insights',
+  ]
+
+  it('carries one field per nav node, in bar order', () => {
+    expect(navLabels).toBeDefined()
+    expect(navLabels.fields.map((f: any) => f.name)).toEqual(KEYS)
+  })
+
+  it('describes the destination each label points at', () => {
+    /*
+     * The only guard available against the one failure this design cannot test for: a
+     * label that lies about where it goes. "Insights" over a link to /partners is valid on
+     * both halves and catchable by nothing. §5's mitigation is that each field description
+     * names its destination, so the editor is told. Asserting that a description mentions
+     * a path is weak; it is the difference between a field that explains itself and one
+     * that does not.
+     */
+    for (const f of navLabels.fields) {
+      expect(f.description, `navLabels.${f.name} has no description`).toBeTruthy()
+      expect(
+        f.description,
+        `navLabels.${f.name}'s description does not name its destination`,
+      ).toMatch(/\//)
+    }
+  })
+
+  it('caps the four bar labels at 10 characters and the panel labels at 24', () => {
+    /*
+     * 10, not the 12 this field's own comment used to claim and §5's arithmetic predicted.
+     * That arithmetic assumed the bar's width was decided by label text alone; Task 6
+     * measured the real header at all four bar labels padded to 12 characters and found the
+     * nav wrapped to two lines at 390px as well as 320px — the chevron toggles on About Us
+     * and Strategy, and the gaps between all four items, cost more width than a
+     * character-count estimate saw. 10 characters keeps a single nav line at 390px; both
+     * numbers are in the PR that lowered this, which is the point of measuring rather than
+     * trusting the arithmetic.
+     *
+     * The five children cap at 24 instead, because a panel row has the width of the panel
+     * and none of the bar's problem. Same shape as `headerCta.label`'s cap of 20 against
+     * ctaLink's own 40: a guardrail on the design, not on correctness.
+     */
+    const cap = (name: string) => {
+      const f = navLabels.fields.find((x: any) => x.name === name)
+      return captureValidation(f.validation).find((c: RuleCall) => c.method === 'max')?.arg
+    }
+    for (const bar of ['aboutUs', 'strategy', 'portfolio', 'insights']) {
+      expect(cap(bar), `navLabels.${bar} is a bar label and must cap at 10`).toBe(10)
+    }
+    for (const child of ['aboutEm8', 'whyEm8', 'ourTeam', 'whyMidwest', 'partners']) {
+      expect(cap(child), `navLabels.${child} is a panel label and should cap at 24`).toBe(24)
+    }
+  })
+
+  it('marks every label required in the Studio too', () => {
+    // A courtesy to the editor, not the guard. Sanity's required() greys out Publish and
+    // gates nothing else — not the API, not a GROQ query, not `next build`. The guard is
+    // the per-leaf throw in (site)/layout.tsx via REQUIRED_SITE_SETTINGS, added in Task 4.
+    for (const f of navLabels.fields) {
+      expect(
+        captureValidation(f.validation),
+        `navLabels.${f.name} is not required`,
+      ).toContainEqual({ method: 'required', arg: undefined })
+    }
+  })
+})
+
+describe('the realized-results heading', () => {
+  const settings = byName('siteSettings')
+  const heading = field(settings, 'dealStoryHeading')
+
+  it('is a siteSettings field, so the words are editable', () => {
+    /*
+     * Hunter's instruction, 2026-09-08: every string this PR writes has to be editable in
+     * the Studio. This was the only one that would have been a literal in TSX — the h2
+     * above a sold property's realized figures — so it is a field.
+     *
+     * On siteSettings rather than on the property, because it is a section label read by
+     * every property page rather than a fact about any one of them. Same reasoning as
+     * `ctaBand`, whose account of the "one record every page reads" rule is on that field.
+     */
+    expect(heading).toBeDefined()
+    expect(heading.type).toBe('string')
+  })
+
+  it('is optional, so blanking it cannot fail a build', () => {
+    /*
+     * Deliberately NOT required, unlike the nine nav labels. A missing nav label renders a
+     * tab with no words in it, which is a broken page; a missing heading here renders the
+     * deal figures with no heading, which is exactly how they looked on /track-record for
+     * the last three weeks. So the cost of an editor clearing it is a slightly plainer
+     * section, not 29 failed pages — and there is no reason to buy a tenth build-failure
+     * vector for a heading that degrades gracefully.
+     */
+    expect(heading.validation).toBeDefined()
+    const rules = captureValidation(heading.validation)
+    expect(rules.map((r: RuleCall) => r.method)).not.toContain('required')
+    expect(rules).toContainEqual({ method: 'max', arg: 60 })
+  })
+})
+
+describe('strategyPage', () => {
+  const strategy = byName('strategyPage')
+
+  it('is shaped like the other page singletons, plus a body', () => {
+    expect(strategy).toBeDefined()
+    expect(strategy.fields.map((f: any) => f.name)).toEqual(['seo', 'heading', 'body'])
+  })
+
+  it('requires seo and heading, and leaves the body optional', () => {
+    /*
+     * The body is the Why Midwest argument, and it is copy EM8 owes — §3 lists it under
+     * "Owed by people". So the page ships with its structure in place and its body empty,
+     * which is what means nobody needs a developer when the words arrive. `heading` is
+     * required for the same reason it is on /portfolio and /insights: the component throws
+     * without a title, and a titleless page failing the build loudly is what this project
+     * prefers to a shell.
+     */
+    for (const name of ['seo', 'heading']) {
+      expect(
+        captureValidation(field(strategy, name).validation),
+        `strategyPage.${name} should be required`,
+      ).toContainEqual({ method: 'required', arg: undefined })
+    }
+    expect(field(strategy, 'body').validation).toBeUndefined()
+  })
+
+  it('is registered as a pinned singleton', () => {
+    // Unpinned, the Studio lets an editor create a second one, which the [0] in
+    // STRATEGY_PAGE_QUERY silently ignores — so their edits land in a document the site
+    // never reads.
+    expect([...SINGLETON_TYPES]).toContain('strategyPage')
+  })
+})
+
+describe('whyEm8 on aboutPage', () => {
+  const whyEm8 = field(byName('aboutPage'), 'whyEm8')
+
+  it('is an optional block with its own heading and body', () => {
+    expect(whyEm8).toBeDefined()
+    expect(whyEm8.fields.map((f: any) => f.name)).toEqual(['heading', 'body'])
+    // Optional at the top: the section ships empty and renders nothing until the copy
+    // lands. §5: "A section whose body is absent renders nothing, and its nav entry goes
+    // with it." An empty <h2> on /about would be worse than no section at all.
+    expect(whyEm8.validation).toBeUndefined()
   })
 })

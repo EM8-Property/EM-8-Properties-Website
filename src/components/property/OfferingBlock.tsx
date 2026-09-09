@@ -17,8 +17,8 @@ export type OfferingData = {
  * lives here rather than at the call site so a new caller cannot forget it.
  *
  * Every figure is labelled as targeted and carries the caveat. Unlabelled, "17.7%" reads
- * as a result, especially on a site whose /track-record page publishes realized multiples
- * in the same visual language.
+ * as a result, especially on a site where `DealStory` publishes realized multiples on the
+ * same property page in the same visual language.
  */
 export function OfferingBlock({
   offering,

@@ -42,20 +42,6 @@ export const PROPERTY_SLUGS_QUERY = defineQuery(
   `*[_type == "property" && defined(slug.current)].slug.current`,
 )
 
-/**
- * The /track-record view. It selects the same `slug` the canonical /portfolio/[slug]
- * page uses — a realized deal is presented here but never given a second URL, which
- * would split its search ranking and double the editing surface.
- */
-export const SOLD_PROPERTIES_QUERY = defineQuery(`
-  *[_type == "property" && status == "sold"] | order(dealStory.exitYear desc) {
-    _id, title, "slug": slug.current, assetClass, status, city, state,
-    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
-    "image": gallery[0],
-    dealStory
-  }
-`)
-
 export const ALL_POSTS_QUERY = defineQuery(`
   *[_type == "post"] | order(publishedAt desc) {
     _id, title, "slug": slug.current, publishedAt, category, excerpt, heroImage
@@ -115,6 +101,11 @@ export const SITE_SETTINGS_QUERY = defineQuery(
   `*[_type == "siteSettings"][0] {
     agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,
     headerCta { label, href },
+    navLabels {
+      aboutUs, aboutEm8, whyEm8, ourTeam,
+      strategy, whyMidwest, partners, portfolio, insights
+    },
+    dealStoryHeading,
     ctaBand {
       heading { eyebrow, title, intro },
       submitLabel, successMessage, callTitle, callBody, callLabel
@@ -152,8 +143,32 @@ export const ABOUT_PAGE_QUERY = defineQuery(`
     seo { title, description },
     hero { eyebrow, title, titleAccent, titleSuffix, intro },
     factorsHeading { eyebrow, title, intro },
+    whyEm8 { heading { eyebrow, title, intro }, body },
     leadershipTitle,
     boardTitle
+  }
+`)
+
+/**
+ * Which optional sections exist, for the navigation.
+ *
+ * One boolean today. It is here rather than folded into `SITE_SETTINGS_QUERY` — where it
+ * would cost no extra round trip — for a specific reason:
+ * `tests/unit/requiredContent.test.ts` proves that every required leaf is projected by
+ * looking for each dotted path segment as a substring of `SITE_SETTINGS_QUERY`, and its own
+ * comment concedes that a coincidental segment name elsewhere in the query would satisfy it
+ * wrongly. The string `whyEm8` appearing there for an unrelated reason manufactures exactly
+ * that coincidence, for exactly the leaf it would hide: `navLabels.whyEm8`. Keeping this
+ * apart keeps that guard honest, and Next's data cache serves the second fetch from the
+ * same request.
+ *
+ * `defined(whyEm8.body)` rather than the value: the layout needs to know whether to show a
+ * menu link, and pulling a whole portable-text array into the layout of all 29 pages to
+ * answer a yes-or-no question would be a real cost for no gain.
+ */
+export const NAV_SECTIONS_QUERY = defineQuery(`
+  *[_id == "aboutPage"][0] {
+    "whyEm8": defined(whyEm8.body)
   }
 `)
 
@@ -204,9 +219,17 @@ export const INSIGHTS_PAGE_QUERY = defineQuery(`
   }
 `)
 
-export const TRACK_RECORD_PAGE_QUERY = defineQuery(`
-  *[_id == "trackRecordPage"][0] {
+/**
+ * The Strategy page: spec §5's one new route.
+ *
+ * Shaped like `PORTFOLIO_PAGE_QUERY` above, plus `body` — the Why Midwest argument, which
+ * is the reason the page exists and which ships empty. Written out rather than built from
+ * a shared string for the same typegen reason as everywhere else in this file.
+ */
+export const STRATEGY_PAGE_QUERY = defineQuery(`
+  *[_id == "strategyPage"][0] {
     seo { title, description },
-    heading { eyebrow, title, intro }
+    heading { eyebrow, title, intro },
+    body
   }
 `)

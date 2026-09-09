@@ -110,14 +110,22 @@ test('an insights article resolves and carries share metadata', async ({ page })
   await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
 })
 
-test('track record links back to canonical property URLs, not its own', async ({ page }) => {
-  await page.goto('/track-record')
-  const links = page.locator('a[href*="/portfolio/"]')
-  if ((await links.count()) > 0) {
-    await expect(links.first()).toHaveAttribute('href', /^\/portfolio\/[a-z0-9-]+$/)
-  }
-  // No property may be addressable under /track-record/.
-  await expect(page.locator('a[href^="/track-record/"]')).toHaveCount(0)
+/*
+ * The deleted route stays deleted, and nothing points at it.
+ *
+ * Replaces `track record links back to canonical property URLs, not its own`, whose page
+ * no longer exists. The assertion worth keeping was its second one — that no property is
+ * addressable under a second path — and this is that claim in the form it can still take.
+ */
+test('the deleted track-record route is gone and unadvertised', async ({ page }) => {
+  const res = await page.goto('/track-record')
+  expect(res?.status(), '/track-record should not resolve').toBe(404)
+
+  await page.goto('/')
+  await expect(page.locator('a[href*="track-record"]')).toHaveCount(0)
+
+  const sitemap = await page.goto('/sitemap.xml')
+  expect(await sitemap!.text()).not.toContain('track-record')
 })
 
 /*
@@ -134,10 +142,24 @@ test('track record links back to canonical property URLs, not its own', async ({
  * change is that changing them needs no code. "Get Started" is worth naming explicitly:
  * that string coming back means the deployed build predates this, which is exactly the
  * question you ask after triggering a Railway deploy.
+ *
+ * Anchored to `#header-actions`, and the `toHaveCount(1)` below is load-bearing. This
+ * canary spent a task grading the wrong element: it used to take `#site-nav a` and `.last()`,
+ * which was the CTA until the two-row header moved the CTA out of the nav into its own
+ * row-one container — after which the selector resolved to the `Insights` nav link, whose
+ * label is non-empty, is not "Get Started" and has an href, so all three assertions below
+ * passed against it and the deploy-staleness canary was silently detached from its subject.
+ * A count assertion is what turns the next such move into a failure rather than a pass:
+ * `#header-actions` holds exactly one internal link, the CMS-driven CTA, because Investor
+ * Login is an off-site absolute URL.
  */
 test('the header button comes from the CMS, not from a literal', async ({ page }) => {
   await page.goto('/')
-  const cta = page.locator('#site-nav a').last()
+  const cta = page.locator('#header-actions a[href^="/"]')
+  await expect(
+    cta,
+    'the header CTA is no longer the one internal link in #header-actions — this canary is grading the wrong element',
+  ).toHaveCount(1)
 
   const label = (await cta.innerText()).trim()
   expect(label.length, 'the header button rendered with no words in it').toBeGreaterThan(0)
@@ -149,11 +171,31 @@ test('the header button comes from the CMS, not from a literal', async ({ page }
   expect(href, 'the header button points nowhere').toBeTruthy()
 })
 
+/*
+ * Investor Login on a desktop: off-site, and *visible* without a tap.
+ *
+ * `toBeVisible` is the addition, and it is the assertion that pins `md:flex` on the link
+ * and `md:hidden` on the phone-only disclosure button. Those two tokens are the entire
+ * reason "the desktop header does not change" is true after the two-row rewrite, and until
+ * this line nothing checked them at a real width: `toHaveAttribute` passes against a
+ * `display:none` element, and jsdom cannot see a media query at all. Delete `md:flex` and
+ * Investor Login vanishes from the desktop header with every other test green.
+ *
+ * The default project is `devices['Desktop Chrome']` at 1280px, which is above `md`.
+ */
 test('Investor Login points off-site to Agora', async ({ page }) => {
   await page.goto('/')
   const link = page.getByRole('link', { name: /investor login/i }).first()
+  await expect(link, 'Investor Login is not visible on a desktop — is `md:flex` still on it?').toBeVisible()
   await expect(link).toHaveAttribute('target', '_blank')
   await expect(link).toHaveAttribute('rel', /noopener/)
+
+  // The other half of the pair. The disclosure button is a phone affordance; on a desktop
+  // it must be gone, or two nodes carry the accessible name "Investor Login".
+  await expect(
+    page.locator('header button[aria-controls="investor-login-link"]'),
+    'the phone disclosure button is showing on a desktop — is `md:hidden` still on it?',
+  ).toBeHidden()
 })
 
 test('Keep in Touch submits and confirms', async ({ page }) => {
@@ -232,7 +274,6 @@ test('every content route declares the canonical it should, and a large card', a
     '/investors',
     '/partners',
     '/portfolio',
-    '/track-record',
   ]
 
   const origins = new Set<string>()
@@ -314,7 +355,6 @@ test('every section page opens on a full-bleed photograph with its own title on 
     '/investors',
     '/partners',
     '/portfolio',
-    '/track-record',
   ]
 
   for (const route of routes) {
@@ -493,21 +533,37 @@ test('the homepage keeps its copy on the photograph, not on the measure', async 
  * The original defect appeared below ~640px: the copy is bottom-aligned, so it climbs as
  * it wraps, and at 375px the eyebrow began at y=62 while the header ran to y=68.
  *
- * The two shapes are nowhere near each other in how much of the `pt-24` reservation they
- * actually need, which is why this runs on both. Measured clearance between the bottom of
- * the header and the top of the eyebrow:
+ * The two shapes are nowhere near each other in how much of the reservation they actually
+ * need, which is why this runs on both. Measured clearance, 2026-09-09, against
+ * `HEADER_RESERVATION = 'pt-48 min-[390px]:pt-36 md:pt-28'` — the numbers this docblock
+ * used to quote were the ones against an abandoned four-breakpoint intermediate
+ * (`pt-48 min-[360px]:pt-36 min-[390px]:pt-32 md:pt-28`) that never shipped, and before
+ * that the ones against `pt-32 md:pt-28`, and before that the pre-§5 ones against `pt-24`,
+ * and none of them read as current:
  *
- *   /        375px   363px    — `screen`, all the slack in the world
- *   /about   375px    48px
- *   /about   360px     28px   — the tightest on the site
- *   /about   320px     28px
+ *   /        375px   342.3px   — `screen`, all the slack in the world
+ *   /about   320px    79.0px
+ *   /about   360px    79.0px
+ *   /about   375px   103.5px
+ *   /about   390px    55.5px   — the tightest on the site, webfonts loaded
  *
- * Below 375px the band's overlay has grown past the 420px floor, so the box is exactly as
- * tall as the copy and bottom-alignment leaves no slack at all: `pt-24` minus the header
- * is the entire margin. Which means the vulnerable shape is `band` at a narrow viewport,
- * and for a day this test covered only the homepage — verified: dropping the reservation
- * to `pt-14` still clears the header at 1280px and at 375px, and only fails at 320px on a
- * band page.
+ * Below 390px the band's overlay has grown past the 420px floor, so the box is exactly as
+ * tall as the copy and bottom-alignment leaves no slack at all: the reservation minus the
+ * header is the entire margin. Which means the vulnerable shape is `band` at a narrow
+ * viewport, and for a day this test covered only the homepage — verified: dropping the
+ * reservation still clears the header at 1280px and at 375px, and fails first at 320px on
+ * a band page.
+ *
+ * 55.5px, not 79.0px and not 28px. A reader planning the next header change should budget
+ * the real slack: the tightest band-page width has fifty-five and a half pixels of it, and
+ * `src/lib/headerReservation.ts` carries the full table, including the fallback-font column
+ * these two tests cannot see (below).
+ *
+ * **These two tests run with the webfonts available, and that is a blind spot rather than
+ * a choice.** They cannot see the case that broke CI — the fallback face makes the header
+ * 40px taller at 320px (113.0px → 153.0px) — so the loop below this one blocks the font
+ * requests and asserts the same thing. Both are needed: this one is the case a warm visitor
+ * sees, that one is the case a cold visitor on a slow connection sees.
  */
 for (const [route, width] of [
   ['/', 375],
@@ -528,6 +584,282 @@ for (const [route, width] of [
     ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
   })
 }
+
+/*
+ * The same assertion, with the webfonts blocked — the case that actually broke CI, and the
+ * one the loop above cannot see because its browser has the fonts cached.
+ *
+ * CI renders with fallback fonts. The wider fallback face wraps the header's row one at
+ * 320px, taking the header from 113.0px to 153.0px, and against the FIXED
+ * `HEADER_RESERVATION` that ate the entire budget: /about and /insights went to −25.0px of
+ * clearance and /investors to −3.8px — the eyebrow rendered under a translucent bar. This
+ * is not a CI artifact: a real phone on a slow connection paints fallback fonts first, so
+ * the same underlap happens there during that flash. `HEADER_RESERVATION` is now sized
+ * against this exact case (see `src/lib/headerReservation.ts`), and re-measured here,
+ * 2026-09-09, at 320px with the fonts blocked: /about +39.0px, /insights +39.0px,
+ * /investors +39.0px — all three tie because all three share the same fallback-face header
+ * height and the same reservation; the site-specific slack lives in how far below the
+ * `min-h-[420px]` floor each page's copy sits, and none of the three do at 320px.
+ *
+ * These are the three worst routes from the CI failure, not an arbitrary sample.
+ */
+for (const route of ['/about', '/insights', '/investors'] as const) {
+  test(`the hero clears the header with the webfonts blocked at 320px on ${route}`, async ({
+    page,
+  }) => {
+    await page.route('**/*.{woff,woff2,ttf,otf}', (r) => r.abort())
+    await page.setViewportSize({ width: 320, height: 812 })
+    await page.goto(route)
+
+    const headerBox = (await page.locator('header').boundingBox())!
+    // The eyebrow is the first line of copy, so it is the one that goes under the header.
+    const eyebrow = page.locator('[data-hero-overlay] p').first()
+    const eyebrowBox = (await eyebrow.boundingBox())!
+
+    expect(
+      eyebrowBox.y,
+      `the eyebrow renders under the overlaid header on ${route} at 320px with the webfonts ` +
+        `blocked — the fallback face wraps the header's row one and grows it to 153px, which ` +
+        `is the case that broke CI (see src/lib/headerReservation.ts)`,
+    ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
+  })
+}
+
+/*
+ * The nav is visible on a phone without a tap.
+ *
+ * This is the assertion that would have caught what Etamar reported, and nothing in the
+ * suite could have: the links were all in the DOM and all one tap away, so every unit test
+ * passed while the rendered header showed two items. Asserted on the rendered page at the
+ * review viewport for that reason (spec §11).
+ */
+test('the four nav parents are visible on a phone without a tap', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+
+  const header = page.locator('header')
+  const nav = header.locator('#site-nav')
+  await expect(nav).toBeVisible()
+
+  // Four children of the nav: two dropdown groups and two plain links. Counted on the nav
+  // rather than by label, because the labels are CMS content now and a test that pins
+  // wording fails when someone edits their own copy.
+  await expect(nav.locator(':scope > *')).toHaveCount(4)
+
+  for (const child of await nav.locator(':scope > *').all()) {
+    await expect(child).toBeVisible()
+    const box = (await child.boundingBox())!
+    expect(box.width, 'a nav item painted at zero width is invisible while "visible"').toBeGreaterThan(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(390)
+  }
+
+  // The CTA, which the earlier header painted off the edge of the screen, is still a
+  // plain visible link.
+  await expect(header.getByRole('link', { name: 'Invest With Us' })).toBeVisible()
+
+  /*
+   * Investor Login itself is a second-pass finding, not the first-pass design: row one
+   * (wordmark, Investor Login, the CTA) measured 366px of content against 342px of content
+   * width at 390px wide, which is `flex-wrap`'s exact third-row case — two flex children
+   * that do not fit together move to their own lines, so row one became two rows and the
+   * header three instead of two. Per §5's own fallback rule for exactly this shape,
+   * Investor Login moved behind a small button rather than staying a plain row-one link; it
+   * is reachable one tap away here (and always from the footer). SiteHeader.tsx's docblock
+   * has the full measurement.
+   */
+  const accountToggle = header.getByRole('button', { name: /investor login/i })
+  await expect(accountToggle).toBeVisible()
+  await accountToggle.click()
+  await expect(header.getByRole('link', { name: /investor login/i })).toBeVisible()
+})
+
+/*
+ * Revealing Investor Login does not change the header's height — so the hero still clears
+ * it AFTER the tap, not only before.
+ *
+ * This test exists because its predecessor performed exactly this gesture and then checked
+ * nothing about the consequence, which is worse than no test: it looks like coverage. The
+ * disclosed link shipped as an in-flow flex sibling, row one cannot hold wordmark + link +
+ * CTA at any phone width (which is the whole reason the disclosure exists), so revealing it
+ * wrapped row one and the header grew 42px — 88.5→130.5px at 375px, 113→155px at 320px.
+ * The hero reserves a FIXED `pt-32`, so /about's eyebrow went to −2.5px and −27.0px of
+ * clearance: the first line of copy rendered under a translucent bar. `npm run build`,
+ * `tsc`, the 516 unit tests, ESLint and Lighthouse were all green through it, because the
+ * only way to see it is to measure the rendered page in the state a user produces.
+ *
+ * Asserted as a HEIGHT DELTA as well as a clearance, because those are two different
+ * regressions. A clearance-only assertion would go green again if someone raised
+ * `HEADER_RESERVATION` to paper over an interactive header height, which costs every mobile
+ * page 32px of hero even when the disclosure is closed. The requirement is that the header
+ * does not move.
+ *
+ * 320px and 375px: 320 is the tightest clearance on the site (15px), and 375 is where the
+ * nav stops wrapping to two lines, so the two widths cover both header heights.
+ */
+for (const width of [320, 375] as const) {
+  test(`revealing Investor Login does not change the header's height at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 812 })
+    await page.goto('/about')
+
+    const header = page.locator('header')
+    const eyebrow = page.locator('[data-hero-overlay] p').first()
+
+    const clearance = async () => {
+      const h = (await header.boundingBox())!
+      const e = (await eyebrow.boundingBox())!
+      return { height: h.height, clearance: e.y - (h.y + h.height) }
+    }
+
+    const before = await clearance()
+    expect(
+      before.clearance,
+      `the eyebrow is already under the header at ${width}px before any interaction`,
+    ).toBeGreaterThan(0)
+
+    const toggle = header.getByRole('button', { name: /investor login/i })
+    await expect(toggle).toBeVisible()
+    await toggle.click()
+
+    // The tap did what it is for: the link is reachable, not merely present.
+    await expect(header.getByRole('link', { name: /investor login/i })).toBeVisible()
+
+    const after = await clearance()
+    expect(
+      after.height,
+      `revealing Investor Login moved the header from ${before.height}px to ${after.height}px at ${width}px — it must be out of flow below md`,
+    ).toBeCloseTo(before.height, 1)
+    expect(
+      after.clearance,
+      `the eyebrow renders under the overlaid header at ${width}px once Investor Login is revealed`,
+    ).toBeGreaterThan(0)
+  })
+}
+
+/*
+ * Opening a nav panel does not change the header's height either — the same assertion, for
+ * the header's other disclosure, after the same defect.
+ *
+ * The panel shipped as an in-flow `w-full` block below `md`, inside a group that is itself
+ * a flex item of the wrapping `<nav>`, so revealing it made the header taller: measured on
+ * a production build, 88.5→186px at 390px and 113→186px at 320px, which against the FIXED
+ * `HEADER_RESERVATION` put /about's eyebrow 58.0px under a translucent bar (from +39.5px
+ * and +15.0px) and /insights' 24.3px under it. Four of the seven section pages.
+ *
+ * Nothing in the suite reported it, and the panel HAD an E2E test: it ran on `/`, the one
+ * route with 332px of hero slack, and asserted `aria-expanded`, the URL and a link count —
+ * no geometry at all. A test that performs the gesture and checks nothing about its
+ * consequence is worse than no test, because it looks like coverage. That is the second
+ * time this exact hole appeared in this header (see the Investor Login tests above), so
+ * this one runs where it can fail: a band page, at the two widths that bracket the nav's
+ * own wrap, asserting the same two things as its sibling — the height DELTA, because a
+ * clearance-only assertion goes green again if someone pads `HEADER_RESERVATION` to cover
+ * an interactive header height, and the clearance, because that is what a reader sees.
+ *
+ * Both panels, because they are two instances with different anchors and different
+ * children (`aboutUs` renders two of its three here, `strategy` two).
+ *
+ * The third assertion is the one that pins WHICH box the panel is absolute against. Off the
+ * header's bottom edge it covers the top of the photograph, which nothing depends on;
+ * anchored to its own group it would hang from a line-one nav label and land on top of
+ * `Insights`, which wraps to line two below 375px — the mistake the Investor Login popover
+ * made first, in the task whose whole purpose is that the nav labels are visible.
+ */
+for (const width of [320, 390] as const) {
+  for (const key of ['aboutUs', 'strategy'] as const) {
+    test(`opening the ${key} nav panel does not change the header's height at ${width}px`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 812 })
+      await page.goto('/about')
+
+      const header = page.locator('header')
+      const eyebrow = page.locator('[data-hero-overlay] p').first()
+
+      const measure = async () => {
+        const h = (await header.boundingBox())!
+        const e = (await eyebrow.boundingBox())!
+        return { height: h.height, clearance: e.y - (h.y + h.height) }
+      }
+
+      const before = await measure()
+      expect(
+        before.clearance,
+        `the eyebrow is already under the header at ${width}px before any interaction`,
+      ).toBeGreaterThan(0)
+
+      const toggle = page.locator(`#site-nav button[aria-controls="nav-panel-${key}"]`)
+      await expect(toggle).toBeVisible()
+      await toggle.click()
+
+      // The gesture did what it is for, so the measurements below are of an OPEN panel.
+      const panel = page.locator(`#nav-panel-${key}`)
+      await expect(panel).toBeVisible()
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+
+      const after = await measure()
+      expect(
+        after.height,
+        `opening the ${key} panel moved the header from ${before.height}px to ${after.height}px at ${width}px — it must be out of flow below md`,
+      ).toBeCloseTo(before.height, 1)
+      expect(
+        after.clearance,
+        `the eyebrow renders under the overlaid header at ${width}px once the ${key} panel is open`,
+      ).toBeGreaterThan(0)
+
+      // And it hangs below the header rather than over it: no header item is covered.
+      const panelBox = (await panel.boundingBox())!
+      const items = [
+        ...(await page.locator('#site-nav > *').all()),
+        page.locator('#header-actions a[href^="/"]'),
+        page.locator('header a[href="/"]').first(),
+      ]
+      for (const item of items) {
+        const box = (await item.boundingBox())!
+        const dx =
+          Math.min(panelBox.x + panelBox.width, box.x + box.width) - Math.max(panelBox.x, box.x)
+        const dy =
+          Math.min(panelBox.y + panelBox.height, box.y + box.height) -
+          Math.max(panelBox.y, box.y)
+        expect(
+          dx > 0 && dy > 0,
+          `the open ${key} panel covers "${(await item.innerText()).trim().split('\n')[0]}" at ${width}px, by ${dx.toFixed(1)}x${dy.toFixed(1)}px`,
+        ).toBe(false)
+      }
+    })
+  }
+}
+
+/*
+ * The panel opens on a tap and does not navigate on that tap.
+ *
+ * §5's requirement for a touch device, and the case a hover-only panel fails silently:
+ * on a phone there is no hover, so a CSS-driven panel simply never opens and its children
+ * are reachable only from the footer.
+ *
+ * `playwright.config.ts` does not set `hasTouch` on the chromium project (it only spreads
+ * `devices['Desktop Chrome']`), so `tap()` needs it turned on here or it throws. Declared
+ * with `test.use` rather than switched to a dispatchEvent+click fallback, since the point
+ * of this test is specifically a touch tap.
+ */
+test.describe(() => {
+  test.use({ hasTouch: true })
+
+  test('a nav panel opens on tap without leaving the page', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+
+    const toggle = page.locator('#site-nav button[aria-controls="nav-panel-aboutUs"]')
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await toggle.tap()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await expect(page).toHaveURL(/\/$/)
+    // 2, not 3: `whyEm8` has no body in the dataset, so Task 8's nav gate hides it and
+    // only About EM8 and Our Team remain in the panel.
+    await expect(page.locator('#nav-panel-aboutUs a')).toHaveCount(2)
+  })
+})
 
 /*
  * The homepage hero fills the first screen, measured on the rendered page.

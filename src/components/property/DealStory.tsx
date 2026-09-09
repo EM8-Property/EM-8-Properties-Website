@@ -12,6 +12,11 @@ type Story = {
  * Every figure here describes something that already happened, so the labels say
  * "Realized". Forward-looking words — targeted, projected, underwritten — belong on live
  * offerings and would misstate a closed result if used here.
+ *
+ * The stage labels are h3. They were h4 while this rendered on /track-record, inside a
+ * card whose title was a link rather than a heading — so the level skipped from the page's
+ * h1 and nothing minded. On /portfolio/[slug] it sits directly under an h2, and heading
+ * order is one of the few accessibility rules Lighthouse actually audits.
  */
 export function DealStory({ story }: { story: Story }) {
   const stages: [string, string | null | undefined][] = [
@@ -25,9 +30,9 @@ export function DealStory({ story }: { story: Story }) {
       <div className="grid gap-4 sm:grid-cols-3">
         {stages.map(([label, body]) => (
           <div key={label}>
-            <h4 className="text-[8px] font-semibold uppercase tracking-[0.15em] text-teal-text">
+            <h3 className="text-[8px] font-semibold uppercase tracking-[0.15em] text-teal-text">
               {label}
-            </h4>
+            </h3>
             <p className="mt-1.5 text-[11px] leading-relaxed text-ink-secondary">{body}</p>
           </div>
         ))}

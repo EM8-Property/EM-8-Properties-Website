@@ -11,6 +11,19 @@ const COMPLETE = {
   disclaimer: 'x',
   headerCta: { label: 'Invest With Us', href: '/investors' },
   ctaBand: { heading: { title: 'x' }, submitLabel: 'x' },
+  // Nine labels, because nine leaves are required. A fixture that is complete in name only
+  // makes `returns nothing for a complete document` assert the opposite of its name.
+  navLabels: {
+    aboutUs: 'About Us',
+    aboutEm8: 'About EM8',
+    whyEm8: 'Why EM8',
+    ourTeam: 'Our Team',
+    strategy: 'Strategy',
+    whyMidwest: 'Why Midwest',
+    partners: 'Partners',
+    portfolio: 'Portfolio',
+    insights: 'Insights',
+  },
 }
 
 describe('required siteSettings leaves', () => {
@@ -23,6 +36,15 @@ describe('required siteSettings leaves', () => {
       'headerCta.href',
       'ctaBand.heading.title',
       'ctaBand.submitLabel',
+      'navLabels.aboutUs',
+      'navLabels.aboutEm8',
+      'navLabels.whyEm8',
+      'navLabels.ourTeam',
+      'navLabels.strategy',
+      'navLabels.whyMidwest',
+      'navLabels.partners',
+      'navLabels.portfolio',
+      'navLabels.insights',
     ])
   })
 
@@ -117,6 +139,29 @@ describe('required siteSettings leaves', () => {
             'will read this leaf as always missing and fail next build on every page',
         ).toBe(true)
       }
+    }
+  })
+
+  it('projects every nav label in SITE_SETTINGS_QUERY, nested and aliased', () => {
+    /*
+     * The specific shape of the three-edit trap, asserted rather than left to the loose
+     * segment check above.
+     *
+     * `navLabels` has nine leaves, so nine aliases have to be unique and nine nested
+     * projections have to exist. The loose check passes as soon as the word "navLabels"
+     * appears anywhere in the query — which it does after the first leaf is added — so it
+     * would wave through eight missing ones. This asserts the leaf names individually.
+     */
+    for (const leaf of REQUIRED_SITE_SETTINGS.filter((l) =>
+      l.path.startsWith('navLabels.'),
+    )) {
+      const key = leaf.path.split('.')[1]!
+      expect(
+        SITE_SETTINGS_QUERY,
+        `navLabels.${key} is required but SITE_SETTINGS_QUERY does not project it — the ` +
+          'layout will read it as always missing and fail next build on every page, ' +
+          'while the release gate stays green',
+      ).toMatch(new RegExp(`\\b${key}\\b`))
     }
   })
 })

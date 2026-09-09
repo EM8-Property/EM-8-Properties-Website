@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { PortableText } from 'next-sanity'
 import { seoMetadata } from '@/lib/pageSeo'
 import Image from 'next/image'
 import { fetchSanity } from '@/sanity/client'
@@ -88,6 +89,32 @@ export default async function AboutPage() {
       </section>
 
       {/*
+        Why EM8 — a section rather than a page, which is what Hunter's "fold" meant and
+        what §12 records as the improvement over an earlier draft's four new routes.
+
+        Guarded on BOTH leaves. A `whyEm8` object with null fields is still a truthy
+        object, so a shallow check renders an empty <h2> with a rule under it; a heading
+        with no body is a title over blank space, and a body with no heading is prose with
+        no idea what it is. §5: "a half-filled one renders nothing rather than an empty
+        <h2>".
+
+        It renders nothing today, deliberately — the copy is owed (§3) — and the "Why EM8"
+        link in the About Us menu is hidden to match, via NAV_SECTIONS_QUERY. The id is
+        here rather than on an inner element so the anchor survives the section's own
+        layout changing.
+      */}
+      {copy.whyEm8?.heading?.title && copy.whyEm8?.body && (
+        <section id="why-em8" className="border-t border-rule bg-panel">
+          <div className="mx-auto max-w-[1200px] px-6 py-14">
+            <SectionHeading {...copy.whyEm8.heading} />
+            <div className="mt-6 max-w-[68ch] text-sm leading-relaxed text-ink-secondary">
+              <PortableText value={copy.whyEm8.body} />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/*
         Two sections, not one list.
 
         A board seat is a governance relationship, not a rung on the org chart, so
@@ -95,52 +122,59 @@ export default async function AboutPage() {
         misrepresents both. `group` on the document decides which section a person lands
         in; a group with nobody in it renders nothing rather than an empty heading.
       */}
-      {GROUP_SECTIONS.map(
-        ({ group, eyebrow, title }) =>
-          byGroup(group).length > 0 && (
-            <section key={group} className="border-t border-rule bg-panel">
-              <div className="mx-auto max-w-[1200px] px-6 py-14">
-                <SectionHeading eyebrow={eyebrow} title={title} />
-                {/*
-                  items-start, so a card is only as tall as its own content.
+      {/*
+        The anchor "Our Team" points at, on a wrapper rather than on either section: the
+        leadership group renders only if it has members, so an id on it would disappear
+        with it and the menu link would scroll nowhere. A wrapper is always here.
+      */}
+      <div id="team">
+        {GROUP_SECTIONS.map(
+          ({ group, eyebrow, title }) =>
+            byGroup(group).length > 0 && (
+              <section key={group} className="border-t border-rule bg-panel">
+                <div className="mx-auto max-w-[1200px] px-6 py-14">
+                  <SectionHeading eyebrow={eyebrow} title={title} />
+                  {/*
+                    items-start, so a card is only as tall as its own content.
 
-                  Grid items stretch to the tallest in the row by default, which was fine
-                  when every bio was one line. Beside a full board biography it left 325px
-                  of empty space inside a bordered card — around forty per cent of it
-                  blank, which reads as a rendering fault rather than a short bio.
-                */}
-                <div className="mt-8 grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {byGroup(group).map((m) => (
-                    <Card key={m._id}>
-                      {/*
-                        Square crops driven by Sanity's hotspot. The circular-crop
-                        decapitation the old style guide warned about cannot recur, because
-                        the editor sets the focal point in the Studio rather than hoping the
-                        crop is kind.
-                      */}
-                      {m.photo ? (
-                        <Image
-                          src={urlForImage(m.photo).width(600).height(600).url()}
-                          alt={m.photo.alt ?? m.name ?? ''}
-                          width={600}
-                          height={600}
-                          className="aspect-square w-full object-cover"
-                        />
-                      ) : (
-                        <div className="aspect-square w-full bg-rule" />
-                      )}
-                      <div className="p-4">
-                        <h3 className="text-sm font-semibold text-ink">{m.name}</h3>
-                        {m.role && <Eyebrow>{m.role}</Eyebrow>}
-                        <TeamBio bio={m.bio} name={m.name ?? ''} />
-                      </div>
-                    </Card>
-                  ))}
+                    Grid items stretch to the tallest in the row by default, which was fine
+                    when every bio was one line. Beside a full board biography it left 325px
+                    of empty space inside a bordered card — around forty per cent of it
+                    blank, which reads as a rendering fault rather than a short bio.
+                  */}
+                  <div className="mt-8 grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {byGroup(group).map((m) => (
+                      <Card key={m._id}>
+                        {/*
+                          Square crops driven by Sanity's hotspot. The circular-crop
+                          decapitation the old style guide warned about cannot recur, because
+                          the editor sets the focal point in the Studio rather than hoping the
+                          crop is kind.
+                        */}
+                        {m.photo ? (
+                          <Image
+                            src={urlForImage(m.photo).width(600).height(600).url()}
+                            alt={m.photo.alt ?? m.name ?? ''}
+                            width={600}
+                            height={600}
+                            className="aspect-square w-full object-cover"
+                          />
+                        ) : (
+                          <div className="aspect-square w-full bg-rule" />
+                        )}
+                        <div className="p-4">
+                          <h3 className="text-sm font-semibold text-ink">{m.name}</h3>
+                          {m.role && <Eyebrow>{m.role}</Eyebrow>}
+                          <TeamBio bio={m.bio} name={m.name ?? ''} />
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </section>
-          ),
-      )}
+              </section>
+            ),
+        )}
+      </div>
       <CtaBand
         bookACallUrl={settings?.bookACallUrl}
         copy={settings?.ctaBand}

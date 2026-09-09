@@ -694,6 +694,44 @@ export const SITE_SETTINGS = {
    * once an editor has changed either field in the Studio the step leaves it alone.
    */
   headerCta: { label: 'Invest With Us', href: '/investors' },
+  /**
+   * The words on the top navigation. Nine of them, one per node in
+   * `src/lib/navigation.ts`; where each goes is decided there and cannot be changed here.
+   *
+   * Backfilled by `--only=nav-labels`, per leaf and only where the leaf is blank, so once
+   * an editor has reworded a tab in the Studio the step leaves it alone.
+   *
+   * These are proposals, not transcriptions. Every other string in this file was already
+   * on the site and was moved here verbatim; there was no navigation with these labels to
+   * transcribe, so §5's own wording is what is seeded. §3 lists the labels under "Owed by
+   * people" and says they "can ship with the labels this document proposes and be edited
+   * later; nothing is blocked on them".
+   *
+   * As seeded the bar reads `About Us · Strategy · Portfolio · Insights` — 33 characters
+   * against the 42 §5 called more than tight. The caps in the schema are what hold that
+   * once an editor is typing.
+   */
+  navLabels: {
+    aboutUs: 'About Us',
+    aboutEm8: 'About EM8',
+    whyEm8: 'Why EM8',
+    ourTeam: 'Our Team',
+    strategy: 'Strategy',
+    whyMidwest: 'Why Midwest',
+    partners: 'Partners',
+    portfolio: 'Portfolio',
+    insights: 'Insights',
+  },
+  /**
+   * The heading above a sold property's realized figures. Backfilled by the same step as
+   * the labels, and only where the leaf is blank.
+   *
+   * Written rather than moved: on /track-record those figures had no heading at all, so
+   * there is nothing to transcribe. It is a field rather than a literal because every
+   * string this PR writes has to be editable — Hunter, 2026-09-08 — and it is optional, so
+   * clearing it in the Studio returns the section to how it looked before.
+   */
+  dealStoryHeading: 'Realized results',
 }
 
 /**
@@ -853,14 +891,15 @@ export const PAGE_COPY = {
   },
 
   /*
-   * The last three pages to hold their own title in code.
+   * The last two pages to hold their own title in code. (A third, /track-record, was in
+   * this group too until it was deleted in Task 10; its heading was deleted with it.)
    *
    * These carry a heading and nothing else: the rest of each page is generated from the
    * property and post collections. Every string below is transcribed character for
    * character from the literals those pages shipped with — this is a move, not a rewrite,
    * and `pageCopy.test.tsx` pins that.
    *
-   * Note the apostrophes. Two of these use a straight ' where most of the rest of this
+   * Note the apostrophes. Both of these use a straight ' where most of the rest of this
    * file uses a typographic ’ — that is what the pages actually shipped, and it is a real
    * difference on a rendered page, so they are reproduced as they were rather than tidied
    * up in passing. Verified by diffing the rendered hero copy against the live site.
@@ -881,12 +920,26 @@ export const PAGE_COPY = {
         'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA.',
     },
   },
-  trackRecordPage: {
+  /**
+   * The one new page, and the only seeded copy in this file that was not already on the
+   * site — there was no /strategy to transcribe from.
+   *
+   * So this heading is written rather than moved, and it is written narrowly: it says what
+   * the page is about and asserts nothing. No figures, no municipal claims, no
+   * forward-looking language — `placeholders.ts` and the compliance scan both cover this
+   * object, and the point is not merely to pass them but to seed something nobody has to
+   * retract. Reword it in the Studio; that is what it is there for.
+   *
+   * No `body`. The Why Midwest argument is copy EM8 owes (§3), the field is optional, and
+   * the page renders its title with nothing under it until the words arrive. Inventing an
+   * argument for the Midwest here would be the one thing this project has never done.
+   */
+  strategyPage: {
     heading: {
-      eyebrow: 'Track Record',
-      title: 'Realized results, not projections',
+      eyebrow: 'Strategy',
+      title: 'Why the Midwest',
       intro:
-        "Every deal we've taken full cycle, with what we paid, what we did, and what we exited at.",
+        'How we choose markets, and why our work sits within walking distance of Metra stations in suburban Chicago.',
     },
   },
 }
@@ -933,10 +986,10 @@ export const PAGE_SEO = {
     description:
       'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily.',
   },
-  trackRecordPage: {
-    title: 'Track Record',
+  strategyPage: {
+    title: 'Strategy',
     description:
-      'Realized results across the Chicago MSA: what we paid, what we did, what we exited at.',
+      'How EM8 chooses markets in suburban Chicago, and the partners we build with.',
   },
 }
 

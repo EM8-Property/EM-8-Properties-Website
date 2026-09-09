@@ -62,7 +62,7 @@ export default defineConfig({
                 // each page is generated from the property and post collections.
                 ['portfolioPage', 'Portfolio page'],
                 ['insightsPage', 'Insights page'],
-                ['trackRecordPage', 'Track record page'],
+                ['strategyPage', 'Strategy page'],
               ] as const
             ).map(([type, title]) =>
               S.listItem()

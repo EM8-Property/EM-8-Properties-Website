@@ -9,8 +9,10 @@ export { ASSET_CLASSES, STATUSES }
 
 /**
  * One document per asset, at one canonical URL: /portfolio/[slug], regardless of status.
- * /track-record is a filtered view over `status == "sold"`, never a second set of pages —
- * duplicate URLs for one asset would split its search ranking and double the editing surface.
+ * A sold asset carries a Sold chip in that same grid rather than a second set of pages —
+ * duplicate URLs for one asset would split its search ranking and double the editing
+ * surface. (/track-record was once that filtered view over `status == "sold"`; it was
+ * deleted in Task 10.)
  */
 export const property = defineType({
   name: 'property',

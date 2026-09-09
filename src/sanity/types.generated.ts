@@ -84,14 +84,32 @@ export type CtaLink = {
   href?: string;
 };
 
-export type TrackRecordPage = {
+export type StrategyPage = {
   _id: string;
-  _type: "trackRecordPage";
+  _type: "strategyPage";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
   seo?: SeoBlock;
   heading?: HeadingBlock;
+  body?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
+    listItem?: "bullet" | "number";
+    markDefs?: Array<{
+      href?: string;
+      _type: "link";
+      _key: string;
+    }>;
+    level?: number;
+    _type: "block";
+    _key: string;
+  }>;
 };
 
 export type InsightsPage = {
@@ -166,6 +184,27 @@ export type AboutPage = {
   seo?: SeoBlock;
   hero?: HeroBlock;
   factorsHeading?: HeadingBlock;
+  whyEm8?: {
+    heading?: HeadingBlock;
+    body?: Array<{
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
+      listItem?: "bullet" | "number";
+      markDefs?: Array<{
+        href?: string;
+        _type: "link";
+        _key: string;
+      }>;
+      level?: number;
+      _type: "block";
+      _key: string;
+    }>;
+  };
   leadershipTitle?: string;
   boardTitle?: string;
 };
@@ -233,6 +272,18 @@ export type SiteSettings = {
     crop?: SanityImageCrop;
     _type: "image";
   };
+  navLabels?: {
+    aboutUs?: string;
+    aboutEm8?: string;
+    whyEm8?: string;
+    ourTeam?: string;
+    strategy?: string;
+    whyMidwest?: string;
+    partners?: string;
+    portfolio?: string;
+    insights?: string;
+  };
+  dealStoryHeading?: string;
   ctaBand?: CtaBand;
   disclaimer?: string;
 };
@@ -601,7 +652,7 @@ export type AllSanitySchemaTypes =
   | HeroBlock
   | HeadingBlock
   | CtaLink
-  | TrackRecordPage
+  | StrategyPage
   | InsightsPage
   | PortfolioPage
   | InvestorsPage
@@ -786,48 +837,6 @@ export type PROPERTY_BY_SLUG_QUERY_RESULT = {
 // Variable: PROPERTY_SLUGS_QUERY
 // Query: *[_type == "property" && defined(slug.current)].slug.current
 export type PROPERTY_SLUGS_QUERY_RESULT = Array<string | null>;
-
-// Source: src/sanity/queries.ts
-// Variable: SOLD_PROPERTIES_QUERY
-// Query: *[_type == "property" && status == "sold"] | order(dealStory.exitYear desc) {    _id, title, "slug": slug.current, assetClass, status, city, state,    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,    "image": gallery[0],    dealStory  }
-export type SOLD_PROPERTIES_QUERY_RESULT = Array<{
-  _id: string;
-  title: string | null;
-  slug: string | null;
-  assetClass:
-    | "industrial"
-    | "mixed-use"
-    | "multifamily"
-    | "retail"
-    | "senior"
-    | "townhomes"
-    | null;
-  status: "sold";
-  city: string | null;
-  state: string | null;
-  metraStation: string | null;
-  walkMinutes: number | null;
-  unitCount: number | null;
-  retailUnitCount: number | null;
-  yearBuilt: number | null;
-  cardBlurb: string | null;
-  image: {
-    asset?: SanityImageAssetReference;
-    media?: unknown;
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    alt?: string;
-    _type: "image";
-    _key: string;
-  } | null;
-  dealStory: {
-    acquired?: string;
-    executed?: string;
-    exited?: string;
-    equityMultiple?: string;
-    exitYear?: number;
-  } | null;
-}>;
 
 // Source: src/sanity/queries.ts
 // Variable: ALL_POSTS_QUERY
@@ -1032,7 +1041,7 @@ export type CURRENT_OFFERINGS_QUERY_RESULT = Array<{
 
 // Source: src/sanity/queries.ts
 // Variable: SITE_SETTINGS_QUERY
-// Query: *[_type == "siteSettings"][0] {    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,    headerCta { label, href },    ctaBand {      heading { eyebrow, title, intro },      submitLabel, successMessage, callTitle, callBody, callLabel    },    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }  }
+// Query: *[_type == "siteSettings"][0] {    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,    headerCta { label, href },    navLabels {      aboutUs, aboutEm8, whyEm8, ourTeam,      strategy, whyMidwest, partners, portfolio, insights    },    dealStoryHeading,    ctaBand {      heading { eyebrow, title, intro },      submitLabel, successMessage, callTitle, callBody, callLabel    },    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }  }
 export type SITE_SETTINGS_QUERY_RESULT = {
   agoraPortalUrl: string | null;
   contactEmail: string | null;
@@ -1049,6 +1058,18 @@ export type SITE_SETTINGS_QUERY_RESULT = {
     label: string | null;
     href: string | null;
   } | null;
+  navLabels: {
+    aboutUs: string | null;
+    aboutEm8: string | null;
+    whyEm8: string | null;
+    ourTeam: string | null;
+    strategy: string | null;
+    whyMidwest: string | null;
+    partners: string | null;
+    portfolio: string | null;
+    insights: string | null;
+  } | null;
+  dealStoryHeading: string | null;
   ctaBand: {
     heading: {
       eyebrow: string | null;
@@ -1233,12 +1254,13 @@ export type HOME_PAGE_QUERY_RESULT =
 
 // Source: src/sanity/queries.ts
 // Variable: ABOUT_PAGE_QUERY
-// Query: *[_id == "aboutPage"][0] {    seo { title, description },    hero { eyebrow, title, titleAccent, titleSuffix, intro },    factorsHeading { eyebrow, title, intro },    leadershipTitle,    boardTitle  }
+// Query: *[_id == "aboutPage"][0] {    seo { title, description },    hero { eyebrow, title, titleAccent, titleSuffix, intro },    factorsHeading { eyebrow, title, intro },    whyEm8 { heading { eyebrow, title, intro }, body },    leadershipTitle,    boardTitle  }
 export type ABOUT_PAGE_QUERY_RESULT =
   | {
       seo: null;
       hero: null;
       factorsHeading: null;
+      whyEm8: null;
       leadershipTitle: null;
       boardTitle: null;
     }
@@ -1249,6 +1271,7 @@ export type ABOUT_PAGE_QUERY_RESULT =
       } | null;
       hero: null;
       factorsHeading: null;
+      whyEm8: null;
       leadershipTitle: null;
       boardTitle: null;
     }
@@ -1269,6 +1292,7 @@ export type ABOUT_PAGE_QUERY_RESULT =
         title: string | null;
         intro: string | null;
       } | null;
+      whyEm8: null;
       leadershipTitle: null;
       boardTitle: null;
     }
@@ -1288,9 +1312,47 @@ export type ABOUT_PAGE_QUERY_RESULT =
         eyebrow: string | null;
         title: string | null;
         intro: string | null;
+      } | null;
+      whyEm8: {
+        heading: {
+          eyebrow: string | null;
+          title: string | null;
+          intro: string | null;
+        } | null;
+        body: Array<{
+          children?: Array<{
+            marks?: Array<string>;
+            text?: string;
+            _type: "span";
+            _key: string;
+          }>;
+          style?:
+            "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+          listItem?: "bullet" | "number";
+          markDefs?: Array<{
+            href?: string;
+            _type: "link";
+            _key: string;
+          }>;
+          level?: number;
+          _type: "block";
+          _key: string;
+        }> | null;
       } | null;
       leadershipTitle: string | null;
       boardTitle: string | null;
+    }
+  | null;
+
+// Source: src/sanity/queries.ts
+// Variable: NAV_SECTIONS_QUERY
+// Query: *[_id == "aboutPage"][0] {    "whyEm8": defined(whyEm8.body)  }
+export type NAV_SECTIONS_QUERY_RESULT =
+  | {
+      whyEm8: false;
+    }
+  | {
+      whyEm8: false | true;
     }
   | null;
 
@@ -1545,12 +1607,13 @@ export type INSIGHTS_PAGE_QUERY_RESULT =
   | null;
 
 // Source: src/sanity/queries.ts
-// Variable: TRACK_RECORD_PAGE_QUERY
-// Query: *[_id == "trackRecordPage"][0] {    seo { title, description },    heading { eyebrow, title, intro }  }
-export type TRACK_RECORD_PAGE_QUERY_RESULT =
+// Variable: STRATEGY_PAGE_QUERY
+// Query: *[_id == "strategyPage"][0] {    seo { title, description },    heading { eyebrow, title, intro },    body  }
+export type STRATEGY_PAGE_QUERY_RESULT =
   | {
       seo: null;
       heading: null;
+      body: null;
     }
   | {
       seo: {
@@ -1558,6 +1621,7 @@ export type TRACK_RECORD_PAGE_QUERY_RESULT =
         description: string | null;
       } | null;
       heading: null;
+      body: null;
     }
   | {
       seo: {
@@ -1569,6 +1633,70 @@ export type TRACK_RECORD_PAGE_QUERY_RESULT =
         title: string | null;
         intro: string | null;
       } | null;
+      body: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      body: Array<{
+        children?: Array<{
+          marks?: Array<string>;
+          text?: string;
+          _type: "span";
+          _key: string;
+        }>;
+        style?:
+          "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+        listItem?: "bullet" | "number";
+        markDefs?: Array<{
+          href?: string;
+          _type: "link";
+          _key: string;
+        }>;
+        level?: number;
+        _type: "block";
+        _key: string;
+      }> | null;
+    }
+  | {
+      seo: null;
+      heading: null;
+      body: Array<
+        | {
+            children?: Array<{
+              marks?: Array<string>;
+              text?: string;
+              _type: "span";
+              _key: string;
+            }>;
+            style?:
+              "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+            listItem?: "bullet" | "number";
+            markDefs?: Array<{
+              href?: string;
+              _type: "link";
+              _key: string;
+            }>;
+            level?: number;
+            _type: "block";
+            _key: string;
+          }
+        | {
+            asset?: SanityImageAssetReference;
+            media?: unknown;
+            hotspot?: SanityImageHotspot;
+            crop?: SanityImageCrop;
+            _type: "image";
+            _key: string;
+          }
+      > | null;
     }
   | null;
 
@@ -1579,7 +1707,6 @@ declare module "@sanity/client" {
     '\n  *[_type == "property" && showInPortfolio != false] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0]\n  }\n': ALL_PROPERTIES_QUERY_RESULT;
     '\n  *[_type == "property" && slug.current == $slug][0] {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0],\n    squareFeet, yearRenovated, overview, businessPlan,\n    gallery, coordinates, dealStory, publiclyOffered, offering,\n    "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {\n      title, "slug": slug.current, publishedAt\n    }\n  }\n': PROPERTY_BY_SLUG_QUERY_RESULT;
     '*[_type == "property" && defined(slug.current)].slug.current': PROPERTY_SLUGS_QUERY_RESULT;
-    '\n  *[_type == "property" && status == "sold"] | order(dealStory.exitYear desc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0],\n    dealStory\n  }\n': SOLD_PROPERTIES_QUERY_RESULT;
     '\n  *[_type == "post"] | order(publishedAt desc) {\n    _id, title, "slug": slug.current, publishedAt, category, excerpt, heroImage\n  }\n': ALL_POSTS_QUERY_RESULT;
     '\n  *[_type == "post" && slug.current == $slug][0] {\n    title, "slug": slug.current, publishedAt, category, excerpt, heroImage, body,\n    relatedProperty-> { title, "slug": slug.current, city, unitCount, retailUnitCount, walkMinutes, "image": gallery[0] }\n  }\n': POST_BY_SLUG_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current)].slug.current': POST_SLUGS_QUERY_RESULT;
@@ -1588,13 +1715,14 @@ declare module "@sanity/client" {
     '*[_type == "focusCard"] | order(order asc) { _id, title, description }': FOCUS_CARDS_QUERY_RESULT;
     '\n  *[_type == "testimonial" && consentOnRecord == true] | order(order asc) {\n    _id, quote, attribution, descriptor, investorSince, featured\n  }\n': TESTIMONIALS_QUERY_RESULT;
     '\n  *[_type == "property" && publiclyOffered == true] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0], offering\n  }\n': CURRENT_OFFERINGS_QUERY_RESULT;
-    '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    headerCta { label, href },\n    ctaBand {\n      heading { eyebrow, title, intro },\n      submitLabel, successMessage, callTitle, callBody, callLabel\n    },\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
+    '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    headerCta { label, href },\n    navLabels {\n      aboutUs, aboutEm8, whyEm8, ourTeam,\n      strategy, whyMidwest, partners, portfolio, insights\n    },\n    dealStoryHeading,\n    ctaBand {\n      heading { eyebrow, title, intro },\n      submitLabel, successMessage, callTitle, callBody, callLabel\n    },\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
     '\n  *[_id == "homePage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro,\n           primaryCta { label, href }, secondaryCta { label, href } },\n    factorsHeading { eyebrow, title, intro },\n    insightsHeading { eyebrow, title, intro },\n    portfolioHeading { eyebrow, title, intro },\n    offeringsHeading { eyebrow, title, intro },\n    testimonialsHeading { eyebrow, title, intro },\n    partnersTeaser { eyebrow, title, intro },\n    partnersTeaserCta { label, href },\n    portfolioCta { label, href },\n    popup { enabled, eyebrow, title, body, submitLabel, successMessage }\n  }\n': HOME_PAGE_QUERY_RESULT;
-    '\n  *[_id == "aboutPage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro },\n    factorsHeading { eyebrow, title, intro },\n    leadershipTitle,\n    boardTitle\n  }\n': ABOUT_PAGE_QUERY_RESULT;
+    '\n  *[_id == "aboutPage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro },\n    factorsHeading { eyebrow, title, intro },\n    whyEm8 { heading { eyebrow, title, intro }, body },\n    leadershipTitle,\n    boardTitle\n  }\n': ABOUT_PAGE_QUERY_RESULT;
+    '\n  *[_id == "aboutPage"][0] {\n    "whyEm8": defined(whyEm8.body)\n  }\n': NAV_SECTIONS_QUERY_RESULT;
     '\n  *[_id == "partnersPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    partners[] { eyebrow, title, body },\n    submissionHeading { eyebrow, title, intro },\n    facts[] { label, value },\n    formTitle,\n    submitLabel\n  }\n': PARTNERS_PAGE_QUERY_RESULT;
     '\n  *[_id == "investorsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    loginLabel,\n    stepsTitle,\n    steps[] { title, body },\n    keepInTouchHeading { eyebrow, title, intro },\n    submitLabel,\n    testimonialsHeading { eyebrow, title, intro }\n  }\n': INVESTORS_PAGE_QUERY_RESULT;
     '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
     '\n  *[_id == "insightsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': INSIGHTS_PAGE_QUERY_RESULT;
-    '\n  *[_id == "trackRecordPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': TRACK_RECORD_PAGE_QUERY_RESULT;
+    '\n  *[_id == "strategyPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    body\n  }\n': STRATEGY_PAGE_QUERY_RESULT;
   }
 }
