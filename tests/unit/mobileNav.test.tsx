@@ -44,7 +44,7 @@ describe('the phone header', () => {
      * upper bar" for links that were already there.
      */
     render(<SiteHeader {...props} />)
-    expect(screen.getByRole('button', { name: /about us/i })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'About Us' })).toBeDefined()
     expect(screen.getByRole('link', { name: 'Strategy' })).toBeDefined()
     expect(screen.getByRole('link', { name: 'Portfolio' })).toBeDefined()
     expect(screen.getByRole('link', { name: 'Insights' })).toBeDefined()
@@ -174,6 +174,7 @@ describe('the phone header', () => {
      */
     render(<SiteHeader {...props} />)
     for (const name of [
+      'About Us',
       'About EM8',
       'Why EM8',
       'Our Team',
@@ -186,14 +187,18 @@ describe('the phone header', () => {
     ]) {
       expect(screen.getAllByRole('link', { name, hidden: true }), name).toHaveLength(1)
     }
-    // Strategy appears twice on purpose and with two different accessible names — the bar
-    // link and the panel's first child, which §5 requires so the destination survives a
-    // tap on the parent. Both point at the same place.
-    expect(
-      screen
-        .getAllByRole('link', { hidden: true })
-        .filter((a) => a.getAttribute('href') === '/strategy'),
-    ).toHaveLength(2)
+    // /about and /strategy both appear twice on purpose, each with two different
+    // accessible names — the bar link and the panel's first child, which §5 requires so
+    // the destination survives a tap on the parent. Both instances of each pair point at
+    // the same place: About Us / About EM8 to /about, Strategy / Why Midwest to /strategy.
+    for (const href of ['/about', '/strategy']) {
+      expect(
+        screen
+          .getAllByRole('link', { hidden: true })
+          .filter((a) => a.getAttribute('href') === href),
+        href,
+      ).toHaveLength(2)
+    }
   })
 
   it('drops the Why EM8 link while that section has no body', () => {

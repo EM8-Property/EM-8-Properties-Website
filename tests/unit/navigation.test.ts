@@ -18,16 +18,17 @@ describe('the nav tree', () => {
     ])
   })
 
-  it('gives About Us no destination of its own and Strategy one', () => {
+  it('gives both About Us and Strategy their own destination', () => {
     /*
-     * The asymmetry §5 calls deliberate, pinned so it cannot be tidied away. About Us is
-     * a button: every page under it is a section of /about, so the tab itself has nowhere
-     * distinct to go. Strategy is a link AND a parent, which is the awkward case — see
-     * NavDropdown, where a link parent gets its own disclosure button so its panel stays
-     * reachable on a phone.
+     * Until 2026-09-09 this asserted the opposite: About Us was null because "every page
+     * under it is a section of /about, so the tab has nowhere distinct to go." Hunter
+     * overruled that the same day — /about IS a page and readers expect the tab to reach
+     * it — so About Us now gets a destination the same way Strategy already has one. Both
+     * are a link AND a parent, which is the awkward case — see NavDropdown, where a link
+     * parent gets its own disclosure button so its panel stays reachable on a phone.
      */
     const byKey = (k: string) => NAV_TREE.find((n) => n.key === k)!
-    expect(byKey('aboutUs').href).toBeNull()
+    expect(byKey('aboutUs').href).toBe('/about')
     expect(byKey('strategy').href).toBe('/strategy')
   })
 

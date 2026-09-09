@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { NavDropdown } from '@/components/layout/NavDropdown'
 import { NAV_TREE } from '@/lib/navigation'
-import type { NavLabels } from '@/lib/navigation'
+import type { NavLabels, NavNode } from '@/lib/navigation'
 
 const LABELS: NavLabels = {
   aboutUs: 'About Us',
@@ -17,12 +17,39 @@ const LABELS: NavLabels = {
   insights: 'Insights',
 }
 
-const aboutUs = NAV_TREE.find((n) => n.key === 'aboutUs')!
+/**
+ * A synthetic parent with no destination of its own, used only in this describe block.
+ *
+ * The real `aboutUs` node had exactly this shape until 2026-09-09, when Hunter decided
+ * the tab should navigate to /about the same way every other parent navigates — see
+ * `navigation.ts`. `NavDropdown` still supports a parent with `href: null` (the type
+ * permits it, and a dropdown parent with no page of its own is a standard pattern a
+ * future node may need), and after this change no real node uses that shape. So this
+ * block keeps testing the branch, but against a fixture built for the purpose rather
+ * than against whichever real node happens to be button-shaped this week — which also
+ * makes the tests below about the component's general contract rather than about which
+ * real node currently has no destination.
+ *
+ * Same key and the same three children the real `aboutUs` node used to have, so every
+ * assertion below — the panel id, the `aria-controls` value, the child hrefs — still
+ * describes the shape it always did.
+ */
+const aboutUs: NavNode = {
+  key: 'aboutUs',
+  href: null,
+  children: [
+    { key: 'aboutEm8', href: '/about' },
+    { key: 'whyEm8', href: '/about#why-em8' },
+    { key: 'ourTeam', href: '/about#team' },
+  ],
+}
+
 const strategy = NAV_TREE.find((n) => n.key === 'strategy')!
+const realAboutUs = NAV_TREE.find((n) => n.key === 'aboutUs')!
 
 const PHYSICAL = /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/
 
-describe('NavDropdown, a parent with no destination', () => {
+describe('NavDropdown, a parent with no destination (synthetic fixture)', () => {
   it('renders the label from Sanity, never a literal of its own', () => {
     /*
      * The test that fails if a string goes back into the JSX, which is the whole point of
@@ -381,5 +408,25 @@ describe('NavDropdown, a parent that is also a link', () => {
       ['Why Midwest', '/strategy'],
       ['Partners', '/partners'],
     ])
+  })
+
+  it('is also the shape About Us renders in now, since 2026-09-09', async () => {
+    /*
+     * Real-node coverage, not synthetic: `aboutUs` from the actual `NAV_TREE`, so this
+     * fails if the tree ever drifts back to `href: null` without anyone updating this
+     * test to match. Both parents are the same shape now — a link for the label, a
+     * separate `▾` button for the disclosure — so this repeats the two assertions above
+     * against the real node rather than adding a third, differently-shaped describe block.
+     */
+    const user = userEvent.setup()
+    render(<NavDropdown node={realAboutUs} labels={LABELS} />)
+
+    const label = screen.getByRole('link', { name: 'About Us' })
+    expect(label.getAttribute('href')).toBe('/about')
+
+    const toggle = screen.getByRole('button', { name: /open the about us menu/i })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    await user.pointer({ target: toggle, keys: '[TouchA]' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
   })
 })

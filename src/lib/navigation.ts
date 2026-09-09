@@ -45,12 +45,18 @@ export type NavNode = {
   /** Stable across label edits. It is the `siteSettings.navLabels` key and the React key. */
   key: NavKey
   /**
-   * `null` for a parent with no destination of its own.
+   * `null` for a parent with no destination of its own. `NavDropdown` still supports that
+   * shape — a dropdown parent with no page of its own is a standard pattern a future node
+   * may need — but no node in this tree currently uses it.
    *
-   * `aboutUs` is null because every page under it is a section of /about, so the tab has
-   * nowhere distinct to go — which is what lets it be a plain button. `strategy` is not
-   * null, and that asymmetry is §5's, deliberately kept: see `NavDropdown`, where a link
-   * parent gets its own disclosure button so its panel stays reachable on a phone.
+   * `aboutUs` used to be null, on the reasoning that every page under it is a section of
+   * /about, so the tab had nowhere distinct to go. Hunter overruled that on 2026-09-09:
+   * `/about` IS a page and readers expect the tab to reach it, so `aboutUs` now gets a
+   * destination the same way `strategy` already does — see `NavDropdown`, where a link
+   * parent gets its own disclosure button so its panel stays reachable on a phone. Both
+   * parents are now the same shape, and `/about` is reachable from two places in the bar
+   * (the parent link and the `About EM8` panel child), exactly as `/strategy` already is
+   * from `Strategy` and `Why Midwest` — consistent and intended, not a bug.
    */
   href: string | null
   children?: readonly NavNode[]
@@ -62,7 +68,7 @@ export type NavLabels = Record<NavKey, string>
 export const NAV_TREE = [
   {
     key: 'aboutUs',
-    href: null,
+    href: '/about',
     children: [
       { key: 'aboutEm8', href: '/about' },
       /*

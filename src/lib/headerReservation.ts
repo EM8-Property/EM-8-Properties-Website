@@ -29,25 +29,39 @@
  *
  * **The measurements.** Measured on `npm run build && npm start`, against
  * `[data-hero-overlay] p` on /about — the tightest shape on the site — at
- * `HEADER_RESERVATION = 'pt-48 min-[390px]:pt-36 md:pt-28'`, 2026-09-09. "blocked" is
- * Playwright aborting every request for a `.woff`, `.woff2`, `.ttf` or `.otf` file, which
- * is the fallback-font case above; "loaded" is the warm case. Both columns matter, and each
- * band is chosen by the worse of the two.
+ * `HEADER_RESERVATION = 'pt-48 min-[390px]:pt-36 md:pt-28'`, re-measured 2026-09-09 after
+ * `About Us` gained its own `▾` disclosure button (it now points at `/about` instead of
+ * being a destinationless button, so it needed the same separate toggle `Strategy` already
+ * had — see `navigation.ts` and `NavDropdown.tsx`). "blocked" is Playwright aborting every
+ * request for a `.woff`, `.woff2`, `.ttf` or `.otf` file, which is the fallback-font case
+ * above; "loaded" is the warm case. Both columns matter, and each band is chosen by the
+ * worse of the two.
  *
  *   width    reservation                header            /about clearance
  *                                       loaded  blocked   loaded    blocked
  *   320px    pt-48 = 192px              113.0   153.0      +79.0     +39.0  ← row one wraps
  *   360px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
- *   375px    pt-48 = 192px               88.5   113.0     +103.5     +79.0
- *   390px    min-[390px]:pt-36 = 144px    88.5    88.5      +55.5     +55.5  ← the tightest
+ *   375px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
+ *   390px    min-[390px]:pt-36 = 144px    88.5   113.0      +55.5     +31.0  ← the tightest
  *   640px    min-[390px]:pt-36 = 144px    88.5    88.5      +74.1     +55.5
  *   767px    min-[390px]:pt-36 = 144px    88.5    88.5      +74.1     +55.5
  *   768px    md:pt-28 = 112px             62.0    62.0     +100.6     +61.0
  *   1280px   md:pt-28 = 112px             62.0    62.0      +50.0     +50.0
  *
- * Swept every integer width from 320px to 820px on /about, /insights and /investors, both
- * ways: nothing falls below +39.0px blocked or +55.5px loaded. The floor to beat was 28px —
- * what the hero had before the two-row phone header — so the whole range now clears it.
+ * The extra chevron button costs one nav line at two of the eight rows: 375px loaded (which
+ * used to fit the nav on one line, header 88.5px, +103.5px clearance) and 390px blocked
+ * (which used to as well, header 88.5px, +55.5px clearance) now both wrap the nav to two
+ * lines, same as their neighbouring rows already did. The other six rows are unchanged,
+ * because their nav was already one line short of the extra chevron's width or already
+ * wrapped for an unrelated reason. `HEADER_RESERVATION` itself did not move — the band each
+ * of those two rows falls in already reserved for a two-line nav (see the next section) —
+ * and the new tightest is 390px blocked at +31.0px, down from 320px blocked's +39.0px
+ * before this change but still clearly positive.
+ *
+ * Swept every 5px from 320px to 820px on /about, /insights and /investors, both ways, after
+ * this change: nothing falls below +31.0px blocked or +50.0px loaded. The floor to beat was
+ * 28px — what the hero had before the two-row phone header — so the whole range still
+ * clears it, with less margin at 390px than before but none of it gone.
  *
  * **Why each band reserves for a header one line TALLER than the one it shows.** This is
  * the part that keeps the table above from going stale on somebody else's machine. The
@@ -80,6 +94,16 @@
  *     take a face nearly a fifth wider than Inter, and is not budgeted for.
  *   - `md` and up, 62.0px in both faces, one row with 100%+ of slack on every element.
  *     `md:pt-28` = 112px, unchanged from before this fix, +50.0px.
+ *
+ * **This section predates the `About Us` chevron** (see the top of this docblock) and its
+ * table is left as originally measured rather than re-derived, because the nav's needed
+ * width is sensitive to how the flex row is measured mid-wrap and re-deriving it cleanly
+ * needs more care than this fix warrants. What matters is that its prediction came true
+ * exactly where it said it would: this section already argued the 390-767px band had to
+ * reserve for a two-line nav because 390px was "1.9% of width away" from wrapping, and the
+ * extra chevron's width is what closed that 1.9% gap — 390px now wraps at both fallback and
+ * webfont widths in the "blocked" column of the first table above, which `pt-36` already
+ * had headroom for. Nothing here needed to change as a result.
  *
  * The breakpoint is `md` at the top and a literal `min-[390px]:` below it, and neither is
  * interchangeable with `sm`. 320px and 375px are BOTH below `sm` (640px) and need different
