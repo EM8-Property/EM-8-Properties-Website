@@ -600,6 +600,40 @@ describe('navLabels on siteSettings', () => {
   })
 })
 
+describe('the realized-results heading', () => {
+  const settings = byName('siteSettings')
+  const heading = field(settings, 'dealStoryHeading')
+
+  it('is a siteSettings field, so the words are editable', () => {
+    /*
+     * Hunter's instruction, 2026-09-08: every string this PR writes has to be editable in
+     * the Studio. This was the only one that would have been a literal in TSX — the h2
+     * above a sold property's realized figures — so it is a field.
+     *
+     * On siteSettings rather than on the property, because it is a section label read by
+     * every property page rather than a fact about any one of them. Same reasoning as
+     * `ctaBand`, whose account of the "one record every page reads" rule is on that field.
+     */
+    expect(heading).toBeDefined()
+    expect(heading.type).toBe('string')
+  })
+
+  it('is optional, so blanking it cannot fail a build', () => {
+    /*
+     * Deliberately NOT required, unlike the nine nav labels. A missing nav label renders a
+     * tab with no words in it, which is a broken page; a missing heading here renders the
+     * deal figures with no heading, which is exactly how they looked on /track-record for
+     * the last three weeks. So the cost of an editor clearing it is a slightly plainer
+     * section, not 29 failed pages — and there is no reason to buy a tenth build-failure
+     * vector for a heading that degrades gracefully.
+     */
+    expect(heading.validation).toBeDefined()
+    const rules = captureValidation(heading.validation)
+    expect(rules.map((r: RuleCall) => r.method)).not.toContain('required')
+    expect(rules).toContainEqual({ method: 'max', arg: 60 })
+  })
+})
+
 describe('strategyPage', () => {
   const strategy = byName('strategyPage')
 
@@ -778,6 +812,45 @@ together rather than after the footer's disclaimer:
     }),
 ```
 
+Then, immediately after `navLabels`, the one other string this PR would otherwise have
+baked into a component:
+
+```ts
+    /**
+     * The heading above a sold property's realized deal figures, on /portfolio/[slug].
+     *
+     * A field rather than a literal on Hunter's instruction of 2026-09-08: every string
+     * this PR writes has to be editable in the Studio. It was the only one that would not
+     * have been — the nine nav labels and the Strategy page's heading are all CMS content
+     * already.
+     *
+     * On `siteSettings` because it is a section label every property page reads rather
+     * than a fact about any one property; `ctaBand` above carries the full account of that
+     * rule. Per-property it would be eleven copies of one phrase, drifting.
+     *
+     * Optional, unlike the nav labels, and the difference is what a blank one does. A
+     * missing nav label renders a tab with no words in it, so the layout throws. A missing
+     * heading here renders the figures with no heading — which is exactly how they looked
+     * on /track-record — so it degrades rather than failing, and there is no reason to buy
+     * a tenth build-failure vector for it.
+     *
+     * The three other headings on that page — "The business plan", "Location", and
+     * DealStory's own Acquired/Executed/Exited labels — are still literals. They predate
+     * this PR and moving them is a separate change; noted so the inconsistency is on the
+     * record rather than a surprise.
+     */
+    defineField({
+      name: 'dealStoryHeading',
+      title: 'Realized results heading',
+      type: 'string',
+      description:
+        'The heading above the realized figures on a sold property’s page — the deal ' +
+        'narrative and its equity multiple. Leave it empty to show those figures with no ' +
+        'heading above them.',
+      validation: (r) => r.max(60),
+    }),
+```
+
 - [ ] **Step 4: Add `aboutPage.whyEm8`**
 
 In `src/sanity/schema/pages.ts`, add to `aboutPage`'s field list immediately after
@@ -936,7 +1009,7 @@ this whole workstream — belongs to PR 3, not to this PR. **If you find yoursel
 
 **Interfaces:**
 - Consumes: nothing from earlier tasks. The nine key names match `NavKey` from Task 1 and the schema from Task 2; all three lists are written out independently and joined by `navigation.test.ts` and `schema.test.ts`.
-- Produces: `SITE_SETTINGS.navLabels` (nine strings), `PAGE_COPY.strategyPage`, `PAGE_SEO.strategyPage` in the seed module; the `nav-labels` step, runnable as `--only=nav-labels`. After the apply, the production dataset carries all nine labels and a published `strategyPage`.
+- Produces: `SITE_SETTINGS.navLabels` (nine strings), `SITE_SETTINGS.dealStoryHeading`, `PAGE_COPY.strategyPage`, `PAGE_SEO.strategyPage` in the seed module; the `nav-labels` step, runnable as `--only=nav-labels`. After the apply, the production dataset carries all nine labels, the realized-results heading, and a published `strategyPage`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -991,6 +1064,20 @@ describe('the seeded nav labels', () => {
       .map((k) => labels[k])
       .join('')
     expect(bar.length).toBeLessThanOrEqual(36)
+  })
+
+  it('seeds the realized-results heading, so there is something to rewrite', () => {
+    /*
+     * Optional in the schema, so the site is correct without it — but an unseeded optional
+     * field is a field nobody knows exists. Hunter's instruction was that every string this
+     * PR writes be editable in the Studio, and a blank field is not editable copy, it is an
+     * absent feature.
+     *
+     * "Realized" and not "targeted" or "projected": these are closed results. The
+     * compliance scan below covers this string because SITE_SETTINGS is in the blob.
+     */
+    expect((SITE_SETTINGS as any).dealStoryHeading).toBeTruthy()
+    expect((SITE_SETTINGS as any).dealStoryHeading.length).toBeLessThanOrEqual(60)
   })
 
   it('says nothing promissory and invents no figure', () => {
@@ -1068,6 +1155,16 @@ In `scripts/content/em8-content.mjs`, add to `SITE_SETTINGS` after `headerCta`:
     portfolio: 'Portfolio',
     insights: 'Insights',
   },
+  /**
+   * The heading above a sold property's realized figures. Backfilled by the same step as
+   * the labels, and only where the leaf is blank.
+   *
+   * Written rather than moved: on /track-record those figures had no heading at all, so
+   * there is nothing to transcribe. It is a field rather than a literal because every
+   * string this PR writes has to be editable — Hunter, 2026-09-08 — and it is optional, so
+   * clearing it in the Studio returns the section to how it looked before.
+   */
+  dealStoryHeading: 'Realized results',
 ```
 
 Add to `PAGE_COPY`, after `insightsPage`:
@@ -1136,26 +1233,35 @@ In `scripts/migrate-content.mjs`, add after `backfillHeaderCta`:
  * See docs/deploys-and-migrations.md.
  */
 async function backfillNavLabels(apply) {
-  const doc = await query('*[_id=="siteSettings"][0]{ navLabels }')
+  const doc = await query('*[_id=="siteSettings"][0]{ navLabels, dealStoryHeading }')
   if (!doc) {
     throw new Error(
       'nav-labels: no siteSettings document. Every page throws without one — create it ' +
         'in the Studio first.',
     )
   }
-  const existing = doc.navLabels
 
   const fill = {}
   for (const [leaf, value] of Object.entries(SITE_SETTINGS.navLabels)) {
-    if (!existing?.[leaf]) fill[`navLabels.${leaf}`] = value
+    if (!doc.navLabels?.[leaf]) fill[`navLabels.${leaf}`] = value
   }
+  /*
+   * The realized-results heading rides along, because it is the same kind of change to the
+   * same document: one blank leaf of chrome copy, filled once, never overwritten. A step of
+   * its own would be a third scoped apply against production for one string.
+   *
+   * It is the one leaf here the site does not require — see the field in
+   * src/sanity/schema/siteSettings.ts — so a run that fills the nine labels and leaves this
+   * alone because an editor has already reworded it is a correct run, not a partial one.
+   */
+  if (!doc.dealStoryHeading) fill.dealStoryHeading = SITE_SETTINGS.dealStoryHeading
 
   if (Object.keys(fill).length === 0) {
-    console.log('  nav labels  all nine already set — left untouched')
+    console.log('  nav labels  all nine labels and the deal heading already set — left untouched')
     return
   }
 
-  console.log(`  nav labels  filling ${Object.keys(fill).length} of 9:`)
+  console.log(`  nav labels  filling ${Object.keys(fill).length} of 10:`)
   for (const [path, value] of Object.entries(fill)) {
     console.log(`              ${path} -> "${value}"`)
   }
@@ -1166,6 +1272,9 @@ async function backfillNavLabels(apply) {
     headers: { ...auth, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       mutations: [
+        // The parent object first: a leaf path cannot be set inside an object that does
+        // not exist yet, and this is a no-op when it already does. `dealStoryHeading` is
+        // top-level and needs no parent, so this covers navLabels alone.
         { patch: { id: 'siteSettings', setIfMissing: { navLabels: {} } } },
         { patch: { id: 'siteSettings', set: fill } },
       ],
@@ -1177,6 +1286,10 @@ async function backfillNavLabels(apply) {
   console.log('  nav labels  backfilled')
 }
 ```
+
+Ten leaves in one step, nine of them required and one not. The step's name stays
+`nav-labels` — it is what the README, the commit and this plan all call it, and renaming a
+migration step for a tenth leaf costs more than the slight imprecision.
 
 Register it in `STEPS` after `'header-button'`:
 
@@ -1211,11 +1324,12 @@ node --env-file=.env.local scripts/migrate-content.mjs --only=pages
 Use the worktree's `.env.local` — it is the one holding `SANITY_API_WRITE_TOKEN`. A dry run
 writes nothing and names every document it would touch.
 
-Expected from the first: `SCOPE: nav-labels only`, then `filling 9 of 9` and the nine
-`navLabels.<key> -> "<label>"` lines. Nine, because the probe on 2026-09-08 confirmed
-`navLabels` absent. **If it says fewer than nine, stop and find out who wrote the others** —
-`set` on the blank leaves means an existing value is preserved, which is correct behaviour
-and a surprise worth understanding before writing.
+Expected from the first: `SCOPE: nav-labels only`, then `filling 10 of 10` — the nine
+`navLabels.<key> -> "<label>"` lines plus `dealStoryHeading -> "Realized results"`. Ten,
+because the probe on 2026-09-08 confirmed `navLabels` absent and `dealStoryHeading` is new
+in this PR. **If it says fewer than ten, stop and find out who wrote the others** — `set`
+on the blank leaves means an existing value is preserved, which is correct behaviour and a
+surprise worth understanding before writing.
 
 Expected from the second: `page      seeding strategyPage`, and
 `already exists — left untouched` for the other seven. **If it names any page other than
@@ -1252,7 +1366,7 @@ node --env-file=.env.local scripts/migrate-content.mjs --only=nav-labels
 node --env-file=.env.local scripts/migrate-content.mjs --only=pages
 ```
 
-Expected: `all nine already set — left untouched` and
+Expected: `all nine labels and the deal heading already set — left untouched` and
 `strategyPage already exists — left untouched`. A second dry run reporting work still
 pending is the `setIfMissing`-versus-falsiness trap firing, and it means the write did not
 do what the log claimed.
@@ -1269,12 +1383,14 @@ const q = async (g) => {
   return (await (await fetch(u, { headers: { Authorization: `Bearer ${tok}` } })).json()).result
 }
 console.log("navLabels:", JSON.stringify(await q(`*[_id=="siteSettings"][0].navLabels`)))
+console.log("dealHeading:", JSON.stringify(await q(`*[_id=="siteSettings"][0].dealStoryHeading`)))
 console.log("strategyPage:", JSON.stringify(await q(`*[_id=="strategyPage"][0]{ _type, heading, seo, "hasBody": defined(body) }`)))
 console.log("drafts:", JSON.stringify(await q(`*[_id in path("drafts.**")]{ _id, _type }`)))
 '
 ```
 
-Expected: all nine labels with their seeded values; `strategyPage` with `_type:
+Expected: all nine labels with their seeded values, `dealStoryHeading` as
+`"Realized results"`; `strategyPage` with `_type:
 "strategyPage"`, a complete `heading` and `seo`, and `hasBody: false`; and **`drafts: []`**.
 A draft appearing here means a write went to `drafts.<id>` — the 2026-08-31 fault, which
 every automated check stays green through and only the Studio shows.
@@ -2758,8 +2874,30 @@ conditions, and what to do when one fails:
 | the four nav labels appear in `items` at 390px and 320px | the nav is still gated on a breakpoint — the defect is unfixed |
 | `rows` is 2 at 390px and 320px, 1 at ≥768px | `basis-full` / `md:basis-auto` is wrong |
 | `clearance` on `/about` is **> 0** at 320px, 360px and 390px | raise `HEADER_RESERVATION`'s base value one step and re-measure |
-| `headerHeight` at 390px is within ~10px of 100px | over that, row one is wrapping — check whether Investor Login and the CTA fit beside the wordmark |
+| `headerHeight` at 390px is within ~10px of 100px | over that, row one is wrapping — see the note below |
 | `/about` `screens` has not grown by more than ~0.1 | the header is eating scroll §6 has to reclaim; record it either way |
+
+**If row one wraps at 320px, that is when a menu button earns its place back.**
+
+Hunter asked, 2026-09-08, whether the hamburger should still exist on mobile. With the nav
+visible it has nothing to hold: all four parents are in row two, each panel carries its own
+disclosure, both actions are in row one, and every destination is in the footer as well. To
+be *useful* it would have to repeat destinations already in the bar — which puts two nodes
+with the same accessible name in the tree, breaks `getByRole` for every consumer and makes
+the nav ambiguous to a screen reader. That is the exact regression `mobileNav.test.tsx` was
+written to catch, and it is why the default here is no hamburger.
+
+There is one shape where a menu button is the cheaper answer, and it is a measurement rather
+than a preference: if `EM8 PROPERTIES` + `Investor Login` + `Invest With Us` will not fit a
+320px row, `flex-wrap` puts the header on a **third** row and it grows again — spending more
+of the clearance and more of the scroll §6 has to reclaim. In that case move **Investor
+Login alone** behind a small labelled menu button on row one, keeping the four nav labels and
+the CTA visible. That is a control with something real behind it, it duplicates no
+accessible name, and Investor Login stays reachable from the footer either way.
+
+Record the measured row count at 320px and say which branch you took. Do not take the
+fallback pre-emptively: a third row may simply not happen, and an unnecessary menu button is
+the thing Etamar complained about.
 
 - [ ] **Step 7: Measure the worst case an editor can type**
 
@@ -3580,12 +3718,13 @@ Verified against the live dataset on 2026-09-08: Burbank Manor Apartments (1.99x
 populated `dealStory`, both `showInPortfolio: true`.
 
 **Files:**
+- Modify: `src/sanity/queries.ts` (`SITE_SETTINGS_QUERY` gains `dealStoryHeading`)
 - Modify: `src/app/(site)/portfolio/[slug]/page.tsx:106-117`
 - Modify: `src/components/property/DealStory.tsx:26-33`
 - Test: `tests/unit/dealStory.test.tsx:17-21` — both the component change and the new call site, because there is no property-page scanner today and the component and its one remaining call site are now the same concern
 
 **Interfaces:**
-- Consumes: `DealStory` from `@/components/property/DealStory`; `p.dealStory` and `p.status`, both already projected by `PROPERTY_BY_SLUG_QUERY`.
+- Consumes: `DealStory` from `@/components/property/DealStory`; `p.dealStory` and `p.status`, both already projected by `PROPERTY_BY_SLUG_QUERY`; `siteSettings.dealStoryHeading` from Tasks 2 and 3, which this task adds to `SITE_SETTINGS_QUERY`.
 - Produces: nothing importable. `DealStory`'s stage labels become `h3` rather than `h4`.
 
 - [ ] **Step 1: Write the failing test**
@@ -3634,11 +3773,30 @@ describe('where the deal story renders', () => {
     expect(propertyPage).toMatch(/p\.dealStory\s*&&/)
   })
 
-  it('sits under a heading of its own, at the level below it', () => {
-    // The page's other two blocks — "The business plan" and "Location" — are h2s under the
-    // property's h1. A block of content with no heading between them reads as a
-    // continuation of the one above it.
-    expect(propertyPage).toMatch(/<h2[^>]*>\s*Realized results/)
+  it('sits under a heading from the CMS, at the level below it', () => {
+    /*
+     * The page's other two blocks — "The business plan" and "Location" — are h2s under the
+     * property's h1, so a block of content with no heading between them reads as a
+     * continuation of the one above it.
+     *
+     * And the words come from `siteSettings.dealStoryHeading`, not from this file. Hunter's
+     * instruction of 2026-09-08: every string this PR writes has to be editable in the
+     * Studio, and this was the only one that would not have been. Asserted as the absence
+     * of the literal as well as the presence of the field, because reading the field would
+     * pass just as happily against a component that also hardcoded a fallback.
+     */
+    expect(propertyPage).toMatch(/<h2[^>]*>\s*\{settings\?\.dealStoryHeading\}/)
+    expect(propertyPage).not.toContain('Realized results')
+  })
+
+  it('renders the figures with no heading when that field is blank', () => {
+    /*
+     * The field is optional, so this is a state an editor can produce in one keystroke —
+     * and it is how these figures looked on /track-record, which had no heading above them
+     * at all. So the guard is on the heading alone: clearing the words must not take the
+     * 1.99x multiple off the site with them.
+     */
+    expect(propertyPage).toMatch(/settings\?\.dealStoryHeading\s*&&/)
   })
 })
 ```
@@ -3671,7 +3829,42 @@ contains no `DealStory`. The level-3 one fails with
 level that matches nothing throws rather than returning an empty array, so read the message
 rather than the assertion.
 
-- [ ] **Step 3: Render it on the property page**
+- [ ] **Step 3: Project the heading, or it reads as blank forever**
+
+`settings` on the property page is the result of `SITE_SETTINGS_QUERY`, so a field that is
+not in that projection arrives as `undefined` however well it is filled in the Studio — and
+because `dealStoryHeading` is deliberately *optional*, **nothing would report it**. The
+layout's guard only walks `REQUIRED_SITE_SETTINGS`, the release gate builds its projection
+from the same array, and the section simply renders headingless. That is the three-edit trap
+from Task 4 in its quieter form: two edits instead of three, and no failure at all rather
+than a loud one.
+
+So add it to `SITE_SETTINGS_QUERY` in `src/sanity/queries.ts`, after `navLabels { … }`:
+
+```
+    dealStoryHeading,
+```
+
+And assert it, because no guard will:
+
+```ts
+  it('projects the realized-results heading, which no guard would miss for you', () => {
+    /*
+     * `dealStoryHeading` is optional by design, so it is not in REQUIRED_SITE_SETTINGS —
+     * which means the layout's throw and the release gate both ignore it. Left out of the
+     * projection it is `undefined` on every property page no matter what the Studio holds,
+     * and the only symptom is a heading that never appears. This assertion is the whole of
+     * the protection.
+     */
+    expect(SITE_SETTINGS_QUERY).toContain('dealStoryHeading')
+  })
+```
+
+Put it in `tests/unit/queries.test.ts`, beside
+`selects both leaves of the header button, not just the object`, which exists for the same
+reason about the same query.
+
+- [ ] **Step 4: Render it on the property page**
 
 In `src/app/(site)/portfolio/[slug]/page.tsx`, add the import beside the others:
 
@@ -3701,9 +3894,17 @@ And add after the `businessPlan` block, before `<OfferingBlock>`:
           */}
           {p.status === 'sold' && p.dealStory && (
             <>
-              <h2 className="mt-8 text-lg font-bold tracking-tight text-ink">
-                Realized results
-              </h2>
+              {/*
+                The heading is CMS copy and the figures are not conditional on it. The
+                field is optional, so an editor can clear it in one keystroke — and that
+                is how these figures looked on /track-record, which carried no heading
+                above them. Clearing the words must not take the multiple with them.
+              */}
+              {settings?.dealStoryHeading && (
+                <h2 className="mt-8 text-lg font-bold tracking-tight text-ink">
+                  {settings.dealStoryHeading}
+                </h2>
+              )}
               <DealStory story={p.dealStory} />
             </>
           )}
@@ -3720,7 +3921,7 @@ because this is now the only place a realized deal is described:
  */
 ```
 
-- [ ] **Step 4: Move `DealStory`'s labels down a level**
+- [ ] **Step 5: Move `DealStory`'s labels down a level**
 
 In `src/components/property/DealStory.tsx`, change the `<h4>` to `<h3>` and extend the
 docblock:
@@ -3740,15 +3941,16 @@ docblock:
  */
 ```
 
-- [ ] **Step 5: Run the tests and watch them pass**
+- [ ] **Step 6: Regenerate types, then run the tests and watch them pass**
 
 ```bash
-npx vitest run tests/unit/dealStory.test.tsx && npm test
+npm run typegen
+npx vitest run tests/unit/dealStory.test.tsx tests/unit/queries.test.ts && npm test
 ```
 
 Expected: green apart from Task 1's footer assertion.
 
-- [ ] **Step 6: Read the rendered page, on both a sold property and an unsold one**
+- [ ] **Step 7: Read the rendered page, on both a sold property and an unsold one**
 
 The gate is the part worth verifying against real data, and both directions matter:
 
@@ -3776,10 +3978,10 @@ curl -s http://localhost:3000/portfolio/burbank-manor-apartments | grep -o "<h[1
 Expected: one `h1`, several `h2`, three `h3`, and **no `h4`**. An `h4` still present means
 the component change did not land or something else on the page uses one.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add "src/app/(site)/portfolio/[slug]/page.tsx" src/components/property/DealStory.tsx tests/unit/dealStory.test.tsx
+git add "src/app/(site)/portfolio/[slug]/page.tsx" src/components/property/DealStory.tsx src/sanity/queries.ts src/sanity/types.generated.ts tests/unit/dealStory.test.tsx tests/unit/queries.test.ts
 git commit -m "Render the realized deal story on the property page, gated on sold"
 ```
 
