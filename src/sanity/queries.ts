@@ -115,6 +115,10 @@ export const SITE_SETTINGS_QUERY = defineQuery(
   `*[_type == "siteSettings"][0] {
     agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,
     headerCta { label, href },
+    navLabels {
+      aboutUs, aboutEm8, whyEm8, ourTeam,
+      strategy, whyMidwest, partners, portfolio, insights
+    },
     ctaBand {
       heading { eyebrow, title, intro },
       submitLabel, successMessage, callTitle, callBody, callLabel

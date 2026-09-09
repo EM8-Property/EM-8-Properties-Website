@@ -62,6 +62,68 @@ export const REQUIRED_SITE_SETTINGS: readonly RequiredLeaf[] = [
     groq: '"ctaBandSubmitLabel": ctaBand.submitLabel',
     describe: 'ctaBand.submitLabel — the closing form has an unlabelled submit button',
   },
+  /*
+   * The nine navigation labels, spec §5. Hunter's decision of 2026-09-08 put the words in
+   * Sanity and left the structure in code; `src/lib/navigation.ts` is the other half, and
+   * `navigation.test.ts` joins the two lists in both directions so neither can grow a node
+   * the other does not know about.
+   *
+   * Required rather than defaulted. A label falling back to a literal in the component is
+   * the constants.ts fallback pattern this project removed — "There is no constants.ts
+   * fallback and no sanity:sync script — both were failure modes on the old site. Missing
+   * required content fails the build loudly rather than rendering a broken shell." A tab
+   * reading `undefined` is that shell.
+   *
+   * Every one is nested, so every one carries an aliased projection. That is not stylistic:
+   * `content-integrity` rebuilds the nested value from the flat row by reading
+   * `leaf.groq.split('"')[1]` as the alias, and an unaliased nested projection is invalid
+   * GROQ besides. `requiredContent.test.ts` enforces both the aliasing and the uniqueness.
+   */
+  {
+    path: 'navLabels.aboutUs',
+    groq: '"navAboutUs": navLabels.aboutUs',
+    describe: 'navLabels.aboutUs — the first nav tab renders with no words in it',
+  },
+  {
+    path: 'navLabels.aboutEm8',
+    groq: '"navAboutEm8": navLabels.aboutEm8',
+    describe: 'navLabels.aboutEm8 — the About Us menu has an unlabelled link to /about',
+  },
+  {
+    path: 'navLabels.whyEm8',
+    groq: '"navWhyEm8": navLabels.whyEm8',
+    describe: 'navLabels.whyEm8 — the About Us menu has an unlabelled link to /about#why-em8',
+  },
+  {
+    path: 'navLabels.ourTeam',
+    groq: '"navOurTeam": navLabels.ourTeam',
+    describe: 'navLabels.ourTeam — the About Us menu has an unlabelled link to /about#team',
+  },
+  {
+    path: 'navLabels.strategy',
+    groq: '"navStrategy": navLabels.strategy',
+    describe: 'navLabels.strategy — the second nav tab renders with no words in it',
+  },
+  {
+    path: 'navLabels.whyMidwest',
+    groq: '"navWhyMidwest": navLabels.whyMidwest',
+    describe: 'navLabels.whyMidwest — the Strategy menu has an unlabelled link to /strategy',
+  },
+  {
+    path: 'navLabels.partners',
+    groq: '"navPartners": navLabels.partners',
+    describe: 'navLabels.partners — the Strategy menu has an unlabelled link to /partners',
+  },
+  {
+    path: 'navLabels.portfolio',
+    groq: '"navPortfolio": navLabels.portfolio',
+    describe: 'navLabels.portfolio — the Portfolio tab renders with no words in it',
+  },
+  {
+    path: 'navLabels.insights',
+    groq: '"navInsights": navLabels.insights',
+    describe: 'navLabels.insights — the Insights tab renders with no words in it',
+  },
 ] as const
 
 function valueAt(source: unknown, path: string): unknown {
