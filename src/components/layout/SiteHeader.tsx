@@ -29,7 +29,16 @@ export type HeaderCta = { label: string; href: string }
  * **Why two rows.** The wordmark, Investor Login and the CTA already fill a 390px row
  * between them, so the nav gets its own: `basis-full md:basis-auto` on the `<nav>`, inside
  * the `flex-wrap` container that has always been here. Nothing about the desktop layout
- * changes — from `md` it is the single row it has always been.
+ * changes — from `md` it is the single row it has always been, and `md:ms-auto md:me-5` on
+ * the `<nav>` is what keeps that sentence true. Without them the container's
+ * `justify-between` had three children instead of two and spread them, putting the nav in
+ * the middle of the bar (measured at 1280px: nav x=436, actions x=975) where before this
+ * task the nav, Investor Login and the CTA were one cluster against the right edge. The
+ * auto inline-start margin gives the free space to the nav instead of splitting it, and
+ * `me-5` restores the 20px that the old single `<nav>`'s own `md:gap-5` used to put
+ * between `Insights` and `Investor Login`. Measured after: wordmark x=64, nav x=668 with
+ * its inline end at 955, actions x=975, CTA right edge 1216 — flush with the 1200px
+ * measure's inline end (1280 − 64), which is where it sat before this task.
  *
  * **What it costs, and where that is paid.** The header goes from 68px to roughly 100px on
  * a phone, and the hero reserves space for it because it sits *over* the photograph. At
@@ -63,6 +72,14 @@ export type HeaderCta = { label: string; href: string }
  * `absolute end-6 top-full` against the header now, so revealing it moves the header
  * height by 0px at every width. The E2E test that taps the button re-measures the
  * clearance afterwards, which the first version of it did not.
+ *
+ * **So are the two nav panels, for the same reason and after the same defect.** They
+ * shipped `static` below `md` and cost the header 73-97px on open (88.5→186px at 390px,
+ * 113→186px at 320px), taking /about's eyebrow to −58.0px and /insights' to −24.3px. They
+ * are `absolute start-6 top-full` against this header now — see `NavDropdown`, which has
+ * the full account. Two disclosures in this header, one pattern, and the rule they both
+ * answer to is `headerReservation.ts`'s: the header's height must not depend on an
+ * interaction.
  *
  * The nav labels come from `siteSettings.navLabels`; which nodes exist and where they point
  * comes from `src/lib/navigation.ts`. "Investor Login" is still a literal, deliberately: it
@@ -282,10 +299,20 @@ export function SiteHeader({
           far right. The wordmark's implicit `order: 0` sorts before 2 before 3, so the
           numbered pair reads wordmark, nav, actions and the CTA is at the far right again.
           Verified by measuring x-positions at 1280px, not by reading the rule.
+
+          `md:ms-auto md:me-5` finishes that job, and the order pair alone did not. Order
+          fixes the SEQUENCE; `justify-between` still spread three children across the bar
+          and left the nav in the middle of it (nav x=436, actions x=975 at 1280px), where
+          this task's premise is that the desktop bar is unchanged and before it the nav,
+          Investor Login and the CTA were one cluster at the right. `ms-auto` hands the free
+          space to the nav rather than splitting it, and `me-5` is the 20px the old single
+          `<nav>`'s `md:gap-5` used to leave between `Insights` and `Investor Login`. Both
+          are `md:`-only: below `md` this element is `basis-full` and there is no free space
+          on its row to absorb. Logical properties, never `mr-`/`ml-`.
         */}
         <nav
           id="site-nav"
-          className="order-last flex basis-full flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold uppercase tracking-wide text-ink-secondary md:order-2 md:basis-auto md:text-xs md:font-medium md:normal-case md:tracking-normal"
+          className="order-last flex basis-full flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold uppercase tracking-wide text-ink-secondary md:order-2 md:ms-auto md:me-5 md:basis-auto md:text-xs md:font-medium md:normal-case md:tracking-normal"
         >
           {NAV_TREE.map((node: NavNode) =>
             node.children ? (

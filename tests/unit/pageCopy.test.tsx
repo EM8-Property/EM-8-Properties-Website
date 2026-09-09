@@ -46,7 +46,7 @@ describe('page copy schema', () => {
 
 describe('seeded page copy', () => {
   it('carries copy for every page that has any', () => {
-    // Six, not four. /portfolio and /insights joined when their headings moved out of
+    // Seven, not four. /portfolio and /insights joined when their headings moved out of
     // TSX; /strategy joined too, as the one page whose heading was never in TSX at all.
     // Each carries a heading (and /strategy an empty body), the rest of every page being
     // generated from the property and post collections.

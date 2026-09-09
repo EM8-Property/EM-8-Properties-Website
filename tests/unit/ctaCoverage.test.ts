@@ -28,9 +28,8 @@ const routes = pageFiles(siteDir).map((file) => ({ file, route: routeOf(file) })
  *
  * Five did not: /about, /insights, /insights/[slug], /portfolio and /track-record (deleted
  * in Task 10) ran their content and then stopped at the footer disclaimer. Spec §3 closes
- * the narrative
- * with a call to action, and /insights exists to be linked from LinkedIn — an article that
- * ends with nothing to do next wastes the arrival it was written to earn.
+ * the narrative with a call to action, and /insights exists to be linked from LinkedIn —
+ * an article that ends with nothing to do next wastes the arrival it was written to earn.
  *
  * `/investors` and `/partners` are the two exceptions, and deliberately so: each already
  * leads with a full form. A second, lower-friction email capture underneath would compete

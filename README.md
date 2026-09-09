@@ -69,9 +69,11 @@ a stale set of fields.
 
 `siteSettings` is a pinned singleton — one document, not creatable twice. It holds both of
 the header's buttons: Investor Login's destination (`agoraPortalUrl`) and the dark button
-beside it (`headerCta`), whose label *and* destination are both editable. The five nav
-labels and the words "Investor Login" are still literals in `SiteHeader.tsx` — they name
-routes and a third-party product rather than carrying copy.
+beside it (`headerCta`), whose label *and* destination are both editable. The nine nav
+labels are `siteSettings.navLabels`, required content leaf by leaf — Sanity owns the words
+while `src/lib/navigation.ts` owns the structure and the destinations. Only the words
+"Investor Login" are still a literal in `SiteHeader.tsx`: that one names a third-party
+product rather than carrying copy.
 
 ## Non-negotiables
 

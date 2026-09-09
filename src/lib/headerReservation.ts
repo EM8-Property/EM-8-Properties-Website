@@ -36,10 +36,13 @@
  * E2E assertion at 320px on /about is what proves this number is still right, and it is the
  * first thing that fails if the header grows again.
  *
- * For the same reason, the header's height must not depend on an interaction. It briefly
- * did: revealing Investor Login below `md` wrapped row one and took the header to 155px at
- * 320px, which is 27px of eyebrow *underneath* the bar against the 128px this reserves.
- * That link is out of flow below `md` now — see `SiteHeader.tsx`.
+ * For the same reason, the header's height must not depend on an interaction. It has twice:
+ * revealing Investor Login below `md` wrapped row one and took the header to 155px at
+ * 320px, which is 27px of eyebrow *underneath* the bar against the 128px this reserves;
+ * and opening a nav panel, which was an in-flow block below `md`, took it to 186px at
+ * every phone width — 58px of eyebrow under the bar on /about and 24px on /insights. Both
+ * disclosures are out of flow below `md` now, and both are pinned by an E2E height-delta
+ * assertion — see `SiteHeader.tsx` and `NavDropdown.tsx`.
  *
  * The breakpoint is `md`, not `sm`, and the 640-767px row above is what settles it. The
  * header is still 88.5px — two bands — at 767px. Relaxing the reservation at `sm` (640px)

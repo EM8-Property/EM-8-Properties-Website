@@ -142,12 +142,24 @@ describe('the phone header', () => {
      * edge. Every test was green, and the comment above the class string claimed the
      * opposite of what it did.
      *
-     * The wordmark's implicit `order: 0` sorts before 2 before 3. Measured at 1280px after
-     * the fix: wordmark x=64, nav x=440, actions x=929 with the CTA's right edge at 1216.
+     * The wordmark's implicit `order: 0` sorts before 2 before 3.
+     *
+     * `md:ms-auto md:me-5` is the other half, and the order pair alone left the docblock on
+     * the component false: order fixes the sequence, but the container's `justify-between`
+     * then had three children instead of two and spread them, leaving the nav in the middle
+     * of the bar (nav x=436, actions x=975 at 1280px) where before this task the nav,
+     * Investor Login and the CTA were one cluster against the right edge. `ms-auto` gives
+     * the free space to the nav rather than splitting it; `me-5` is the 20px the old single
+     * `<nav>`'s `md:gap-5` used to leave between `Insights` and `Investor Login`.
+     *
+     * Measured at 1280px after both: wordmark x=64, nav x=668 ending at 955, actions x=975,
+     * CTA right edge 1216 — the inline end of the 1200px measure (1280 − 64).
      */
     const { container } = render(<SiteHeader {...props} />)
     expect(container.querySelector('#site-nav')!.className).toContain('md:order-2')
     expect(container.querySelector('#header-actions')!.className).toContain('md:order-3')
+    expect(container.querySelector('#site-nav')!.className).toContain('md:ms-auto')
+    expect(container.querySelector('#site-nav')!.className).toContain('md:me-5')
   })
 
   it('renders every destination exactly once, panels included', () => {

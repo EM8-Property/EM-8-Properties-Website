@@ -268,7 +268,7 @@ export const siteSettings = defineType({
      * already.
      *
      * On `siteSettings` because it is a section label every property page reads rather
-     * than a fact about any one property; `ctaBand` above carries the full account of that
+     * than a fact about any one property; `ctaBand` below carries the full account of that
      * rule. Per-property it would be eleven copies of one phrase, drifting.
      *
      * Optional, unlike the nav labels, and the difference is what a blank one does. A

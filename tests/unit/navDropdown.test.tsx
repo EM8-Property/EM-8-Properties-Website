@@ -304,6 +304,37 @@ describe('NavDropdown, a parent with no destination', () => {
     expect(screen.getByRole('link', { name: 'Our Team' })).toBeDefined()
   })
 
+  it('keeps the panel out of flow at every width, not only from md up', () => {
+    /*
+     * The Critical fix, pinned where jsdom can see it.
+     *
+     * The panel shipped `static` below `md` — an in-flow `w-full` block inside a group that
+     * is a flex item of the wrapping `<nav>` — so opening it made the header taller
+     * (88.5→186px at 390px, 113→186px at 320px) and the hero, which reserves a FIXED
+     * `HEADER_RESERVATION`, put its eyebrow 58px UNDER the bar on /about. Every unit test,
+     * `tsc`, ESLint and `next build` were green through it.
+     *
+     * Two tokens carry the fix and both are asserted: `absolute` with no breakpoint prefix,
+     * and the ABSENCE of a bare `relative` on the group, which is what makes the `<header>`
+     * the containing block below `md` so the panel hangs off the header's bottom edge
+     * rather than off a nav label that may itself be on line one of a wrapped nav.
+     *
+     * jsdom evaluates no stylesheet, so the class strings are the only thing it can check;
+     * the geometry is asserted on a real build by the four `opening the … nav panel does
+     * not change the header's height` E2E tests, which fail with the numbers above against
+     * either mutation.
+     */
+    const { container } = render(<NavDropdown node={aboutUs} labels={LABELS} />)
+
+    const panel = container.querySelector('#nav-panel-aboutUs')!
+    expect(panel.className).toMatch(/(?:^|\s)absolute(?:\s|$)/)
+    expect(panel.className).toMatch(/(?:^|\s)top-full(?:\s|$)/)
+
+    const group = container.firstElementChild!
+    expect(group.className).toContain('md:relative')
+    expect(group.className).not.toMatch(/(?:^|\s)relative(?:\s|$)/)
+  })
+
   it('uses no physical-direction utilities', () => {
     const { container } = render(<NavDropdown node={aboutUs} labels={LABELS} />)
     expect(container.innerHTML).not.toMatch(PHYSICAL)

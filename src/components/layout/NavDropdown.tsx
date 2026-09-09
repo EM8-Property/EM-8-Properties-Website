@@ -183,7 +183,27 @@ export function NavDropdown({
 
   return (
     <div
-      className="relative"
+      /*
+       * `md:relative`, and the absence of `relative` below it is the whole fix.
+       *
+       * The panel is `absolute` at every width now (see below), so what this class governs
+       * is which box it is absolute AGAINST. From `md` up this group is the containing
+       * block and the panel hangs under its own label, which is where a desktop dropdown
+       * belongs and where it has always been. Below `md` there is deliberately no
+       * positioned ancestor here, so the panel resolves against the `<header>` — which is
+       * `relative` or `absolute` in both of `SiteHeader`'s branches — and hangs off the
+       * header's bottom edge instead.
+       *
+       * Anchoring to this group below `md` was tried and is wrong for the same reason
+       * anchoring Investor Login to the actions row was: the nav itself wraps below 375px
+       * — at 320px `Portfolio` ends at x=272.9 against 272px of content width, so
+       * `Insights` is on line two at y=80.5 — and a panel hanging under a line-one label
+       * lands on top of it. Measured against this mutation: the `About Us` panel covered
+       * `Insights` by 30.6x16.5px at 320px, in the task whose whole purpose is that the nav
+       * labels are visible. Off the header's bottom edge it covers the top of the
+       * photograph instead, which nothing depends on.
+       */
+      className="md:relative"
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
       onKeyDown={onKeyDown}
@@ -225,15 +245,45 @@ export function NavDropdown({
       </span>
 
       {/*
-        Static below md and absolute from md up: on a phone the group opens as a sheet that
-        pushes the rest of the bar down, and on a pointer device it floats over the page.
-        §5 asks for both. One element in both cases, so the accessible names stay unique.
+        **Out of flow at every width, and below `md` that is a correctness requirement
+        rather than a styling choice.**
+
+        It shipped `static` below `md` — an in-flow `w-full` block inside a group that is
+        itself a flex item of the wrapping `<nav>` — on the theory that a phone wants a
+        sheet that pushes the rest of the bar down. It cannot: the hero reserves a FIXED
+        amount of top space for the header (`src/lib/headerReservation.ts`), so anything
+        that makes the header taller on an interaction puts the first line of hero copy
+        UNDERNEATH a translucent bar. Measured on a production build: opening a panel took
+        the header 88.5→186px at 390px and 113→186px at 320px, and /about's eyebrow from
+        +39.5px and +15.0px of clearance to −58.0px at both. /insights went +73.3→−24.3px.
+        Four of the seven section pages. It also did not read as a menu — an in-flow item in
+        a `flex-wrap` row interleaves with the row's remaining items, so `About EM8` painted
+        beside `Strategy` and `Portfolio` and the bar looked scrambled rather than opened.
+
+        This is the identical defect commit 8cdcc6a fixed for the Investor Login link one
+        row up, so it takes the identical shape: `absolute top-full` against the header,
+        `bg-ground` so it is readable over the photograph it now floats above, and a 0.0px
+        header-height delta at every width. Two disclosures in this header, one pattern.
+
+        `start-6` lines its inline start up with the nav's own, which the container's `px-6`
+        sets; `md:start-0` is the static position it resolves to from `md` up, where the
+        containing block is the group rather than the header. `start-`, never `left-`:
+        physical-direction utilities are what a Hebrew RTL phase would have to rewrite, and
+        ESLint rejects them under `src/`.
+
+        One class string rather than a `md:`-prefixed override of a different mobile
+        treatment, because there is no longer anything for the breakpoint to change: the
+        card is the same card in both cases and only its anchor differs. Deliberately not
+        `text-white` on anything — spec §9 lists seven `text-white`-on-a-moving-token
+        pairings the dark re-theme has to unpick and this surface is not becoming the eighth.
+
+        One element for both breakpoints, so the accessible names stay unique.
       */}
       <div
         ref={panelRef}
         id={panelId}
         hidden={!open}
-        className="mt-2 flex w-full flex-col gap-2 ps-3 md:absolute md:top-full md:z-50 md:mt-1 md:w-44 md:gap-0 md:rounded-card md:border md:border-rule md:bg-ground md:p-2 md:shadow-sm md:ps-2"
+        className="absolute start-6 top-full z-50 mt-1 flex w-44 flex-col rounded-card border border-rule bg-ground p-2 shadow-sm md:start-0"
       >
         {children.map((child) => (
           <Link
@@ -243,7 +293,7 @@ export function NavDropdown({
               close(false)
               onNavigate?.()
             }}
-            className="rounded-control px-1 py-1.5 text-ink-secondary hover:bg-panel hover:text-ink md:px-2"
+            className="rounded-control px-2 py-1.5 text-ink-secondary hover:bg-panel hover:text-ink"
           >
             {labels[child.key]}
           </Link>

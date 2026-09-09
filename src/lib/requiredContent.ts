@@ -7,7 +7,7 @@
  * layout and not by the release gate, so a document missing any of them passed the gate
  * and then failed `next build` at deploy time — the worst place to meet it. The
  * 2026-09-03 handover predicted this drift and said deriving both from one array "would
- * make the next required field free". §5 of the 2026-09-08 spec adds ten nav labels, so
+ * make the next required field free". §5 of the 2026-09-08 spec adds nine nav labels, so
  * this is that array, written before they arrive.
  *
  * Imports nothing, deliberately: a React Server Component and a Vitest integration test

@@ -687,6 +687,100 @@ for (const width of [320, 375] as const) {
 }
 
 /*
+ * Opening a nav panel does not change the header's height either — the same assertion, for
+ * the header's other disclosure, after the same defect.
+ *
+ * The panel shipped as an in-flow `w-full` block below `md`, inside a group that is itself
+ * a flex item of the wrapping `<nav>`, so revealing it made the header taller: measured on
+ * a production build, 88.5→186px at 390px and 113→186px at 320px, which against the FIXED
+ * `HEADER_RESERVATION` put /about's eyebrow 58.0px under a translucent bar (from +39.5px
+ * and +15.0px) and /insights' 24.3px under it. Four of the seven section pages.
+ *
+ * Nothing in the suite reported it, and the panel HAD an E2E test: it ran on `/`, the one
+ * route with 332px of hero slack, and asserted `aria-expanded`, the URL and a link count —
+ * no geometry at all. A test that performs the gesture and checks nothing about its
+ * consequence is worse than no test, because it looks like coverage. That is the second
+ * time this exact hole appeared in this header (see the Investor Login tests above), so
+ * this one runs where it can fail: a band page, at the two widths that bracket the nav's
+ * own wrap, asserting the same two things as its sibling — the height DELTA, because a
+ * clearance-only assertion goes green again if someone pads `HEADER_RESERVATION` to cover
+ * an interactive header height, and the clearance, because that is what a reader sees.
+ *
+ * Both panels, because they are two instances with different anchors and different
+ * children (`aboutUs` renders two of its three here, `strategy` two).
+ *
+ * The third assertion is the one that pins WHICH box the panel is absolute against. Off the
+ * header's bottom edge it covers the top of the photograph, which nothing depends on;
+ * anchored to its own group it would hang from a line-one nav label and land on top of
+ * `Insights`, which wraps to line two below 375px — the mistake the Investor Login popover
+ * made first, in the task whose whole purpose is that the nav labels are visible.
+ */
+for (const width of [320, 390] as const) {
+  for (const key of ['aboutUs', 'strategy'] as const) {
+    test(`opening the ${key} nav panel does not change the header's height at ${width}px`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 812 })
+      await page.goto('/about')
+
+      const header = page.locator('header')
+      const eyebrow = page.locator('[data-hero-overlay] p').first()
+
+      const measure = async () => {
+        const h = (await header.boundingBox())!
+        const e = (await eyebrow.boundingBox())!
+        return { height: h.height, clearance: e.y - (h.y + h.height) }
+      }
+
+      const before = await measure()
+      expect(
+        before.clearance,
+        `the eyebrow is already under the header at ${width}px before any interaction`,
+      ).toBeGreaterThan(0)
+
+      const toggle = page.locator(`#site-nav button[aria-controls="nav-panel-${key}"]`)
+      await expect(toggle).toBeVisible()
+      await toggle.click()
+
+      // The gesture did what it is for, so the measurements below are of an OPEN panel.
+      const panel = page.locator(`#nav-panel-${key}`)
+      await expect(panel).toBeVisible()
+      await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+
+      const after = await measure()
+      expect(
+        after.height,
+        `opening the ${key} panel moved the header from ${before.height}px to ${after.height}px at ${width}px — it must be out of flow below md`,
+      ).toBeCloseTo(before.height, 1)
+      expect(
+        after.clearance,
+        `the eyebrow renders under the overlaid header at ${width}px once the ${key} panel is open`,
+      ).toBeGreaterThan(0)
+
+      // And it hangs below the header rather than over it: no header item is covered.
+      const panelBox = (await panel.boundingBox())!
+      const items = [
+        ...(await page.locator('#site-nav > *').all()),
+        page.locator('#header-actions a[href^="/"]'),
+        page.locator('header a[href="/"]').first(),
+      ]
+      for (const item of items) {
+        const box = (await item.boundingBox())!
+        const dx =
+          Math.min(panelBox.x + panelBox.width, box.x + box.width) - Math.max(panelBox.x, box.x)
+        const dy =
+          Math.min(panelBox.y + panelBox.height, box.y + box.height) -
+          Math.max(panelBox.y, box.y)
+        expect(
+          dx > 0 && dy > 0,
+          `the open ${key} panel covers "${(await item.innerText()).trim().split('\n')[0]}" at ${width}px, by ${dx.toFixed(1)}x${dy.toFixed(1)}px`,
+        ).toBe(false)
+      }
+    })
+  }
+}
+
+/*
  * The panel opens on a tap and does not navigate on that tap.
  *
  * §5's requirement for a touch device, and the case a hover-only panel fails silently:
