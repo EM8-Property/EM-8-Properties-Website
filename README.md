@@ -17,7 +17,7 @@ record, or a blog.
 | `docs/disclaimer-draft.md` | Unreviewed draft footer disclaimer, pending securities counsel. |
 | `docs/deploys-and-migrations.md` | How the dataset and the code ship separately, and the ordering rule that keeps the live site up. Read before applying any migration. |
 | `docs/resource-budget.md` | Why the Lighthouse budget is where it is, and two image traps. |
-| `docs/handover-2026-09-03.md` | Current state, what shipped, and what is still open with an owner for each. The only handover in version control — earlier ones were untracked and went stale in place. |
+| `docs/handover-2026-09-09.md` | Current state, what shipped, and what is still open with an owner for each. Supersedes `handover-2026-09-03.md`, which it keeps beside it — both are in version control, unlike every handover before them. |
 
 ## Getting started
 
@@ -332,6 +332,60 @@ first two entries together — they are the same lesson from opposite ends.
   `docs/handover-2026-09-03.md`, so they went stale in place. Run
   `git log --oneline -1 origin/main` and query Railway for the deployed hash before
   trusting any SHA written in prose.
+
+### Found on 2026-09-09
+
+Both of this day's faults passed `next build`, the unit suite, `tsc`, ESLint and
+Lighthouse. One was found by measuring the rendered page in a state nobody had thought to
+measure; the other by CI rendering in a font nobody had thought about.
+
+- **CI renders with fallback fonts, and the header grows 40px in them.** `npm run test:e2e`
+  passed locally and failed in CI on four clearance tests. The wider fallback face makes the
+  header's first row wrap, taking it from 113px to **153px** at 320px against what was then
+  a fixed 128px reservation — so the hero's first line of copy rendered underneath it,
+  clearance **−25px** on `/about` and `/insights`. Not a CI artifact: a phone on a slow
+  connection paints fallback fonts first, so a real visitor sees it during that flash.
+  Reproduce in one line — `page.route('**/*.{woff,woff2,ttf,otf}', r => r.abort())` — and
+  note that a clearance test running with the fonts available cannot see this whole class of
+  failure. `HEADER_RESERVATION` is now sized against the fallback face rather than against
+  the webfont-loaded numbers, and three E2E tests block the requests.
+- **A fixed padding cannot reserve space for a variable-height header.** The overlaid
+  header's height moves with font loading, with how the four CMS-authored nav labels wrap,
+  and with the CMS-authored CTA label's length. So anything that grows it *on an
+  interaction* puts hero copy behind it: the nav dropdown panel shipped as an in-flow
+  `w-full` item below `md` — "a sheet that pushes the bar down" — and opening it took the
+  header from 88.5px to **186px** and `/about`'s clearance to **−58px**, on four of seven
+  section pages. The rule is now written on `src/lib/headerReservation.ts`: **the header's
+  height must not depend on an interaction.** Disclosed elements anchor out of flow.
+- **An E2E test that performs a gesture and then asserts nothing looks like coverage.** The
+  panel's tap test ran on `/` — the one route with 332px of hero slack — and checked only
+  that `aria-expanded` flipped. It passed a per-task review while the defect above was live
+  on four pages. If a test taps something that can change layout, it has to measure the
+  layout.
+- **`{/* … */}` between JSX attributes is a parse error** (TS1005). Brace comments are only
+  valid in children position. Use `//` on its own line above the attribute.
+- **`as const` on a tuple breaks `.flatMap((x) => x.optionalKey)` under strict TS.** Two of
+  `NAV_TREE`'s four elements have no `children` key, so `node.children` does not exist on
+  the inferred union and the inner callbacks fall to implicit `any` — six errors from one
+  missing annotation. Annotate the callback parameter with the interface; `satisfies`
+  already guarantees each element conforms.
+- **`toContain('pt-32')` matches a `min-[390px]:pt-32` variant.** A test meaning to pin a
+  *base* Tailwind token has to assert the first, unprefixed token — otherwise it goes green
+  for a base of `pt-4`.
+- **For a real mouse click, `pointerenter` fires before `click`.** A panel that opens on
+  hover and toggles on click therefore closes the instant it is clicked, so a mouse user can
+  never open it. Scope the suppression to pointer-driven clicks with `event.detail > 0`: a
+  keyboard-synthesised click on a `<button>` carries `detail === 0`, so a timing flag would
+  swallow the first Enter press instead.
+- **`npm start` works in this repo** despite an advisory warning about
+  `output: 'standalone'`. A session report claimed it "warns and exits without binding a
+  port"; it prints `Ready in ~150ms` and serves. Verified — the claim would have sent the
+  next reader down a wrong path.
+- **A spec's file table is a starting point, not the scope.** Spec §5 listed 8 files for the
+  `/track-record` deletion; the real footprint was **30**, including most of the test suite
+  and two files that imported a deleted query. Grep for both spellings before scoping:
+  `grep -rln "track-record" src/ tests/` and
+  `grep -rln "trackRecord\|TRACK_RECORD" src/ tests/ scripts/ sanity.config.ts`.
 
 ## Status
 
