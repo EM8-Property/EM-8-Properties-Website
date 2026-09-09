@@ -23,8 +23,8 @@ import {
   investorsPage,
   portfolioPage,
   insightsPage,
-  trackRecordPage,
   strategyPage,
+  trackRecordPage,
   ctaBand,
   popupBlock,
 } from './pages'
@@ -48,8 +48,8 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   investorsPage,
   portfolioPage,
   insightsPage,
-  trackRecordPage,
   strategyPage,
+  trackRecordPage,
   ctaLink,
   headingBlock,
   heroBlock,
@@ -75,6 +75,6 @@ export const SINGLETON_TYPES = [
   'investorsPage',
   'portfolioPage',
   'insightsPage',
-  'trackRecordPage',
   'strategyPage',
+  'trackRecordPage',
 ] as const
