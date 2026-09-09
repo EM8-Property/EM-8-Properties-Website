@@ -2400,7 +2400,7 @@ describe('the phone header', () => {
     expect(screen.getByRole('link', { name: 'Invest With Us' })).toBeDefined()
   })
 
-  it('renders every destination exactly once, panels included', async () => {
+  it('renders every destination exactly once, panels included', () => {
     /*
      * The duplicate-DOM regression guard, kept verbatim from the file this replaces and
      * now covering nine labels instead of five. A second copy of the nav for a second
@@ -2522,10 +2522,18 @@ Create `src/lib/headerReservation.ts`:
  * /about is what proves this number is still right; it is the tightest case on the site and
  * the first thing that fails if the header grows again.
  *
- * `sm:` keeps the smaller value from 640px up, where the header is still two rows but the
- * band has grown enough to have slack of its own.
+ * The breakpoint is `md`, not `sm`, and that matters. The header is two rows all the way up
+ * to `md` (768px), which is where its own layout collapses to one. Relaxing the reservation
+ * at `sm` (640px) would shrink it from 128px to 112px while the header was still at its
+ * tallest — tightening the clearance at exactly the widths that need it most. So the
+ * reservation changes where the header changes, and `md:pt-28` leaves the desktop case
+ * identical to what it has always been against a 68px single-row header.
+ *
+ * Measure 640-767px as well as the phone widths. That band is where the header is two rows
+ * and a reservation keyed to `sm` would already have relaxed, so it is the range that shows
+ * this decision being right or wrong.
  */
-export const HEADER_RESERVATION = 'pt-32 sm:pt-28'
+export const HEADER_RESERVATION = 'pt-32 md:pt-28'
 ```
 
 In `src/components/layout/HeroCarousel.tsx`, add the import beside the others:
@@ -3785,7 +3793,9 @@ describe('where the deal story renders', () => {
      * of the literal as well as the presence of the field, because reading the field would
      * pass just as happily against a component that also hardcoded a fallback.
      */
-    expect(propertyPage).toMatch(/<h2[^>]*>\s*\{settings\?\.dealStoryHeading\}/)
+    // No `?.` inside the element: the `settings?.dealStoryHeading &&` guard wrapping it is
+    // what makes the inner access safe, so the JSX renders `{settings.dealStoryHeading}`.
+    expect(propertyPage).toMatch(/<h2[^>]*>\s*\{settings\.dealStoryHeading\}/)
     expect(propertyPage).not.toContain('Realized results')
   })
 
