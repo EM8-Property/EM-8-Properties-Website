@@ -27,6 +27,7 @@ import {
  * published to the CMS the site builds from. This suite runs offline, in `npm test`, so a
  * placeholder or a compliance breach fails on the machine that would have uploaded it.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any -- plain ESM data module */
 
 type Property = {
   _id: string
