@@ -84,6 +84,34 @@ export type CtaLink = {
   href?: string;
 };
 
+export type StrategyPage = {
+  _id: string;
+  _type: "strategyPage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  seo?: SeoBlock;
+  heading?: HeadingBlock;
+  body?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
+    listItem?: "bullet" | "number";
+    markDefs?: Array<{
+      href?: string;
+      _type: "link";
+      _key: string;
+    }>;
+    level?: number;
+    _type: "block";
+    _key: string;
+  }>;
+};
+
 export type TrackRecordPage = {
   _id: string;
   _type: "trackRecordPage";
@@ -166,6 +194,27 @@ export type AboutPage = {
   seo?: SeoBlock;
   hero?: HeroBlock;
   factorsHeading?: HeadingBlock;
+  whyEm8?: {
+    heading?: HeadingBlock;
+    body?: Array<{
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
+      listItem?: "bullet" | "number";
+      markDefs?: Array<{
+        href?: string;
+        _type: "link";
+        _key: string;
+      }>;
+      level?: number;
+      _type: "block";
+      _key: string;
+    }>;
+  };
   leadershipTitle?: string;
   boardTitle?: string;
 };
@@ -233,6 +282,18 @@ export type SiteSettings = {
     crop?: SanityImageCrop;
     _type: "image";
   };
+  navLabels?: {
+    aboutUs?: string;
+    aboutEm8?: string;
+    whyEm8?: string;
+    ourTeam?: string;
+    strategy?: string;
+    whyMidwest?: string;
+    partners?: string;
+    portfolio?: string;
+    insights?: string;
+  };
+  dealStoryHeading?: string;
   ctaBand?: CtaBand;
   disclaimer?: string;
 };
@@ -601,6 +662,7 @@ export type AllSanitySchemaTypes =
   | HeroBlock
   | HeadingBlock
   | CtaLink
+  | StrategyPage
   | TrackRecordPage
   | InsightsPage
   | PortfolioPage

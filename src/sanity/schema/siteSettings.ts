@@ -150,6 +150,152 @@ export const siteSettings = defineType({
      * that block hides itself when the label is missing. One record is what the comment
      * always described; this is where a record shared by every page belongs.
      */
+    /**
+     * The visible text of every navigation tab and panel link.
+     *
+     * Hunter's decision, 2026-09-08, over the recommendation to keep these in code. The
+     * split is deliberate and it is the whole design: Sanity owns the words, and
+     * `src/lib/navigation.ts` owns which nodes exist, how they nest and where each points.
+     * A bad edit here makes a tab read oddly; it cannot re-aim it or remove it.
+     *
+     * The failure that split leaves open is a label that lies about its destination —
+     * "Insights" over a link to /partners is individually valid on both halves and
+     * catchable by no test. Each description below names the destination it labels,
+     * because that is the only place an editor will ever be told. Spec §5 records this as a
+     * trust decision taken knowingly.
+     *
+     * Nine fields, not the ten §5's prose counts. The tenth in its table is Investor Login,
+     * which names a third-party product rather than carrying copy — the same rule that
+     * keeps it a literal in SiteHeader, stated on `headerCta` above and in the README.
+     *
+     * Every one is required content. The guard is the per-leaf throw in
+     * `(site)/layout.tsx`, driven by `REQUIRED_SITE_SETTINGS`, and the pre-deploy check is
+     * in `content-integrity`. The `required()` calls below gate the Publish button and
+     * nothing else.
+     *
+     * Caps: 12 on the four bar labels, 24 on the five panel labels. The bar is measured in
+     * characters and its four labels share one row on a phone, so their length decides how
+     * tall the header is — and because these are CMS fields now, that length is no longer a
+     * build-time fact. A panel row has the width of the panel and none of that problem.
+     * Measured at 390px and 320px with all four bar labels at their cap; the numbers are in
+     * the PR that added this. Like `headerCta.label`'s cap this is a guardrail on the
+     * design rather than on correctness — over-long labels wrap the header to a third row
+     * rather than overflowing it, which is graceful and which nobody would be told about.
+     */
+    defineField({
+      name: 'navLabels',
+      title: 'Navigation labels',
+      type: 'object',
+      description:
+        'The words on the top navigation. Where each one goes is set in code and cannot ' +
+        'be changed here — the description under each field names its destination.',
+      options: { collapsible: true, collapsed: false },
+      fields: [
+        defineField({
+          name: 'aboutUs',
+          title: 'About Us (tab)',
+          type: 'string',
+          description:
+            'The first tab. Opens a menu; it is not a link itself. Its three menu links ' +
+            'go to /about, /about#why-em8 and /about#team.',
+          validation: (r) => r.required().max(12),
+        }),
+        defineField({
+          name: 'aboutEm8',
+          title: 'About EM8 (under About Us)',
+          type: 'string',
+          description: 'Goes to /about.',
+          validation: (r) => r.required().max(24),
+        }),
+        defineField({
+          name: 'whyEm8',
+          title: 'Why EM8 (under About Us)',
+          type: 'string',
+          description:
+            'Goes to /about#why-em8, the Why EM8 section of the About page. This link is ' +
+            'hidden while that section has no body text.',
+          validation: (r) => r.required().max(24),
+        }),
+        defineField({
+          name: 'ourTeam',
+          title: 'Our Team (under About Us)',
+          type: 'string',
+          description: 'Goes to /about#team, the team section of the About page.',
+          validation: (r) => r.required().max(24),
+        }),
+        defineField({
+          name: 'strategy',
+          title: 'Strategy (tab)',
+          type: 'string',
+          description:
+            'The second tab. Goes to /strategy, and also opens a menu of two links.',
+          validation: (r) => r.required().max(12),
+        }),
+        defineField({
+          name: 'whyMidwest',
+          title: 'Why Midwest (under Strategy)',
+          type: 'string',
+          description:
+            'Goes to /strategy — the same page as the tab above it. It labels that page’s ' +
+            'argument, and it is what makes the page reachable by tapping on a phone.',
+          validation: (r) => r.required().max(24),
+        }),
+        defineField({
+          name: 'partners',
+          title: 'Partners (under Strategy)',
+          type: 'string',
+          description: 'Goes to /partners.',
+          validation: (r) => r.required().max(24),
+        }),
+        defineField({
+          name: 'portfolio',
+          title: 'Portfolio (tab)',
+          type: 'string',
+          description: 'Goes to /portfolio. A plain link with no menu.',
+          validation: (r) => r.required().max(12),
+        }),
+        defineField({
+          name: 'insights',
+          title: 'Insights (tab)',
+          type: 'string',
+          description: 'Goes to /insights. A plain link with no menu.',
+          validation: (r) => r.required().max(12),
+        }),
+      ],
+    }),
+    /**
+     * The heading above a sold property's realized deal figures, on /portfolio/[slug].
+     *
+     * A field rather than a literal on Hunter's instruction of 2026-09-08: every string
+     * this PR writes has to be editable in the Studio. It was the only one that would not
+     * have been — the nine nav labels and the Strategy page's heading are all CMS content
+     * already.
+     *
+     * On `siteSettings` because it is a section label every property page reads rather
+     * than a fact about any one property; `ctaBand` above carries the full account of that
+     * rule. Per-property it would be eleven copies of one phrase, drifting.
+     *
+     * Optional, unlike the nav labels, and the difference is what a blank one does. A
+     * missing nav label renders a tab with no words in it, so the layout throws. A missing
+     * heading here renders the figures with no heading — which is exactly how they looked
+     * on /track-record — so it degrades rather than failing, and there is no reason to buy
+     * a tenth build-failure vector for it.
+     *
+     * The three other headings on that page — "The business plan", "Location", and
+     * DealStory's own Acquired/Executed/Exited labels — are still literals. They predate
+     * this PR and moving them is a separate change; noted so the inconsistency is on the
+     * record rather than a surprise.
+     */
+    defineField({
+      name: 'dealStoryHeading',
+      title: 'Realized results heading',
+      type: 'string',
+      description:
+        'The heading above the realized figures on a sold property’s page — the deal ' +
+        'narrative and its equity multiple. Leave it empty to show those figures with no ' +
+        'heading above them.',
+      validation: (r) => r.max(60),
+    }),
     defineField({ name: 'ctaBand', type: 'ctaBand', validation: (r) => r.required() }),
     defineField({ name: 'disclaimer', type: 'text', rows: 5, validation: (r) => r.required() }),
   ],
