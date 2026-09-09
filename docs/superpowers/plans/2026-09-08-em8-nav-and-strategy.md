@@ -1021,7 +1021,15 @@ this whole workstream — belongs to PR 3, not to this PR. **If you find yoursel
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `tests/unit/contentSource.test.ts`:
+Append to `tests/unit/contentSource.test.ts`. **Add the file-level disable first** if it
+is not already there — `SITE_SETTINGS` comes from a plain ESM data module with no types, so
+the assertions below need `as any` and `@typescript-eslint/no-explicit-any` is on. Eight
+test files in this repo already carry this line with a reason; `homepage.test.tsx` uses the
+one that fits here, because this is a data module rather than a schema:
+
+```ts
+/* eslint-disable @typescript-eslint/no-explicit-any -- plain ESM data module */
+```
 
 ```ts
 describe('the seeded nav labels', () => {
