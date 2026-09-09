@@ -137,4 +137,27 @@ describe('the nav tree', () => {
       expect(href).not.toMatch(/^\/portfolio\/./)
     }
   })
+
+  it('no longer offers a route that was deleted', () => {
+    /*
+     * Hunter's instruction, 2026-09-08: remove Case Studies from the header and put those
+     * properties in the portfolio. Two-thirds of it was already shipped — both realized
+     * deals are in the /portfolio grid with a Sold chip, because ALL_PROPERTIES_QUERY
+     * filters on showInPortfolio rather than on status — so this was only ever a removal.
+     *
+     * Asserted here rather than left to a 404: a nav or footer entry pointing at a route
+     * that does not exist is a link a crawler follows and a reader taps, and nothing else
+     * in the suite looks at both lists at once.
+     */
+    for (const href of navDestinations()) {
+      expect(href).not.toContain('track-record')
+    }
+    const footer = stripComments(
+      readFileSync(
+        resolve(import.meta.dirname, '../../src/components/layout/SiteFooter.tsx'),
+        'utf8',
+      ),
+    ).replace(/\r\n/g, '\n')
+    expect(footer).not.toContain('track-record')
+  })
 })

@@ -891,14 +891,15 @@ export const PAGE_COPY = {
   },
 
   /*
-   * The last three pages to hold their own title in code.
+   * The last two pages to hold their own title in code. (A third, /track-record, was in
+   * this group too until it was deleted in Task 10; its heading was deleted with it.)
    *
    * These carry a heading and nothing else: the rest of each page is generated from the
    * property and post collections. Every string below is transcribed character for
    * character from the literals those pages shipped with — this is a move, not a rewrite,
    * and `pageCopy.test.tsx` pins that.
    *
-   * Note the apostrophes. Two of these use a straight ' where most of the rest of this
+   * Note the apostrophes. Both of these use a straight ' where most of the rest of this
    * file uses a typographic ’ — that is what the pages actually shipped, and it is a real
    * difference on a rendered page, so they are reproduced as they were rather than tidied
    * up in passing. Verified by diffing the rendered hero copy against the live site.
@@ -917,14 +918,6 @@ export const PAGE_COPY = {
       title: "What we've learned building next to the tracks",
       intro:
         'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA.',
-    },
-  },
-  trackRecordPage: {
-    heading: {
-      eyebrow: 'Track Record',
-      title: 'Realized results, not projections',
-      intro:
-        "Every deal we've taken full cycle, with what we paid, what we did, and what we exited at.",
     },
   },
   /**
@@ -992,11 +985,6 @@ export const PAGE_SEO = {
     title: 'Insights',
     description:
       'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily.',
-  },
-  trackRecordPage: {
-    title: 'Track Record',
-    description:
-      'Realized results across the Chicago MSA: what we paid, what we did, what we exited at.',
   },
   strategyPage: {
     title: 'Strategy',

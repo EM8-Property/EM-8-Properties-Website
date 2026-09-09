@@ -31,7 +31,7 @@ const buckets = new Map<string, Bucket>()
  * **Why 400 and not 100.** Every form on the site posts to the same `/api/lead`, and the
  * limiter runs before the body is read, so it cannot tell them apart: the newsletter
  * capture in `CtaBand` now closes almost every page — the homepage, every property page,
- * /about, /portfolio, /insights, /track-record and every article — the homepage overlay is
+ * /about, /portfolio, /insights, /strategy and every article — the homepage overlay is
  * one more form on that same homepage, and /investors Keep in Touch and the /partners site
  * submission share the budget too. The ceiling was never derived from that count, but the
  * sharing it describes got wider, not narrower.

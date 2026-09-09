@@ -178,9 +178,9 @@ function withKeys(items, prefix) {
 
 async function seedPagesIfMissing(apply) {
   // The union of both, not either alone. Every page appears in PAGE_SEO; PAGE_COPY holds
-  // whatever visible copy a page has beyond that, which for /portfolio, /insights and
-  // /track-record is a single heading each. Taking the union keeps this correct however
-  // those two lists diverge later.
+  // whatever visible copy a page has beyond that, which for /portfolio and /insights is a
+  // single heading each, and for /strategy a heading plus a body still owed by people.
+  // Taking the union keeps this correct however those two lists diverge later.
   const ids = [...new Set([...Object.keys(PAGE_COPY), ...Object.keys(PAGE_SEO)])]
   const present = new Set(
     (await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [],
@@ -276,13 +276,17 @@ async function backfillPageSeo(apply) {
 }
 
 /**
- * Adds `heading` to the three page documents that predate the field.
+ * Adds `heading` to page documents that might predate the field, or might otherwise exist
+ * with `seo` but no heading.
  *
- * /portfolio, /insights and /track-record held nothing but `seo`; their eyebrow, headline
- * and intro were literals in TSX. `seedPagesIfMissing` cannot do this — it seeds a whole
- * document only when none exists, and all three are already in the dataset — so without
- * this they would keep their missing `heading` forever while every one of those pages
- * threw at build time.
+ * /portfolio and /insights held nothing but `seo`; their eyebrow, headline and intro were
+ * literals in TSX. /track-record was the third such page until it was deleted in Task 10.
+ * /strategy takes its place in this list — not because it shares that history (it was
+ * seeded with a heading from the start, there being no TSX literal to move), but because it
+ * is a page of the same shape, and a document that somehow reached the dataset with `seo`
+ * and no `heading` would otherwise have no repair path. `seedPagesIfMissing` cannot do this
+ * either way — it seeds a whole document only when none exists — so without this entry a
+ * future `--only=headings` could not fix it.
  *
  * Per *leaf*, and this is the trap `backfillPageSeo` was rewritten to fix: `setIfMissing`
  * on the whole `heading` object is all-or-nothing at that key, so a document with an
@@ -296,10 +300,10 @@ async function backfillPageSeo(apply) {
  * Safe to apply before the code that reads it deploys. This is an addition, and deployed
  * code ignores fields it does not know about — see docs/deploys-and-migrations.md. It is
  * also *required* to run first: the pages throw when `heading` is absent, so shipping the
- * code first would take all three down.
+ * code first would take any of them down.
  */
 async function backfillPageHeadings(apply) {
-  const ids = ['portfolioPage', 'insightsPage', 'trackRecordPage']
+  const ids = ['portfolioPage', 'insightsPage', 'strategyPage']
 
   /*
    * Absence is reported, not folded into "nothing to do".

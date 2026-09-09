@@ -40,15 +40,15 @@ describe('page copy schema', () => {
       'portfolioPage',
       'siteSettings',
       'strategyPage',
-      'trackRecordPage',
     ])
   })
 })
 
 describe('seeded page copy', () => {
   it('carries copy for every page that has any', () => {
-    // Seven, not four. /portfolio, /insights and /track-record joined when their headings
-    // moved out of TSX; they carry a heading and nothing else, the rest of each page being
+    // Six, not four. /portfolio and /insights joined when their headings moved out of
+    // TSX; /strategy joined too, as the one page whose heading was never in TSX at all.
+    // Each carries a heading (and /strategy an empty body), the rest of every page being
     // generated from the property and post collections.
     expect(Object.keys(PAGE_COPY).sort()).toEqual([
       'aboutPage',
@@ -58,22 +58,21 @@ describe('seeded page copy', () => {
       'partnersPage',
       'portfolioPage',
       'strategyPage',
-      'trackRecordPage',
     ])
   })
 
-  it('reproduces the three moved headings exactly as they shipped', () => {
+  it('reproduces the two moved headings exactly as they shipped', () => {
     /*
-     * A move, not a rewrite. These three pages rendered these words from literals in TSX;
+     * A move, not a rewrite. These two pages rendered these words from literals in TSX;
      * if the seed drifts from what was on the page, the "nothing visibly changed" claim is
      * false and nobody would notice, because the CMS value silently becomes the truth.
      *
-     * The apostrophes are the part worth pinning. Two of these use a straight ' where much
+     * The apostrophes are the part worth pinning. Both of these use a straight ' where much
      * of the rest of the site uses a typographic ’ — reproduced as they were, so the
      * rendered page is byte-identical rather than tidied up in passing.
      */
     const headings = PAGE_COPY as any
-    // toEqual on the whole object for all three, not a field each: a test named "exactly
+    // toEqual on the whole object for both, not a field each: a test named "exactly
     // as they shipped" that pins only the title lets the intro be reworded underneath it.
     expect(headings.portfolioPage.heading).toEqual({
       eyebrow: 'Portfolio',
@@ -87,16 +86,10 @@ describe('seeded page copy', () => {
       intro:
         'Notes on transit-oriented development, municipal partnership, and operating suburban multifamily in the Chicago MSA.',
     })
-    expect(headings.trackRecordPage.heading).toEqual({
-      eyebrow: 'Track Record',
-      title: 'Realized results, not projections',
-      intro:
-        "Every deal we've taken full cycle, with what we paid, what we did, and what we exited at.",
-    })
   })
 
-  it('gives all three pages a complete heading, since each page now throws without one', () => {
-    for (const id of ['portfolioPage', 'insightsPage', 'trackRecordPage']) {
+  it('gives both pages a complete heading, since each page now throws without one', () => {
+    for (const id of ['portfolioPage', 'insightsPage']) {
       const h = (PAGE_COPY as any)[id].heading
       for (const field of ['eyebrow', 'title', 'intro']) {
         expect(h?.[field], `${id}.heading.${field} is empty`).toBeTruthy()
@@ -169,12 +162,12 @@ describe('the copy has actually left the components', () => {
       'Have land near a Metra station',
       'How an investment works',
       'Currently accepting commitments',
-      // The last three pages to hold their own title. /portfolio, /insights and
-      // /track-record carried only `seo` in Sanity, so their eyebrow, headline and intro
-      // were literals — the one part of revision D4 that was never finished.
+      // The last two pages to hold their own title. /portfolio and /insights carried only
+      // `seo` in Sanity, so their eyebrow, headline and intro were literals — the one part
+      // of revision D4 that was never finished. (/track-record was a third such page
+      // until it was deleted in Task 10.)
       'Assets across the Chicago MSA',
       "What we've learned building next to the tracks",
-      'Realized results, not projections',
     ]) {
       expect(find(heading), `"${heading}" is still hardcoded`).toEqual([])
     }

@@ -42,20 +42,6 @@ export const PROPERTY_SLUGS_QUERY = defineQuery(
   `*[_type == "property" && defined(slug.current)].slug.current`,
 )
 
-/**
- * The /track-record view. It selects the same `slug` the canonical /portfolio/[slug]
- * page uses — a realized deal is presented here but never given a second URL, which
- * would split its search ranking and double the editing surface.
- */
-export const SOLD_PROPERTIES_QUERY = defineQuery(`
-  *[_type == "property" && status == "sold"] | order(dealStory.exitYear desc) {
-    _id, title, "slug": slug.current, assetClass, status, city, state,
-    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,
-    "image": gallery[0],
-    dealStory
-  }
-`)
-
 export const ALL_POSTS_QUERY = defineQuery(`
   *[_type == "post"] | order(publishedAt desc) {
     _id, title, "slug": slug.current, publishedAt, category, excerpt, heroImage
@@ -245,12 +231,5 @@ export const STRATEGY_PAGE_QUERY = defineQuery(`
     seo { title, description },
     heading { eyebrow, title, intro },
     body
-  }
-`)
-
-export const TRACK_RECORD_PAGE_QUERY = defineQuery(`
-  *[_id == "trackRecordPage"][0] {
-    seo { title, description },
-    heading { eyebrow, title, intro }
   }
 `)

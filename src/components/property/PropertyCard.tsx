@@ -25,8 +25,9 @@ export function PropertyCard({ property: p }: { property: PropertyCardData }) {
   const units = formatUnits(p.unitCount, p.retailUnitCount)
   return (
     <Card>
-      {/* Always /portfolio/[slug], whatever the status. A sold asset is shown on
-          /track-record but never given a second URL there. */}
+      {/* Always /portfolio/[slug], whatever the status. A sold asset carries a Sold chip
+          in this same grid rather than living at a second address — /track-record, which
+          used to be that second view, was deleted in Task 10. */}
       <Link href={`/portfolio/${p.slug}`} className="block">
         {p.image ? (
           <Image

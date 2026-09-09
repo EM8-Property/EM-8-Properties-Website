@@ -88,8 +88,10 @@ exists before working around it.
 3. **Never phrase returns as promises.** Permitted: *targeted, projected, underwritten,
    estimated, pro forma*. Banned: *guaranteed, will return, assured, risk-free*. This is a
    compliance rule. Scanned in source and in every CMS document.
-4. **One canonical URL per property:** `/portfolio/[slug]`, whatever the status.
-   `/track-record` is a view over sold properties and mints no URLs of its own.
+4. **One canonical URL per property:** `/portfolio/[slug]`, whatever the status. A sold
+   asset carries a **Sold** chip in the same grid rather than living at a second address;
+   `/track-record` was a view over `status == "sold"` and was deleted on 2026-09-08, with
+   its realized deal story moved onto the property page.
 5. **No placeholder figures ship.** Spec §9 lists every invented number. The denylist is
    `tests/shared/placeholders.ts`, checked against both source and CMS content.
 6. **Queries use `defineQuery` with fields inlined.** Typegen only discovers queries

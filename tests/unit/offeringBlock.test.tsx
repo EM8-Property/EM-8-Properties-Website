@@ -37,7 +37,8 @@ describe('OfferingBlock', () => {
 
   it('labels every figure as targeted rather than achieved', () => {
     // The compliance rule: targeted / projected / underwritten / estimated / pro forma.
-    // A bare "17.7%" next to a realized multiple on /track-record would read as a result.
+    // A bare "17.7%" next to DealStory's realized multiple on the same page would read as
+    // a result.
     const { container } = render(<OfferingBlock offering={OFFERING} publiclyOffered />)
     const text = container.textContent!
     expect(text).toMatch(/targeted/i)

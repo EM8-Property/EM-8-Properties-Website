@@ -4,8 +4,9 @@ import type { Metadata } from 'next'
  * Head metadata shared by every static content route.
  *
  * Seven of nine routes shipped with no Open Graph block and no canonical URL: `/`,
- * `/about`, `/insights`, `/investors`, `/partners`, `/portfolio` and `/track-record` each
- * exported a bare `title` and `description`. Next synthesises neither `og:title` nor a
+ * `/about`, `/insights`, `/investors`, `/partners`, `/portfolio` and `/track-record` (the
+ * last deleted in Task 10; `/strategy` took its place under this helper) each exported a
+ * bare `title` and `description`. Next synthesises neither `og:title` nor a
  * canonical from those, so sharing any of them produced a link with no card — on a site
  * whose `/insights` feed exists specifically to be linked from LinkedIn, and whose fourth
  * non-negotiable is one canonical URL per property.

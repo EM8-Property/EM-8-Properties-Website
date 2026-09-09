@@ -1,8 +1,19 @@
 import Link from 'next/link'
 
+/*
+ * These labels are literals where the header's come from Sanity, and that is not an
+ * oversight: this list is the fallback route to every page — spec §5, "The panel must not
+ * be the only route to a page. Every destination stays in the footer, which is where a
+ * reader with JavaScript disabled and a crawler both find them." A fallback that reads its
+ * labels from the same document as the thing it backs up is not a fallback. It also
+ * carries /investors, which is not in the nav tree at all.
+ *
+ * `navigation.test.ts` is what keeps the two in step: it asserts that every nav
+ * destination appears here, so a node added to the tree fails until this list has it.
+ */
 const NAV = [
   { href: '/portfolio', label: 'Portfolio' },
-  { href: '/track-record', label: 'Track Record' },
+  { href: '/strategy', label: 'Strategy' },
   { href: '/insights', label: 'Insights' },
   { href: '/partners', label: 'Partners' },
   { href: '/about', label: 'About' },

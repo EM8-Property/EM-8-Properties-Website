@@ -110,14 +110,22 @@ test('an insights article resolves and carries share metadata', async ({ page })
   await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
 })
 
-test('track record links back to canonical property URLs, not its own', async ({ page }) => {
-  await page.goto('/track-record')
-  const links = page.locator('a[href*="/portfolio/"]')
-  if ((await links.count()) > 0) {
-    await expect(links.first()).toHaveAttribute('href', /^\/portfolio\/[a-z0-9-]+$/)
-  }
-  // No property may be addressable under /track-record/.
-  await expect(page.locator('a[href^="/track-record/"]')).toHaveCount(0)
+/*
+ * The deleted route stays deleted, and nothing points at it.
+ *
+ * Replaces `track record links back to canonical property URLs, not its own`, whose page
+ * no longer exists. The assertion worth keeping was its second one — that no property is
+ * addressable under a second path — and this is that claim in the form it can still take.
+ */
+test('the deleted track-record route is gone and unadvertised', async ({ page }) => {
+  const res = await page.goto('/track-record')
+  expect(res?.status(), '/track-record should not resolve').toBe(404)
+
+  await page.goto('/')
+  await expect(page.locator('a[href*="track-record"]')).toHaveCount(0)
+
+  const sitemap = await page.goto('/sitemap.xml')
+  expect(await sitemap!.text()).not.toContain('track-record')
 })
 
 /*
@@ -266,7 +274,6 @@ test('every content route declares the canonical it should, and a large card', a
     '/investors',
     '/partners',
     '/portfolio',
-    '/track-record',
   ]
 
   const origins = new Set<string>()
@@ -348,7 +355,6 @@ test('every section page opens on a full-bleed photograph with its own title on 
     '/investors',
     '/partners',
     '/portfolio',
-    '/track-record',
   ]
 
   for (const route of routes) {

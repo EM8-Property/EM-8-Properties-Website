@@ -398,7 +398,7 @@ describe('PageHero copy', () => {
 })
 
 describe('which pages open on a photograph', () => {
-  it('covers all eight section pages, the homepage included', () => {
+  it('covers all seven section pages, the homepage included', () => {
     expect([...HERO_PATHS].sort()).toEqual([
       '/',
       '/about',
@@ -407,7 +407,6 @@ describe('which pages open on a photograph', () => {
       '/partners',
       '/portfolio',
       '/strategy',
-      '/track-record',
     ])
   })
 

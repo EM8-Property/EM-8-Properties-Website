@@ -84,16 +84,6 @@ export type CtaLink = {
   href?: string;
 };
 
-export type TrackRecordPage = {
-  _id: string;
-  _type: "trackRecordPage";
-  _createdAt: string;
-  _updatedAt: string;
-  _rev: string;
-  seo?: SeoBlock;
-  heading?: HeadingBlock;
-};
-
 export type StrategyPage = {
   _id: string;
   _type: "strategyPage";
@@ -662,7 +652,6 @@ export type AllSanitySchemaTypes =
   | HeroBlock
   | HeadingBlock
   | CtaLink
-  | TrackRecordPage
   | StrategyPage
   | InsightsPage
   | PortfolioPage
@@ -848,48 +837,6 @@ export type PROPERTY_BY_SLUG_QUERY_RESULT = {
 // Variable: PROPERTY_SLUGS_QUERY
 // Query: *[_type == "property" && defined(slug.current)].slug.current
 export type PROPERTY_SLUGS_QUERY_RESULT = Array<string | null>;
-
-// Source: src/sanity/queries.ts
-// Variable: SOLD_PROPERTIES_QUERY
-// Query: *[_type == "property" && status == "sold"] | order(dealStory.exitYear desc) {    _id, title, "slug": slug.current, assetClass, status, city, state,    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,    "image": gallery[0],    dealStory  }
-export type SOLD_PROPERTIES_QUERY_RESULT = Array<{
-  _id: string;
-  title: string | null;
-  slug: string | null;
-  assetClass:
-    | "industrial"
-    | "mixed-use"
-    | "multifamily"
-    | "retail"
-    | "senior"
-    | "townhomes"
-    | null;
-  status: "sold";
-  city: string | null;
-  state: string | null;
-  metraStation: string | null;
-  walkMinutes: number | null;
-  unitCount: number | null;
-  retailUnitCount: number | null;
-  yearBuilt: number | null;
-  cardBlurb: string | null;
-  image: {
-    asset?: SanityImageAssetReference;
-    media?: unknown;
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    alt?: string;
-    _type: "image";
-    _key: string;
-  } | null;
-  dealStory: {
-    acquired?: string;
-    executed?: string;
-    exited?: string;
-    equityMultiple?: string;
-    exitYear?: number;
-  } | null;
-}>;
 
 // Source: src/sanity/queries.ts
 // Variable: ALL_POSTS_QUERY
@@ -1753,34 +1700,6 @@ export type STRATEGY_PAGE_QUERY_RESULT =
     }
   | null;
 
-// Source: src/sanity/queries.ts
-// Variable: TRACK_RECORD_PAGE_QUERY
-// Query: *[_id == "trackRecordPage"][0] {    seo { title, description },    heading { eyebrow, title, intro }  }
-export type TRACK_RECORD_PAGE_QUERY_RESULT =
-  | {
-      seo: null;
-      heading: null;
-    }
-  | {
-      seo: {
-        title: string | null;
-        description: string | null;
-      } | null;
-      heading: null;
-    }
-  | {
-      seo: {
-        title: string | null;
-        description: string | null;
-      } | null;
-      heading: {
-        eyebrow: string | null;
-        title: string | null;
-        intro: string | null;
-      } | null;
-    }
-  | null;
-
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
@@ -1788,7 +1707,6 @@ declare module "@sanity/client" {
     '\n  *[_type == "property" && showInPortfolio != false] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0]\n  }\n': ALL_PROPERTIES_QUERY_RESULT;
     '\n  *[_type == "property" && slug.current == $slug][0] {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0],\n    squareFeet, yearRenovated, overview, businessPlan,\n    gallery, coordinates, dealStory, publiclyOffered, offering,\n    "relatedPosts": *[_type == "post" && relatedProperty._ref == ^._id] | order(publishedAt desc) {\n      title, "slug": slug.current, publishedAt\n    }\n  }\n': PROPERTY_BY_SLUG_QUERY_RESULT;
     '*[_type == "property" && defined(slug.current)].slug.current': PROPERTY_SLUGS_QUERY_RESULT;
-    '\n  *[_type == "property" && status == "sold"] | order(dealStory.exitYear desc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0],\n    dealStory\n  }\n': SOLD_PROPERTIES_QUERY_RESULT;
     '\n  *[_type == "post"] | order(publishedAt desc) {\n    _id, title, "slug": slug.current, publishedAt, category, excerpt, heroImage\n  }\n': ALL_POSTS_QUERY_RESULT;
     '\n  *[_type == "post" && slug.current == $slug][0] {\n    title, "slug": slug.current, publishedAt, category, excerpt, heroImage, body,\n    relatedProperty-> { title, "slug": slug.current, city, unitCount, retailUnitCount, walkMinutes, "image": gallery[0] }\n  }\n': POST_BY_SLUG_QUERY_RESULT;
     '*[_type == "post" && defined(slug.current)].slug.current': POST_SLUGS_QUERY_RESULT;
@@ -1806,6 +1724,5 @@ declare module "@sanity/client" {
     '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
     '\n  *[_id == "insightsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': INSIGHTS_PAGE_QUERY_RESULT;
     '\n  *[_id == "strategyPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    body\n  }\n': STRATEGY_PAGE_QUERY_RESULT;
-    '\n  *[_id == "trackRecordPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': TRACK_RECORD_PAGE_QUERY_RESULT;
   }
 }

@@ -219,7 +219,7 @@ export const investorsPage = defineType({
 })
 
 /**
- * Three routes whose visible copy is a single heading each, the rest being generated from
+ * Two routes whose visible copy is a single heading each, the rest being generated from
  * the property and post collections.
  *
  * They were the pages revision D4 never reached. They held `seo` only, and the note here
@@ -253,17 +253,6 @@ export const insightsPage = defineType({
     defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
   ],
   preview: { prepare: () => ({ title: 'Insights page' }) },
-})
-
-export const trackRecordPage = defineType({
-  name: 'trackRecordPage',
-  title: 'Track record page',
-  type: 'document',
-  fields: [
-    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
-    defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
-  ],
-  preview: { prepare: () => ({ title: 'Track record page' }) },
 })
 
 /**

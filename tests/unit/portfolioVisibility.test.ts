@@ -3,7 +3,6 @@ import { schemaTypes } from '@/sanity/schema'
 import {
   ALL_PROPERTIES_QUERY,
   CURRENT_OFFERINGS_QUERY,
-  SOLD_PROPERTIES_QUERY,
   PROPERTY_SLUGS_QUERY,
   PROPERTY_BY_SLUG_QUERY,
 } from '@/sanity/queries'
@@ -18,8 +17,8 @@ const field = (n: string) =>
  * status was added to avoid — one level up, at the index.
  *
  * The toggle hides a property from the assets listing only. It stays a live offering, it
- * keeps its own page, and a sold asset still reaches /track-record; hiding it from those
- * too would make one flag mean four different things.
+ * keeps its own page, and a sold asset still reaches /portfolio/[slug] with a Sold chip;
+ * hiding it from those too would make one flag mean three different things.
  */
 describe('showInPortfolio', () => {
   it('exists and defaults to visible, so nothing already listed disappears', () => {
@@ -38,10 +37,6 @@ describe('showInPortfolio', () => {
   it('does not touch the current-offering module', () => {
     // Antioch is precisely the case: hidden from assets, still openly offered.
     expect(CURRENT_OFFERINGS_QUERY).not.toContain('showInPortfolio')
-  })
-
-  it('does not touch the track record', () => {
-    expect(SOLD_PROPERTIES_QUERY).not.toContain('showInPortfolio')
   })
 
   it('still builds a page for a hidden property', () => {

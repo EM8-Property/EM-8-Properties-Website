@@ -35,7 +35,7 @@ describe('SiteFooter', () => {
 
   it('exposes every primary route so the footer is a real second navigation', () => {
     render(<SiteFooter {...props} />)
-    for (const label of ['Portfolio', 'Track Record', 'Insights', 'Partners', 'About', 'Investors']) {
+    for (const label of ['Portfolio', 'Strategy', 'Insights', 'Partners', 'About', 'Investors']) {
       expect(screen.getByRole('link', { name: label })).toBeDefined()
     }
   })

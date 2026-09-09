@@ -26,8 +26,9 @@ const routes = pageFiles(siteDir).map((file) => ({ file, route: routeOf(file) })
 /**
  * Every page must offer a way to start a conversation.
  *
- * Five did not: /about, /insights, /insights/[slug], /portfolio and /track-record ran
- * their content and then stopped at the footer disclaimer. Spec §3 closes the narrative
+ * Five did not: /about, /insights, /insights/[slug], /portfolio and /track-record (deleted
+ * in Task 10) ran their content and then stopped at the footer disclaimer. Spec §3 closes
+ * the narrative
  * with a call to action, and /insights exists to be linked from LinkedIn — an article that
  * ends with nothing to do next wastes the arrival it was written to earn.
  *
@@ -49,7 +50,6 @@ describe('every page offers a way to make contact', () => {
       '/portfolio',
       '/portfolio/[slug]',
       '/strategy',
-      '/track-record',
     ])
   })
 
