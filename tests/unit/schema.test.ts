@@ -244,13 +244,16 @@ describe('navLabels on siteSettings', () => {
   it('caps the four bar labels at 10 characters and the panel labels at 24', () => {
     /*
      * 10, not the 12 this field's own comment used to claim and §5's arithmetic predicted.
-     * That arithmetic assumed the bar's width was decided by label text alone; Task 6
-     * measured the real header at all four bar labels padded to 12 characters and found the
-     * nav wrapped to two lines at 390px as well as 320px — the chevron toggles on About Us
-     * and Strategy, and the gaps between all four items, cost more width than a
-     * character-count estimate saw. 10 characters keeps a single nav line at 390px; both
-     * numbers are in the PR that lowered this, which is the point of measuring rather than
-     * trusting the arithmetic.
+     * The About Us tab gaining its own chevron button moved the nav to two lines at more
+     * widths than before. Measured on /about at the mobile breakpoint with webfonts loaded
+     * and with them blocked, the nav is on TWO lines at 320px, 360px and 375px with fonts
+     * loaded, and fits ONE line only at 390px with fonts loaded. At 390px with fonts blocked
+     * (fallback face), the eyebrow clearance below the overlaid header is the tightest at
+     * +31px — still positive but below the design's 28px comfortable margin. The 10-character
+     * cap bounds label LENGTH, not glyph width: ten adversarial wide glyphs (e.g. all "W")
+     * push the nav to a third line between 320px and 335px with +14.5px clearance, which is
+     * tolerable because the header reservation already budgets for two lines and clearance
+     * stays positive.
      *
      * The five children cap at 24 instead, because a panel row has the width of the panel
      * and none of the bar's problem. Same shape as `headerCta.label`'s cap of 20 against
