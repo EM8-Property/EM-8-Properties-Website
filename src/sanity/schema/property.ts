@@ -182,10 +182,11 @@ export const property = defineType({
      */
     defineField({
       name: 'showInPortfolio',
-      title: 'Show in Assets',
+      title: 'List among the assets EM8 owns',
       type: 'boolean',
       description:
-        'Turn off for a property EM8 does not own yet. It keeps its own page and can still be offered.',
+        'Turn off for a property EM8 does not own yet. It keeps its own page, and can still ' +
+        'appear under Current Offerings, even while it is absent here.',
       initialValue: true,
     }),
     defineField({ name: 'featured', type: 'boolean', initialValue: false }),

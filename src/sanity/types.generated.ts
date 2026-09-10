@@ -130,6 +130,7 @@ export type PortfolioPage = {
   _rev: string;
   seo?: SeoBlock;
   heading?: HeadingBlock;
+  offeringsHeading?: HeadingBlock;
 };
 
 export type InvestorsPage = {
@@ -1144,6 +1145,26 @@ export type HOME_PAGE_QUERY_RESULT =
         title: string | null;
         intro: string | null;
       } | null;
+      partnersTeaser: null;
+      partnersTeaserCta: null;
+      portfolioCta: null;
+      popup: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      hero: null;
+      factorsHeading: null;
+      insightsHeading: null;
+      portfolioHeading: null;
+      offeringsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      testimonialsHeading: null;
       partnersTeaser: null;
       partnersTeaserCta: null;
       portfolioCta: null;

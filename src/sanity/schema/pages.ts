@@ -240,6 +240,26 @@ export const portfolioPage = defineType({
   fields: [
     defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
     defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
+    /**
+     * The Current Offerings heading, moved here from `homePage.offeringsHeading` as that
+     * section itself moves from the homepage to this page (spec §6). Same `headingBlock`
+     * shape as the field it replaces.
+     *
+     * Deliberately NOT required, unlike `heading` above and unlike every other page
+     * heading in this file. §6 says a section with nothing in it renders nothing — no
+     * heading, no empty grid — and the day the one publicly-offered property closes,
+     * there is no section left to head. A `required()` here would make the Studio nag
+     * an editor for copy that heads a section nobody will see.
+     */
+    defineField({
+      name: 'offeringsHeading',
+      title: 'Current offerings heading',
+      type: 'headingBlock',
+      description:
+        'Heads the Current Offerings section on this page. Optional: leave it empty and ' +
+        'the section renders nothing, which is what should happen once nothing is ' +
+        'publicly offered.',
+    }),
   ],
   preview: { prepare: () => ({ title: 'Portfolio page' }) },
 })
