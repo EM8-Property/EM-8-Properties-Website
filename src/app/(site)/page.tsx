@@ -17,7 +17,6 @@ import type {
 } from '@/sanity/types.generated'
 import { PageHero } from '@/components/layout/PageHero'
 import type { CarouselSlide } from '@/components/layout/HeroCarousel'
-import { StatBand } from '@/components/ui/StatBand'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Button } from '@/components/ui/Button'
 import { PropertyCard, type PropertyCardData } from '@/components/property/PropertyCard'
@@ -142,8 +141,10 @@ export default async function HomePage() {
         `screen` — and this page is the only one that asks for it.
 
         The photograph fills the first screen, the width of the viewport and the height of
-        it, with the headline laid on the image and the header over the top. The stat band
-        below is reached by scrolling rather than by having a tall enough monitor.
+        it, with the headline laid on the image and the header over the top. Spec §6: the
+        five stats move onto this photograph instead of sitting in their own band below
+        it — the one band removal that drops no content, because it is still here, just
+        inside the overlay rather than after it.
 
         The copy sits at a fixed inset from the edge of the photograph rather than on the
         1200px content measure the rest of this page uses. That is deliberate and it is
@@ -157,15 +158,12 @@ export default async function HomePage() {
         copy={copy.hero}
         slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
         variant="screen"
+        stats={
+          stats.length > 0
+            ? stats.slice(0, 5).map((s) => ({ figure: s.figure ?? '', label: s.label ?? '' }))
+            : undefined
+        }
       />
-
-      {stats.length > 0 && (
-        <StatBand
-          stats={stats
-            .slice(0, 5)
-            .map((s) => ({ figure: s.figure ?? '', label: s.label ?? '' }))}
-        />
-      )}
 
       {/*
         Bands, not hand-painted sections.

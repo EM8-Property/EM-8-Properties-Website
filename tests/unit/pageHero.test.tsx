@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { PageHero } from '@/components/layout/PageHero'
 import { HeroCarousel } from '@/components/layout/HeroCarousel'
 import { HERO_PATHS, showsHero } from '@/lib/heroPages'
 import { HEADER_RESERVATION } from '@/lib/headerReservation'
+import { stripComments } from '../shared/sourceScan'
 
 vi.mock('@/sanity/image', () => ({
   urlForImage: () => ({
@@ -433,5 +436,125 @@ describe('which pages open on a photograph', () => {
   it('tolerates a trailing slash', () => {
     expect(showsHero('/about/')).toBe(true)
     expect(showsHero('/')).toBe(true)
+  })
+})
+
+/**
+ * Task 7: the five hero stats move onto the hero photograph rather than sitting in their
+ * own band between the hero and the factors band. `stats` is an optional prop on
+ * `PageHero` — only the homepage (the `screen` variant) supplies one, but the prop itself
+ * does not know that, so the six `band` pages are unaffected by construction rather than
+ * by convention.
+ */
+describe('PageHero stats', () => {
+  const STATS = [
+    { figure: '$100M+', label: 'AUM' },
+    { figure: '1,350+', label: 'Units managed' },
+  ]
+
+  it('renders the stat figures and labels inside the overlay when given stats', () => {
+    const { container } = render(<PageHero copy={COPY} slides={SLIDES} stats={STATS} />)
+    const overlay = container.querySelector('[data-hero-overlay]')
+    expect(overlay, 'no [data-hero-overlay] element at all').not.toBeNull()
+    expect(overlay!.textContent).toContain('$100M+')
+    expect(overlay!.textContent).toContain('AUM')
+    expect(overlay!.textContent).toContain('1,350+')
+    expect(overlay!.textContent).toContain('Units managed')
+  })
+
+  it('renders the stats below the buttons, not before them', () => {
+    const { container } = render(
+      <PageHero
+        copy={{ ...COPY, primaryCta: { label: 'View portfolio', href: '/portfolio' } }}
+        slides={SLIDES}
+        stats={STATS}
+      />,
+    )
+    const overlay = container.querySelector('[data-hero-overlay]')!
+    const html = overlay.innerHTML
+    expect(html.indexOf('View portfolio')).toBeGreaterThan(-1)
+    expect(html.indexOf('AUM')).toBeGreaterThan(html.indexOf('View portfolio'))
+  })
+
+  it('renders no stat markup at all when given none', () => {
+    // No `stats` prop at all — the shape every one of the six `band` pages calls this
+    // component with today. A dataset with no `heroStat` documents behaves the same way:
+    // page.tsx guards on `stats.length > 0` before it ever passes the prop down.
+    const { container } = render(<PageHero copy={COPY} slides={SLIDES} />)
+    expect(container.querySelector('[data-stat-band]')).toBeNull()
+  })
+
+  it('renders no stat markup in the no-photography fallback either', () => {
+    const { container } = render(<PageHero copy={COPY} slides={[]} />)
+    expect(container.querySelector('[data-stat-band]')).toBeNull()
+  })
+
+  it('needs no pointer-events opt-in, unlike the buttons', () => {
+    // The overlay disables pointer-events so the photograph underneath stays clickable;
+    // the buttons opt back in because they are interactive. The stats are plain text, so
+    // an opt-in here would be a silent regression — it would carve a dead click zone out
+    // of the whole-hero link for content that was never meant to capture the pointer.
+    const { container } = render(<PageHero copy={COPY} slides={SLIDES} stats={STATS} />)
+    const statBand = container.querySelector('[data-stat-band]')!
+    expect(statBand).not.toBeNull()
+    expect(statBand.className).not.toMatch(/pointer-events-auto/)
+    expect(statBand.closest('.pointer-events-auto')).toBeNull()
+  })
+
+  it('colours the figures and labels through the same onPhoto route Eyebrow uses, not a new pairing', () => {
+    const { container } = render(<PageHero copy={COPY} slides={SLIDES} stats={STATS} />)
+    const statBand = container.querySelector('[data-stat-band]')!
+    // The figure takes the same `text-white` this file already uses for the h1 on a
+    // photograph — not a new colour, the existing one.
+    const figure = statBand.querySelector('[data-stat-figure]')!
+    expect(figure.className).toMatch(/\btext-white\b/)
+    expect(figure.className).not.toMatch(/text-white\//)
+    // The label takes exactly Eyebrow's `onPhoto` value (`text-white/80`), not an
+    // invented adjacent opacity like /70 or /75.
+    const label = statBand.querySelector('[data-stat-label]')!
+    expect(label.className).toMatch(/text-white\/80\b/)
+  })
+
+  it('does not ground the on-photograph stats in the panel/border treatment the banded version uses', () => {
+    // border-rule and bg-panel are tokens for a hairline and a fill against a WHITE
+    // ground. Against a photograph under a dark scrim they either vanish or read as a
+    // stray box, so the on-photo tone must not carry them.
+    const { container } = render(<PageHero copy={COPY} slides={SLIDES} stats={STATS} />)
+    const statBand = container.querySelector('[data-stat-band]')!
+    expect(statBand.className).not.toMatch(/bg-panel/)
+    expect(statBand.className).not.toMatch(/border-rule/)
+  })
+
+  it('uses no physical-direction utilities in the stat markup', () => {
+    const { container } = render(<PageHero copy={COPY} slides={SLIDES} stats={STATS} />)
+    expect(container.innerHTML).not.toMatch(
+      /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/,
+    )
+  })
+})
+
+/**
+ * `/` is an async server component (`fetchSanity` imports `server-only`), so it cannot be
+ * rendered under jsdom — `homepage.test.tsx` and `portfolioPage.test.tsx` hit the same
+ * wall and settled on scanning the source with comments stripped. Same approach here.
+ */
+describe('the homepage no longer renders a separate stat band', () => {
+  const pageSource = stripComments(
+    readFileSync(resolve(import.meta.dirname, '../../src/app/(site)/page.tsx'), 'utf8'),
+  ).replace(/\r\n/g, '\n')
+
+  it('does not render <StatBand> as its own element', () => {
+    // The five stats moved onto the hero photograph (spec §6) via PageHero's new `stats`
+    // prop. A standalone `<StatBand` between the hero and the factors band would mean
+    // they render twice.
+    expect(pageSource).not.toMatch(/<StatBand\b/)
+  })
+
+  it('passes stats to PageHero instead', () => {
+    expect(pageSource).toMatch(/<PageHero\b[\s\S]*?\bstats=/)
+  })
+
+  it('still guards on stats.length, so an empty heroStat dataset renders no stat row', () => {
+    expect(pageSource).toMatch(/stats\.length\s*>\s*0/)
   })
 })
