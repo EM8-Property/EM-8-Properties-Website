@@ -626,6 +626,129 @@ for (const route of ['/about', '/insights', '/investors'] as const) {
 }
 
 /*
+ * The homepage compressed from nine bands to five (spec §6, PR 3): insights, offerings
+ * and partners are gone, and the five hero stats moved into the hero overlay instead of
+ * their own band, so their removal shows up nowhere in this count.
+ *
+ * Counted on `<main>`'s direct children rather than by section name, because the names
+ * are `key`s in the homepage's own source and a test that imports them is not testing
+ * anything independent. `InvestorPopup` renders `null` until its 15s delay fires (or a
+ * dismissal is read from storage), so it is not among these five on load — if that ever
+ * changes, this test starts failing for a reason worth looking at, not a false one.
+ *
+ * 390x844 rather than desktop: this is also the width the band-count regression would be
+ * easiest to miss, since a spurious sixth section is exactly the kind of thing that reads
+ * fine on a wide monitor and only crowds a phone screen.
+ */
+test('the homepage renders five bands at 390x844', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+
+  await expect(
+    page.locator('main > *'),
+    'expected exactly five direct children of <main>: hero, factors, portfolio, ' +
+      'testimonials, cta — insights/offerings/partners bands must stay gone',
+  ).toHaveCount(5)
+})
+
+/*
+ * Current Offerings renders on /portfolio, above the filter row — asserted by comparing
+ * bounding-box `y`, not DOM order. `tests/unit/portfolioPage.test.tsx` already pins the
+ * DOM order from the page's source; what only a rendered page can show is that nothing
+ * between the two sections pushes Current Offerings visually below the filters despite
+ * coming first in markup (e.g. an absolutely-positioned filter row, or a CSS order
+ * override) — that is the "documented lesson" this project keeps citing about geometry
+ * catching what DOM order misses.
+ *
+ * `div.pt-14` is `CurrentOfferings`'s own measure wrapper and appears nowhere else on this
+ * page (the filter row's equivalent wrapper is `div.py-14`, from `Band`/the page itself).
+ * Both are exact single-class-token matches, not substring ones, so neither accidentally
+ * matches a Tailwind variant like `sm:pt-14` — the project's own documented
+ * `toContain('pt-32')` trap, for a CSS class selector rather than a string assertion.
+ *
+ * THIS TEST IS CURRENTLY SKIPPED, ON PURPOSE. `portfolioPage.offeringsHeading` is empty
+ * in the live dataset right now — the ADD half of its migration (moving the field's copy
+ * off `homePage.offeringsHeading`) is deliberately deferred until just before deploy — and
+ * `CurrentOfferings` renders nothing without a `heading.title`. So today there is no
+ * offerings section on `/portfolio` to measure at all. Skipping (rather than asserting a
+ * vacuous "if present" relationship that would silently pass while never running, or
+ * asserting presence and going red on `main` for content that has not shipped yet) follows
+ * this same file's own established pattern above for content the CMS has not been given
+ * yet (`test.skip(..., 'no properties published yet — enter content')`) — visible,
+ * reasoned, and it starts actually checking the geometry the moment the migration lands.
+ */
+test('Current Offerings renders above the filter row on /portfolio', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/portfolio')
+
+  const offerings = page.locator('div.pt-14')
+  const offeringsCount = await offerings.count()
+  test.skip(
+    offeringsCount === 0,
+    'portfolioPage.offeringsHeading is empty in the live dataset (the ADD-half migration ' +
+      'has not been run yet) — CurrentOfferings renders nothing until it is; this test ' +
+      'starts asserting geometry the moment that field is filled',
+  )
+
+  const filterRow = page.locator('div.py-14').first()
+  await expect(filterRow, 'no filter row found below the offerings section').toHaveCount(1)
+
+  const offeringsBox = (await offerings.boundingBox())!
+  const filterBox = (await filterRow.boundingBox())!
+
+  expect(
+    offeringsBox.y,
+    'Current Offerings does not render above the filter row on /portfolio',
+  ).toBeLessThan(filterBox.y)
+})
+
+/*
+ * The same case, for the homepage, which the loop above does not cover.
+ *
+ * The homepage now carries the five stats in the same overlay as the eyebrow and h1 (spec
+ * §6: moved out of their own band, PR 3) — one more thing bottom-alignment has to make
+ * room for before the eyebrow, and one more thing a wider fallback face can push down.
+ * Both loops above run against `/about`/`/insights`/`/investors`, all `band`-shape pages;
+ * this is the `screen`-shape page, and the two shapes need "all the slack in the world"
+ * (375.0px cleared at 375px with fonts loaded, see the docblock above) versus "the entire
+ * margin" differently enough that neither loop stands in for the other.
+ *
+ * Both 320px and 390px, per the task brief, rather than only 320px: 390px is the width
+ * the rest of this file already treats as the phone baseline (`the four nav parents are
+ * visible on a phone`, `the homepage renders five bands`), and it is also where the
+ * homepage hero box stops matching `min-h-svh` bit-for-bit (844px there; 897px at 375px
+ * and 360px, 1014px at 320px) because the stats now live in the overlay — this test does
+ * not assert hero height at all for exactly that reason, only that the copy clears the
+ * header.
+ *
+ * Measured 2026-09-10, webfonts blocked: +79px of clearance at 320px, +81.5px at 390px
+ * (vs. +106px with the fonts loaded at 390px) — comfortably positive at both, unlike
+ * /about's fallback-font case above, but asserted here rather than assumed because this
+ * is new geometry (stats now inside the overlay) that nothing else in the suite measures.
+ */
+for (const width of [320, 390] as const) {
+  test(`the homepage hero clears the header with the webfonts blocked at ${width}px`, async ({
+    page,
+  }) => {
+    await page.route('**/*.{woff,woff2,ttf,otf}', (r) => r.abort())
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/')
+
+    const headerBox = (await page.locator('header').boundingBox())!
+    // The eyebrow is the first line of copy, so it is the one that goes under the header.
+    const eyebrow = page.locator('[data-hero-overlay] p').first()
+    const eyebrowBox = (await eyebrow.boundingBox())!
+
+    expect(
+      eyebrowBox.y,
+      `the eyebrow renders under the overlaid header on / at ${width}px with the webfonts ` +
+        `blocked — the homepage now carries the five stats in the same overlay (spec §6), ` +
+        `which is new geometry the fallback-font loop above never measured`,
+    ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
+  })
+}
+
+/*
  * The nav is visible on a phone without a tap.
  *
  * This is the assertion that would have caught what Etamar reported, and nothing in the

@@ -332,4 +332,39 @@ describe('published content', () => {
       expect(page.intro, `${page._id} has no heading.intro`).toBeTruthy()
     }
   })
+
+  /**
+   * `portfolioPage.offeringsHeading` is optional in the schema — it is a `headingBlock`
+   * with no `validation`, unlike `portfolioPage.heading` above — so nothing else notices
+   * it vanishing. `CurrentOfferings` does not throw without a title the way the page-level
+   * heading guards do; it just renders nothing, silently, and a reader arriving from
+   * "Invest With Us" sees a filter row with no offerings above it and no error anywhere.
+   * `REQUIRED_SITE_SETTINGS` does not cover it either (it is a `portfolioPage` leaf, not a
+   * `siteSettings` one), and the layout's own throw only covers `portfolioPage.heading`.
+   * This is the only automated check for the field at all.
+   *
+   * EXPECTED RED RIGHT NOW, and that is intentional, not a bug in this test. PR 3 moved
+   * Current Offerings off the homepage and onto `/portfolio`, but the field carrying its
+   * heading is mid-migration: `scripts/migrate-content.mjs` can copy
+   * `homePage.offeringsHeading` onto `portfolioPage.offeringsHeading`, but that migration
+   * is deliberately deferred until just before deploy (add the field, ship this code,
+   * verify live, only then unset the old field) — see that script's own docblock. Until it
+   * runs against the live dataset, `portfolioPage.offeringsHeading.title` is empty and this
+   * assertion fails, which is `npm run test:content` correctly reporting that Current
+   * Offerings will not render on production `/portfolio` today. It goes green the moment
+   * the migration is run and verified — no code change needed here.
+   */
+  it('publishes a portfolioPage.offeringsHeading title, or Current Offerings renders nothing on /portfolio', async () => {
+    const rows = await client.fetch<{ title?: string }[]>(
+      `*[_id == "portfolioPage" && ${PUBLISHED}]{ "title": offeringsHeading.title }`,
+    )
+    expect(rows.length, 'no published portfolioPage document').toBe(1)
+
+    expect(
+      (rows[0]!.title ?? '').trim(),
+      'portfolioPage.offeringsHeading.title is empty — CurrentOfferings renders nothing on ' +
+        '/portfolio until scripts/migrate-content.mjs runs the offerings-heading migration ' +
+        'against this dataset and it is verified live',
+    ).not.toBe('')
+  })
 })
