@@ -6,23 +6,34 @@ import type { CSSProperties } from 'react'
  * Columns are responsive rather than a flat `repeat(n)`. With five stats, a fixed inline
  * grid gives ~75px per column on a 375px viewport, which crushes both the figure and its
  * label. It starts at two columns and only opens to the full count at `lg`, where there
- * is room — *for the default tone*, whose container grows to `mx-auto max-w-[1200px]
- * px-6` at that width.
+ * is room — *for a container that actually grows at that width*, such as `mx-auto
+ * max-w-[1200px] px-6`.
  *
- * `tone="onPhoto"` does not get that room, so it does not get that rule. It renders
- * inside `PageHero`'s hero-overlay copy column, which is capped at `max-w-[42ch]` —
- * measured at 424px — regardless of viewport width, because `lg:` is a *viewport*
- * breakpoint, not a container query: it fires once the viewport crosses 1024px, whether
- * or not the box the grid actually lives in ever grows. Five columns inside 424px works
- * out to roughly 85px each before gaps, and gaps only shrink that; measured in the
- * browser it was 45px per figure cell, well under the ~75px this docblock already
- * documents as too crushed for `text-2xl` figures like "$100M+" and "36.2%". So
- * `onPhoto` stops at the `sm:grid-cols-3` step (five stats wrap 3+2) and never adopts the
- * `lg:` override at all — not a narrower version of it, none of it. The default tone is
- * unchanged: it still opens to the full column count at `lg`, because its container
- * really does have the room. Do not restore the `lg:` rule for `onPhoto` without first
- * changing the container it measures against — see `tests/unit/ui.test.tsx`, which pins
- * the presence of the `lg:` token on the default tone and its absence on `onPhoto`.
+ * That column decision is controlled by `columns`, and it is deliberately a *second*,
+ * independent prop from `tone`. `columns` answers "how wide is the box this grid sits
+ * in"; `tone` answers "what ground is it sitting on, ink-on-white or white-on-photo".
+ * They used to be one prop — `columns` was inferred from `tone === 'onPhoto'` — and that
+ * conflation was itself the bug: `PageHero` has a no-photography fallback branch where
+ * `tone` is `'default'` but the container is still `max-w-[42ch]`, so the old code
+ * happily restored the `lg:` override for a 424px box the moment there was no photograph,
+ * crushing the same five stats the on-photo fix had just repaired one branch over.
+ *
+ * `columns="narrow"` is for any container that is `max-w-[42ch]` — measured at 424px —
+ * regardless of viewport width, because `lg:` is a *viewport* breakpoint, not a
+ * container query: it fires once the viewport crosses 1024px, whether or not the box the
+ * grid actually lives in ever grows. Five columns inside 424px works out to roughly 85px
+ * each before gaps, and gaps only shrink that; measured in the browser it was 45px per
+ * figure cell, well under the ~75px this docblock already documents as too crushed for
+ * `text-2xl` figures like "$100M+" and "36.2%". So `narrow` stops at the `sm:grid-cols-3`
+ * step (five stats wrap 3+2) and never adopts the `lg:` override at all — not a narrower
+ * version of it, none of it. `columns="measure"` (the default) is for a container that
+ * really does have the room at `lg`, such as the 1200px page measure; it still opens to
+ * the full column count there. `PageHero` passes `columns="narrow"` in *both* of its
+ * branches — the photograph overlay and the no-photography fallback — because both sit
+ * inside `max-w-[42ch]`; only `tone` differs between them. Do not restore the `lg:` rule
+ * for a 424px container without first changing the container it measures against — see
+ * `tests/unit/ui.test.tsx`, which pins the presence of the `lg:` token on `columns="measure"`
+ * and its absence on `columns="narrow"`, independent of tone.
  *
  * `tone="onPhoto"` is the same closed-set pattern `Eyebrow` already uses, and deliberately
  * reuses its exact values rather than choosing new ones: the figure takes `text-white`
@@ -40,21 +51,30 @@ import type { CSSProperties } from 'react'
 export function StatBand({
   stats,
   tone = 'default',
+  columns = 'measure',
 }: {
   stats: { figure: string; label: string }[]
   tone?: 'default' | 'onPhoto'
+  /**
+   * The column decision, independent of `tone` — see the docblock above. `'narrow'` is
+   * for a `max-w-[42ch]` (424px) container and never adopts the `lg:` override at all;
+   * `'measure'` (the default) is for a container with real room at `lg`, such as the
+   * 1200px page measure, and keeps it.
+   */
+  columns?: 'measure' | 'narrow'
 }) {
   const onPhoto = tone === 'onPhoto'
-  // The `lg:` column override is scoped to the default tone only — see the docblock
-  // above. `onPhoto` caps at the `sm:grid-cols-3` step and never receives the `lg:` rule,
-  // in any form, because the 424px box it renders in never has room for five.
-  const columns = onPhoto
-    ? 'grid-cols-2 sm:grid-cols-3'
-    : 'grid-cols-2 sm:grid-cols-3 lg:[grid-template-columns:repeat(var(--stat-cols),minmax(0,1fr))]'
+  // The `lg:` column override is scoped to `columns="measure"` only — see the docblock
+  // above. `columns="narrow"` caps at the `sm:grid-cols-3` step and never receives the
+  // `lg:` rule, in any form, because a 424px box never has room for five.
+  const colClasses =
+    columns === 'narrow'
+      ? 'grid-cols-2 sm:grid-cols-3'
+      : 'grid-cols-2 sm:grid-cols-3 lg:[grid-template-columns:repeat(var(--stat-cols),minmax(0,1fr))]'
   return (
     <div
       data-stat-band
-      className={`grid ${columns} ${onPhoto ? '' : 'border-y border-rule bg-panel'}`}
+      className={`grid ${colClasses}${onPhoto ? '' : ' border-y border-rule bg-panel'}`}
       style={{ '--stat-cols': stats.length } as CSSProperties}
     >
       {stats.map((s) => (

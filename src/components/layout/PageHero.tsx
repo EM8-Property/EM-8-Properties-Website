@@ -146,9 +146,12 @@ export function PageHero({
   // click handler, so leaving pointer-events disabled costs nothing and keeps the whole
   // photograph clickable through the stats the same way it already is through the h1 and
   // the intro paragraph.
+  // `columns="narrow"` in both branches, deliberately independent of `tone`: both branches
+  // sit inside `max-w-[42ch]` (424px), which never has room for the `lg:` five-column
+  // override regardless of which ground the text sits on. See StatBand's own docblock.
   const statBand = stats && stats.length > 0 && (
     <div className="mt-6">
-      <StatBand stats={stats} tone={hasPhoto ? 'onPhoto' : 'default'} />
+      <StatBand stats={stats} tone={hasPhoto ? 'onPhoto' : 'default'} columns="narrow" />
     </div>
   )
 

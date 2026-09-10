@@ -489,6 +489,22 @@ describe('PageHero stats', () => {
     expect(container.querySelector('[data-stat-band]')).toBeNull()
   })
 
+  it('never opens the fallback stat band to five columns at lg — it sits in the same 424px measure as the photograph branch', () => {
+    // The defect this pins: both branches render inside `max-w-[42ch]` (424px). The
+    // photograph branch passes `tone="onPhoto"`, the fallback passes `tone="default"` —
+    // but `tone` is colour, not layout, and `columns` (independent of `tone`) is what
+    // must stay `"narrow"` here. Before that split, `tone="default"` silently restored
+    // the `lg:` five-column override for this 424px box the moment there was no
+    // photograph, crushing the same five stats to ~45px each at >=1024px — the exact
+    // defect the on-photo fix removed one branch over. This is the combination nothing
+    // else covers: the no-photography fallback WITH stats.
+    const five = Array.from({ length: 5 }, (_, i) => ({ figure: String(i), label: `l${i}` }))
+    const { container } = render(<PageHero copy={COPY} slides={[]} stats={five} />)
+    const statBand = container.querySelector('[data-stat-band]')!
+    expect(statBand, 'no [data-stat-band] rendered').not.toBeNull()
+    expect(statBand.className).not.toContain('lg:[grid-template-columns')
+  })
+
   it('needs no pointer-events opt-in, unlike the buttons', () => {
     // The overlay disables pointer-events so the photograph underneath stays clickable;
     // the buttons opt back in because they are interactive. The stats are plain text, so

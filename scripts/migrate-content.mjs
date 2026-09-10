@@ -416,7 +416,18 @@ async function addOfferingsHeading(apply) {
     return
   }
 
-  const source = fromHomePage ?? PAGE_COPY.portfolioPage.offeringsHeading
+  // Per leaf, not on the object — same reason the `incomplete` check above is per leaf.
+  // `fromHomePage` can be truthy but half-filled (an eyebrow with no title, say); an
+  // object-level `fromHomePage ?? seed` fallback would then carry that leaf's `undefined`
+  // straight into the mutation, `JSON.stringify` would drop the key, `setIfMissing` would
+  // silently no-op it, and this step would still print "done" — every re-run, without ever
+  // repairing the leaf the per-leaf `incomplete` check exists to catch.
+  const seed = PAGE_COPY.portfolioPage.offeringsHeading
+  const source = {
+    eyebrow: fromHomePage?.eyebrow ?? seed.eyebrow,
+    title: fromHomePage?.title ?? seed.title,
+    intro: fromHomePage?.intro ?? seed.intro,
+  }
   console.log(
     fromHomePage
       ? '  offerings heading  copying the live copy from homePage to portfolioPage'
