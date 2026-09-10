@@ -373,8 +373,13 @@ async function backfillPageHeadings(apply) {
  * revalidates — the same shape of mutation that took the CTA band down on 2026-08-31. It is
  * not in `REMOVALS` and it must never be: a reviewer should be able to read this function and
  * see that it is incapable of unsetting anything. The unset is a separate
- * `offerings-heading-cleanup` step, for a later task, to run only once the code that stops
- * reading the old location is deployed and verified. See docs/deploys-and-migrations.md.
+ * `offerings-heading-cleanup` step, to run only once the code that stops reading the old
+ * location is deployed and verified. See docs/deploys-and-migrations.md.
+ *
+ * *That step now exists, below, and was applied on 2026-09-10 against `f22a434`.* The
+ * sentence above about `page.tsx` describes the state this function shipped into and is
+ * left as written, because it is the reason this function is shaped the way it is — but
+ * it is no longer current: PR #30 removed that read.
  *
  * The live value wins over the seed constant — the one thing about `moveCtaBandToSettings`
  * worth copying wholesale. If the team has already edited this copy in the Studio, that is
@@ -460,6 +465,74 @@ async function addOfferingsHeading(apply) {
     throw new Error(`offerings heading add failed ${res.status}: ${await res.text()}`)
   }
   console.log('  offerings heading  done')
+}
+
+/**
+ * Unsets `homePage.offeringsHeading` — the REMOVAL half of the move `addOfferingsHeading`
+ * began, and the step that function's docblock reserved this name for.
+ *
+ * **Run this only after the code that stopped reading the old location is deployed and
+ * verified**, which is why it is in `REMOVALS` and prints the warning. As of `f22a434`
+ * that condition is met: `HOME_PAGE_QUERY` no longer projects the field (see the note in
+ * `src/sanity/queries.ts`), `homePage`'s schema no longer declares it, and the only read
+ * anywhere is `/portfolio`'s, from `portfolioPage.offeringsHeading`. The value on
+ * `homePage` is orphaned — invisible in the Studio because the schema dropped it, and
+ * read by nothing.
+ *
+ * **Why this is a separate function rather than an `unset` bolted onto the add.** That is
+ * exactly the shape of `moveCtaBandToSettings`, which writes the new location and unsets
+ * the old one in a single mutation list, and it is the shape that took the live homepage's
+ * call to action down on 2026-08-31. A move whose add must LEAD the code and whose unset
+ * must FOLLOW it cannot be one function, because the two halves run on opposite sides of a
+ * deploy. Splitting them is what lets the add be provably incapable of removing anything.
+ *
+ * **The guard is the point.** This refuses to unset unless `portfolioPage` holds all three
+ * leaves. Checked per leaf rather than on the object, the same granularity every step in
+ * this file has been bitten by: a half-filled destination is not a destination, and
+ * discovering that after the source is gone means the copy is gone. `moveCtaBandToSettings`
+ * gets away without this check only because it writes the destination in the same
+ * mutation; here the destination was written a deploy ago by a different run, so it has to
+ * be re-verified rather than assumed.
+ *
+ * Idempotent: with the field already absent it reports and makes no request.
+ */
+async function cleanupOfferingsHeading(apply) {
+  const [onHomePage, destination] = await Promise.all([
+    query('*[_id=="homePage"][0].offeringsHeading'),
+    query('*[_id=="portfolioPage"][0].offeringsHeading'),
+  ])
+
+  if (!onHomePage) {
+    console.log('  offerings cleanup  homePage has no offeringsHeading — nothing to unset')
+    return
+  }
+
+  // Per leaf. An object-level `if (!destination)` would pass on a destination holding only
+  // an eyebrow, and this step would then delete the only complete copy of the other two.
+  const missing = ['eyebrow', 'title', 'intro'].filter((leaf) => !destination?.[leaf])
+  if (missing.length > 0) {
+    throw new Error(
+      `offerings-heading-cleanup: portfolioPage.offeringsHeading is missing ${missing.join(', ')}. ` +
+        'Refusing to unset the homePage copy while it is the only complete one — run ' +
+        '--only=offerings-heading first, verify /portfolio renders the heading, then re-run this.',
+    )
+  }
+
+  console.log('  offerings cleanup  portfolioPage has all three leaves — safe to unset')
+  console.log('  offerings cleanup  removing the orphaned homePage.offeringsHeading')
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: [{ patch: { id: 'homePage', unset: ['offeringsHeading'] } }],
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`offerings heading cleanup failed ${res.status}: ${await res.text()}`)
+  }
+  console.log('  offerings cleanup  done')
 }
 
 /**
@@ -921,9 +994,13 @@ async function buildDocuments() {
  *
  * `offerings-heading` looks like the same shape of change as `cta` — both move a field off
  * `homePage` — but `addOfferingsHeading` writes only the new location and never unsets the
- * old one, so it belongs on the addition side of this list rather than beside `cta`. Its
- * own unset is a separate future step, `offerings-heading-cleanup`, which will belong in
- * `REMOVALS` when it exists. See docs/deploys-and-migrations.md.
+ * old one, so it belongs on the addition side of this list rather than beside `cta`.
+ *
+ * **Its unset now exists, as `offerings-heading-cleanup`, and is in `REMOVALS` below.**
+ * The pair is the clearest example in this file of why the two sides of a move are two
+ * entries: `offerings-heading` had to run BEFORE PR #30 shipped and
+ * `offerings-heading-cleanup` had to run AFTER it deployed, so no single step could have
+ * been correct at either moment. See docs/deploys-and-migrations.md.
  */
 const STEPS = {
   carousel: seedCarouselIfEmpty,
@@ -931,13 +1008,14 @@ const STEPS = {
   seo: backfillPageSeo,
   headings: backfillPageHeadings,
   'offerings-heading': addOfferingsHeading,
+  'offerings-heading-cleanup': cleanupOfferingsHeading,
   'header-button': backfillHeaderCta,
   'nav-labels': backfillNavLabels,
   cta: moveCtaBandToSettings,
 }
 
 /** Steps that remove or move a field, and so must follow their code rather than lead it. */
-const REMOVALS = new Set(['cta'])
+const REMOVALS = new Set(['cta', 'offerings-heading-cleanup'])
 
 async function main() {
   console.log(`\nEM8 content migration -> project ${projectId}, dataset ${dataset}`)
