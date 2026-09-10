@@ -149,5 +149,30 @@
  * ...`, which is the only one that can see the case this docblock is about. Both are
  * needed: on a warm machine the first cannot fail on a fallback-font regression, because
  * the webfonts are simply there.
+ *
+ * **Clearance does not depend on the headline's size, and PR 4 was planned on that.**
+ * Derived from forty measurements — four routes × the five phone viewports × fonts loaded
+ * and blocked — clearance is not free-standing:
+ *
+ *     clearance = (reservation − header) + slack,   with slack ≥ 0
+ *
+ * so it is FLOORED at `reservation − header` and cannot be driven negative by putting more
+ * content in the overlay. `/about` sits exactly on that floor at every phone width, because
+ * its copy already exceeds the `min-h-[420px]` box and the box is therefore content-driven:
+ * every "+79.0" and "+31.0" in the table above is `192 − 113` and `144 − 113`, not a
+ * coincidence. The homepage confirms it from the other side — it had slack, so a taller
+ * headline ate the slack first and only then grew the box downward.
+ *
+ * The consequence, and the reason it is recorded here: **a bigger headline costs scroll,
+ * not clearance.** The 2026-09-09 handover warned the opposite — that bottom-aligned CMS
+ * copy would climb into the header as the type grew — and that fear is what made §7 look
+ * like a risk to this file. It is not; it is a risk to §6's page-length target instead.
+ * PR 4 re-measured after PR 3 and found 51px of homepage slack at 390x844 and zero at the
+ * other four widths, which is what held the phone headline to 36px.
+ *
+ * This holds only while the hero stays `min-h` and the overlay stays in flow. Give the hero
+ * a fixed height, or take the overlay out of flow, and the relationship above stops being
+ * true while every existing test stays green — so it is now asserted directly by
+ * `clearance is floored at reservation minus header, with the webfonts blocked`.
  */
 export const HEADER_RESERVATION = 'pt-48 min-[390px]:pt-36 md:pt-28'
