@@ -5,6 +5,7 @@ import {
   POST_BY_SLUG_QUERY,
   TESTIMONIALS_QUERY,
   SITE_SETTINGS_QUERY,
+  PORTFOLIO_PAGE_QUERY,
 } from '@/sanity/queries'
 
 describe('GROQ queries', () => {
@@ -51,5 +52,16 @@ describe('GROQ queries', () => {
      * the protection.
      */
     expect(SITE_SETTINGS_QUERY).toContain('dealStoryHeading')
+  })
+
+  it('projects the current-offerings heading, which no guard would miss for you', () => {
+    /*
+     * `portfolioPage.offeringsHeading` is optional by design, so it is not in
+     * REQUIRED_SITE_SETTINGS — which means the layout's throw and the release gate both
+     * ignore it. Left out of the projection it is `undefined` on every render no matter
+     * what the Studio holds, and the only symptom is a section that never appears. This
+     * assertion is the whole of the protection.
+     */
+    expect(PORTFOLIO_PAGE_QUERY).toContain('offeringsHeading')
   })
 })

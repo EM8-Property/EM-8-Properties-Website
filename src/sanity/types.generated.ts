@@ -1573,11 +1573,12 @@ export type INVESTORS_PAGE_QUERY_RESULT =
 
 // Source: src/sanity/queries.ts
 // Variable: PORTFOLIO_PAGE_QUERY
-// Query: *[_id == "portfolioPage"][0] {    seo { title, description },    heading { eyebrow, title, intro }  }
+// Query: *[_id == "portfolioPage"][0] {    seo { title, description },    heading { eyebrow, title, intro },    offeringsHeading { eyebrow, title, intro }  }
 export type PORTFOLIO_PAGE_QUERY_RESULT =
   | {
       seo: null;
       heading: null;
+      offeringsHeading: null;
     }
   | {
       seo: {
@@ -1585,6 +1586,19 @@ export type PORTFOLIO_PAGE_QUERY_RESULT =
         description: string | null;
       } | null;
       heading: null;
+      offeringsHeading: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: null;
+      offeringsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
     }
   | {
       seo: {
@@ -1592,6 +1606,23 @@ export type PORTFOLIO_PAGE_QUERY_RESULT =
         description: string | null;
       } | null;
       heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      offeringsHeading: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      offeringsHeading: {
         eyebrow: string | null;
         title: string | null;
         intro: string | null;
@@ -1742,7 +1773,7 @@ declare module "@sanity/client" {
     '\n  *[_id == "aboutPage"][0] {\n    "whyEm8": defined(whyEm8.body)\n  }\n': NAV_SECTIONS_QUERY_RESULT;
     '\n  *[_id == "partnersPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    partners[] { eyebrow, title, body },\n    submissionHeading { eyebrow, title, intro },\n    facts[] { label, value },\n    formTitle,\n    submitLabel\n  }\n': PARTNERS_PAGE_QUERY_RESULT;
     '\n  *[_id == "investorsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    loginLabel,\n    stepsTitle,\n    steps[] { title, body },\n    keepInTouchHeading { eyebrow, title, intro },\n    submitLabel,\n    testimonialsHeading { eyebrow, title, intro }\n  }\n': INVESTORS_PAGE_QUERY_RESULT;
-    '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
+    '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    offeringsHeading { eyebrow, title, intro }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
     '\n  *[_id == "insightsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': INSIGHTS_PAGE_QUERY_RESULT;
     '\n  *[_id == "strategyPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    body\n  }\n': STRATEGY_PAGE_QUERY_RESULT;
   }

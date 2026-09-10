@@ -208,7 +208,8 @@ export const INVESTORS_PAGE_QUERY = defineQuery(`
 export const PORTFOLIO_PAGE_QUERY = defineQuery(`
   *[_id == "portfolioPage"][0] {
     seo { title, description },
-    heading { eyebrow, title, intro }
+    heading { eyebrow, title, intro },
+    offeringsHeading { eyebrow, title, intro }
   }
 `)
 
