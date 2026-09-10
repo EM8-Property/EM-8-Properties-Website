@@ -85,7 +85,7 @@ export default async function PortfolioPage() {
         heading={copy.offeringsHeading}
         offerings={offerings as PropertyCardData[]}
       />
-      <div className="mx-auto max-w-[1200px] px-6 py-14">
+      <div data-portfolio-filters className="mx-auto max-w-[1200px] px-6 py-14">
         <PortfolioFilter properties={properties as PropertyCardData[]} />
       </div>
       {/*

@@ -660,11 +660,12 @@ test('the homepage renders five bands at 390x844', async ({ page }) => {
  * override) — that is the "documented lesson" this project keeps citing about geometry
  * catching what DOM order misses.
  *
- * `div.pt-14` is `CurrentOfferings`'s own measure wrapper and appears nowhere else on this
- * page (the filter row's equivalent wrapper is `div.py-14`, from `Band`/the page itself).
- * Both are exact single-class-token matches, not substring ones, so neither accidentally
- * matches a Tailwind variant like `sm:pt-14` — the project's own documented
- * `toContain('pt-32')` trap, for a CSS class selector rather than a string assertion.
+ * Keyed off `[data-current-offerings]` and `[data-portfolio-filters]` — the same
+ * data-attribute convention `HeroCarousel` (`data-hero-overlay`) and `StatBand`
+ * (`data-stat-band`/`data-stat-figure`/`data-stat-label`) already use so E2E does not key
+ * off Tailwind utility classes a layout change could move. (An earlier version of this test
+ * used `div.pt-14`/`div.py-14`; those were exact single-class-token matches and verified
+ * unique on this page, but coupled the test to styling rather than an intentional marker.)
  *
  * THIS TEST IS CURRENTLY SKIPPED, ON PURPOSE. `portfolioPage.offeringsHeading` is empty
  * in the live dataset right now — the ADD half of its migration (moving the field's copy
@@ -681,7 +682,7 @@ test('Current Offerings renders above the filter row on /portfolio', async ({ pa
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/portfolio')
 
-  const offerings = page.locator('div.pt-14')
+  const offerings = page.locator('[data-current-offerings]')
   const offeringsCount = await offerings.count()
   test.skip(
     offeringsCount === 0,
@@ -690,7 +691,7 @@ test('Current Offerings renders above the filter row on /portfolio', async ({ pa
       'starts asserting geometry the moment that field is filled',
   )
 
-  const filterRow = page.locator('div.py-14').first()
+  const filterRow = page.locator('[data-portfolio-filters]').first()
   await expect(filterRow, 'no filter row found below the offerings section').toHaveCount(1)
 
   const offeringsBox = (await offerings.boundingBox())!

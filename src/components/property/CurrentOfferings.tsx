@@ -44,7 +44,7 @@ export function CurrentOfferings({
   if (!heading?.title) return null
 
   return (
-    <div className="mx-auto max-w-[1200px] px-6 pt-14">
+    <div data-current-offerings className="mx-auto max-w-[1200px] px-6 pt-14">
       <SectionHeading {...heading} />
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {offerings.map((o) => (
