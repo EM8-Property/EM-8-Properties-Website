@@ -387,6 +387,29 @@ measure; the other by CI rendering in a font nobody had thought about.
   `grep -rln "track-record" src/ tests/` and
   `grep -rln "trackRecord\|TRACK_RECORD" src/ tests/ scripts/ sanity.config.ts`.
 
+### Found on 2026-09-10
+
+- **`naturalWidth` is NOT the bitmap width when `srcset` uses `w` descriptors.** The browser
+  reports it density-corrected: it divides the real bitmap by `descriptor ÷ sizes-width`. A
+  genuine 1600px hero reads **649** at DPR 3, because `1600 ÷ (3840 ÷ 1560) = 649`, and a
+  genuine 2048px one reads **831**. Reading it alone sends you hunting a 650px image that
+  does not exist — that happened, and produced a wrong conclusion about the hero's sharpness
+  before it was caught. **Read the `w=` off the URL, or fetch the URL and decode it**;
+  `scripts/measure-phone.mjs --images` prints the inputs rather than inventing a number.
+- **A crop cap cannot outrun the source asset, and Sanity does not upscale.** Raising
+  `urlForImage(...).width(N)` above a source's real width silently returns the source width.
+  The first hero slide's asset is 1600x917, so a 2048 cap still served 1600x900 — while the
+  second slide (4160x3117) grew and cost 202 KB. Before raising a cap to buy sharpness,
+  check what the source actually is: `-(\d+x\d+)\.` is in the Sanity URL.
+- **`lighthouse-budget.json` declares `/*` but CI only ever loads `/`.**
+  `scripts/lighthouse.sh` defaults to `http://localhost:3000/`, so every other route is
+  in scope by declaration and unaudited in fact. Measured 2026-09-10, `/portfolio` at
+  desktop 1512x900 is **2289 KB against the 2200 KB total budget** — an overage that
+  predates PR 4 and that nothing reports. Measure that page by hand when you touch images.
+- **Five Lighthouse samples of one unchanged commit scored 75, 84, 91, 79, 79.** A 16-point
+  spread. The image-byte figure was 757 KB in all five. Byte budgets are the stable
+  measurement; the performance score is not. Never read a delta off one run.
+
 ## Status
 
 Tasks 1–15 complete. Task 14 descoped (see the plan). Task 16's infrastructure is built;

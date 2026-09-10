@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { HEADER_RESERVATION } from '../../src/lib/headerReservation'
 
 /*
  * The headline is CMS copy, so this asserts the shape of the sentence rather than its
@@ -601,9 +602,16 @@ for (const [route, width] of [
  * height and the same reservation; the site-specific slack lives in how far below the
  * `min-h-[420px]` floor each page's copy sits, and none of the three do at 320px.
  *
- * These are the three worst routes from the CI failure, not an arbitrary sample.
+ * The first three are the worst routes from the CI failure, not an arbitrary sample.
+ *
+ * `/` is the fourth and it joined in PR 4, which is why the paragraph above describes
+ * three. It was outside this loop while its hero was the one shape with slack to spare;
+ * it now carries PR 3's five stats and PR 4's larger headline in the same overlay, and
+ * its slack at 320px is zero. Measured here at 320px with the fonts blocked it sits at
+ * +39.0px — the same tie as the other three, and for the same reason: same fallback-face
+ * header, same reservation, no page-specific slack left on any of them.
  */
-for (const route of ['/about', '/insights', '/investors'] as const) {
+for (const route of ['/about', '/insights', '/investors', '/'] as const) {
   test(`the hero clears the header with the webfonts blocked at 320px on ${route}`, async ({
     page,
   }) => {
@@ -624,6 +632,117 @@ for (const route of ['/about', '/insights', '/investors'] as const) {
     ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height)
   })
 }
+
+/*
+ * The invariant the whole typography workstream reasons from, asserted directly.
+ *
+ * Across forty measurements — four routes × five viewports × fonts loaded and blocked —
+ * clearance is not an independent quantity. It is:
+ *
+ *     clearance = (reservation − header) + slack,   slack ≥ 0
+ *
+ * so it is FLOORED at `reservation − header` and cannot be pushed negative by adding
+ * content to the overlay. `/about` sits exactly on that floor at every phone width,
+ * because its copy already exceeds the `min-h-[420px]` box and the box is therefore
+ * content-driven: 192 − 153 = 39 at 320px blocked, 144 − 113 = 31 at 390px blocked.
+ *
+ * **Why this matters enough to test.** The 2026-09-09 handover warned that a larger
+ * headline would make the bottom-aligned CMS copy climb into the header. Measured, it
+ * does not — the box grows downward instead, so the real cost of a bigger headline is
+ * scroll, not clearance. Every type-scale decision in PR 4 was taken on that basis. But
+ * it is true only while the hero stays `min-h` and the overlay stays in flow, and
+ * nothing asserted it: it was true by construction, which is precisely the shape of the
+ * two faults PR 3 paid for. Give the hero a fixed height, or take the overlay out of
+ * flow, and the reasoning silently stops holding while every other test stays green.
+ *
+ * This asserts the relationship rather than a bare number: the expected value is derived
+ * from the header it actually measured, so it survives a header that changes height — a
+ * CMS-authored nav label, a different fallback face on a different runner.
+ *
+ * **What makes it red, stated precisely, because the equality is two-sided.** It asserts
+ * `/about` sits ON the floor, i.e. that its slack is exactly zero. Two different changes
+ * break that, and only one of them is a defect:
+ *
+ *   - **Clearance BELOW the floor** — the hero stopped being `min-h`, or the overlay left
+ *     the flow. That is the defect this exists for, and it is the change that would let a
+ *     larger headline start burying copy under the header again.
+ *   - **Clearance ABOVE the floor** — `/about`'s hero copy got short enough for the box to
+ *     fall back to its `min-h-[420px]` floor, so slack is positive again. That is benign,
+ *     leaves the invariant intact, and makes clearance BETTER. It is still a red test,
+ *     deliberately: `/about` is the page every reservation number in
+ *     `headerReservation.ts` is measured against, and it silently ceasing to be the
+ *     tightest shape on the site is worth a human look, not a silent pass.
+ *
+ * So read a failure by direction before assuming a regression.
+ */
+test('/about sits exactly on the clearance floor, with the webfonts blocked', async ({
+  page,
+}) => {
+  await page.route('**/*.{woff,woff2,ttf,otf}', (r) => r.abort())
+  await page.setViewportSize({ width: 320, height: 844 })
+  await page.goto('/about')
+
+  /*
+   * 192px is `pt-48`, the band `HEADER_RESERVATION` applies below its `min-[390px]:`
+   * breakpoint — transcribed, not computed, because turning a Tailwind token into pixels
+   * in a test means reimplementing Tailwind's scale here.
+   *
+   * The assertion below it is what stops the transcription going stale: if the token's
+   * bottom band ever stops being `pt-48`, this fails loudly with a message saying so,
+   * rather than passing on a number that no longer describes what ships.
+   */
+  const RESERVATION_AT_320 = 192
+  expect(
+    HEADER_RESERVATION,
+    `this test transcribes pt-48 = ${RESERVATION_AT_320}px as the reservation below 390px; ` +
+      `HEADER_RESERVATION no longer starts with pt-48, so that number is stale`,
+  ).toMatch(/^pt-48\b/)
+
+  const headerBox = (await page.locator('header').boundingBox())!
+  const eyebrowBox = (await page.locator('[data-hero-overlay] p').first().boundingBox())!
+
+  const clearance = eyebrowBox.y - (headerBox.y + headerBox.height)
+  const floor = RESERVATION_AT_320 - headerBox.height
+
+  expect(
+    Math.abs(clearance - floor),
+    `/about at 320px with the fonts blocked should sit exactly on the clearance floor: ` +
+      `measured ${clearance.toFixed(1)}px against a floor of ${RESERVATION_AT_320} − ` +
+      `${headerBox.height.toFixed(1)} = ${floor.toFixed(1)}px. BELOW the floor means the ` +
+      `hero is no longer min-h or the overlay is no longer in flow — PR 4's type scale was ` +
+      `chosen on the assumption that both still hold. ABOVE it means /about's copy now fits ` +
+      `inside min-h-[420px] and the page is no longer the tightest shape on the site, which ` +
+      `is benign but invalidates the measurements in headerReservation.ts`,
+  ).toBeLessThanOrEqual(1)
+})
+
+/*
+ * The type scale, asserted where it was decided.
+ *
+ * 390x844 is the review viewport (spec §11) and it is also the only phone width where
+ * the homepage hero had any slack left after PR 3 — 51px of it. The phone step was
+ * chosen against that number: 36px spends 53px of it and costs 2px of page length,
+ * where §7's own lowest reading of 40px spends 110px and costs 60px.
+ *
+ * A unit test already pins the class tokens. This pins the COMPUTED size, which is the
+ * thing the measurement was taken against and the thing a Tailwind config change could
+ * move without touching a single class name.
+ */
+test('the headline renders at the measured 36px on a phone', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+
+  const fontSize = await page
+    .locator('h1')
+    .first()
+    .evaluate((el) => getComputedStyle(el).fontSize)
+
+  expect(
+    fontSize,
+    `the phone headline is the one value in PR 4 derived from measurement rather than ` +
+      `from spec §7 — see the table in PageHero.tsx before changing it`,
+  ).toBe('36px')
+})
 
 /*
  * The homepage compressed from nine bands to five (spec §6, PR 3): insights, offerings

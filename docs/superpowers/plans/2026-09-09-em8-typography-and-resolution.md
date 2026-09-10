@@ -233,14 +233,14 @@ plan's scope, and Task 8 raises it to Hunter if the budget forces a choice.
 PR 3 spends the homepage hero's slack on five stats. Every §7 decision depends on what is
 left, so the table in this plan's Baseline is **superseded before it is used**.
 
-- [ ] Confirm PR 3 is merged, deployed and verified — check the deployed commit by **hash** from the Railway API, not by `SUCCESS`
-- [ ] `git fetch origin && git checkout -b typography-and-resolution origin/main`
-- [ ] Kill anything on port 3000 (`netstat -ano | grep :3000`, then `MSYS_NO_PATHCONV=1 taskkill /PID <pid> /F`) — `npm start` will not replace it and the stale build makes every measurement a lie
-- [ ] `rm -rf .next/cache` — **the whole cache**, not just `fetch-cache`; optimised images live in `.next/cache/images`
-- [ ] `npm run build && npm start`
-- [ ] Re-measure, at 320x844, 360x844, 375x812, **375x667** and 390x844, all DPR 3, **fonts loaded and blocked**: `h1` box height and line count, overlay height, hero height, **slack**, eyebrow clearance, page length in screens
-- [ ] Record whether PR 3 kept the stats on the hero or fell back to the stat band — **that decision changes the slack this PR has to spend, and therefore its answer**
-- [ ] Confirm clearance still equals `reservation − header` on `/about` at every width. If it does not, the invariant this plan reasons from has moved and the reasoning must be redone before proceeding.
+- [x] Confirm PR 3 is merged, deployed and verified — check the deployed commit by **hash** from the Railway API, not by `SUCCESS`
+- [x] `git fetch origin && git checkout -b typography-and-resolution origin/main`
+- [x] Kill anything on port 3000 (`netstat -ano | grep :3000`, then `MSYS_NO_PATHCONV=1 taskkill /PID <pid> /F`) — `npm start` will not replace it and the stale build makes every measurement a lie
+- [x] `rm -rf .next/cache` — **the whole cache**, not just `fetch-cache`; optimised images live in `.next/cache/images`
+- [x] `npm run build && npm start`
+- [x] Re-measure, at 320x844, 360x844, 375x812, **375x667** and 390x844, all DPR 3, **fonts loaded and blocked**: `h1` box height and line count, overlay height, hero height, **slack**, eyebrow clearance, page length in screens
+- [x] Record whether PR 3 kept the stats on the hero or fell back to the stat band — **that decision changes the slack this PR has to spend, and therefore its answer**
+- [x] Confirm clearance still equals `reservation − header` on `/about` at every width. If it does not, the invariant this plan reasons from has moved and the reasoning must be redone before proceeding.
 
 **Verification:** a post-PR-3 table in the same shape as the Baseline above, and an explicit statement of how much hero slack remains at each viewport.
 
@@ -253,14 +253,14 @@ left, so the table in this plan's Baseline is **superseded before it is used**.
 Desktop and `sm` are the uncontested half: `/about`-shaped pages have zero slack and grow
 downward, and desktop page length is not what §6 targets. §7's 60px and 72px land here.
 
-- [ ] Write the failing test first. Assert the **unprefixed** token separately from the prefixed ones — `toContain('text-3xl')` matches `sm:text-3xl`, and that trap is already in the README from PR 2b.
-- [ ] Run it. Watch it fail.
-- [ ] Set the `sm` and `lg` steps to §7's 60px and 72px. Tailwind has no default 60px step — use an arbitrary value (`text-[60px]`) or the nearest scale step, and say in a comment which and why.
-- [ ] Leave the **phone** step at 30px in this task. Task 3 sets it, against a measurement.
-- [ ] Apply the same change to the no-photograph fallback branch, which carries its own `h1`. Both branches were a regression once and the docblock says so.
-- [ ] Re-measure the `titleAccent` contrast at the new size and update the comment's numbers. The relationship improves with size; record it rather than leaving a 30px measurement labelled as current.
-- [ ] Check desktop page length at 1512x900 as a regression check, and the `md`/`lg` clearance rows — `md:pt-28` = 112px against a 62px header leaves +50px, and desktop pages have slack
-- [ ] `npm test`, `npx tsc --noEmit`, `npm run lint`
+- [x] Write the failing test first. Assert the **unprefixed** token separately from the prefixed ones — `toContain('text-3xl')` matches `sm:text-3xl`, and that trap is already in the README from PR 2b.
+- [x] Run it. Watch it fail.
+- [x] Set the `sm` and `lg` steps to §7's 60px and 72px. Tailwind has no default 60px step — use an arbitrary value (`text-[60px]`) or the nearest scale step, and say in a comment which and why.
+- [x] Leave the **phone** step at 30px in this task. Task 3 sets it, against a measurement.
+- [x] Apply the same change to the no-photograph fallback branch, which carries its own `h1`. Both branches were a regression once and the docblock says so.
+- [x] Re-measure the `titleAccent` contrast at the new size and update the comment's numbers. The relationship improves with size; record it rather than leaving a 30px measurement labelled as current.
+- [x] Check desktop page length at 1512x900 as a regression check, and the `md`/`lg` clearance rows — `md:pt-28` = 112px against a 62px header leaves +50px, and desktop pages have slack
+- [x] `npm test`, `npx tsc --noEmit`, `npm run lint`
 
 **Verification:** the scale test passes; desktop and tablet headlines are 72px and 60px; desktop page length has not moved materially.
 
@@ -278,12 +278,12 @@ The mechanism, from the Baseline: growth is absorbed free while the homepage her
 and costs scroll 1:1 once it does not. `/about` and the five other band pages have **zero**
 slack, so every pixel of headline growth is a pixel of scroll on all six, immediately.
 
-- [ ] Measure each candidate — **40px, 48px, 56px, 60px** — at 320x844, 360x844, 375x812, 375x667 and 390x844, DPR 3, **fonts loaded and blocked**. For each: `h1` line count, hero height, whether the hero exceeded `min-h-svh` on `/`, eyebrow clearance, and page length in screens for `/`, `/about` and `/portfolio`.
-- [ ] Do it by editing the one class and rebuilding, clearing `.next/cache` each time. Six viewports × four sizes is 24 measurements and they are the deliverable.
-- [ ] **The decision rule, written before the numbers so it cannot be fitted to them:** take the largest candidate for which (a) the homepage hero does not exceed `min-h-svh` at 390x844, (b) clearance stays positive at every width with fonts blocked, and (c) `/` page length does not regress past what PR 3 landed. If no candidate satisfies (a), take the largest that satisfies (b) and (c) and report the homepage cost explicitly.
-- [ ] 320px is the width to watch: the headline is already 4 lines at 30px there, and at 60px it will be 8. `/about` is where that lands hardest.
-- [ ] Record the chosen value **and the runners-up with their costs**, so Hunter can overrule the rule with numbers in front of him
-- [ ] `npm test`, `npx tsc --noEmit`, `npm run lint`
+- [x] Measure each candidate — **40px, 48px, 56px, 60px** — at 320x844, 360x844, 375x812, 375x667 and 390x844, DPR 3, **fonts loaded and blocked**. For each: `h1` line count, hero height, whether the hero exceeded `min-h-svh` on `/`, eyebrow clearance, and page length in screens for `/`, `/about` and `/portfolio`.
+- [x] Do it by editing the one class and rebuilding, clearing `.next/cache` each time. Six viewports × four sizes is 24 measurements and they are the deliverable.
+- [x] **The decision rule, written before the numbers so it cannot be fitted to them:** take the largest candidate for which (a) the homepage hero does not exceed `min-h-svh` at 390x844, (b) clearance stays positive at every width with fonts blocked, and (c) `/` page length does not regress past what PR 3 landed. If no candidate satisfies (a), take the largest that satisfies (b) and (c) and report the homepage cost explicitly.
+- [x] 320px is the width to watch: the headline is already 4 lines at 30px there, and at 60px it will be 8. `/about` is where that lands hardest.
+- [x] Record the chosen value **and the runners-up with their costs**, so Hunter can overrule the rule with numbers in front of him
+- [x] `npm test`, `npx tsc --noEmit`, `npm run lint`
 
 **Verification:** the 24-cell measurement table, the applied decision rule, and the chosen phone size with its measured page-length cost on all three routes.
 
@@ -298,11 +298,11 @@ is `min-h` and the overlay is in flow. That is currently true by construction an
 asserts it. The two faults in the 2026-09-09 handover were both this shape — an invariant
 everyone relied on and nothing tested.
 
-- [ ] Write an E2E test that renders `/about` at 320px with the fonts blocked and asserts clearance equals `reservation − header` within a pixel. It fails the day someone gives the hero a fixed height or takes the overlay out of flow — which is the change that would silently re-introduce the buried-copy defect at a larger type size.
-- [ ] Add a headline-size assertion at 390x844 so the scale cannot regress unnoticed
-- [ ] Extend the existing fonts-blocked clearance loop to cover `/` — it now carries stats *and* a larger headline in the same overlay, and it is not in that loop today
-- [ ] Add a line to `headerReservation.ts`'s docblock recording that clearance is `reservation − header` and does not depend on the headline, with the measured evidence. It is the natural home for the fact and that file is where the header's rules already live.
-- [ ] `npx playwright test`
+- [x] Write an E2E test that renders `/about` at 320px with the fonts blocked and asserts clearance equals `reservation − header` within a pixel. It fails the day someone gives the hero a fixed height or takes the overlay out of flow — which is the change that would silently re-introduce the buried-copy defect at a larger type size.
+- [x] Add a headline-size assertion at 390x844 so the scale cannot regress unnoticed
+- [x] Extend the existing fonts-blocked clearance loop to cover `/` — it now carries stats *and* a larger headline in the same overlay, and it is not in that loop today
+- [x] Add a line to `headerReservation.ts`'s docblock recording that clearance is `reservation − header` and does not depend on the headline, with the measured evidence. It is the natural home for the fact and that file is where the header's rules already live.
+- [x] `npx playwright test`
 
 **Verification:** the new tests pass and fail for the right reason — verify by temporarily giving the hero a fixed height and watching the invariant test go red.
 
@@ -314,14 +314,14 @@ everyone relied on and nothing tested.
 
 §7's three levers, cheapest first, each measured on the wire rather than assumed.
 
-- [ ] Write the failing tests first: the crop request carries the new cap; `quality` is 75; `SHAPE.screen.sizes` holds the re-derived hint
-- [ ] Run them. Watch them fail.
-- [ ] **Lever 1 — `quality` 68 → 75.** One word. 75 is already in `qualities`, so no config edit. **Then read `q=` off the deployed hero URL and compare bytes** — this is the lever whose silent failure cost three rebuilds, and the fact that 68 currently works does not prove 75 will be picked up.
-- [ ] Measure images-only first paint on `/` at 390x844 DPR-3 after lever 1 alone. Record it.
-- [ ] **Lever 3 — the crop cap 1600 → 2048.** Change `urlForImage(...).width(1600).height(900)` and the `<Image width height>` pair together; they must agree or the aspect ratio breaks. 2048 is already a Next `deviceSizes` entry, which is why §7 names it.
-- [ ] **Re-derive `SHAPE.screen.sizes`.** `docs/resource-budget.md` is explicit that the current multipliers are free only while the 1600 cap binds. With a 2048 cap, `400vw` at 390px asks for 1560 CSS px × DPR 3 = 4680 device px and lands on the 3840w entry, which now resolves to a genuinely larger asset instead of the same one. Work out what each of the three clauses now costs on a phone, a tablet and a desktop, and write the arithmetic into `docs/resource-budget.md` next to the table it supersedes.
-- [ ] Confirm the served bitmap really is 2048 by **reading the URL and dividing the density back out** — `naturalWidth` is density-corrected and will read ~830 at DPR 3, not 2048. This is the trap this PR discovered; do not let it re-bite here.
-- [ ] `npm test`, `npx tsc --noEmit`, `npm run lint`
+- [x] Write the failing tests first: the crop request carries the new cap; `quality` is 75; `SHAPE.screen.sizes` holds the re-derived hint
+- [x] Run them. Watch them fail.
+- [x] **Lever 1 — `quality` 68 → 75.** One word. 75 is already in `qualities`, so no config edit. **Then read `q=` off the deployed hero URL and compare bytes** — this is the lever whose silent failure cost three rebuilds, and the fact that 68 currently works does not prove 75 will be picked up.
+- [x] Measure images-only first paint on `/` at 390x844 DPR-3 after lever 1 alone. Record it.
+- [x] **Lever 3 — the crop cap 1600 → 2048.** Change `urlForImage(...).width(1600).height(900)` and the `<Image width height>` pair together; they must agree or the aspect ratio breaks. 2048 is already a Next `deviceSizes` entry, which is why §7 names it.
+- [x] **Re-derive `SHAPE.screen.sizes`.** `docs/resource-budget.md` is explicit that the current multipliers are free only while the 1600 cap binds. With a 2048 cap, `400vw` at 390px asks for 1560 CSS px × DPR 3 = 4680 device px and lands on the 3840w entry, which now resolves to a genuinely larger asset instead of the same one. Work out what each of the three clauses now costs on a phone, a tablet and a desktop, and write the arithmetic into `docs/resource-budget.md` next to the table it supersedes.
+- [x] Confirm the served bitmap really is 2048 by **reading the URL and dividing the density back out** — `naturalWidth` is density-corrected and will read ~830 at DPR 3, not 2048. This is the trap this PR discovered; do not let it re-bite here.
+- [x] `npm test`, `npx tsc --noEmit`, `npm run lint`
 
 **Verification:** `q=75` and a 2048px bitmap both confirmed on the wire, and a `sizes` hint whose arithmetic is written down.
 
@@ -331,12 +331,12 @@ everyone relied on and nothing tested.
 
 **Files:** `docs/resource-budget.md`
 
-- [ ] `rm -rf .next/cache && npm run build && npm start`
-- [ ] Images-only and total first-paint bytes on `/` at 390x844 DPR-3, and at Lighthouse's mobile form factor (**412x823 at DPR 1.75**), which is the one CI gates
-- [ ] The same on `/portfolio` — `docs/resource-budget.md` names it as the page to watch at 1250 KB against a 1400 KB budget, and **Lighthouse in CI only loads `/`, so nothing gates it**. PR 3 added a card there. If the cap increase pushes it over, CI will not tell you and a visitor will.
-- [ ] `npm run lighthouse` — it dies on Windows *after* it finishes with a `chrome-launcher` EPERM; `lh.json` is already written, so run `node scripts/lighthouse-report.mjs`
-- [ ] **Five samples before believing any delta.** Seven runs of one commit returned 87, 87, 87, 97, 98, 87, 87. Byte budgets are the stable measurement; the performance score is not. **Never compare localhost to deployed.**
-- [ ] Update `docs/resource-budget.md` with the measured before/after table and the re-derived `sizes` reasoning
+- [x] `rm -rf .next/cache && npm run build && npm start`
+- [x] Images-only and total first-paint bytes on `/` at 390x844 DPR-3, and at Lighthouse's mobile form factor (**412x823 at DPR 1.75**), which is the one CI gates
+- [x] The same on `/portfolio` — `docs/resource-budget.md` names it as the page to watch at 1250 KB against a 1400 KB budget, and **Lighthouse in CI only loads `/`, so nothing gates it**. PR 3 added a card there. If the cap increase pushes it over, CI will not tell you and a visitor will.
+- [x] `npm run lighthouse` — it dies on Windows *after* it finishes with a `chrome-launcher` EPERM; `lh.json` is already written, so run `node scripts/lighthouse-report.mjs`
+- [x] **Five samples before believing any delta.** Seven runs of one commit returned 87, 87, 87, 97, 98, 87, 87. Byte budgets are the stable measurement; the performance score is not. **Never compare localhost to deployed.**
+- [x] Update `docs/resource-budget.md` with the measured before/after table and the re-derived `sizes` reasoning
 
 **Verification:** measured byte figures for `/` and `/portfolio` on both form factors, five Lighthouse samples, and a budget table that shows the remaining headroom as a number.
 
@@ -353,8 +353,8 @@ measurement, not assumed:
 
 - [ ] **Both levers fit with real headroom** — ship both. Record the new headroom figure and what it means for the lobby photography still to be shot.
 - [ ] **Both fit but headroom is thin** (under ~15%) — ship quality 75 and a cap between 1600 and 2048, measured. §7 says "expect to land on quality 75 plus a cap near 2048, measured rather than promised", and a cap of 1800 or 1920 is a legitimate answer to that sentence. 1920 is a `deviceSizes` entry, which makes it the natural intermediate.
-- [ ] **They do not fit** — ship quality 75 alone, which is §7's cheapest and most likely explanation of what Etamar saw, keep the 1600 cap, and put the taller-crop option (4:3 instead of 16:9, ~1080 CSS px painted instead of ~1500 — sharper *and* cheaper) in front of Hunter as the design decision `docs/resource-budget.md` already frames it as.
-- [ ] **Do not raise `lighthouse-budget.json` in any of the three.** If that seems like the answer, it is the signal to take outcome three.
+- [x] **They do not fit** — ship quality 75 alone, which is §7's cheapest and most likely explanation of what Etamar saw, keep the 1600 cap, and put the taller-crop option (4:3 instead of 16:9, ~1080 CSS px painted instead of ~1500 — sharper *and* cheaper) in front of Hunter as the design decision `docs/resource-budget.md` already frames it as.
+- [x] **Do not raise `lighthouse-budget.json` in any of the three.** If that seems like the answer, it is the signal to take outcome three.
 
 **Verification:** the chosen outcome stated with the measurement that chose it, and `lighthouse-budget.json` unchanged.
 

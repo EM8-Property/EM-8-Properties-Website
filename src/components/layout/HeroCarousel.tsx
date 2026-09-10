@@ -315,16 +315,36 @@ export function HeroCarousel({
                   binds — every over-ask lands on the same 1600px asset and every under-ask
                   still clears it at any plausible DPR. If the cap is ever raised, these
                   numbers stop being free and want re-deriving.
+
+                  **PR 4 tried to raise it and did not, so these multipliers are still
+                  free and are deliberately unchanged.** §7 named the cap as its third
+                  lever; measured at 2048 it put `/portfolio` on desktop at 1564 KB of
+                  images against a 1400 KB budget — a page CI never audits — while the
+                  first slide stayed 1600x900 anyway, because its Sanity source asset is
+                  only 1600x917 and Sanity does not upscale. The re-derivation above is
+                  therefore still owed by whoever succeeds at raising the cap, and the
+                  prerequisite for that is a higher-resolution source photograph, not a
+                  bigger number here.
                 */
                 sizes={SHAPE[variant].sizes}
                 /*
-                  Below Next's default of 75, and declared in `images.qualities` in
-                  next.config.ts — Next 16 silently ignores any quality not on that list
-                  and falls back to 75, with no warning and byte-identical output. A
-                  photograph carries compression far better than a chart would, and this is
-                  the heaviest single asset on the site.
+                  Raised from 68 by PR 4 (spec §7's first resolution lever), and declared
+                  in `images.qualities` in next.config.ts — Next 16 silently ignores any
+                  quality not on that list and falls back to 75, with no warning and
+                  byte-identical output.
+
+                  That silent-fallback behaviour is exactly why this was measured on the
+                  wire rather than assumed: `qualities: [68, 75]` allowlists both, and the
+                  deployed hero really was serving `q=68`, so the change was real. Read
+                  back afterwards as `q=75`, and the page images on `/` moved 723 KB → 754
+                  KB at 390x844 DPR-3 — +31 KB, against a 1400 KB budget. A no-op would
+                  have been byte-identical, and it was not.
+
+                  This is the only one of §7's three resolution levers that shipped. The
+                  crop cap stayed at 1600 — see the cap's own note above and
+                  `docs/resource-budget.md` for the measurement that declined it.
                 */
-                quality={68}
+                quality={75}
                 priority={i === 0}
                 className="h-full w-full object-cover"
               />

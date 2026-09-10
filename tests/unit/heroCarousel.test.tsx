@@ -1,13 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { HeroCarousel } from '@/components/layout/HeroCarousel'
+import { stripComments } from '../shared/sourceScan'
 
 vi.mock('@/sanity/image', () => ({
   urlForImage: () => ({ width: () => ({ height: () => ({ url: () => 'https://cdn.test/x.jpg' }) }) }),
 }))
 
 const PHYSICAL = /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left|text-right)-?\b/
+
+/**
+ * The component's own source with comments stripped.
+ *
+ * Two facts about this component ship but cannot be rendered here: the Sanity crop cap
+ * (`urlForImage` is mocked to a fixed URL that discards the width it was handed) and
+ * `quality` (consumed by next/image rather than emitted as an attribute). Scanning the
+ * source is the repo's idiom for that — see `pageHero.test.tsx` — and comments are
+ * stripped because the docblocks explain these numbers by naming them, and would
+ * otherwise satisfy the assertions on their own.
+ */
+const heroSource = () =>
+  stripComments(
+    readFileSync(resolve(import.meta.dirname, '../../src/components/layout/HeroCarousel.tsx'), 'utf8'),
+  )
 
 const SLIDES = [
   { image: { alt: 'Lobby at 157 & Cicero' }, slug: '157-and-cicero', propertyTitle: '157 & Cicero' },
@@ -136,6 +154,62 @@ describe('HeroCarousel — resource budget', () => {
     expect(screen.endsWith('100vw')).toBe(true)
 
     expect(sizesFor('band')).toBe('100vw')
+  })
+
+  /*
+   * The crop cap and the quality, read off the source.
+   *
+   * Neither is observable here: `urlForImage` is mocked to a fixed URL that discards the
+   * width it was handed, and `quality` is consumed by next/image rather than rendered as
+   * an attribute. The repo's idiom for a fact that ships but cannot be rendered is to
+   * scan the source with comments stripped — see `pageHero.test.tsx` — so that the
+   * docblocks which spell these numbers out in order to explain them cannot satisfy the
+   * assertion themselves.
+   *
+   * Why they are pinned together: the Sanity crop and the `<Image>` intrinsic pair must
+   * agree, or the aspect ratio breaks. 1600x900 is 16:9 exactly.
+   *
+   * **The cap stays at 1600, and PR 4 raising it to 2048 is why this test exists.** §7
+   * named the cap as its third resolution lever and the plan carried it as far as a
+   * measurement. Both halves of that measurement said no:
+   *
+   *   - **It breaks a budget nothing gates.** At 2048 the page images on `/portfolio` at
+   *     desktop 1512x900 measured 1564 KB against a 1400 KB budget, and 2556 KB total
+   *     against 2200 KB. `lighthouse-budget.json` declares those limits for `/*`, but
+   *     `scripts/lighthouse.sh` only ever loads `/` — which sits at 754 KB and passes
+   *     comfortably. The overage would have shipped green.
+   *   - **It buys no sharpness on the image that matters.** The first slide is the
+   *     `priority` one and the LCP, and its Sanity source asset is 1600x917. Sanity does
+   *     not upscale, so at a 2048 cap it still served a 1600x900 bitmap — verified by
+   *     fetching the URL, since `naturalWidth` reads 649 for it at DPR 3. Only the second
+   *     slide (4160x3117) actually grew, and it grew by 202 KB.
+   *
+   * So the way to sharpen this hero is a better source asset, not a bigger cap. Raising
+   * the cap before that photograph is re-shot spends the budget on the one slide a
+   * visitor sees second.
+   */
+  it('keeps the 1600px crop cap, at 16:9, in both the crop and the intrinsic size', () => {
+    expect(heroSource()).toContain('.width(1600).height(900)')
+    expect(heroSource()).toMatch(/width=\{1600\}/)
+    expect(heroSource()).toMatch(/height=\{900\}/)
+
+    // The ratio is read back OUT of the source, not asserted on two literals — a
+    // `expect(1600 / 900).toBeCloseTo(16 / 9)` would be arithmetic on constants written
+    // in the test and would stay green while the component said anything at all. These
+    // two numbers are whatever `urlForImage` is actually being handed.
+    const [, w, h] = heroSource().match(/\.width\((\d+)\)\.height\((\d+)\)/)!
+    expect(Number(w) / Number(h), `the crop is ${w}x${h}, which is not 16:9`).toBeCloseTo(16 / 9, 5)
+  })
+
+  /*
+   * 68 → 75. `next.config.ts` allowlists both, so 68 was genuinely being served at
+   * `7d0d9ff` — confirmed by reading `q=68` off the deployed hero URL before the change,
+   * which is what makes this a real change rather than the no-op the budget doc's
+   * generic warning would suggest. Measured after: `q=75` on the wire, +31 KB on `/`.
+   */
+  it('serves the hero at quality 75', () => {
+    expect(heroSource()).toMatch(/quality=\{75\}/)
+    expect(heroSource()).not.toMatch(/quality=\{68\}/)
   })
 
   it('still preloads the slide it is about to advance to', () => {

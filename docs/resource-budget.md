@@ -188,6 +188,77 @@ with the revert on the phone; on desktop both shapes end at `100vw` and fetch th
 variant, so nothing changed there. Lighthouse in CI only loads `/`, so nothing gates that
 page today.
 
+## PR 4, 2026-09-10 — quality 68 → 75 shipped, the crop cap did not
+
+Spec §7 named three resolution levers. One shipped. The measurement is below because §7's
+own arithmetic (in the plan) put both levers together at ~1330 KB against 1400 KB and
+called that "inside but spending nearly all the headroom" — the real numbers are worse in
+one place and better in another, and neither was predictable.
+
+**Measured on a production build, first paint, this document's own instrument replaced by
+a per-response byte count so that `total` is comparable to the budget's `total`.**
+
+All three form factors, both routes, all three builds. **412x823 at DPR 1.75 is
+Lighthouse's mobile form factor — the one CI gates, and only on `/`.**
+
+| build | route | 390x844 @3 | 412x823 @1.75 | 1512x900 @2 |
+|---|---|---|---|---|
+| deployed `7d0d9ff` (q68, cap 1600) | `/` | 723 / 1689 | 723 / 1689 | 723 / 1688 |
+| deployed `7d0d9ff` | `/portfolio` | 1105 / 2094 | 937 / 1927 | 1300 / **2289** |
+| **q75, cap 1600 — shipped** | `/` | **754** / 1723 | **754** / 1723 | 754 / 1723 |
+| **q75, cap 1600 — shipped** | `/portfolio` | 1127 / 2119 | 945 / 1938 | **1331** / **2323** |
+| q75 + cap 2048 — declined | `/` | 987 / 1956 | 987 / 1956 | 987 / 1956 |
+| q75 + cap 2048 — declined | `/portfolio` | 1129 / 2121 | 945 / 1938 | **1564** / **2556** |
+| budget | | 1400 / 2200 | 1400 / 2200 | 1400 / 2200 |
+
+Cells are `images / total`, in KB, first paint. Bold marks a figure at or over budget.
+
+Two things the table makes obvious and the single-form-factor version did not. **`/` is
+form-factor-insensitive** — the hero resolves to the same variant at all three, which is
+what the crop cap does. And **`/portfolio` is only in trouble on desktop**: at
+Lighthouse's own mobile form factor it is 945 KB and unremarkable, so even auditing
+`/portfolio` on the CI runner's form factor would not have caught the 2323 KB desktop
+total.
+
+**On 757 KB vs 754 KB.** Lighthouse's own transfer table reports 757 KB of images on `/`
+where the per-response count above says 754 KB; the five-run README figure is the
+Lighthouse one. The 3 KB is accounting, not variance — Lighthouse counts compressed
+transfer size including headers, this counts response bodies. Both were stable across
+five runs, which is the property that mattered.
+
+**Why the cap was declined, and it is two reasons rather than one.**
+
+1. **It breaks the image budget on the page nothing audits.** 1564 KB against 1400 KB on
+   `/portfolio` at desktop. `lighthouse-budget.json` declares its limits for `/*`, but
+   `scripts/lighthouse.sh` defaults to `http://localhost:3000/`, so `/` is the only route
+   ever measured — and `/` passes at 754 KB with no overage reported in five runs. The
+   breach would have shipped green. This document's rule against raising a budget to make
+   something pass is what closed it; `lighthouse-budget.json` is unchanged.
+2. **It buys no sharpness where it matters.** The first slide carries `priority` and is the
+   LCP. Its Sanity source asset is **1600x917**, and Sanity does not upscale, so at a 2048
+   cap it still served a **1600x900** bitmap — verified by fetching the URL and decoding it,
+   because `naturalWidth` reads 649 for it at DPR 3. Only the second slide (4160x3117) grew,
+   to 2048x1152, at +202 KB. The visitor's first impression was unchanged and paid for.
+
+**So the multipliers in `SHAPE.screen.sizes` are still free and are deliberately
+unchanged.** The warning above — that they want re-deriving once the cap moves — is still
+owed, by whoever moves it.
+
+**What would actually sharpen the hero**, in the order it should be tried:
+
+1. **Re-shoot or re-upload the Boulevard photograph above 1600px.** It is the cheapest fix
+   and it is a content action, not a code one. Until then no cap raises this image.
+2. **The taller crop**, 4:3 instead of 16:9, which this document already frames and
+   declines: a portrait phone would paint ~1080 CSS px instead of ~1500, which is sharper
+   *and* fewer bytes. Still a design decision about re-framing every photograph on every
+   page, and still not taken here.
+
+**`/portfolio` is already over the total budget and was before this PR.** 2289 KB against
+2200 KB on the deployed build, at desktop. Quality 75 deepens it by 34 KB. That is recorded
+rather than fixed because it predates this workstream and its cause is the ten property-card
+thumbnails, not the hero — but it is real by this document's own numbers, and the reason
+nobody has seen it is that CI does not look.
+
 **What pays for it instead is the preload window on the first paint.** Only the current
 slide and the one it is about to cross-fade to carry an `<img>` when the page loads; the
 slide being faded *out* stays mounted once there is one, so the steady state is three. That
@@ -248,6 +319,12 @@ Both times it has failed so far, the cause was real and the fix was in the code:
 with no warning, no build error, and byte-identical output — three rebuilds in a row
 produced exactly the same bytes before this was spotted. Any quality the code asks for
 must also appear in `images.qualities` in `next.config.ts`.
+
+*The `68` above is the historical example, not the current state.* Since PR 4 the hero
+asks for `quality={75}` and nothing in `src/` asks for 68; `next.config.ts` still
+allowlists it only so the before/after tables in this document stay reproducible. The
+trap itself is unchanged, and it is the reason PR 4 read `q=` off the wire before and
+after rather than trusting the prop.
 
 **Clear `.next/cache`, not just `.next/cache/fetch-cache`.** Optimised images are cached
 separately under `.next/cache/images`. Deleting only the fetch cache leaves stale
