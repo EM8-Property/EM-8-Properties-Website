@@ -19,13 +19,19 @@ export type OfferingsHeadingData = {
  *
  * Renders nothing for either of two independent reasons:
  *  - `offerings` is empty. Spec §6: a section with nothing in it renders nothing -- no
- *    heading, no empty grid. Today exactly one property is publicly offered, and this must
- *    hold none the day that one closes.
+ *    heading, no empty grid, no wrapper. Today exactly one property is publicly offered,
+ *    and this must hold none the day that one closes.
  *  - `heading` has no `title`. GROQ projects `heading { eyebrow, title, intro }` into a
  *    truthy object even when every field inside is null, so checking the object itself
  *    would let a half-filled heading through and render an empty heading -- the same trap
  *    documented in `src/app/(site)/portfolio/page.tsx`. Checking the `title` leaf instead
  *    is what a titleless section here refuses to ship.
+ *
+ * Owns its own measure wrapper (`mx-auto max-w-[1200px] px-6 pt-14`), the same way
+ * `PortfolioFilter`'s content sits inside one -- so the caller renders this component
+ * unconditionally and never re-derives the emptiness check above at the call site. A
+ * wrapper div with nothing inside it would still occupy its `pt-14` padding, so the null
+ * returns above cover the wrapper too, not just its contents.
  */
 export function CurrentOfferings({
   heading,
@@ -38,13 +44,13 @@ export function CurrentOfferings({
   if (!heading?.title) return null
 
   return (
-    <>
+    <div className="mx-auto max-w-[1200px] px-6 pt-14">
       <SectionHeading {...heading} />
       <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {offerings.map((o) => (
           <PropertyCard key={o.slug} property={o} />
         ))}
       </div>
-    </>
+    </div>
   )
 }

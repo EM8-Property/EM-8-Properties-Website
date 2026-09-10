@@ -77,26 +77,14 @@ export default async function PortfolioPage() {
         this page at all; the filters sit directly above the grid they belong to, so nothing
         about them appears to apply to the offerings above.
 
-        `CurrentOfferings` renders a heading and a grid, not a ground of its own — unlike
-        `PageHero` and `CtaBand` below, it owns no panel or full-bleed rule, so it takes the
-        measure wrapper itself rather than sitting outside it as their sibling. It gets its
-        own wrapper rather than sharing the filter's below so each section keeps its own
-        vertical rhythm and either can gain independent spacing or a ground later without
-        disturbing the other.
-
-        The wrapper's own visibility mirrors `CurrentOfferings`' internal one (empty
-        offerings, or a heading with no title) so an empty section leaves behind no bare
-        `pt-14` gap above the filters — a section with nothing in it renders nothing, per
-        spec §6, not sixty-some pixels of unexplained space.
+        `CurrentOfferings` owns its own measure wrapper and its own emptiness check (empty
+        offerings, or a heading with no title), so it is rendered unconditionally here —
+        there is nothing left for this call site to gate.
       */}
-      {offerings.length > 0 && copy.offeringsHeading?.title && (
-        <div className="mx-auto max-w-[1200px] px-6 pt-14">
-          <CurrentOfferings
-            heading={copy.offeringsHeading}
-            offerings={offerings as PropertyCardData[]}
-          />
-        </div>
-      )}
+      <CurrentOfferings
+        heading={copy.offeringsHeading}
+        offerings={offerings as PropertyCardData[]}
+      />
       <div className="mx-auto max-w-[1200px] px-6 py-14">
         <PortfolioFilter properties={properties as PropertyCardData[]} />
       </div>
