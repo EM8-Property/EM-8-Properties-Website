@@ -221,7 +221,6 @@ export type HomePage = {
   factorsHeading?: HeadingBlock;
   insightsHeading?: HeadingBlock;
   portfolioHeading?: HeadingBlock;
-  offeringsHeading?: HeadingBlock;
   testimonialsHeading?: HeadingBlock;
   partnersTeaser?: HeadingBlock;
   partnersTeaserCta?: CtaLink;
@@ -1099,7 +1098,7 @@ export type SITE_SETTINGS_QUERY_RESULT = {
 
 // Source: src/sanity/queries.ts
 // Variable: HOME_PAGE_QUERY
-// Query: *[_id == "homePage"][0] {    seo { title, description },    hero { eyebrow, title, titleAccent, titleSuffix, intro,           primaryCta { label, href }, secondaryCta { label, href } },    factorsHeading { eyebrow, title, intro },    insightsHeading { eyebrow, title, intro },    portfolioHeading { eyebrow, title, intro },    offeringsHeading { eyebrow, title, intro },    testimonialsHeading { eyebrow, title, intro },    partnersTeaser { eyebrow, title, intro },    partnersTeaserCta { label, href },    portfolioCta { label, href },    popup { enabled, eyebrow, title, body, submitLabel, successMessage }  }
+// Query: *[_id == "homePage"][0] {    seo { title, description },    hero { eyebrow, title, titleAccent, titleSuffix, intro,           primaryCta { label, href }, secondaryCta { label, href } },    factorsHeading { eyebrow, title, intro },    insightsHeading { eyebrow, title, intro },    portfolioHeading { eyebrow, title, intro },    testimonialsHeading { eyebrow, title, intro },    partnersTeaser { eyebrow, title, intro },    partnersTeaserCta { label, href },    portfolioCta { label, href },    popup { enabled, eyebrow, title, body, submitLabel, successMessage }  }
 export type HOME_PAGE_QUERY_RESULT =
   | {
       seo: null;
@@ -1107,7 +1106,6 @@ export type HOME_PAGE_QUERY_RESULT =
       factorsHeading: null;
       insightsHeading: null;
       portfolioHeading: null;
-      offeringsHeading: null;
       testimonialsHeading: null;
       partnersTeaser: null;
       partnersTeaserCta: null;
@@ -1123,7 +1121,6 @@ export type HOME_PAGE_QUERY_RESULT =
       factorsHeading: null;
       insightsHeading: null;
       portfolioHeading: null;
-      offeringsHeading: null;
       testimonialsHeading: null;
       partnersTeaser: null;
       partnersTeaserCta: null;
@@ -1139,32 +1136,11 @@ export type HOME_PAGE_QUERY_RESULT =
       factorsHeading: null;
       insightsHeading: null;
       portfolioHeading: null;
-      offeringsHeading: null;
       testimonialsHeading: {
         eyebrow: string | null;
         title: string | null;
         intro: string | null;
       } | null;
-      partnersTeaser: null;
-      partnersTeaserCta: null;
-      portfolioCta: null;
-      popup: null;
-    }
-  | {
-      seo: {
-        title: string | null;
-        description: string | null;
-      } | null;
-      hero: null;
-      factorsHeading: null;
-      insightsHeading: null;
-      portfolioHeading: null;
-      offeringsHeading: {
-        eyebrow: string | null;
-        title: string | null;
-        intro: string | null;
-      } | null;
-      testimonialsHeading: null;
       partnersTeaser: null;
       partnersTeaserCta: null;
       portfolioCta: null;
@@ -1197,7 +1173,6 @@ export type HOME_PAGE_QUERY_RESULT =
       } | null;
       insightsHeading: null;
       portfolioHeading: null;
-      offeringsHeading: null;
       testimonialsHeading: null;
       partnersTeaser: null;
       partnersTeaserCta: null;
@@ -1235,11 +1210,6 @@ export type HOME_PAGE_QUERY_RESULT =
         intro: string | null;
       } | null;
       portfolioHeading: {
-        eyebrow: string | null;
-        title: string | null;
-        intro: string | null;
-      } | null;
-      offeringsHeading: {
         eyebrow: string | null;
         title: string | null;
         intro: string | null;
@@ -1593,18 +1563,6 @@ export type PORTFOLIO_PAGE_QUERY_RESULT =
         title: string | null;
         description: string | null;
       } | null;
-      heading: null;
-      offeringsHeading: {
-        eyebrow: string | null;
-        title: string | null;
-        intro: string | null;
-      } | null;
-    }
-  | {
-      seo: {
-        title: string | null;
-        description: string | null;
-      } | null;
       heading: {
         eyebrow: string | null;
         title: string | null;
@@ -1768,7 +1726,7 @@ declare module "@sanity/client" {
     '\n  *[_type == "testimonial" && consentOnRecord == true] | order(order asc) {\n    _id, quote, attribution, descriptor, investorSince, featured\n  }\n': TESTIMONIALS_QUERY_RESULT;
     '\n  *[_type == "property" && publiclyOffered == true] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0], offering\n  }\n': CURRENT_OFFERINGS_QUERY_RESULT;
     '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    headerCta { label, href },\n    navLabels {\n      aboutUs, aboutEm8, whyEm8, ourTeam,\n      strategy, whyMidwest, partners, portfolio, insights\n    },\n    dealStoryHeading,\n    ctaBand {\n      heading { eyebrow, title, intro },\n      submitLabel, successMessage, callTitle, callBody, callLabel\n    },\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
-    '\n  *[_id == "homePage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro,\n           primaryCta { label, href }, secondaryCta { label, href } },\n    factorsHeading { eyebrow, title, intro },\n    insightsHeading { eyebrow, title, intro },\n    portfolioHeading { eyebrow, title, intro },\n    offeringsHeading { eyebrow, title, intro },\n    testimonialsHeading { eyebrow, title, intro },\n    partnersTeaser { eyebrow, title, intro },\n    partnersTeaserCta { label, href },\n    portfolioCta { label, href },\n    popup { enabled, eyebrow, title, body, submitLabel, successMessage }\n  }\n': HOME_PAGE_QUERY_RESULT;
+    '\n  *[_id == "homePage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro,\n           primaryCta { label, href }, secondaryCta { label, href } },\n    factorsHeading { eyebrow, title, intro },\n    insightsHeading { eyebrow, title, intro },\n    portfolioHeading { eyebrow, title, intro },\n    testimonialsHeading { eyebrow, title, intro },\n    partnersTeaser { eyebrow, title, intro },\n    partnersTeaserCta { label, href },\n    portfolioCta { label, href },\n    popup { enabled, eyebrow, title, body, submitLabel, successMessage }\n  }\n': HOME_PAGE_QUERY_RESULT;
     '\n  *[_id == "aboutPage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro },\n    factorsHeading { eyebrow, title, intro },\n    whyEm8 { heading { eyebrow, title, intro }, body },\n    leadershipTitle,\n    boardTitle\n  }\n': ABOUT_PAGE_QUERY_RESULT;
     '\n  *[_id == "aboutPage"][0] {\n    "whyEm8": defined(whyEm8.body)\n  }\n': NAV_SECTIONS_QUERY_RESULT;
     '\n  *[_id == "partnersPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    partners[] { eyebrow, title, body },\n    submissionHeading { eyebrow, title, intro },\n    facts[] { label, value },\n    formTitle,\n    submitLabel\n  }\n': PARTNERS_PAGE_QUERY_RESULT;

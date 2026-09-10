@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, cleanup } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { PageHero } from '@/components/layout/PageHero'
 import type { CarouselSlide } from '@/components/layout/HeroCarousel'
 import { PAGE_COPY } from '../../scripts/content/em8-content.mjs'
+import { stripComments } from '../shared/sourceScan'
 
 const PROMISSORY = /(guaranteed|will return|assured|risk-free|no risk)/i
 
@@ -116,5 +119,71 @@ describe('PageHero render paths', () => {
       <PageHero copy={hero} slides={[{ image: { alt: 'a' }, slug: null, propertyTitle: 'X' }]} />,
     )
     expect(container.querySelector('h1')!.className).toMatch(/text-ink/)
+  })
+})
+
+/**
+ * `/` is an async server component that fetches from Sanity, so its band list is asserted
+ * against source rather than rendered — the same approach `portfolioPage.test.tsx` and
+ * `strategyPage.test.tsx` take for page-level structure on this codebase's other
+ * server-component pages.
+ *
+ * Spec §6: nine bands become five. The Insights and Partners teasers come out because
+ * both are one click away in the nav bar, and Current Offerings comes out because it
+ * moved to `/portfolio` (Task 5, commit 50420d2) as its own section there.
+ */
+const pageSource = stripComments(
+  readFileSync(resolve(import.meta.dirname, '../../src/app/(site)/page.tsx'), 'utf8'),
+).replace(/\r\n/g, '\n')
+
+describe('the homepage band list', () => {
+  it('no longer renders an insights band', () => {
+    // The insights teaser was 1088px of the phone scroll spec §6 removes — three cards
+    // of a feed that has three articles in it.
+    expect(pageSource).not.toMatch(/key:\s*['"]insights['"]/)
+  })
+
+  it('no longer renders an offerings band', () => {
+    // Current Offerings moved to /portfolio (Task 5); rendering it here too would be the
+    // "deliberately renders in both places" state this commit ends.
+    expect(pageSource).not.toMatch(/key:\s*['"]offerings['"]/)
+  })
+
+  it('no longer renders a partners band', () => {
+    // The partners teaser is one click away in the nav bar.
+    expect(pageSource).not.toMatch(/key:\s*['"]partners['"]/)
+  })
+
+  it('drops the queries only the removed bands used', () => {
+    // tsc catches unused imports, but a source-level assertion documents the intent and
+    // fails with a clearer message than a type error would.
+    expect(pageSource).not.toContain('ALL_POSTS_QUERY')
+    expect(pageSource).not.toContain('CURRENT_OFFERINGS_QUERY')
+  })
+
+  it('stops reading offeringsHeading, whose copy now lives at a second address', () => {
+    // portfolioPage.offeringsHeading is the field that heads the section now, per
+    // Task 5. Leaving this read in place would edit words nothing renders.
+    expect(pageSource).not.toContain('copy.offeringsHeading')
+  })
+
+  it('keeps insightsHeading, partnersTeaser and partnersTeaserCta in the schema and query', () => {
+    // Per the controller ruling: an unread field costs nothing, and a removal waits for
+    // the code that stopped reading it to be deployed first. Only offeringsHeading is the
+    // exception (its copy now lives at portfolioPage.offeringsHeading, a second address).
+    // page.tsx no longer reads these three (asserted above); the schema and query must
+    // still declare them, or this would be a breaking migration with no benefit.
+    const querySource = stripComments(
+      readFileSync(resolve(import.meta.dirname, '../../src/sanity/queries.ts'), 'utf8'),
+    )
+    const schemaSource = stripComments(
+      readFileSync(resolve(import.meta.dirname, '../../src/sanity/schema/pages.ts'), 'utf8'),
+    )
+    expect(querySource).toMatch(/insightsHeading\s*\{/)
+    expect(querySource).toMatch(/partnersTeaser\s*\{/)
+    expect(querySource).toMatch(/partnersTeaserCta\s*\{/)
+    expect(schemaSource).toContain("name: 'insightsHeading'")
+    expect(schemaSource).toContain("name: 'partnersTeaser'")
+    expect(schemaSource).toContain("name: 'partnersTeaserCta'")
   })
 })

@@ -33,12 +33,12 @@ export const homePage = defineType({
     }),
     defineField({ name: 'insightsHeading', type: 'headingBlock', validation: (r) => r.required() }),
     defineField({ name: 'portfolioHeading', type: 'headingBlock', validation: (r) => r.required() }),
-    defineField({
-      name: 'offeringsHeading',
-      title: 'Current offerings heading',
-      type: 'headingBlock',
-      validation: (r) => r.required(),
-    }),
+    // offeringsHeading removed here: its copy now lives at portfolioPage.offeringsHeading
+    // (Task 5), the field the Current Offerings section on /portfolio actually reads.
+    // insightsHeading, partnersTeaser and partnersTeaserCta below are NOT removed even
+    // though page.tsx stopped reading them too (spec §6) — they have no second address,
+    // so this stays a dormant field rather than a drift hazard. See the comment on
+    // HOME_PAGE_QUERY in src/sanity/queries.ts for the full reasoning.
     defineField({
       name: 'testimonialsHeading',
       type: 'headingBlock',
