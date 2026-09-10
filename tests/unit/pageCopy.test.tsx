@@ -131,6 +131,22 @@ describe('seeded page copy', () => {
     const facts = (PAGE_COPY as any).partnersPage.facts
     expect(facts.some((f: any) => f.label === 'Deal Size')).toBe(true)
   })
+
+  it('moves the Current Offerings heading from homePage to portfolioPage', () => {
+    // PR 3 (spec §6) moves the Current Offerings section from the homepage to /portfolio.
+    // Its heading copy moves with it -- a field MOVE, which is why the seed constant has
+    // to move too rather than exist in both places. The old address must be gone, not
+    // merely duplicated, or the seed would silently disagree with itself about where this
+    // copy lives.
+    const portfolioPage = (PAGE_COPY as any).portfolioPage
+    expect(portfolioPage.offeringsHeading).toEqual({
+      eyebrow: 'Open Now',
+      title: 'Currently accepting commitments',
+      intro:
+        'Offered to verified accredited investors. Accreditation is confirmed in the portal, not here.',
+    })
+    expect((PAGE_COPY as any).homePage.offeringsHeading).toBeUndefined()
+  })
 })
 
 describe('the copy has actually left the components', () => {

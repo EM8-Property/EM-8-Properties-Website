@@ -768,12 +768,6 @@ export const PAGE_COPY = {
       eyebrow: 'Portfolio',
       title: 'Assets across the Chicago MSA, most within a walk of a station',
     },
-    offeringsHeading: {
-      eyebrow: 'Open Now',
-      title: 'Currently accepting commitments',
-      intro:
-        'Offered to verified accredited investors. Accreditation is confirmed in the portal, not here.',
-    },
     testimonialsHeading: { eyebrow: 'Our Investors', title: 'What our partners say' },
     partnersTeaser: {
       eyebrow: 'Partners',
@@ -910,6 +904,17 @@ export const PAGE_COPY = {
       title: 'Assets across the Chicago MSA',
       intro:
         'Value-add renovations, ground-up development, and stabilized operations. We manage all of it ourselves.',
+    },
+    // Moved from homePage.offeringsHeading as the Current Offerings section itself moves
+    // from the homepage to this page (spec §6). Same words, new address — a field MOVE,
+    // which `scripts/migrate-content.mjs`'s `offerings-heading` step lands ahead of the
+    // code that reads it here, and `offerings-heading-cleanup` (a later task) unsets the
+    // old location only once that code is deployed. See docs/deploys-and-migrations.md.
+    offeringsHeading: {
+      eyebrow: 'Open Now',
+      title: 'Currently accepting commitments',
+      intro:
+        'Offered to verified accredited investors. Accreditation is confirmed in the portal, not here.',
     },
   },
   insightsPage: {
