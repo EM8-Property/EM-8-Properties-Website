@@ -73,6 +73,58 @@ describe('StatBand', () => {
     expect(band.className).toContain('grid-cols-2')
     expect(band.className).toMatch(/(sm|md|lg):/)
   })
+
+  it('opens columns="measure" (the default) to five columns at lg, where a 1200px container has room', () => {
+    // The unprefixed token itself is `lg:[grid-template-columns:repeat(var(--stat-cols),
+    // minmax(0,1fr))]` — asserting the full bracketed string, not a fragment like
+    // `grid-cols-3`, which `sm:grid-cols-3` would also satisfy (the README's documented
+    // `toContain('pt-32')`-matches-`min-[390px]:pt-32` trap, in reverse: a short substring
+    // here would pass even if the `lg:` override were missing entirely).
+    const five = Array.from({ length: 5 }, (_, i) => ({ figure: String(i), label: `l${i}` }))
+    const { container } = render(<StatBand stats={five} />)
+    const band = container.firstChild as HTMLElement
+    expect(band.className).toContain(
+      'lg:[grid-template-columns:repeat(var(--stat-cols),minmax(0,1fr))]',
+    )
+  })
+
+  it('never opens columns="narrow" to five columns at lg — that container is a 424px overlay, not 1200px', () => {
+    // Regression pin for the desktop defect: at viewport >= 1024px, `lg:` used to snap
+    // this grid to five columns inside PageHero's `max-w-[42ch]` (424px) overlay, giving
+    // ~45px per figure cell — well under the ~75px this file's own docblock already
+    // treats as too crushed for a two-column phone layout. `columns="narrow"` must cap at
+    // the `sm:grid-cols-3` step (five stats wrap 3+2) and carry no `lg:` grid-template-columns
+    // rule at any width, not a narrower version of it.
+    const five = Array.from({ length: 5 }, (_, i) => ({ figure: String(i), label: `l${i}` }))
+    const { container } = render(<StatBand stats={five} columns="narrow" />)
+    const band = container.firstChild as HTMLElement
+    expect(band.className).toContain('grid-cols-2')
+    expect(band.className).toContain('sm:grid-cols-3')
+    expect(band.className).not.toContain('lg:[grid-template-columns')
+  })
+
+  it('decides the `lg:` column override from `columns` alone, independent of `tone`', () => {
+    // The two axes used to be one prop — `columns` was inferred from `tone === 'onPhoto'`
+    // — and that conflation was the bug PageHero's fallback branch exposed: `tone` is
+    // colour, `columns` is layout, and neither should move the other.
+    const five = Array.from({ length: 5 }, (_, i) => ({ figure: String(i), label: `l${i}` }))
+
+    // onPhoto + measure: the override survives even on the photograph tone, because the
+    // container (not the tone) is what has room.
+    const onPhotoMeasure = render(
+      <StatBand stats={five} tone="onPhoto" columns="measure" />,
+    ).container.firstChild as HTMLElement
+    expect(onPhotoMeasure.className).toContain(
+      'lg:[grid-template-columns:repeat(var(--stat-cols),minmax(0,1fr))]',
+    )
+
+    // default + narrow: the override drops even on the default (white-ground) tone,
+    // because the container is 424px regardless of colour.
+    const defaultNarrow = render(
+      <StatBand stats={five} tone="default" columns="narrow" />,
+    ).container.firstChild as HTMLElement
+    expect(defaultNarrow.className).not.toContain('lg:[grid-template-columns')
+  })
 })
 
 describe('SectionHeading', () => {

@@ -332,4 +332,71 @@ describe('published content', () => {
       expect(page.intro, `${page._id} has no heading.intro`).toBeTruthy()
     }
   })
+
+  /**
+   * `portfolioPage.offeringsHeading` is optional in the schema — it is a `headingBlock`
+   * with no `validation`, unlike `portfolioPage.heading` above — so nothing else notices
+   * it vanishing. `CurrentOfferings` does not throw without a title the way the page-level
+   * heading guards do; it just renders nothing, silently, and a reader arriving from
+   * "Invest With Us" sees a filter row with no offerings above it and no error anywhere.
+   * `REQUIRED_SITE_SETTINGS` does not cover it either (it is a `portfolioPage` leaf, not a
+   * `siteSettings` one), and the layout's own throw only covers `portfolioPage.heading`.
+   * This is the only automated check for the field at all.
+   *
+   * This does NOT assert the title is non-empty unconditionally. `CurrentOfferings` itself
+   * renders `null` when there are no publicly-offered properties — spec §6, and this
+   * component's own docblock: "a section with nothing in it renders nothing... this must
+   * hold none the day that [the last publicly offered property] closes." That is a
+   * legitimate, permanent state, not a defect, and an unconditional assertion here would
+   * turn this into a gate that goes red forever the day the last offering closes — exactly
+   * the kind of permanently-broken window that trains people to stop reading
+   * `npm run test:content` results. The real invariant is conditional: the heading must be
+   * present when there is something for it to head. So this checks
+   * `count(publiclyOffered properties) > 0` first, and only requires a title when that
+   * count is nonzero. Scoped to `${PUBLISHED}` on both halves, like every other check in
+   * this file — a draft property does not render on the site either.
+   *
+   * EXPECTED RED RIGHT NOW, and that is intentional, not a bug in this test. Today exactly
+   * one property (Antioch Shopping Plaza) is `publiclyOffered`, so the conditional above
+   * evaluates true and the title is required — but PR 3 moved Current Offerings off the
+   * homepage and onto `/portfolio`, and the field carrying its heading is mid-migration:
+   * `scripts/migrate-content.mjs` can copy `homePage.offeringsHeading` onto
+   * `portfolioPage.offeringsHeading`, but that migration is deliberately deferred until
+   * just before deploy (add the field, ship this code, verify live, only then unset the old
+   * field) — see that script's own docblock. Until it runs against the live dataset,
+   * `portfolioPage.offeringsHeading.title` is empty and this assertion fails, which is
+   * `npm run test:content` correctly reporting that Current Offerings will not render on
+   * production `/portfolio` today. It goes green the moment the migration is run and
+   * verified — no code change needed here. It stays green later too, once the last
+   * publicly-offered property closes, because at that point there is nothing left for the
+   * heading to head and the conditional stops requiring one — that is the fix over the
+   * prior unconditional version of this test.
+   */
+  it('publishes a portfolioPage.offeringsHeading title whenever a property is publicly offered', async () => {
+    const [rows, offeredCount] = await Promise.all([
+      client.fetch<{ title?: string }[]>(
+        `*[_id == "portfolioPage" && ${PUBLISHED}]{ "title": offeringsHeading.title }`,
+      ),
+      client.fetch<number>(
+        `count(*[_type == "property" && publiclyOffered == true && ${PUBLISHED}])`,
+      ),
+    ])
+    expect(rows.length, 'no published portfolioPage document').toBe(1)
+
+    if (offeredCount === 0) {
+      // Nothing is publicly offered right now, so CurrentOfferings renders nothing
+      // regardless of the heading — there is nothing for a heading to head. This is the
+      // legitimate permanent state the schema's docblock describes, not a gap in coverage.
+      return
+    }
+
+    expect(
+      (rows[0]!.title ?? '').trim(),
+      `${offeredCount} propert${offeredCount === 1 ? 'y is' : 'ies are'} publicly offered ` +
+        'but portfolioPage.offeringsHeading.title is empty — CurrentOfferings renders ' +
+        'nothing on /portfolio until scripts/migrate-content.mjs runs the ' +
+        'offerings-heading migration against this dataset and it is verified live. ' +
+        '(EXPECTED RED right now, pending that migration — see this test\'s docblock.)',
+    ).not.toBe('')
+  })
 })

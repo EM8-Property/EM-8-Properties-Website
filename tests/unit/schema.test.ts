@@ -364,3 +364,27 @@ describe('whyEm8 on aboutPage', () => {
     expect(whyEm8.validation).toBeUndefined()
   })
 })
+
+describe('offeringsHeading on portfolioPage', () => {
+  const offeringsHeading = field(byName('portfolioPage'), 'offeringsHeading')
+
+  it('is a headingBlock, the same type homePage.offeringsHeading used', () => {
+    // Current Offerings is moving from the homepage to /portfolio (spec §6), and its
+    // heading copy is moving with it — a field MOVE, the one migration shape that has
+    // taken this site down before. The new address is portfolioPage.offeringsHeading,
+    // shaped exactly like the field it replaces.
+    expect(offeringsHeading).toBeDefined()
+    expect(offeringsHeading.type).toBe('headingBlock')
+  })
+
+  it('is optional, unlike every other page heading', () => {
+    /*
+     * Deliberately NOT required(), unlike `heading` above on this same document. §6 says
+     * a section with nothing in it renders nothing — no heading, no empty grid — and the
+     * day the one publicly-offered property closes, there is no section left to head.
+     * Requiring copy here would make the Studio nag for words that head an invisible
+     * section.
+     */
+    expect(offeringsHeading.validation).toBeUndefined()
+  })
+})

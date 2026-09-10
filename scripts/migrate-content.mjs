@@ -364,6 +364,105 @@ async function backfillPageHeadings(apply) {
 }
 
 /**
+ * Copies `homePage.offeringsHeading` onto `portfolioPage.offeringsHeading` — the ADD half
+ * of moving the Current Offerings section from the homepage to /portfolio (spec §6).
+ *
+ * This step only ever adds. `homePage.offeringsHeading` is left completely alone:
+ * `(site)/page.tsx` still reads it with a non-null assertion (Task 2's ruling), so unsetting
+ * it now would take the homepage's Current Offerings section down the moment the webhook
+ * revalidates — the same shape of mutation that took the CTA band down on 2026-08-31. It is
+ * not in `REMOVALS` and it must never be: a reviewer should be able to read this function and
+ * see that it is incapable of unsetting anything. The unset is a separate
+ * `offerings-heading-cleanup` step, for a later task, to run only once the code that stops
+ * reading the old location is deployed and verified. See docs/deploys-and-migrations.md.
+ *
+ * The live value wins over the seed constant — the one thing about `moveCtaBandToSettings`
+ * worth copying wholesale. If the team has already edited this copy in the Studio, that is
+ * the version that has to survive the move; falling back to the constant would quietly
+ * revert their words to what shipped months ago. The constant is only used when `homePage`
+ * has nothing to move.
+ *
+ * Per leaf, not on the object. `setIfMissing: { offeringsHeading: {...} }` fills the key
+ * only when the whole object is absent, so a heading somebody left half-filled — a title
+ * with no intro — would be skipped forever while reporting "already has one" on every
+ * re-run. See "setIfMissing on an object is all-or-nothing" in
+ * docs/deploys-and-migrations.md, the trap `backfillPageSeo` was rewritten to avoid; this
+ * step is written that way from the start, so it repairs rather than merely runs once — a
+ * re-run fills any leaf someone has since blanked, without touching a leaf they filled
+ * themselves.
+ */
+async function addOfferingsHeading(apply) {
+  const [fromHomePage, doc] = await Promise.all([
+    query('*[_id=="homePage"][0].offeringsHeading'),
+    query(
+      '*[_id=="portfolioPage"][0]{ "incomplete": ' +
+        '!defined(offeringsHeading.eyebrow) || !defined(offeringsHeading.title) || ' +
+        '!defined(offeringsHeading.intro) }',
+    ),
+  ])
+
+  // The document itself, not just the field: a missing portfolioPage matches no filter, so
+  // keying on `incomplete` alone would report a clean "already has one" for a dataset this
+  // step cannot actually write to.
+  if (!doc) {
+    throw new Error(
+      'offerings-heading: no portfolioPage document. Run --only=pages first, or create it ' +
+        'in the Studio.',
+    )
+  }
+
+  if (!doc.incomplete) {
+    console.log('  offerings heading  portfolioPage already has a complete one — left untouched')
+    return
+  }
+
+  // Per leaf, not on the object — same reason the `incomplete` check above is per leaf.
+  // `fromHomePage` can be truthy but half-filled (an eyebrow with no title, say); an
+  // object-level `fromHomePage ?? seed` fallback would then carry that leaf's `undefined`
+  // straight into the mutation, `JSON.stringify` would drop the key, `setIfMissing` would
+  // silently no-op it, and this step would still print "done" — every re-run, without ever
+  // repairing the leaf the per-leaf `incomplete` check exists to catch.
+  const seed = PAGE_COPY.portfolioPage.offeringsHeading
+  const source = {
+    eyebrow: fromHomePage?.eyebrow ?? seed.eyebrow,
+    title: fromHomePage?.title ?? seed.title,
+    intro: fromHomePage?.intro ?? seed.intro,
+  }
+  console.log(
+    fromHomePage
+      ? '  offerings heading  copying the live copy from homePage to portfolioPage'
+      : '  offerings heading  seeding portfolioPage from the content module',
+  )
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: [
+        // The parent object first: a leaf path cannot be set inside an object that does
+        // not exist yet, and this is a no-op when it already does.
+        { patch: { id: 'portfolioPage', setIfMissing: { offeringsHeading: {} } } },
+        {
+          patch: {
+            id: 'portfolioPage',
+            setIfMissing: {
+              'offeringsHeading.eyebrow': source.eyebrow,
+              'offeringsHeading.title': source.title,
+              'offeringsHeading.intro': source.intro,
+            },
+          },
+        },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`offerings heading add failed ${res.status}: ${await res.text()}`)
+  }
+  console.log('  offerings heading  done')
+}
+
+/**
  * Moves the closing call to action from `homePage` onto `siteSettings`.
  *
  * It was only ever read by the homepage. Property pages rendered the same component with
@@ -811,7 +910,7 @@ async function buildDocuments() {
 /**
  * The independently runnable steps, for `--only=`.
  *
- * Six of these are **additions**, and additions are safe to apply before the code that
+ * Seven of these are **additions**, and additions are safe to apply before the code that
  * reads them deploys — deployed code ignores fields it does not know about.
  *
  * `cta` is not one of them, and the distinction matters more than the shared list makes it
@@ -819,13 +918,19 @@ async function buildDocuments() {
  * it is the exact mutation that took the live homepage's call to action down on
  * 2026-08-31, and it must not run until the code that stopped reading the old location is
  * deployed and verified. Idempotent is not the same as safe to run early.
- * See docs/deploys-and-migrations.md.
+ *
+ * `offerings-heading` looks like the same shape of change as `cta` — both move a field off
+ * `homePage` — but `addOfferingsHeading` writes only the new location and never unsets the
+ * old one, so it belongs on the addition side of this list rather than beside `cta`. Its
+ * own unset is a separate future step, `offerings-heading-cleanup`, which will belong in
+ * `REMOVALS` when it exists. See docs/deploys-and-migrations.md.
  */
 const STEPS = {
   carousel: seedCarouselIfEmpty,
   pages: seedPagesIfMissing,
   seo: backfillPageSeo,
   headings: backfillPageHeadings,
+  'offerings-heading': addOfferingsHeading,
   'header-button': backfillHeaderCta,
   'nav-labels': backfillNavLabels,
   cta: moveCtaBandToSettings,
@@ -876,6 +981,7 @@ async function main() {
     await seedPagesIfMissing(false)
     await backfillPageSeo(false)
     await backfillPageHeadings(false)
+    await addOfferingsHeading(false)
     await backfillHeaderCta(false)
     await backfillNavLabels(false)
     await moveCtaBandToSettings(false)
@@ -924,6 +1030,7 @@ async function main() {
   await seedPagesIfMissing(true)
   await backfillPageSeo(true)
   await backfillPageHeadings(true)
+  await addOfferingsHeading(true)
   await backfillHeaderCta(true)
   await backfillNavLabels(true)
   await moveCtaBandToSettings(true)

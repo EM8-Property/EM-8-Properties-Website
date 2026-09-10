@@ -2,30 +2,24 @@ import { fetchSanity } from '@/sanity/client'
 import {
   HERO_STATS_QUERY,
   FOCUS_CARDS_QUERY,
-  ALL_POSTS_QUERY,
   ALL_PROPERTIES_QUERY,
   TESTIMONIALS_QUERY,
-  CURRENT_OFFERINGS_QUERY,
   SITE_SETTINGS_QUERY,
   HOME_PAGE_QUERY,
 } from '@/sanity/queries'
 import type {
   HERO_STATS_QUERY_RESULT,
   FOCUS_CARDS_QUERY_RESULT,
-  ALL_POSTS_QUERY_RESULT,
   ALL_PROPERTIES_QUERY_RESULT,
   TESTIMONIALS_QUERY_RESULT,
-  CURRENT_OFFERINGS_QUERY_RESULT,
   SITE_SETTINGS_QUERY_RESULT,
   HOME_PAGE_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { PageHero } from '@/components/layout/PageHero'
 import type { CarouselSlide } from '@/components/layout/HeroCarousel'
-import { StatBand } from '@/components/ui/StatBand'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Button } from '@/components/ui/Button'
 import { PropertyCard, type PropertyCardData } from '@/components/property/PropertyCard'
-import { PostCard, type PostData } from '@/components/insights/PostCard'
 import { Testimonials } from '@/components/ui/Testimonials'
 import { CtaBand } from '@/components/ui/CtaBand'
 import { Band, alternatingTones } from '@/components/ui/Band'
@@ -54,19 +48,22 @@ export async function generateMetadata(): Promise<Metadata> {
   })
 }
 
-/** Narrative scroll: hero → stats → success factors → insights → portfolio → partners. */
+/**
+ * Narrative scroll: hero with stats → success factors → portfolio → testimonials → CTA.
+ *
+ * Spec §6 removed the Insights and Partners teasers — both are one click away in the nav
+ * bar — and moved Current Offerings to `/portfolio` as its own section there (Task 5,
+ * commit 50420d2). Nine bands become five.
+ */
 export default async function HomePage() {
-  const [stats, factors, posts, properties, testimonials, offerings, settings, copy] =
-    await Promise.all([
+  const [stats, factors, properties, testimonials, settings, copy] = await Promise.all([
     fetchSanity<HERO_STATS_QUERY_RESULT>(HERO_STATS_QUERY),
     fetchSanity<FOCUS_CARDS_QUERY_RESULT>(FOCUS_CARDS_QUERY),
-    fetchSanity<ALL_POSTS_QUERY_RESULT>(ALL_POSTS_QUERY),
     fetchSanity<ALL_PROPERTIES_QUERY_RESULT>(ALL_PROPERTIES_QUERY),
     fetchSanity<TESTIMONIALS_QUERY_RESULT>(TESTIMONIALS_QUERY),
-    fetchSanity<CURRENT_OFFERINGS_QUERY_RESULT>(CURRENT_OFFERINGS_QUERY),
-      fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
-      fetchSanity<HOME_PAGE_QUERY_RESULT>(HOME_PAGE_QUERY),
-    ])
+    fetchSanity<SITE_SETTINGS_QUERY_RESULT>(SITE_SETTINGS_QUERY),
+    fetchSanity<HOME_PAGE_QUERY_RESULT>(HOME_PAGE_QUERY),
+  ])
 
   // Same rule as siteSettings: missing required content fails the build loudly rather than
   // rendering a page with no headline. Silent fallback copy is the failure mode the old
@@ -78,8 +75,9 @@ export default async function HomePage() {
     )
   }
 
-  // Only the sections with something to show. Order is the narrative order spec §3 sets:
-  // factors → insights → portfolio → testimonials → open offerings → partners.
+  // Only the sections with something to show. Order is the narrative order spec §6 sets:
+  // factors → portfolio → testimonials. Insights, offerings and partners are gone — see
+  // the docblock above.
   const bands = [
     factors.length > 0 && {
       key: 'factors',
@@ -95,19 +93,6 @@ export default async function HomePage() {
                   {f.description}
                 </p>
               </div>
-            ))}
-          </div>
-        </>
-      ),
-    },
-    posts.length > 0 && {
-      key: 'insights',
-      content: (
-        <>
-          <SectionHeading {...copy.insightsHeading!} />
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.slice(0, 3).map((p) => (
-              <PostCard key={p.slug} post={p as PostData} />
             ))}
           </div>
         </>
@@ -144,41 +129,6 @@ export default async function HomePage() {
         </>
       ),
     },
-    offerings.length > 0 && {
-      key: 'offerings',
-      content: (
-        <>
-          {/*
-            The current-opportunity module spec §4 names. CURRENT_OFFERINGS_QUERY filters
-            on publiclyOffered, which is the Rule 506(c) gate — an offering not filed under
-            that exemption may not be generally solicited, so it must never appear here by
-            default.
-          */}
-          <SectionHeading {...copy.offeringsHeading!} />
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {offerings.map((o) => (
-              <PropertyCard key={o.slug} property={o as PropertyCardData} />
-            ))}
-          </div>
-        </>
-      ),
-    },
-    {
-      // Spec §3 closes the narrative with partners and then the call to action. Brokers,
-      // municipalities and land sellers are an audience spec §3 calls out as served by
-      // nothing on the old site.
-      key: 'partners',
-      content: (
-        <>
-          <SectionHeading {...copy.partnersTeaser!} />
-          <div className="mt-6">
-            <Button href={copy.partnersTeaserCta!.href!} variant="secondary">
-              {copy.partnersTeaserCta!.label}
-            </Button>
-          </div>
-        </>
-      ),
-    },
   ].filter(Boolean) as { key: string; content: React.ReactNode }[]
 
   // The closing call to action is part of the same sequence, so it cannot land on the
@@ -191,8 +141,10 @@ export default async function HomePage() {
         `screen` — and this page is the only one that asks for it.
 
         The photograph fills the first screen, the width of the viewport and the height of
-        it, with the headline laid on the image and the header over the top. The stat band
-        below is reached by scrolling rather than by having a tall enough monitor.
+        it, with the headline laid on the image and the header over the top. Spec §6: the
+        five stats move onto this photograph instead of sitting in their own band below
+        it — the one band removal that drops no content, because it is still here, just
+        inside the overlay rather than after it.
 
         The copy sits at a fixed inset from the edge of the photograph rather than on the
         1200px content measure the rest of this page uses. That is deliberate and it is
@@ -206,15 +158,12 @@ export default async function HomePage() {
         copy={copy.hero}
         slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
         variant="screen"
+        stats={
+          stats.length > 0
+            ? stats.slice(0, 5).map((s) => ({ figure: s.figure ?? '', label: s.label ?? '' }))
+            : undefined
+        }
       />
-
-      {stats.length > 0 && (
-        <StatBand
-          stats={stats
-            .slice(0, 5)
-            .map((s) => ({ figure: s.figure ?? '', label: s.label ?? '' }))}
-        />
-      )}
 
       {/*
         Bands, not hand-painted sections.

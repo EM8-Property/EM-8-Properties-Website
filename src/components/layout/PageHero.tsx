@@ -1,5 +1,6 @@
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Button } from '@/components/ui/Button'
+import { StatBand } from '@/components/ui/StatBand'
 import { HeroCarousel, type HeroVariant } from '@/components/layout/HeroCarousel'
 // From lib, not from HeroCarousel: that module is `'use client'`, and a server component
 // calling a function it exports fails the build outright.
@@ -68,6 +69,7 @@ export function PageHero({
   copy,
   slides,
   variant = 'band',
+  stats,
 }: {
   copy: PageHeroCopy
   slides: CarouselSlide[]
@@ -77,6 +79,21 @@ export function PageHero({
    * signature tells you what six of the seven pages get without opening another file.
    */
   variant?: HeroVariant
+  /**
+   * The five proof stats (AUM, units managed, realized multiple…), rendered below the
+   * buttons. Optional, and deliberately not coupled to `variant`: only the homepage
+   * (`screen`) passes one today, but the mechanism does not know that, so the six `band`
+   * pages are unaffected by construction — they simply never pass this prop — rather than
+   * by a `variant === 'screen'` check here that a future `band` page with its own stats
+   * would have to fight.
+   *
+   * `undefined` and `[]` both render nothing — a dataset with no `heroStat` documents
+   * must not draw an empty stat row on the photograph, the same guard `page.tsx` already
+   * applies before this prop existed (`stats.length > 0 && <StatBand .../>`). Checked
+   * here too, rather than trusted to every caller, so a future caller cannot reintroduce
+   * that empty row by forgetting the guard at the call site.
+   */
+  stats?: { figure: string; label: string }[]
 }) {
   // The same helper HeroCarousel uses to decide what it will render, deliberately shared:
   // if these two ever disagreed, this would hand a carousel a list it then rejects, and
@@ -123,6 +140,21 @@ export function PageHero({
     </div>
   )
 
+  // No pointer-events opt-in here, unlike `buttons` above: these are plain text, not
+  // links or buttons, so there is nothing for the overlay's `pointer-events-none` to
+  // block. Confirmed rather than assumed — `StatBand` renders no anchor, no button and no
+  // click handler, so leaving pointer-events disabled costs nothing and keeps the whole
+  // photograph clickable through the stats the same way it already is through the h1 and
+  // the intro paragraph.
+  // `columns="narrow"` in both branches, deliberately independent of `tone`: both branches
+  // sit inside `max-w-[42ch]` (424px), which never has room for the `lg:` five-column
+  // override regardless of which ground the text sits on. See StatBand's own docblock.
+  const statBand = stats && stats.length > 0 && (
+    <div className="mt-6">
+      <StatBand stats={stats} tone={hasPhoto ? 'onPhoto' : 'default'} columns="narrow" />
+    </div>
+  )
+
   // No photography yet, or every slide's property reference is dangling. The title still
   // has to render, so it falls back to the plain block on white.
   if (!hasPhoto) {
@@ -147,6 +179,7 @@ export function PageHero({
             </p>
           )}
           {buttons}
+          {statBand}
         </div>
       </div>
     )
@@ -168,6 +201,7 @@ export function PageHero({
             </p>
           )}
           {buttons}
+          {statBand}
         </div>
       }
     />

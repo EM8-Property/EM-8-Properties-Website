@@ -120,6 +120,15 @@ export const SITE_SETTINGS_QUERY = defineQuery(
  * Each is a pinned singleton fetched by its fixed id rather than by `[0]` on a type. The
  * Studio pins the same ids, so there is no second document for these to silently prefer.
  * Fields are inlined here for the same typegen reason as everywhere else in this file.
+ *
+ * `offeringsHeading` is deliberately absent from `HOME_PAGE_QUERY` below, unlike
+ * `insightsHeading`/`partnersTeaser`/`partnersTeaserCta`, which stay projected even though
+ * `page.tsx` stopped reading all four when their bands came out (spec §6). Those three are
+ * merely dormant — an unread field costs nothing, and removing them is a separate
+ * migration that waits for this deploy. `offeringsHeading` is different: its copy now
+ * lives at a second address, `portfolioPage.offeringsHeading` (Task 5), and that section
+ * is what `/portfolio` renders. Leaving the old projection in place would let an editor
+ * change words nothing reads.
  */
 export const HOME_PAGE_QUERY = defineQuery(`
   *[_id == "homePage"][0] {
@@ -129,7 +138,6 @@ export const HOME_PAGE_QUERY = defineQuery(`
     factorsHeading { eyebrow, title, intro },
     insightsHeading { eyebrow, title, intro },
     portfolioHeading { eyebrow, title, intro },
-    offeringsHeading { eyebrow, title, intro },
     testimonialsHeading { eyebrow, title, intro },
     partnersTeaser { eyebrow, title, intro },
     partnersTeaserCta { label, href },
@@ -208,7 +216,8 @@ export const INVESTORS_PAGE_QUERY = defineQuery(`
 export const PORTFOLIO_PAGE_QUERY = defineQuery(`
   *[_id == "portfolioPage"][0] {
     seo { title, description },
-    heading { eyebrow, title, intro }
+    heading { eyebrow, title, intro },
+    offeringsHeading { eyebrow, title, intro }
   }
 `)
 
