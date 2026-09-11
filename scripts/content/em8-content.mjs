@@ -723,6 +723,19 @@ export const SITE_SETTINGS = {
     insights: 'Insights',
   },
   /**
+   * The footer's one label of its own.
+   *
+   * Five of the six footer links now read their words from `navLabels` above — see
+   * `SiteFooter` for why the literals it used to carry were drift rather than a fallback.
+   * `/investors` is the sixth and is not in `NAV_TREE`, so it gets a leaf here instead of
+   * a tenth nav label that no tab would ever render.
+   *
+   * Seeded with the word the footer already said, so this is a move rather than a rewrite.
+   */
+  footerLabels: {
+    investors: 'Investors',
+  },
+  /**
    * The heading above a sold property's realized figures. Backfilled by the same step as
    * the labels, and only where the leaf is blank.
    *
@@ -926,18 +939,25 @@ export const PAGE_COPY = {
     },
   },
   /**
-   * The one new page, and the only seeded copy in this file that was not already on the
-   * site — there was no /strategy to transcribe from.
+   * The one page whose copy was not already on the site — there was no /strategy to
+   * transcribe from — so all of it is written here rather than moved.
    *
-   * So this heading is written rather than moved, and it is written narrowly: it says what
-   * the page is about and asserts nothing. No figures, no municipal claims, no
-   * forward-looking language — `placeholders.ts` and the compliance scan both cover this
-   * object, and the point is not merely to pass them but to seed something nobody has to
-   * retract. Reword it in the Studio; that is what it is there for.
+   * The heading shipped on 2026-09-08 deliberately narrow, asserting nothing, with no
+   * `body`: the Why Midwest argument was copy EM8 owed (§3) and "inventing an argument for
+   * the Midwest here would be the one thing this project has never done." Hunter supplied
+   * that argument on 2026-09-11 — demand, sector breadth, supply constraint, and the
+   * municipal relationships that get a project approved — and this is it, written to the
+   * register the rest of the site uses.
    *
-   * No `body`. The Why Midwest argument is copy EM8 owes (§3), the field is optional, and
-   * the page renders its title with nothing under it until the words arrive. Inventing an
-   * argument for the Midwest here would be the one thing this project has never done.
+   * **The figures in `marketBars` are sourced, and that is the whole reason they are
+   * allowed to be here.** The brief asked for example content to be reworded later, and
+   * example *prose* is safe to seed — a reader can tell an opinion from a fact. A chart
+   * cannot be seeded that way: a bar labelled 3.1% reads as measurement whoever typed it,
+   * and §9's rule is that no figure ships without a source behind it. So rather than
+   * inventing a plausible series for the layout, these are Apartment List's published
+   * June 2026 year-over-year metro figures, `marketSource` names them, and the page will
+   * not render the section at all without that attribution. Reword every sentence on this
+   * page freely in the Studio; replace the numbers only against a source.
    */
   strategyPage: {
     heading: {
@@ -946,6 +966,82 @@ export const PAGE_COPY = {
       intro:
         'How we choose markets, and why our work sits within walking distance of Metra stations in suburban Chicago.',
     },
+    body: portable([
+      'EM8 buys, builds, and operates in one market: the Chicago MSA, within walking ' +
+        'distance of a Metra platform. That is a decision about fundamentals rather than ' +
+        'about geography, and it rests on three questions — who wants to live here, what ' +
+        'the economy underneath them looks like, and how hard it is to add supply.',
+      'On the demand side, the Midwest is a long-horizon market. Water is abundant, the ' +
+        'climate does not put habitability or insurability in question, and regional ' +
+        'employment is spread across enough industries that no single one sets the ' +
+        'direction of rents. Chicagoland is not a company town, which is precisely what ' +
+        'makes it dull and durable.',
+      'On the supply side, land near the tracks is scarce and the path through a village ' +
+        'board is long. We work inside that constraint rather than around it: our ' +
+        'approvals come from relationships built over years with the municipalities we ' +
+        'develop in, and those relationships are what turn a constrained parcel into a ' +
+        'project that pencils.',
+    ]),
+    pillarsHeading: {
+      eyebrow: 'The Thesis',
+      title: 'Why this market, and not another',
+      intro:
+        'Four things we look at before underwriting a site, all of them about the market around the building rather than the building itself.',
+    },
+    pillars: [
+      {
+        icon: 'resilience',
+        eyebrow: 'Demand',
+        title: 'Climate-resilient by default',
+        body:
+          'The Midwest is not short of water and is not repricing habitability every ' +
+          'renewal. We hold assets for years rather than quarters, so we would rather own ' +
+          'in a market where basic livability is not the open question.',
+      },
+      {
+        icon: 'diversified',
+        eyebrow: 'Demand',
+        title: 'No single sector sets the rent',
+        body:
+          'Chicagoland employment spreads across healthcare, logistics, manufacturing, ' +
+          'finance and professional services. That breadth is why a downturn in one ' +
+          'industry does not empty a building here the way it can in a market built on one.',
+      },
+      {
+        icon: 'supply',
+        eyebrow: 'Supply',
+        title: 'Supply-constrained near the tracks',
+        body:
+          'Sites within a walk of a Metra platform are finite, already surrounded, and ' +
+          'slow to entitle. New supply arrives a project at a time rather than all at ' +
+          'once, which is the condition existing units need to hold their pricing power.',
+      },
+      {
+        icon: 'partnership',
+        eyebrow: 'Execution',
+        title: 'Relationships make a site pencil',
+        body:
+          'Every project runs through a village board, a plan commission and a public ' +
+          'hearing. The working relationships we hold across Chicago MSA municipalities ' +
+          'are what turn a constrained parcel into an approved one, and they are not ' +
+          'something a newcomer can arrive and buy.',
+      },
+    ],
+    marketHeading: {
+      eyebrow: 'The Result',
+      title: 'Chicago led the largest metros on rent growth',
+      intro:
+        'Apartment List put year-over-year rent growth in the Chicago metro at 3.1% in June 2026 — roughly double New York and close to triple Philadelphia, and the highest of the ten largest U.S. metropolitan areas.',
+    },
+    marketBars: [
+      { label: 'Chicago metro', value: 3.1, highlight: true },
+      { label: 'New York metro', value: 1.6, highlight: false },
+      { label: 'Philadelphia metro', value: 1.1, highlight: false },
+    ],
+    marketUnit: '%',
+    marketSource:
+      'Year-over-year rent growth by metropolitan area, Apartment List, June 2026. ' +
+      'Past market conditions are not a projection of future results.',
   },
 }
 
@@ -1017,6 +1113,9 @@ export const CTA_BAND = {
       'We look at transit-adjacent multifamily, mixed-use, and retail across the Chicago MSA. Leave an address and we will share what we are working on, or book a call and ask us directly.',
   },
   submitLabel: 'Keep me posted',
+  // Moved out of CtaBand.tsx, where it was the last literal on the site's only conversion
+  // path. Same word the form already showed, so this is a move rather than a rewrite.
+  emailLabel: 'Email address',
   successMessage:
     'Thank you — we have your address and will be in touch when something fits.',
   callTitle: 'Would rather talk it through?',

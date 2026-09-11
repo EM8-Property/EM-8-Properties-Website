@@ -95,7 +95,19 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         />
       </div>
       <main className="flex-1">{children}</main>
-      <SiteFooter disclaimer={site.disclaimer!} contactEmail={site.contactEmail!} />
+      {/*
+        The footer is handed the same `navLabels` object as the header, so the two cannot
+        drift apart — `SiteFooter` explains why that is now preferred to the literals it
+        used to carry. Non-null for the same reason every other leaf here is: the
+        `missingLeaves` throw above covers all of them, including
+        `footerLabels.investors`, and TypeScript cannot see that through the array.
+      */}
+      <SiteFooter
+        disclaimer={site.disclaimer!}
+        contactEmail={site.contactEmail!}
+        labels={site.navLabels as NavLabels}
+        investorsLabel={site.footerLabels!.investors!}
+      />
     </>
   )
 }

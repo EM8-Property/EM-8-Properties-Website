@@ -62,6 +62,23 @@ export const REQUIRED_SITE_SETTINGS: readonly RequiredLeaf[] = [
     groq: '"ctaBandSubmitLabel": ctaBand.submitLabel',
     describe: 'ctaBand.submitLabel — the closing form has an unlabelled submit button',
   },
+  {
+    path: 'ctaBand.emailLabel',
+    groq: '"ctaBandEmailLabel": ctaBand.emailLabel',
+    describe: 'ctaBand.emailLabel — the closing form has an unlabelled email box',
+  },
+  /*
+   * The footer's one label of its own. `/investors` is not in `NAV_TREE`, so it gets no
+   * `navLabels` leaf — see the field in src/sanity/schema/siteSettings.ts for why putting
+   * it there would break the join `navigation.test.ts` keeps between `NAV_KEYS` and this
+   * list. The footer's other five labels come from `navLabels` below and need no entry
+   * here, because they are already required for the header.
+   */
+  {
+    path: 'footerLabels.investors',
+    groq: '"footerInvestors": footerLabels.investors',
+    describe: 'footerLabels.investors — the footer link to /investors has no words in it',
+  },
   /*
    * The nine navigation labels, spec §5. Hunter's decision of 2026-09-08 put the words in
    * Sanity and left the structure in code; `src/lib/navigation.ts` is the other half, and

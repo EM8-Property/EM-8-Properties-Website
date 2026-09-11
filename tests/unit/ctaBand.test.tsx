@@ -32,6 +32,25 @@ describe('CtaBand', () => {
     expect(input.required).toBe(true)
   })
 
+  it('takes both of the form’s words from content, with no literal behind either', () => {
+    /*
+     * The submit button used to read `copy?.submitLabel ?? 'Keep me posted'` and the email
+     * field was labelled with a hardcoded 'Email address' — the last literals on the only
+     * conversion path the site has, beside a heading, an intro and a success message the
+     * team could already edit.
+     *
+     * Both leaves are required content (`src/lib/requiredContent.ts`), so `missingLeaves`
+     * throws in the layout before a page with either one blank can render. That made the
+     * fallback unreachable as well as wrong: it could only ever fire for a document the
+     * site refuses to build against.
+     */
+    render(<CtaBand bookACallUrl={CAL} copy={{ ...copy, submitLabel: 'Send it', emailLabel: 'Where do we write?' }} />)
+    expect(screen.getByRole('button', { name: 'Send it' })).toBeDefined()
+    expect(screen.getByLabelText('Where do we write?')).toBeDefined()
+    expect(screen.queryByText('Keep me posted')).toBeNull()
+    expect(screen.queryByText('Email address')).toBeNull()
+  })
+
   it('posts as a newsletter lead, the low-friction ask', () => {
     render(<CtaBand bookACallUrl={CAL} copy={copy} />)
     // The whole point of this band is that it does not demand a name, a check size, or an

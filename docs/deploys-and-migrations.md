@@ -241,6 +241,12 @@ surface is ahead of the site until the code follows.
 Before applying a migration to the production dataset:
 
 - [ ] Is every change an **addition**? If yes, apply freely.
+- [ ] Does the new code make a field **required content**? Then the addition is safe to
+      apply early and *unsafe to apply late*: `missingLeaves` throws in the layout, which
+      renders on all 29 pages, so deploying ahead of the backfill fails `next build` for
+      the whole site rather than for one page. Apply the step, confirm a second dry run
+      reports nothing pending, and only then deploy. `chrome-labels` (footer and CTA form
+      labels) and `nav-labels` are both of this kind.
 - [ ] If anything is removed, renamed or moved — is the code that stops reading it
       **deployed and verified** already?
 - [ ] Dry run first. It writes nothing and names every document it would touch.

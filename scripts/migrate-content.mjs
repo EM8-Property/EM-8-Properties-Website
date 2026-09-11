@@ -196,6 +196,8 @@ async function seedPagesIfMissing(apply) {
     if (copy.partners) copy.partners = withKeys(copy.partners, 'partner')
     if (copy.facts) copy.facts = withKeys(copy.facts, 'fact')
     if (copy.steps) copy.steps = withKeys(copy.steps, 'step')
+    if (copy.pillars) copy.pillars = withKeys(copy.pillars, 'pillar')
+    if (copy.marketBars) copy.marketBars = withKeys(copy.marketBars, 'bar')
     if (PAGE_SEO[id]) copy.seo = structuredClone(PAGE_SEO[id])
     console.log(`  page      seeding ${id}`)
     docs.push({ _id: id, _type: id, ...copy })
@@ -361,6 +363,94 @@ async function backfillPageHeadings(apply) {
     throw new Error(`page heading backfill failed ${res.status}: ${await res.text()}`)
   }
   console.log(`  headings  backfilled ${incomplete.length}`)
+}
+
+/**
+ * Fills the four Why Midwest sections onto the `strategyPage` document that already exists.
+ *
+ * `seedPagesIfMissing` cannot do this and never could: it seeds a whole document only when
+ * none exists, and `strategyPage` has been in the dataset since 2026-09-08 with a heading
+ * and an empty body. Without this step the new fields would stay blank in every
+ * environment while the code that renders them shipped green — the page would keep
+ * rendering exactly what it rendered before, and nothing would say why.
+ *
+ * An ADDITION, so it is safe to apply before the code that reads it deploys: deployed code
+ * ignores fields it does not know about. It is also safe to apply *after*, unlike the
+ * headings step — every section on /strategy is optional and gates on its own content, so
+ * the page is correct with none of this, which is the state it shipped in.
+ *
+ * `setIfMissing`, never `set`, and per leaf on the two headings for the reason
+ * `backfillPageHeadings` documents at length: `setIfMissing` on a whole object is
+ * all-or-nothing at that key, so a heading with an eyebrow and no title would be skipped
+ * forever while the section it heads stayed invisible. The arrays and the two strings are
+ * single keys and are patched as such.
+ *
+ * The chart's figures are Apartment List's published June 2026 metro rent growth and
+ * `marketSource` names them. If an editor has already written their own bars, this step
+ * leaves both the bars and the source alone — which is the only correct pairing, since
+ * writing a source onto somebody else's numbers is worse than writing no source at all.
+ */
+async function addStrategyContent(apply) {
+  const copy = PAGE_COPY.strategyPage
+
+  // Absence is reported, not folded into "nothing to do" — the same reasoning as
+  // `backfillPageHeadings`. A `!defined(...)` query alone reports the all-clear for a
+  // page that is in fact missing entirely, and a scoped run has no `seedPagesIfMissing`
+  // ahead of it to hide that.
+  const present = (await query(`*[_id == "strategyPage"]._id`)) ?? []
+  if (present.length === 0) {
+    throw new Error(
+      'strategy: no strategyPage document. Run --only=pages first, or create it in the Studio.',
+    )
+  }
+
+  const blank =
+    (await query(
+      `*[_id == "strategyPage" && (!defined(body) || !defined(pillars) || !defined(marketBars) ||
+        !defined(pillarsHeading.title) || !defined(marketHeading.title) || !defined(marketSource))]._id`,
+    )) ?? []
+
+  if (blank.length === 0) {
+    console.log('  strategy  every section already filled in — left untouched')
+    return
+  }
+
+  console.log('  strategy  backfilling body, pillars, chart and source on strategyPage')
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: [
+        // The parent objects first: a leaf path cannot be set inside an object that does
+        // not exist yet, and this is a no-op when it already does.
+        { patch: { id: 'strategyPage', setIfMissing: { pillarsHeading: {}, marketHeading: {} } } },
+        {
+          patch: {
+            id: 'strategyPage',
+            setIfMissing: {
+              body: copy.body,
+              'pillarsHeading.eyebrow': copy.pillarsHeading.eyebrow,
+              'pillarsHeading.title': copy.pillarsHeading.title,
+              'pillarsHeading.intro': copy.pillarsHeading.intro,
+              pillars: withKeys(copy.pillars, 'pillar'),
+              'marketHeading.eyebrow': copy.marketHeading.eyebrow,
+              'marketHeading.title': copy.marketHeading.title,
+              'marketHeading.intro': copy.marketHeading.intro,
+              marketBars: withKeys(copy.marketBars, 'bar'),
+              marketUnit: copy.marketUnit,
+              marketSource: copy.marketSource,
+            },
+          },
+        },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`strategy content backfill failed ${res.status}: ${await res.text()}`)
+  }
+  console.log('  strategy  backfilled')
 }
 
 /**
@@ -533,6 +623,74 @@ async function cleanupOfferingsHeading(apply) {
     throw new Error(`offerings heading cleanup failed ${res.status}: ${await res.text()}`)
   }
   console.log('  offerings cleanup  done')
+}
+
+/**
+ * Fills the two chrome leaves that moved out of TSX: `footerLabels.investors` and
+ * `ctaBand.emailLabel`.
+ *
+ * Both are REQUIRED content, which makes this step's ordering the whole point rather than
+ * a detail. `missingLeaves` throws in the layout, and the layout renders on all 29 pages,
+ * so shipping the code that requires these ahead of this step fails `next build` on the
+ * entire site. **Run this first, verify it, then deploy.** It is still an addition — a
+ * deployed build that does not know these fields ignores them — so there is no window in
+ * which running it early breaks anything. See docs/deploys-and-migrations.md.
+ *
+ * Modelled on `backfillNavLabels` directly above, and the three traps it documents apply
+ * unchanged:
+ *
+ *   - The document is queried, not the fields, so a missing siteSettings is reported
+ *     rather than folded into "nothing to do". A scoped run has no `seedPagesIfMissing`
+ *     ahead of it to hide that.
+ *   - `set` on the blank leaves, never `setIfMissing` on the parent objects. The guard
+ *     throws on falsiness and `setIfMissing` keys on absence, so pairing them would report
+ *     a fill, write nothing, print "backfilled", and say the same on every future run
+ *     while the build stayed broken on an empty string.
+ *   - Each parent object is `setIfMissing`-ed first: a leaf path cannot be set inside an
+ *     object that does not exist, and it is a no-op when it already does. `ctaBand` is the
+ *     one that matters here — `moveCtaBandToSettings` writes that object all-or-nothing at
+ *     its own key, so it will never add a leaf to a `ctaBand` that already exists, which
+ *     is exactly why `emailLabel` needs this step rather than a re-run of `cta`.
+ */
+async function backfillChromeLabels(apply) {
+  const doc = await query('*[_id=="siteSettings"][0]{ footerLabels, ctaBand }')
+  if (!doc) {
+    throw new Error(
+      'chrome-labels: no siteSettings document. Every page throws without one — create ' +
+        'it in the Studio first.',
+    )
+  }
+
+  const fill = {}
+  if (!doc.footerLabels?.investors) {
+    fill['footerLabels.investors'] = SITE_SETTINGS.footerLabels.investors
+  }
+  if (!doc.ctaBand?.emailLabel) fill['ctaBand.emailLabel'] = CTA_BAND.emailLabel
+
+  if (Object.keys(fill).length === 0) {
+    console.log('  chrome      footer and email labels already set — left untouched')
+    return
+  }
+
+  for (const [path, value] of Object.entries(fill)) {
+    console.log(`  chrome      ${path} -> "${value}"`)
+  }
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mutations: [
+        { patch: { id: 'siteSettings', setIfMissing: { footerLabels: {}, ctaBand: {} } } },
+        { patch: { id: 'siteSettings', set: fill } },
+      ],
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`chrome label backfill failed ${res.status}: ${await res.text()}`)
+  }
+  console.log('  chrome      backfilled')
 }
 
 /**
@@ -983,7 +1141,7 @@ async function buildDocuments() {
 /**
  * The independently runnable steps, for `--only=`.
  *
- * Seven of these are **additions**, and additions are safe to apply before the code that
+ * Nine of these are **additions**, and additions are safe to apply before the code that
  * reads them deploys — deployed code ignores fields it does not know about.
  *
  * `cta` is not one of them, and the distinction matters more than the shared list makes it
@@ -1007,10 +1165,12 @@ const STEPS = {
   pages: seedPagesIfMissing,
   seo: backfillPageSeo,
   headings: backfillPageHeadings,
+  strategy: addStrategyContent,
   'offerings-heading': addOfferingsHeading,
   'offerings-heading-cleanup': cleanupOfferingsHeading,
   'header-button': backfillHeaderCta,
   'nav-labels': backfillNavLabels,
+  'chrome-labels': backfillChromeLabels,
   cta: moveCtaBandToSettings,
 }
 

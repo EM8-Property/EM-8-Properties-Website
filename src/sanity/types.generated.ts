@@ -29,6 +29,7 @@ export type CtaBand = {
   _type: "ctaBand";
   heading?: HeadingBlock;
   submitLabel?: string;
+  emailLabel?: string;
   successMessage?: string;
   callTitle?: string;
   callBody?: string;
@@ -49,6 +50,28 @@ export type FactItem = {
 
 export type StepItem = {
   _type: "stepItem";
+  title?: string;
+  body?: string;
+};
+
+export type MetricBar = {
+  _type: "metricBar";
+  label?: string;
+  value?: number;
+  highlight?: boolean;
+};
+
+export type PillarCard = {
+  _type: "pillarCard";
+  icon?:
+    | "resilience"
+    | "diversified"
+    | "supply"
+    | "partnership"
+    | "transit"
+    | "growth"
+    | "households";
+  eyebrow?: string;
   title?: string;
   body?: string;
 };
@@ -110,6 +133,20 @@ export type StrategyPage = {
     _type: "block";
     _key: string;
   }>;
+  pillarsHeading?: HeadingBlock;
+  pillars?: Array<
+    {
+      _key: string;
+    } & PillarCard
+  >;
+  marketHeading?: HeadingBlock;
+  marketBars?: Array<
+    {
+      _key: string;
+    } & MetricBar
+  >;
+  marketUnit?: string;
+  marketSource?: string;
 };
 
 export type InsightsPage = {
@@ -282,6 +319,9 @@ export type SiteSettings = {
     partners?: string;
     portfolio?: string;
     insights?: string;
+  };
+  footerLabels?: {
+    investors?: string;
   };
   dealStoryHeading?: string;
   ctaBand?: CtaBand;
@@ -648,6 +688,8 @@ export type AllSanitySchemaTypes =
   | SeoBlock
   | FactItem
   | StepItem
+  | MetricBar
+  | PillarCard
   | LabelledCard
   | HeroBlock
   | HeadingBlock
@@ -1041,7 +1083,7 @@ export type CURRENT_OFFERINGS_QUERY_RESULT = Array<{
 
 // Source: src/sanity/queries.ts
 // Variable: SITE_SETTINGS_QUERY
-// Query: *[_type == "siteSettings"][0] {    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,    headerCta { label, href },    navLabels {      aboutUs, aboutEm8, whyEm8, ourTeam,      strategy, whyMidwest, partners, portfolio, insights    },    dealStoryHeading,    ctaBand {      heading { eyebrow, title, intro },      submitLabel, successMessage, callTitle, callBody, callLabel    },    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }  }
+// Query: *[_type == "siteSettings"][0] {    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,    headerCta { label, href },    navLabels {      aboutUs, aboutEm8, whyEm8, ourTeam,      strategy, whyMidwest, partners, portfolio, insights    },    footerLabels { investors },    dealStoryHeading,    ctaBand {      heading { eyebrow, title, intro },      submitLabel, emailLabel, successMessage, callTitle, callBody, callLabel    },    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }  }
 export type SITE_SETTINGS_QUERY_RESULT = {
   agoraPortalUrl: string | null;
   contactEmail: string | null;
@@ -1069,6 +1111,9 @@ export type SITE_SETTINGS_QUERY_RESULT = {
     portfolio: string | null;
     insights: string | null;
   } | null;
+  footerLabels: {
+    investors: string | null;
+  } | null;
   dealStoryHeading: string | null;
   ctaBand: {
     heading: {
@@ -1077,6 +1122,7 @@ export type SITE_SETTINGS_QUERY_RESULT = {
       intro: string | null;
     } | null;
     submitLabel: string | null;
+    emailLabel: string | null;
     successMessage: string | null;
     callTitle: string | null;
     callBody: string | null;
@@ -1618,12 +1664,18 @@ export type INSIGHTS_PAGE_QUERY_RESULT =
 
 // Source: src/sanity/queries.ts
 // Variable: STRATEGY_PAGE_QUERY
-// Query: *[_id == "strategyPage"][0] {    seo { title, description },    heading { eyebrow, title, intro },    body  }
+// Query: *[_id == "strategyPage"][0] {    seo { title, description },    heading { eyebrow, title, intro },    body,    pillarsHeading { eyebrow, title, intro },    pillars[] { icon, eyebrow, title, body },    marketHeading { eyebrow, title, intro },    marketBars[] { label, value, highlight },    marketUnit,    marketSource  }
 export type STRATEGY_PAGE_QUERY_RESULT =
   | {
       seo: null;
       heading: null;
       body: null;
+      pillarsHeading: null;
+      pillars: null;
+      marketHeading: null;
+      marketBars: null;
+      marketUnit: null;
+      marketSource: null;
     }
   | {
       seo: {
@@ -1632,6 +1684,12 @@ export type STRATEGY_PAGE_QUERY_RESULT =
       } | null;
       heading: null;
       body: null;
+      pillarsHeading: null;
+      pillars: null;
+      marketHeading: null;
+      marketBars: null;
+      marketUnit: null;
+      marketSource: null;
     }
   | {
       seo: {
@@ -1644,6 +1702,12 @@ export type STRATEGY_PAGE_QUERY_RESULT =
         intro: string | null;
       } | null;
       body: null;
+      pillarsHeading: null;
+      pillars: null;
+      marketHeading: null;
+      marketBars: null;
+      marketUnit: null;
+      marketSource: null;
     }
   | {
       seo: {
@@ -1674,6 +1738,37 @@ export type STRATEGY_PAGE_QUERY_RESULT =
         _type: "block";
         _key: string;
       }> | null;
+      pillarsHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      pillars: Array<{
+        icon:
+          | "diversified"
+          | "growth"
+          | "households"
+          | "partnership"
+          | "resilience"
+          | "supply"
+          | "transit"
+          | null;
+        eyebrow: string | null;
+        title: string | null;
+        body: string | null;
+      }> | null;
+      marketHeading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      marketBars: Array<{
+        label: string | null;
+        value: number | null;
+        highlight: boolean | null;
+      }> | null;
+      marketUnit: string | null;
+      marketSource: string | null;
     }
   | {
       seo: null;
@@ -1707,6 +1802,12 @@ export type STRATEGY_PAGE_QUERY_RESULT =
             _key: string;
           }
       > | null;
+      pillarsHeading: null;
+      pillars: null;
+      marketHeading: null;
+      marketBars: null;
+      marketUnit: null;
+      marketSource: null;
     }
   | null;
 
@@ -1725,7 +1826,7 @@ declare module "@sanity/client" {
     '*[_type == "focusCard"] | order(order asc) { _id, title, description }': FOCUS_CARDS_QUERY_RESULT;
     '\n  *[_type == "testimonial" && consentOnRecord == true] | order(order asc) {\n    _id, quote, attribution, descriptor, investorSince, featured\n  }\n': TESTIMONIALS_QUERY_RESULT;
     '\n  *[_type == "property" && publiclyOffered == true] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0], offering\n  }\n': CURRENT_OFFERINGS_QUERY_RESULT;
-    '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    headerCta { label, href },\n    navLabels {\n      aboutUs, aboutEm8, whyEm8, ourTeam,\n      strategy, whyMidwest, partners, portfolio, insights\n    },\n    dealStoryHeading,\n    ctaBand {\n      heading { eyebrow, title, intro },\n      submitLabel, successMessage, callTitle, callBody, callLabel\n    },\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
+    '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    headerCta { label, href },\n    navLabels {\n      aboutUs, aboutEm8, whyEm8, ourTeam,\n      strategy, whyMidwest, partners, portfolio, insights\n    },\n    footerLabels { investors },\n    dealStoryHeading,\n    ctaBand {\n      heading { eyebrow, title, intro },\n      submitLabel, emailLabel, successMessage, callTitle, callBody, callLabel\n    },\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
     '\n  *[_id == "homePage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro,\n           primaryCta { label, href }, secondaryCta { label, href } },\n    factorsHeading { eyebrow, title, intro },\n    insightsHeading { eyebrow, title, intro },\n    portfolioHeading { eyebrow, title, intro },\n    testimonialsHeading { eyebrow, title, intro },\n    partnersTeaser { eyebrow, title, intro },\n    partnersTeaserCta { label, href },\n    portfolioCta { label, href },\n    popup { enabled, eyebrow, title, body, submitLabel, successMessage }\n  }\n': HOME_PAGE_QUERY_RESULT;
     '\n  *[_id == "aboutPage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro },\n    factorsHeading { eyebrow, title, intro },\n    whyEm8 { heading { eyebrow, title, intro }, body },\n    leadershipTitle,\n    boardTitle\n  }\n': ABOUT_PAGE_QUERY_RESULT;
     '\n  *[_id == "aboutPage"][0] {\n    "whyEm8": defined(whyEm8.body)\n  }\n': NAV_SECTIONS_QUERY_RESULT;
@@ -1733,6 +1834,6 @@ declare module "@sanity/client" {
     '\n  *[_id == "investorsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    loginLabel,\n    stepsTitle,\n    steps[] { title, body },\n    keepInTouchHeading { eyebrow, title, intro },\n    submitLabel,\n    testimonialsHeading { eyebrow, title, intro }\n  }\n': INVESTORS_PAGE_QUERY_RESULT;
     '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    offeringsHeading { eyebrow, title, intro }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
     '\n  *[_id == "insightsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': INSIGHTS_PAGE_QUERY_RESULT;
-    '\n  *[_id == "strategyPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    body\n  }\n': STRATEGY_PAGE_QUERY_RESULT;
+    '\n  *[_id == "strategyPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    body,\n    pillarsHeading { eyebrow, title, intro },\n    pillars[] { icon, eyebrow, title, body },\n    marketHeading { eyebrow, title, intro },\n    marketBars[] { label, value, highlight },\n    marketUnit,\n    marketSource\n  }\n': STRATEGY_PAGE_QUERY_RESULT;
   }
 }

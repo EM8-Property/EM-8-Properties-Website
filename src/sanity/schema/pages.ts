@@ -74,6 +74,22 @@ export const ctaBand = defineType({
   fields: [
     defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
     defineField({ name: 'submitLabel', type: 'string', validation: (r) => r.required().max(40) }),
+    /**
+     * The label on the email field, and the last literal on the site's only conversion path.
+     *
+     * `CtaBand` hardcoded it, which made it the one string in this band an editor could not
+     * change — beside a submit button, a heading, an intro and a success message they all
+     * could. Required rather than optional, unlike `dealStoryHeading`: a blank heading
+     * degrades to no heading, but a blank field label is an unlabelled `<input type=email>`,
+     * which a screen reader announces as nothing at all.
+     */
+    defineField({
+      name: 'emailLabel',
+      title: 'Email field label',
+      type: 'string',
+      description: 'The label above the email box. Screen readers read this out, so it cannot be blank.',
+      validation: (r) => r.required().max(40),
+    }),
     defineField({
       name: 'successMessage',
       type: 'text',
@@ -278,15 +294,21 @@ export const insightsPage = defineType({
 /**
  * The one new route in spec §5, and the only one: an earlier draft would have created four.
  *
- * Shaped like `portfolioPage` and `insightsPage` — `seo` and `heading` — plus a `body`,
- * which is the Why Midwest argument and the reason the page exists. A page of this kind
- * usually starts empty and stays that way; here that is deliberate and temporary. §3 lists
- * the copy under "Owed by people", and the structure shipping first is what means nobody
- * needs a developer when it arrives.
+ * It began as `portfolioPage`'s shape — `seo` and `heading` — plus a `body` for the Why
+ * Midwest argument, and shipped on 2026-09-08 with that body empty, which §3 records as
+ * correct: the copy was "Owed by people" and the structure shipping first is what means
+ * nobody needs a developer when it arrives.
  *
- * `heading` is required and `body` is not, so this page always has a title and may have
- * nothing under it. That is the right way round: the component throws without a heading,
- * and a titleless page failing `next build` is the loud failure this project prefers.
+ * It has arrived, and it turned out not to be prose. The argument is three claims about a
+ * market and one figure that shows the result of them, which is a pillar grid and a chart
+ * rather than four paragraphs — so `body` keeps the connective prose and four optional
+ * fields hold the parts that have a shape. Every one of them is optional and every section
+ * gates on its own content, so this document degrades all the way back to a heading and a
+ * call to action without rendering a single empty band.
+ *
+ * `heading` is the one required field, and that asymmetry is the right way round: the
+ * component throws without a heading, and a titleless page failing `next build` is the
+ * loud failure this project prefers to a page that renders with a blank at the top.
  */
 export const strategyPage = defineType({
   name: 'strategyPage',
@@ -301,8 +323,90 @@ export const strategyPage = defineType({
       type: 'array',
       of: [{ type: 'block' }],
       description:
-        'The argument for the Midwest, and for suburban Chicago in particular. The page ' +
-        'renders its title with nothing under it until this is filled in.',
+        'The argument for the Midwest, and for suburban Chicago in particular. Opens the ' +
+        'page under the hero. Leave it empty and the page goes straight to the pillars.',
+    }),
+    /**
+     * The pillar cards, and the heading over them.
+     *
+     * Two optional fields that render as one section, gated on both: a heading with no
+     * cards is a promise the page does not keep, and four cards with no heading is a grid
+     * a reader has no frame for. `/about`'s Why EM8 block settled this shape already —
+     * "A section whose body is absent renders nothing" (spec §5) — and this follows it.
+     *
+     * `pillarsHeading` uses the same `headingBlock` as every other section on the site,
+     * whose own eyebrow and title are required, so a half-filled heading cannot be
+     * published from the Studio. That is a nudge rather than the guard: the CLI, Vision
+     * and any direct API write ignore it, so the page checks the leaf it actually renders.
+     */
+    defineField({
+      name: 'pillarsHeading',
+      title: 'Pillars heading',
+      type: 'headingBlock',
+      description:
+        'Heads the pillar cards below. Leave it empty — or leave the cards empty — and the ' +
+        'whole section renders nothing.',
+    }),
+    defineField({
+      name: 'pillars',
+      title: 'Pillars',
+      type: 'array',
+      of: [{ type: 'pillarCard' }],
+      description:
+        'The reasons the market works, one card each. Four fit the grid exactly; three or ' +
+        'six read fine, five leaves a gap.',
+    }),
+    /**
+     * The chart section — a heading, a series, a unit, and the source behind the numbers.
+     *
+     * `marketSource` is required *conditionally*, which is the only conditional validation
+     * on any page document, and it earns that. Spec §9's rule is that no figure ships
+     * without a source behind it, and `tests/shared/placeholders.ts` enforces it for the
+     * figures that rule was written about — but it cannot enforce it for a number an
+     * editor types into the Studio next year. A bar chart is the one place on this site
+     * where an editor can publish a fresh, unattributed statistic to investors in four
+     * keystrokes, so the schema refuses to let them, and the page refuses to render the
+     * section without it. Two guards, because Studio validation is Studio-side only.
+     */
+    defineField({
+      name: 'marketHeading',
+      title: 'Chart heading',
+      type: 'headingBlock',
+      description:
+        'Heads the bar chart below. Leave it empty — or leave the bars empty — and the ' +
+        'whole section renders nothing.',
+    }),
+    defineField({
+      name: 'marketBars',
+      title: 'Chart bars',
+      type: 'array',
+      of: [{ type: 'metricBar' }],
+      description: 'One row per thing being compared. The longest bar sets the scale.',
+    }),
+    defineField({
+      name: 'marketUnit',
+      title: 'Chart unit',
+      type: 'string',
+      description: 'Appended to every figure — "%", "pts", " units". Leave empty for none.',
+      initialValue: '%',
+      validation: (r) => r.max(8),
+    }),
+    defineField({
+      name: 'marketSource',
+      title: 'Chart source',
+      type: 'string',
+      description:
+        'Who published these figures, and for what period. Required as soon as the chart ' +
+        'has a single bar in it, and the chart does not render without it — a statistic ' +
+        'on an investor-facing page states where it came from.',
+      validation: (r) =>
+        r.max(200).custom((value, context) => {
+          const bars = (context.document?.marketBars as unknown[] | undefined) ?? []
+          if (bars.length > 0 && !value?.trim()) {
+            return 'The chart has bars but no source. Name the publisher and the period.'
+          }
+          return true
+        }),
     }),
   ],
   preview: { prepare: () => ({ title: 'Strategy page' }) },

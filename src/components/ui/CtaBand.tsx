@@ -25,6 +25,7 @@ import { Band, type BandTone } from './Band'
 export type CtaBandCopy = {
   heading?: { eyebrow?: string | null; title?: string | null; intro?: string | null } | null
   submitLabel?: string | null
+  emailLabel?: string | null
   successMessage?: string | null
   callTitle?: string | null
   callBody?: string | null
@@ -54,11 +55,32 @@ export function CtaBand({
 
         <div className="mt-8 grid gap-8 md:grid-cols-2">
           <div>
+            {/*
+              Both labels come from `siteSettings.ctaBand` with no literal behind them.
+              They used to read `copy?.submitLabel ?? 'Keep me posted'` and a hardcoded
+              'Email address', which was the `constants.ts` fallback pattern this project
+              removed: copy in two places, the component's winning silently whenever the
+              CMS's was absent. Both leaves are required content, so `missingLeaves` throws
+              in the layout before a page with either one blank can render — which makes
+              the fallback unreachable as well as wrong.
+
+              `?? ''` rather than `!` only because `CtaBandCopy` is the shape a property
+              page passes too, and typing it non-null here would push a non-null assertion
+              onto all eleven of those call sites to say something the layout already
+              guarantees.
+            */}
             <LeadForm
               source="newsletter"
-              submitLabel={copy?.submitLabel ?? 'Keep me posted'}
+              submitLabel={copy?.submitLabel ?? ''}
               successMessage={copy?.successMessage ?? undefined}
-              fields={[{ name: 'email', label: 'Email address', type: 'email', required: true }]}
+              fields={[
+                {
+                  name: 'email',
+                  label: copy?.emailLabel ?? '',
+                  type: 'email',
+                  required: true,
+                },
+              ]}
             />
           </div>
 

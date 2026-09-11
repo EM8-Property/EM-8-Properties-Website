@@ -260,6 +260,51 @@ export const siteSettings = defineType({
       ],
     }),
     /**
+     * The one footer link the top navigation does not have a word for.
+     *
+     * The footer used to hardcode all six of its labels, on the reasoning that it is the
+     * fallback route to every page — spec §5, "the panel must not be the only route to a
+     * page" — and that "a fallback that reads its labels from the same document as the
+     * thing it backs up is not a fallback."
+     *
+     * The spec sentence is about **destinations** and reachability without JavaScript, and
+     * those are still literals in `SiteFooter`, still joined to `NAV_TREE` in both
+     * directions by `navigation.test.ts`. The extension of it to *labels* does not hold:
+     * every `navLabels` leaf is required content, so `missingLeaves` throws in the layout
+     * and there is no state in which the header's labels are broken and the footer renders
+     * as a working fallback. What the literals bought instead was drift — rename
+     * `navLabels.portfolio` to "Our Assets" in the Studio and the header changed while the
+     * footer went on saying "Portfolio".
+     *
+     * So the footer now reads the five labels it shares with the navigation from
+     * `navLabels`, and this holds the sixth. `/investors` is not in `NAV_TREE` — it is
+     * reached from the header's own button — so a leaf for it inside `navLabels` would
+     * break the bidirectional join `navigation.test.ts` keeps between `NAV_KEYS` and the
+     * required-content list, and would rightly: that object means "the words on the top
+     * navigation", and this is not one of them.
+     *
+     * Required, like the nav labels and for the same reason. A blank one renders a link
+     * with no text — invisible to a screen reader and unclickable to everyone else.
+     */
+    defineField({
+      name: 'footerLabels',
+      title: 'Footer links',
+      type: 'object',
+      description:
+        'The footer repeats the navigation and adds one link of its own. Only that extra ' +
+        'one is set here; the rest follow the navigation labels above.',
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({
+          name: 'investors',
+          title: 'Investors (footer only)',
+          type: 'string',
+          description: 'Goes to /investors. It appears in the footer and nowhere else.',
+          validation: (r) => r.required().max(24),
+        }),
+      ],
+    }),
+    /**
      * The heading above a sold property's realized deal figures, on /portfolio/[slug].
      *
      * A field rather than a literal on Hunter's instruction of 2026-09-08: every string

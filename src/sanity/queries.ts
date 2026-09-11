@@ -105,10 +105,11 @@ export const SITE_SETTINGS_QUERY = defineQuery(
       aboutUs, aboutEm8, whyEm8, ourTeam,
       strategy, whyMidwest, partners, portfolio, insights
     },
+    footerLabels { investors },
     dealStoryHeading,
     ctaBand {
       heading { eyebrow, title, intro },
-      submitLabel, successMessage, callTitle, callBody, callLabel
+      submitLabel, emailLabel, successMessage, callTitle, callBody, callLabel
     },
     heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }
   }`,
@@ -231,14 +232,26 @@ export const INSIGHTS_PAGE_QUERY = defineQuery(`
 /**
  * The Strategy page: spec §5's one new route.
  *
- * Shaped like `PORTFOLIO_PAGE_QUERY` above, plus `body` — the Why Midwest argument, which
- * is the reason the page exists and which ships empty. Written out rather than built from
- * a shared string for the same typegen reason as everywhere else in this file.
+ * Shaped like `PORTFOLIO_PAGE_QUERY` above, plus the four sections that carry the Why
+ * Midwest argument: `body` for the connective prose, a pillar grid, and a bar chart with
+ * the source behind its figures. Written out rather than built from a shared string for
+ * the same typegen reason as everywhere else in this file — an interpolated fragment
+ * reports "0 queries" and the type safety this CMS was chosen for disappears.
+ *
+ * Every projected field except `heading` may be null, and the page renders correctly when
+ * all of them are. That is not defensive habit: it is the state this page shipped in, and
+ * the state it returns to whenever an editor empties a section.
  */
 export const STRATEGY_PAGE_QUERY = defineQuery(`
   *[_id == "strategyPage"][0] {
     seo { title, description },
     heading { eyebrow, title, intro },
-    body
+    body,
+    pillarsHeading { eyebrow, title, intro },
+    pillars[] { icon, eyebrow, title, body },
+    marketHeading { eyebrow, title, intro },
+    marketBars[] { label, value, highlight },
+    marketUnit,
+    marketSource
   }
 `)

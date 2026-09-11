@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { schemaTypes, SINGLETON_TYPES } from '@/sanity/schema'
+import { PILLAR_ICONS } from '@/lib/pillarIcons'
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- asserting on raw schema shape */
 const byName = (n: string) => schemaTypes.find((t: any) => t.name === n) as any
@@ -321,19 +322,33 @@ describe('the realized-results heading', () => {
 describe('strategyPage', () => {
   const strategy = byName('strategyPage')
 
-  it('is shaped like the other page singletons, plus a body', () => {
+  it('holds the four Why Midwest sections alongside seo and heading', () => {
     expect(strategy).toBeDefined()
-    expect(strategy.fields.map((f: any) => f.name)).toEqual(['seo', 'heading', 'body'])
+    expect(strategy.fields.map((f: any) => f.name)).toEqual([
+      'seo',
+      'heading',
+      'body',
+      'pillarsHeading',
+      'pillars',
+      'marketHeading',
+      'marketBars',
+      'marketUnit',
+      'marketSource',
+    ])
   })
 
-  it('requires seo and heading, and leaves the body optional', () => {
+  it('requires seo and heading, and leaves every section optional', () => {
     /*
-     * The body is the Why Midwest argument, and it is copy EM8 owes — §3 lists it under
-     * "Owed by people". So the page ships with its structure in place and its body empty,
-     * which is what means nobody needs a developer when the words arrive. `heading` is
-     * required for the same reason it is on /portfolio and /insights: the component throws
-     * without a title, and a titleless page failing the build loudly is what this project
-     * prefers to a shell.
+     * `heading` is required for the same reason it is on /portfolio and /insights: the
+     * component throws without a title, and a titleless page failing the build loudly is
+     * what this project prefers to a shell.
+     *
+     * Everything below it is optional, and that is not leftover from the day the body
+     * shipped empty. Each section gates on its own content, so this document degrades all
+     * the way back to a heading and a call to action — the state the page shipped in on
+     * 2026-09-08 — without rendering a single empty band. `required()` on any of them
+     * would make the Studio nag an editor for copy whose section they have deliberately
+     * emptied.
      */
     for (const name of ['seo', 'heading']) {
       expect(
@@ -341,7 +356,61 @@ describe('strategyPage', () => {
         `strategyPage.${name} should be required`,
       ).toContainEqual({ method: 'required', arg: undefined })
     }
-    expect(field(strategy, 'body').validation).toBeUndefined()
+    for (const name of ['body', 'pillarsHeading', 'pillars', 'marketHeading', 'marketBars']) {
+      expect(
+        field(strategy, name).validation,
+        `strategyPage.${name} should stay optional`,
+      ).toBeUndefined()
+    }
+  })
+
+  it('refuses to publish chart bars with no source behind them', () => {
+    /*
+     * Spec §9's rule — no figure ships without a source — reaching the one field on this
+     * site an editor can use to publish a fresh statistic to investors in four keystrokes.
+     * Conditional, because a chart with no bars needs no source; this is the only
+     * conditional validation on any page document and that is what it buys.
+     *
+     * Studio-side only, like every `required()` in this schema. The page carries the guard
+     * that actually holds, and `strategyPage.test.tsx` pins it.
+     */
+    const rule = captureValidation(field(strategy, 'marketSource').validation)
+    const custom = rule.find((r: RuleCall) => r.method === 'custom')
+    expect(custom, 'marketSource has no custom rule').toBeDefined()
+
+    const check = custom!.arg as (
+      value: string | undefined,
+      context: { document?: Record<string, unknown> },
+    ) => true | string
+    expect(check(undefined, { document: { marketBars: [{ label: 'Chicago', value: 3.1 }] } })).toBeTypeOf(
+      'string',
+    )
+    expect(check('   ', { document: { marketBars: [{ label: 'Chicago', value: 3.1 }] } })).toBeTypeOf(
+      'string',
+    )
+    expect(check(undefined, { document: {} })).toBe(true)
+    expect(
+      check('Apartment List, June 2026.', {
+        document: { marketBars: [{ label: 'Chicago', value: 3.1 }] },
+      }),
+    ).toBe(true)
+  })
+
+  it('offers the pillar icon as a dropdown rather than a free-text field', () => {
+    // A typo in a free-text icon name renders a card with a hole where its glyph should
+    // be, and nothing in the build, the tests or Lighthouse would notice — PillarIcon
+    // draws nothing it does not recognise.
+    const icon = field(byName('pillarCard'), 'icon')
+    expect(icon.options?.list?.map((o: any) => o.value)).toEqual([...PILLAR_ICONS])
+    expect(icon.validation, 'an icon is optional — a card with no icon is still a card').toBeUndefined()
+  })
+
+  it('holds every chart bar at zero or above, since bars are drawn from a zero baseline', () => {
+    // A negative rate would draw as a short bar on the same side as every gain and read as
+    // a small one. A series with negatives in it needs a diverging chart, which this is not.
+    const rules = captureValidation(field(byName('metricBar'), 'value').validation)
+    expect(rules).toContainEqual({ method: 'required', arg: undefined })
+    expect(rules).toContainEqual({ method: 'min', arg: 0 })
   })
 
   it('is registered as a pinned singleton', () => {
