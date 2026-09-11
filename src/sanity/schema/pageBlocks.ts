@@ -1,4 +1,8 @@
 import { defineType, defineField } from 'sanity'
+// The icon vocabulary lives in src/lib/pillarIcons.ts, which imports nothing — a
+// component cannot reach into this file for it without dragging the whole Studio into
+// the RSC graph. Same arrangement as property.ts and propertyTaxonomy.ts.
+import { PILLAR_ICONS, PILLAR_ICON_LABELS } from '@/lib/pillarIcons'
 
 /**
  * Reusable copy blocks shared by the per-page singletons.
@@ -116,6 +120,90 @@ export const factItem = defineType({
     defineField({ name: 'value', type: 'string', validation: (r) => r.required().max(60) }),
   ],
   preview: { select: { title: 'value', subtitle: 'label' } },
+})
+
+/**
+ * An icon, a label, a claim and its reasoning — the Strategy pillars.
+ *
+ * A separate type from `labelledCard` rather than that type with an icon bolted on. The
+ * Partners trio uses `labelledCard` and has no icons; adding an optional `icon` there
+ * would put a dropdown on three cards that will never draw one, and an editor who filled
+ * it in would get no icon and no explanation. The two look alike on the page and mean
+ * different things in the Studio, which is the case for two types.
+ *
+ * `icon` is a dropdown over a closed list, never a string field. A typo in a free-text
+ * icon name renders a card with a hole where its glyph should be, and nothing in the
+ * build, the tests or Lighthouse would notice — `PillarIcon` draws nothing it does not
+ * recognise. It is also optional: a card with no icon is still a card, and shipping the
+ * words ahead of a decision about the picture is allowed.
+ */
+export const pillarCard = defineType({
+  name: 'pillarCard',
+  title: 'Strategy pillar',
+  type: 'object',
+  fields: [
+    defineField({
+      name: 'icon',
+      type: 'string',
+      options: {
+        // `?? value` because the labels are an index signature, which the strict
+        // config types as possibly absent. A name with no label is still selectable
+        // rather than a dropdown entry with no words in it.
+        list: PILLAR_ICONS.map((value) => ({ value, title: PILLAR_ICON_LABELS[value] ?? value })),
+        layout: 'dropdown',
+      },
+      description: 'The line icon above the card. Leave it empty for no icon.',
+    }),
+    defineField({ name: 'eyebrow', type: 'string', validation: (r) => r.required().max(40) }),
+    defineField({ name: 'title', type: 'string', validation: (r) => r.required().max(60) }),
+    defineField({ name: 'body', type: 'text', rows: 4, validation: (r) => r.required().max(400) }),
+  ],
+  preview: { select: { title: 'title', subtitle: 'eyebrow' } },
+})
+
+/**
+ * One row of a bar chart: what is being measured, and how much of it there is.
+ *
+ * `value` is a number rather than a string such as "3.1%". The chart divides it by the
+ * largest value in the series to get a bar width, and a string would make every bar the
+ * same length while the labels beside them said otherwise — a chart that looks
+ * authoritative and is wrong. The unit is one field on the section rather than a field on
+ * every row, because a chart whose rows carry different units is not a chart.
+ *
+ * `min(0)` is a rendering constraint, not a view about what is measurable. `MetricBars`
+ * draws from a zero baseline, so a negative rate would draw as a short bar on the same
+ * side as every gain and read as a small one. A series with negatives in it needs a
+ * diverging chart, which this is not.
+ */
+export const metricBar = defineType({
+  name: 'metricBar',
+  title: 'Bar',
+  type: 'object',
+  fields: [
+    defineField({
+      name: 'label',
+      type: 'string',
+      description: 'What this row measures — a metro, a year, a submarket.',
+      validation: (r) => r.required().max(60),
+    }),
+    defineField({
+      name: 'value',
+      type: 'number',
+      description:
+        'The figure itself, without its unit — 3.1, not "3.1%". Bars are drawn from zero, ' +
+        'so this cannot be negative.',
+      validation: (r) => r.required().min(0),
+    }),
+    defineField({
+      name: 'highlight',
+      title: 'Highlight this row',
+      type: 'boolean',
+      description:
+        'Draws the bar in teal. Usually the row the section is making a point about.',
+      initialValue: false,
+    }),
+  ],
+  preview: { select: { title: 'label', subtitle: 'value' } },
 })
 
 /**

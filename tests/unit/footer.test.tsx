@@ -10,7 +10,24 @@ const PHYSICAL = /\b(?:[a-z0-9-]+:)*-?(?:ml|mr|pl|pr|border-l|border-r|text-left
  * the layout and then never rendered anywhere on the site, so the only way to reach EM8
  * was the single form on /investors.
  */
-const props = { disclaimer: 'Past performance is not indicative of future results.', contactEmail: 'info@em-8.com' }
+const LABELS = {
+  aboutUs: 'About Us',
+  aboutEm8: 'About EM8',
+  whyEm8: 'Why EM8',
+  ourTeam: 'Our Team',
+  strategy: 'Strategy',
+  whyMidwest: 'Why Midwest',
+  partners: 'Partners',
+  portfolio: 'Portfolio',
+  insights: 'Insights',
+}
+
+const props = {
+  disclaimer: 'Past performance is not indicative of future results.',
+  contactEmail: 'info@em-8.com',
+  labels: LABELS,
+  investorsLabel: 'Investors',
+}
 
 describe('SiteFooter', () => {
   it('renders the disclaimer it is given', () => {
@@ -35,9 +52,35 @@ describe('SiteFooter', () => {
 
   it('exposes every primary route so the footer is a real second navigation', () => {
     render(<SiteFooter {...props} />)
-    for (const label of ['Portfolio', 'Strategy', 'Insights', 'Partners', 'About', 'Investors']) {
+    for (const label of ['Portfolio', 'Strategy', 'Insights', 'Partners', 'About Us', 'Investors']) {
       expect(screen.getByRole('link', { name: label })).toBeDefined()
     }
+  })
+
+  it('takes its words from the same navLabels the header reads', () => {
+    /*
+     * The defect this closes. These labels used to be literals in the component, so
+     * renaming `navLabels.portfolio` in the Studio changed the header and left the footer
+     * saying the old word, with nothing in the build, the tests or Lighthouse to catch the
+     * disagreement.
+     *
+     * The DESTINATIONS are still literals, which is what spec §5 actually asks for — "the
+     * panel must not be the only route to a page" — and `navigation.test.ts` still joins
+     * them to `NAV_TREE` in both directions.
+     */
+    render(<SiteFooter {...props} labels={{ ...LABELS, portfolio: 'Our Assets' }} />)
+    expect(screen.getByRole('link', { name: 'Our Assets' }).getAttribute('href')).toBe('/portfolio')
+    expect(screen.queryByRole('link', { name: 'Portfolio' })).toBeNull()
+  })
+
+  it('labels the investors link from its own leaf, since the nav tree has no word for it', () => {
+    // /investors is reached from the header's own button rather than from NAV_TREE, so a
+    // navLabels leaf for it would break the join navigation.test.ts keeps between NAV_KEYS
+    // and the required-content list.
+    render(<SiteFooter {...props} investorsLabel="Invest With Us" />)
+    expect(screen.getByRole('link', { name: 'Invest With Us' }).getAttribute('href')).toBe(
+      '/investors',
+    )
   })
 
   it('uses no physical-direction utilities', () => {

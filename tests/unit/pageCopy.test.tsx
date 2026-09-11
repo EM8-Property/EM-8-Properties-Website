@@ -98,14 +98,53 @@ describe('seeded page copy', () => {
   })
 
   it('gives the strategy page a complete heading, since that page throws without one', () => {
-    // Same rule as /portfolio and /insights. `body` is deliberately absent from the seed:
-    // the Why Midwest copy is owed by people (§3), and the page renders its title with
-    // nothing under it until it arrives.
+    // Same rule as /portfolio and /insights.
     const strategy = (PAGE_COPY as any).strategyPage
     for (const field of ['eyebrow', 'title', 'intro']) {
       expect(strategy.heading?.[field], `strategyPage.heading.${field} is empty`).toBeTruthy()
     }
-    expect(strategy.body, 'the Why Midwest body must ship empty, not invented').toBeUndefined()
+  })
+
+  it('seeds the Why Midwest argument that used to be owed by people', () => {
+    /*
+     * This assertion is the inverse of the one it replaces. The seed used to require
+     * `body` to be *absent* — the Why Midwest copy was owed by people (§3) and inventing
+     * an argument for the Midwest was the one thing this project had never done. Hunter
+     * supplied that argument on 2026-09-11, so the rule is now that the four sections are
+     * all here: half a seed renders half a page and nothing would say why.
+     */
+    const strategy = (PAGE_COPY as any).strategyPage
+    expect(strategy.body?.length, 'the Why Midwest body is empty').toBeGreaterThan(0)
+    expect(strategy.pillars?.length, 'no pillar cards seeded').toBeGreaterThan(0)
+    expect(strategy.marketBars?.length, 'no chart bars seeded').toBeGreaterThan(0)
+    for (const heading of ['pillarsHeading', 'marketHeading']) {
+      for (const field of ['eyebrow', 'title', 'intro']) {
+        expect(
+          strategy[heading]?.[field],
+          `strategyPage.${heading}.${field} is empty, so its section renders nothing`,
+        ).toBeTruthy()
+      }
+    }
+  })
+
+  it('names a source for the chart, because a figure without one does not render', () => {
+    /*
+     * Spec §9's rule reaches the one place on this site where an editor can publish a
+     * fresh statistic to investors in four keystrokes. The schema requires `marketSource`
+     * as soon as a bar exists and the page will not render the section without it, so a
+     * seed carrying bars and no source would ship a section nobody can see.
+     */
+    const strategy = (PAGE_COPY as any).strategyPage
+    expect(strategy.marketSource, 'chart bars seeded with no source behind them').toBeTruthy()
+  })
+
+  it('keeps every chart bar a non-negative number, since bars are drawn from zero', () => {
+    // A string here makes every bar the same length while the labels beside them say
+    // otherwise, and a negative draws as a short bar on the same side as every gain.
+    for (const bar of (PAGE_COPY as any).strategyPage.marketBars) {
+      expect(typeof bar.value, `${bar.label} value is not a number`).toBe('number')
+      expect(bar.value, `${bar.label} value is negative`).toBeGreaterThanOrEqual(0)
+    }
   })
 
   it('reproduces the hero exactly as it shipped', () => {

@@ -1,23 +1,38 @@
 import Link from 'next/link'
+import type { NavKey, NavLabels } from '@/lib/navigation'
 
 /*
- * These labels are literals where the header's come from Sanity, and that is not an
- * oversight: this list is the fallback route to every page — spec §5, "The panel must not
- * be the only route to a page. Every destination stays in the footer, which is where a
- * reader with JavaScript disabled and a crawler both find them." A fallback that reads its
- * labels from the same document as the thing it backs up is not a fallback. It also
- * carries /investors, which is not in the nav tree at all.
+ * The DESTINATIONS are literals here, and that is the fallback this footer exists to be:
+ * spec §5, "The panel must not be the only route to a page. Every destination stays in the
+ * footer, which is where a reader with JavaScript disabled and a crawler both find them."
+ * `navigation.test.ts` keeps the two in step, asserting that every href in `NAV_TREE`
+ * appears in this file — so a node added to the tree fails until this list has it.
  *
- * `navigation.test.ts` is what keeps the two in step: it asserts that every nav
- * destination appears here, so a node added to the tree fails until this list has it.
+ * The LABELS used to be literals too, on an extension of that same sentence: "a fallback
+ * that reads its labels from the same document as the thing it backs up is not a
+ * fallback." That does not survive contact with how the labels are actually loaded. Every
+ * `navLabels` leaf is required content, so `missingLeaves` throws in the layout before a
+ * page renders — there is no state in which the header's words are broken and this footer
+ * is quietly holding the site together. What the literals bought was drift in one
+ * direction only: rename `navLabels.portfolio` to "Our Assets" in the Studio and the
+ * header changed while the footer went on saying "Portfolio", with nothing to catch it.
+ *
+ * So the words come from the same place the header's do, and the routes do not. Five of
+ * the six map onto a nav key; `/investors` is not in `NAV_TREE` at all — it is reached
+ * from the header's own button — so it carries its own required leaf,
+ * `siteSettings.footerLabels.investors`.
+ *
+ * `/about` takes `aboutUs`, the tab's own label, rather than the `aboutEm8` panel child.
+ * Both point at /about; the tab is the one a reader has already seen at the top of the
+ * page, so repeating it at the bottom is the pairing that reads as the same site map
+ * twice rather than as two different names for one page.
  */
-const NAV = [
-  { href: '/portfolio', label: 'Portfolio' },
-  { href: '/strategy', label: 'Strategy' },
-  { href: '/insights', label: 'Insights' },
-  { href: '/partners', label: 'Partners' },
-  { href: '/about', label: 'About' },
-  { href: '/investors', label: 'Investors' },
+const NAV: readonly { href: string; key: NavKey }[] = [
+  { href: '/portfolio', key: 'portfolio' },
+  { href: '/strategy', key: 'strategy' },
+  { href: '/insights', key: 'insights' },
+  { href: '/partners', key: 'partners' },
+  { href: '/about', key: 'aboutUs' },
 ]
 
 /**
@@ -32,9 +47,15 @@ const NAV = [
 export function SiteFooter({
   disclaimer,
   contactEmail,
+  labels,
+  investorsLabel,
 }: {
   disclaimer: string
   contactEmail: string
+  /** `siteSettings.navLabels`, the same object the header is handed. Required leaf by leaf. */
+  labels: NavLabels
+  /** `siteSettings.footerLabels.investors` — the one link the top navigation has no word for. */
+  investorsLabel: string
 }) {
   return (
     <footer className="mt-16 border-t border-rule bg-panel">
@@ -55,9 +76,18 @@ export function SiteFooter({
           <nav className="grid grid-cols-2 gap-x-10 gap-y-2 text-xs text-ink-secondary sm:grid-cols-3">
             {NAV.map((n) => (
               <Link key={n.href} href={n.href} className="hover:text-ink">
-                {n.label}
+                {labels[n.key]}
               </Link>
             ))}
+            {/*
+              Last, and outside the mapped list, because it is the one destination with no
+              nav key behind it — see the note above `NAV`. Keeping it out of that array is
+              what lets `NAV` be typed against `NavKey` and so lets the compiler catch a
+              key that `navLabels` does not have.
+            */}
+            <Link href="/investors" className="hover:text-ink">
+              {investorsLabel}
+            </Link>
           </nav>
         </div>
 
