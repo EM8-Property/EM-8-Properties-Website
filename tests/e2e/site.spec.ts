@@ -421,35 +421,24 @@ test('every section page opens on a full-bleed photograph with its own title on 
      * the overlay could carry the right utilities and still be pushed out of line by the
      * band around it.
      *
-     * The six `band` pages line up with it. The homepage deliberately does not — its copy
-     * belongs to the photograph, and at a 1280px viewport the measure would move it 24px
-     * further in. Both directions are asserted, because "out of line" is the intended
-     * state on exactly one page and a defect on the other six.
+     * **All seven line up with it, the homepage included, since 2026-09-15.** It used to be
+     * six: the homepage copy hugged the photograph's edge at `p-6 sm:p-10` while the other
+     * six sat on the measure, and this branch asserted the difference in both directions
+     * because "out of line" was the intended state on exactly one page. Hunter reversed
+     * that — the homepage headline now starts on the same column as the body text beneath
+     * it, which at 1512px moved it from x=40 to x=180.
+     *
+     * The branch is kept rather than collapsed. `isScreen` still selects a different
+     * message, so a failure names the homepage specifically, and the next person to argue
+     * about where the homepage copy belongs finds the history here rather than in a blame.
      */
     const wordmarkBox = (await page.locator('header a').first().boundingBox())!
-    if (isScreen) {
-      // Hugging the edge of the photograph — 24px, or 40px from the `sm` breakpoint up —
-      // rather than sitting on the grid. Asserted as a bound rather than against the
-      // wordmark because the sign of that difference flips: the content column is flush at
-      // 24px up to a 1200px viewport and only passes 40px above 1232, where
-      // (viewport - 1200) / 2 + 24 exceeds the inset. Measured, the two coincide at 40px
-      // at 1231-1232.
-      //
-      // Which means this bound stops discriminating anywhere from 1024px to 1232px: in
-      // that window the column is at or below 40px too, and a hero that had been snapped
-      // back onto the measure would satisfy it. This loop runs at Playwright's default
-      // 1280x720, where the column is at 64px, so it discriminates by 24px. Do not
-      // retarget it into that window without changing the assertion.
-      expect(
-        Math.round(h1Box.x),
-        'the homepage h1 has left the edge of the photograph',
-      ).toBeLessThanOrEqual(40)
-    } else {
-      expect(
-        Math.round(h1Box.x),
-        `${route} h1 is out of line with the content column`,
-      ).toBe(Math.round(wordmarkBox.x))
-    }
+    expect(
+      Math.round(h1Box.x),
+      isScreen
+        ? 'the homepage h1 has left the content column it shares with the copy below it'
+        : `${route} h1 is out of line with the content column`,
+    ).toBe(Math.round(wordmarkBox.x))
   }
 })
 
@@ -491,20 +480,25 @@ test('a band page lines its hero copy up with the section copy below it, at ever
   }
 })
 
-test('the homepage keeps its copy on the photograph, not on the measure', async ({
+test('the homepage keeps its copy on the measure, in line with the text below it', async ({
   page,
 }) => {
   /*
-   * The explicit ask, and the reason it needs its own test: for a day the homepage copy
-   * was on the content measure like the other six, and putting it back is a change that
-   * only a measurement can confirm — the classes differ by three utilities and the page
-   * looks plausible either way.
+   * This test has asserted both answers, and that is the point of keeping it.
    *
-   * At 1512px the difference is 140px. Up to a 1200px viewport the measure is flush at
-   * 24px while the inset is 40px, so the two swap which is further in and coincide at 40px
-   * at 1231-1232; the assertion is written as "not the column" plus a bound on the inset
-   * rather than as a direction. The three widths here are all above that crossover, which
-   * is what makes the `not.toBe(column)` half meaningful.
+   * For a day the homepage copy sat on the content measure like the other six. Hunter then
+   * moved it back to the photograph's edge, and this test was written to pin *that* —
+   * because the classes differ by three utilities and the page looks plausible either way,
+   * so only a measurement can tell which shipped. On 2026-09-15 he reversed it again: the
+   * headline goes back on the measure, in line with the text below it. The assertion is
+   * inverted; the reason for the test is unchanged.
+   *
+   * **Why this needs three wide viewports and would be worthless at one narrow one.** Up to
+   * a 1200px viewport the measure is flush at 24px while the old inset was 40px, and the
+   * two coincide at 1231–1232. Below that crossover a homepage on the measure and a
+   * homepage on the image edge are within 16px of each other, which is why the regression
+   * this reversal fixed survived every phone and tablet check for a week. All three widths
+   * here are above the crossover, where the gap is 104–140px and unmistakable.
    */
   for (const width of [1512, 1440, 1280]) {
     await page.setViewportSize({ width, height: 900 })
@@ -520,10 +514,11 @@ test('the homepage keeps its copy on the photograph, not on the measure', async 
     })
 
     expect(x.column, `no section heading found at ${width}px`).not.toBeNull()
-    expect(x.h1, `the homepage h1 is on the content column at ${width}px`).not.toBe(x.column)
-    // 40px is `sm:p-10`, the inset from the edge of the photograph.
-    expect(x.h1, `the homepage h1 has left the photograph's edge at ${width}px`).toBe(40)
-    expect(x.firstLine, `the eyebrow disagrees with the h1 at ${width}px`).toBe(40)
+    expect(x.h1, `the homepage h1 is off the content column at ${width}px`).toBe(x.column)
+    expect(x.firstLine, `the eyebrow disagrees with the h1 at ${width}px`).toBe(x.h1)
+    // Not the old `sm:p-10` inset. Above the crossover the two cannot coincide, so this
+    // fails loudly if the image-edge inset ever comes back rather than passing by accident.
+    expect(x.h1, `the homepage h1 is back on the photograph's edge at ${width}px`).not.toBe(40)
   }
 })
 

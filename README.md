@@ -17,7 +17,7 @@ record, or a blog.
 | `docs/disclaimer-draft.md` | Unreviewed draft footer disclaimer, pending securities counsel. |
 | `docs/deploys-and-migrations.md` | How the dataset and the code ship separately, and the ordering rule that keeps the live site up. Read before applying any migration. |
 | `docs/resource-budget.md` | Why the Lighthouse budget is where it is, and two image traps. |
-| `docs/handover-2026-09-15.md` | **Current state**, what shipped, and what is still open — every content item verified against the live dataset rather than copied forward. Supersedes `handover-2026-09-10.md`, which supersedes `-09-09` and `-09-03`; all are kept in version control. **It also carries the deploy sequence, which is manual: Railway auto-deploy is off and merging ships nothing.** If you write the next handover, change this row in the same commit — it has gone stale twice. |
+| `docs/handover-2026-09-15-logo-and-track-record.md` | **Current state**, what shipped, and what is still open — verified against the live dataset and against a run of the suite on merged `main`, not copied forward. Supersedes `handover-2026-09-15.md` (same date, earlier session), which supersedes `-09-10`, `-09-09` and `-09-03`; all are kept in version control. **It also carries the deploy sequence, which is manual: Railway auto-deploy is off and merging ships nothing.** If you write the next handover, change this row in the same commit — it has now gone stale twice and been updated in time twice. |
 
 ## Getting started
 
