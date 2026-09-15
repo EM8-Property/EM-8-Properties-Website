@@ -112,6 +112,49 @@ export const property = defineType({
         defineField({ name: 'exited', type: 'text', rows: 3 }),
         defineField({ name: 'equityMultiple', title: 'Realized equity multiple', type: 'string' }),
         defineField({ name: 'exitYear', type: 'number' }),
+
+        /*
+         * The realized track record, added 2026-09-15 from the "EM8 Transacted Assets as of
+         * August 2026" sheet.
+         *
+         * **Every one of these is optional, and that is a deploy-safety decision rather than
+         * laxness.** `docs/deploys-and-migrations.md` records that a *required* leaf added to
+         * a schema is safe to migrate early and fatal to migrate late: `missingLeaves` throws
+         * in the site layout, which renders on all 29 pages, so shipping the code ahead of
+         * the backfill fails the build for the whole site rather than one property. Nothing
+         * about a track-record figure is worth that risk, and a sold asset with no figures
+         * simply renders no table.
+         *
+         * **`grossIrr` is named for its basis on purpose.** Hunter's sheet carries a Net IRR
+         * to LPs for two of the eleven deals and a gross IRR for all eleven, and the decision
+         * of 2026-09-15 was to publish gross across the board so one basis covers every
+         * property. A field called `irr` would lose that the moment someone typed a net
+         * figure into it, and gross and net differ by nine points on Burbank. The renderer
+         * labels it "Gross IRR" for the same reason: gross is before fees and promote, and a
+         * reader must not take it for what an investor received.
+         */
+        defineField({
+          name: 'acquiredYear',
+          title: 'Year acquired',
+          type: 'number',
+          validation: (r) => r.min(1980).max(2100),
+        }),
+        defineField({
+          name: 'grossIrr',
+          title: 'Realized gross IRR (%)',
+          type: 'number',
+          description:
+            'Before fees and promote. Enter 29.2 for 29.2%, not 0.292. Always gross — a net ' +
+            'figure does not belong in this field.',
+          validation: (r) => r.min(-100).max(500),
+        }),
+        defineField({
+          name: 'salePrice',
+          title: 'Sale price (USD)',
+          type: 'number',
+          description: 'Gross sale price. Purchase price, equity and NOI stay internal.',
+          validation: (r) => r.min(0),
+        }),
       ],
     }),
     defineField({

@@ -34,6 +34,12 @@ import {
   oldImage,
   portable,
 } from './content/em8-content.mjs'
+import {
+  TRACK_RECORD_NEW,
+  TRACK_RECORD_PATCH,
+  TRACK_RECORD_SKIPPED,
+  TRACK_RECORD_COORDS_UNCONFIRMED,
+} from './content/track-record.mjs'
 
 const APPLY = process.argv.includes('--apply')
 
@@ -652,6 +658,136 @@ async function cleanupOfferingsHeading(apply) {
  *     its own key, so it will never add a leaf to a `ctaBand` that already exists, which
  *     is exactly why `emailLabel` needs this step rather than a re-run of `cta`.
  */
+/**
+ * Adds the realized track record: seven sold properties, and deal-story figures for two
+ * that were already in the dataset.
+ *
+ * ## Two different write verbs, on purpose
+ *
+ * The new documents go in with **createIfNotExists**, not `createOrReplace`. Every other
+ * seeding step in this file uses replace, which is correct for an initial load and wrong
+ * here: these seven will be edited in the Studio the moment Hunter sees them — the titles
+ * below are provisional, and Crestline's map pin is explicitly unconfirmed. A second run
+ * of this step must not quietly revert that. `createIfNotExists` makes re-running a no-op
+ * rather than a rollback, which is the guarantee the docblock at the top of this file
+ * claims for the whole script and which `createOrReplace` would break for this step.
+ *
+ * The two existing documents get a **patch with `setIfMissing` on `dealStory`, then `set`
+ * on the leaves**. Burbank and Embassy already carry prose in `dealStory.acquired`,
+ * `.executed` and `.exited`; replacing the object would delete it. Setting leaf paths
+ * leaves the prose alone and fills only the five figures.
+ *
+ * ## Additive only, so ordering is not load-bearing
+ *
+ * Every field this writes is optional in the schema — see the docblock on `dealStory` in
+ * `sanity/schema/property.ts`. That is deliberate: `docs/deploys-and-migrations.md`
+ * records that a *required* leaf is safe to migrate early and fatal to migrate late, and
+ * this step deliberately buys its way out of that ordering constraint. It can run before
+ * or after the code deploys. A property with no figures renders no figures.
+ */
+async function addTrackRecord(apply) {
+  /*
+   * Matched on `slug.current`, never on `_id`.
+   *
+   * The dataset's ids do not equal its slugs — Burbank is `property-burbank-manor` behind
+   * the slug `burbank-manor-apartments` — so an `_id in [...]` lookup finds neither of the
+   * two properties this step patches. The first dry run did exactly that and reported
+   * Burbank "not in the dataset", which was false. It failed closed and said so, which is
+   * the only reason it was a wasted minute rather than a duplicate Burbank in production.
+   *
+   * New documents still take an `_id` of `property-<slug>`, matching the convention every
+   * property in the dataset already follows.
+   */
+  const slugs = [
+    ...TRACK_RECORD_NEW.map((d) => d.slug.current),
+    ...TRACK_RECORD_PATCH.map((p) => p.slug),
+  ]
+  const live = await query(
+    `*[_type=="property" && slug.current in ${JSON.stringify(slugs)}]{_id, title, dealStory, "slug": slug.current}`,
+  )
+  const bySlug = new Map(live.map((d) => [d.slug, d]))
+
+  const mutations = []
+
+  for (const doc of TRACK_RECORD_NEW) {
+    const existing = bySlug.get(doc.slug.current)
+    if (existing) {
+      console.log(
+        `  record      ${doc.slug.current} already exists as ${existing._id} — left untouched`,
+      )
+      continue
+    }
+    console.log(
+      `  record      + ${doc._id.padEnd(28)} ${doc.dealStory.equityMultiple}  ` +
+        `${doc.dealStory.grossIrr}% gross IRR  sold ${doc.dealStory.exitYear}`,
+    )
+    mutations.push({ createIfNotExists: doc })
+  }
+
+  for (const { slug, label, dealStory } of TRACK_RECORD_PATCH) {
+    const existing = bySlug.get(slug)
+    if (!existing) {
+      throw new Error(
+        `track-record: "${slug}" (${label} in the sheet) is not in the dataset. This step ` +
+          `patches figures onto an existing property and will not create it — check the ` +
+          `slug before re-running.`,
+      )
+    }
+
+    /*
+     * Refuse rather than overwrite a figure that disagrees.
+     *
+     * Burbank and Embassy already carry an `equityMultiple` and an `exitYear`, entered
+     * before this sheet existed. Both happen to match it exactly, which is what confirmed
+     * the two mappings in the first place. If a future sheet disagrees with the Studio,
+     * that is a question for a person — silently replacing a published return with a
+     * different one is the single worst thing this script could do.
+     */
+    const clashes = ['equityMultiple', 'exitYear'].filter(
+      (k) => existing.dealStory?.[k] != null && existing.dealStory[k] !== dealStory[k],
+    )
+    if (clashes.length > 0) {
+      throw new Error(
+        `track-record: ${slug} already publishes ${clashes
+          .map((k) => `${k}=${existing.dealStory[k]} (sheet says ${dealStory[k]})`)
+          .join(', ')}. Refusing to overwrite a published figure — reconcile the sheet and ` +
+          `the Studio, then re-run.`,
+      )
+    }
+
+    const set = Object.fromEntries(Object.entries(dealStory).map(([k, v]) => [`dealStory.${k}`, v]))
+    const prose = ['acquired', 'executed', 'exited'].filter((k) => existing.dealStory?.[k])
+    console.log(
+      `  record      ~ ${slug.padEnd(28)} ${dealStory.equityMultiple}  ` +
+        `${dealStory.grossIrr}% gross IRR` +
+        (prose.length ? `  (keeping ${prose.join(', ')} prose)` : ''),
+    )
+    mutations.push({ patch: { id: existing._id, setIfMissing: { dealStory: {} } } })
+    mutations.push({ patch: { id: existing._id, set } })
+  }
+
+  for (const { label, why } of TRACK_RECORD_SKIPPED) {
+    console.log(`  record      - ${label} — not published. ${why}`)
+  }
+  for (const id of TRACK_RECORD_COORDS_UNCONFIRMED) {
+    console.log(`  record      ! ${id}: map pin is street-level only. Confirm in the Studio.`)
+  }
+
+  if (mutations.length === 0) {
+    console.log('  record      nothing to write — every document is already in place')
+    return
+  }
+  if (!apply) return
+
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mutations }),
+  })
+  if (!res.ok) throw new Error(`track record write failed ${res.status}: ${await res.text()}`)
+  console.log(`  record      wrote ${mutations.length} mutations`)
+}
+
 async function backfillChromeLabels(apply) {
   const doc = await query('*[_id=="siteSettings"][0]{ footerLabels, ctaBand }')
   if (!doc) {
@@ -1171,6 +1307,7 @@ const STEPS = {
   'header-button': backfillHeaderCta,
   'nav-labels': backfillNavLabels,
   'chrome-labels': backfillChromeLabels,
+  'track-record': addTrackRecord,
   cta: moveCtaBandToSettings,
 }
 

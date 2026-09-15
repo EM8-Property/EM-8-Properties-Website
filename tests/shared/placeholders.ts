@@ -49,6 +49,6 @@ export const CONFIRMED_REAL = [
   '1,350+ units managed',
   '750+ units sold',
   '10+ years',
-  '1.79x realized equity multiple',
+  '2.18x realized equity multiple',
   '36.2% average annual return on equity',
 ]

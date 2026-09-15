@@ -9,7 +9,7 @@
  * the site never reads.
  *
  * The exceptions are the hero stats, which spec §9 confirms as real:
- *   $100M+ AUM · 1,350+ units managed · 750+ units sold · 1.79x realized · 36.2%
+ *   $100M+ AUM · 1,350+ units managed · 750+ units sold · 2.18x realized · 36.2%
  * ==================================================================
  *
  * Usage: node --env-file=.env.local scripts/seed-preview.mjs
@@ -92,7 +92,7 @@ const heroStats = [
   { _id: 'hs.1', figure: '$100M+', label: 'Assets Under Management', order: 1 },
   { _id: 'hs.2', figure: '1,350+', label: 'Units Managed', order: 2 },
   { _id: 'hs.3', figure: '750+', label: 'Units Sold', order: 3 },
-  { _id: 'hs.4', figure: '1.79x', label: 'Realized Equity Multiple', order: 4 },
+  { _id: 'hs.4', figure: '2.18x', label: 'Realized Equity Multiple', order: 4 },
   { _id: 'hs.5', figure: '36.2%', label: 'Avg. Annual Return on Equity', order: 5 },
 ]
 
