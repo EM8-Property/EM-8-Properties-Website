@@ -42,20 +42,22 @@ beforeEach(() => {
  * technical one.
  *
  * `screen` — the homepage only. The photograph fills the whole first screen, the width of
- * the viewport and the height of it, and the copy floats on the image at a fixed inset
- * from its edge rather than on the site's content column. It is a picture with words on
- * it, and the page is scrolled to reach anything else.
+ * the viewport and the height of it. It is a picture with words on it, and the page is
+ * scrolled to reach anything else.
  *
  * `band` — the other six section pages. The photograph is 420/500/560px tall by
- * breakpoint and the copy sits on the content measure, so the page title lines up with
- * every heading and paragraph below it. It is a page header that happens to be
- * photographic.
+ * breakpoint. It is a page header that happens to be photographic.
+ *
+ * **The variant is now about HEIGHT alone.** It used to carry where the copy sat as well:
+ * `screen` floated it at a fixed inset from the image edge while `band` put it on the
+ * content measure. Hunter reversed that on 2026-09-15 — the homepage copy is on the
+ * measure like the other six, in line with the text below it — so the two shapes differ in
+ * `box` and `sizes` and agree on `copy`.
  *
  * Both shapes existed separately for a day each, applied to all seven pages, before
- * Hunter looked at the two and split them this way. Which is why the variant is one prop
- * with two named values and not two booleans: `screen` height with `band` copy is the
- * combination that was live yesterday and was rejected, and there is no reason to keep it
- * reachable.
+ * Hunter looked at the two and split them by height. Which is why the variant is one prop
+ * with two named values and not two booleans: the combinations are named and only the two
+ * that are wanted are reachable.
  *
  * Three properties hold in BOTH shapes, and each was a regression once:
  *
@@ -295,7 +297,7 @@ describe('PageHero copy', () => {
     expect(screen.getByText(COPY.intro)).toBeDefined()
   })
 
-  it('holds the content measure in `band`, and the image edge in `screen`', () => {
+  it('holds the content measure in both variants', () => {
     /*
      * Where the words sit is the other half of the variant, and it has been settled twice.
      *
@@ -329,15 +331,30 @@ describe('PageHero copy', () => {
     expect(band).toMatch(/max-w-\[1200px\]/)
     expect(band).toMatch(/\bpx-6\b/)
 
+    /*
+     * **And settled a third time, on 2026-09-15: Hunter reversed the split.** The homepage
+     * copy is back on the measure, in line with the text below it, so all seven pages sit
+     * on the content column again and `screen` and `band` are indistinguishable here.
+     *
+     * The paragraph above is kept rather than rewritten because the reasoning that put the
+     * homepage on the image edge was real and may come back; what changed is the decision,
+     * not the argument. Worth knowing why it looked fine for a week: below 1248px the
+     * measure is flush at x=24 and `sm:p-10` puts the copy at x=40, sixteen pixels apart
+     * and invisible. The gap only opens on a wide desktop, where at 1440px the column is
+     * at x=144 and the old inset held the headline at x=40.
+     *
+     * This assertion is deliberately identical to `band`'s rather than deleted. If someone
+     * splits them again it should be a decision with a test behind it, which is what the
+     * last two turns of this were.
+     */
     const screen = overlay('screen')
-    // Not the measure: the words stay on the photograph rather than on the body grid.
-    expect(screen).not.toMatch(/\bmx-auto\b/)
-    expect(screen).not.toMatch(/max-w-\[1200px\]/)
-    // The inset the homepage had before it went onto the measure. `p-6`/`sm:p-10` set the
-    // vertical padding too, which the two overrides below then replace — so this cannot
-    // be narrowed to `px-`, and the vertical values have to stay after it in the string.
-    expect(screen).toMatch(/(?:^|\s)p-6\b/)
-    expect(screen).toMatch(/\bsm:p-10\b/)
+    expect(screen).toMatch(/\bmx-auto\b/)
+    expect(screen).toMatch(/max-w-\[1200px\]/)
+    expect(screen).toMatch(/\bpx-6\b/)
+    // The image-edge inset is gone, not merely overridden. `p-6` set vertical padding too,
+    // so a leftover would still be doing something even with the measure present.
+    expect(screen).not.toMatch(/(?:^|\s)p-6\b/)
+    expect(screen).not.toMatch(/\bsm:p-10\b/)
   })
 
   it('reserves room at the top for the header that now sits over it', () => {
