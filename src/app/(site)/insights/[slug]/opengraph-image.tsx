@@ -2,7 +2,11 @@ import { ImageResponse } from 'next/og'
 import { fetchSanity } from '@/sanity/client'
 import { POST_BY_SLUG_QUERY } from '@/sanity/queries'
 import type { POST_BY_SLUG_QUERY_RESULT } from '@/sanity/types.generated'
-import { ShareCardFrame, SHARE_CARD_SIZE } from '@/components/seo/shareCardFrame'
+import {
+  ShareCardFrame,
+  SHARE_CARD_SIZE,
+  shareCardFonts,
+} from '@/components/seo/shareCardFrame'
 
 export const size = SHARE_CARD_SIZE
 export const contentType = 'image/png'
@@ -22,8 +26,10 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
   const { slug } = await params
   const post = await fetchSanity<POST_BY_SLUG_QUERY_RESULT>(POST_BY_SLUG_QUERY, { slug })
 
-  return new ImageResponse(
-    <ShareCardFrame headline={post?.title ?? 'EM8 Properties'} />,
-    size,
-  )
+  // Both faces or neither: see `shareCardFonts`. Passing any font replaces Satori's
+  // default outright, so the headline needs one supplied too or it renders as blank boxes.
+  return new ImageResponse(<ShareCardFrame headline={post?.title ?? 'EM8 Properties'} />, {
+    ...size,
+    fonts: await shareCardFonts(),
+  })
 }

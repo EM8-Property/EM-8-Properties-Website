@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Wordmark } from './Wordmark'
 import type { NavKey, NavLabels } from '@/lib/navigation'
 
 /*
@@ -62,9 +63,7 @@ export function SiteFooter({
       <div className="mx-auto max-w-[1200px] px-6 py-10">
         <div className="flex flex-wrap justify-between gap-8">
           <div>
-            <p className="font-display text-base font-bold uppercase tracking-wide text-ink">
-              EM8 <span className="font-light text-teal-text">Properties</span>
-            </p>
+            <Wordmark variant="lockup" />
             <a
               href={`mailto:${contactEmail}`}
               className="mt-3 inline-block text-xs text-teal-text hover:text-ink"
