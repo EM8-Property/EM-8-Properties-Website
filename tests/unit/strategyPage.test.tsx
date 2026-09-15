@@ -86,8 +86,24 @@ describe('the strategy page', () => {
      * emptying the prose would open the page on a panelled band directly under the
      * photograph. That is the defect `alternatingTones` was written for on the homepage.
      */
-    expect(source).toContain('alternatingTones(sections.length)')
     expect(source).toMatch(/\.filter\(Boolean\)/)
+  })
+
+  it('counts the closing call to action as part of the tone sequence', () => {
+    /*
+     * The regression this pins, found on the live site on 2026-09-15 rather than by any
+     * gate. With all three sections published the arithmetic happened to work out —
+     * prose(ground), pillars(panel), chart(ground), CTA(panel). Hunter then emptied the
+     * body in the Studio and the page became pillars(ground), chart(panel), CTA(panel),
+     * above a footer that is also panelled: three consecutive grey bands.
+     *
+     * `+ 1` and the explicit `tone` are what make that unreachable for every combination
+     * of published sections, which is the same arrangement the homepage has carried since
+     * it was written. A `CtaBand` left to its own `tone="panel"` default cannot know what
+     * is above it.
+     */
+    expect(source).toContain('alternatingTones(sections.length + 1)')
+    expect(source).toMatch(/tone=\{tones\[sections\.length\]!\}/)
   })
 
   it('closes with the call to action every page closes with', () => {
