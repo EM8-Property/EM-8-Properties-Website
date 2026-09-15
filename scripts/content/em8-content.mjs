@@ -396,7 +396,7 @@ export const HERO_STATS = [
   { _id: 'heroStat-aum', figure: '$100M+', label: 'Assets Under Management', order: 10 },
   { _id: 'heroStat-managed', figure: '1,350+', label: 'Units Managed', order: 20 },
   { _id: 'heroStat-sold', figure: '750+', label: 'Units Sold', order: 30 },
-  { _id: 'heroStat-multiple', figure: '1.79x', label: 'Realized Equity Multiple', order: 40 },
+  { _id: 'heroStat-multiple', figure: '2.18x', label: 'Realized Equity Multiple', order: 40 },
   { _id: 'heroStat-roe', figure: '36.2%', label: 'Average Annual Return on Equity', order: 50 },
 ]
 

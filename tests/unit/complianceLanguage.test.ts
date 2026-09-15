@@ -81,9 +81,17 @@ describe('spec §9 placeholder figures in source', () => {
   })
 
   it('does not flag the figures spec §9 confirms are real', () => {
-    // 1.79x and 36.2% are genuine and are the most LP-relevant proof EM8 owns. If a
-    // pattern ever starts matching these, the pattern is wrong, not the copy.
-    const real = '$100M+ AUM, 1,350+ units managed, 750+ units sold, 1.79x realized, 36.2% annual'
+    // These are genuine and are the most LP-relevant proof EM8 owns. If a pattern ever
+    // starts matching them, the pattern is wrong, not the copy.
+    //
+    // The multiple was 1.79x until 2026-09-15, when the transacted-assets sheet put the
+    // realized average across eleven exits at 2.18x and Hunter took the homepage to that.
+    // 36.2% did not move and is not a typo for anything here: it is the average annual
+    // return on equity, (multiple − 1) ÷ years held, averaged the same way across the same
+    // eleven deals, which recomputes from the sheet at 35.8%. It is emphatically NOT the
+    // sheet's "Actual Average Annual Return" row, which averages 6.2% and measures
+    // something else — an error made and corrected while this change was being written.
+    const real = '$100M+ AUM, 1,350+ units managed, 750+ units sold, 2.18x realized, 36.2% annual'
     expect(SPEC_9_PLACEHOLDERS.some(({ pattern }) => pattern.test(real))).toBe(false)
   })
 })
