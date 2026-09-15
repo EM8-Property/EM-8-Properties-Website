@@ -17,7 +17,7 @@ record, or a blog.
 | `docs/disclaimer-draft.md` | Unreviewed draft footer disclaimer, pending securities counsel. |
 | `docs/deploys-and-migrations.md` | How the dataset and the code ship separately, and the ordering rule that keeps the live site up. Read before applying any migration. |
 | `docs/resource-budget.md` | Why the Lighthouse budget is where it is, and two image traps. |
-| `docs/handover-2026-09-09.md` | Current state, what shipped, and what is still open with an owner for each. Supersedes `handover-2026-09-03.md`, which it keeps beside it — both are in version control, unlike every handover before them. |
+| `docs/handover-2026-09-15.md` | **Current state**, what shipped, and what is still open — every content item verified against the live dataset rather than copied forward. Supersedes `handover-2026-09-10.md`, which supersedes `-09-09` and `-09-03`; all are kept in version control. **It also carries the deploy sequence, which is manual: Railway auto-deploy is off and merging ships nothing.** If you write the next handover, change this row in the same commit — it has gone stale twice. |
 
 ## Getting started
 
@@ -32,7 +32,7 @@ npm run dev                  # production dataset
 | `npm run dev` | Dev server against the `production` dataset |
 | `bash scripts/dev-preview.sh` | Dev server against `preview` — sample content for design review |
 | `npm run build` | Production build. **Fails if `siteSettings` is missing** — that is deliberate |
-| `npm test` | Unit suite (443 tests). Never touches the network |
+| `npm test` | Unit suite (**607** tests at 2026-09-15; this row has been stale before — run it rather than trusting the count). Never touches the network |
 | `npm run test:content` | Content gate against the live dataset. Run before any content release |
 | `npm run test:e2e` | Playwright. Set `E2E_BASE_URL` to run against a deployed URL |
 | `npm run lighthouse` | Lighthouse + resource budget against a running `npm start` |
@@ -409,6 +409,45 @@ measure; the other by CI rendering in a font nobody had thought about.
 - **Five Lighthouse samples of one unchanged commit scored 75, 84, 91, 79, 79.** A 16-point
   spread. The image-byte figure was 757 KB in all five. Byte budgets are the stable
   measurement; the performance score is not. Never read a delta off one run.
+
+### Found on 2026-09-15
+
+- **A number in a chart is not the same kind of content as a sentence.** Placeholder prose
+  is honest scaffolding a reader can recognise as opinion; a placeholder bar is a fabricated
+  statistic on an investor-facing page, and it reads as measurement whoever typed it. This is
+  why `strategyPage.marketSource` is *conditionally* required — required the moment one bar
+  exists — and why `/strategy` will not render the chart section without it.
+- **A JavaScript default fires only on `undefined`, and GROQ returns `null`.** `MetricBars`
+  carried `unit = '%'`, which the page could never receive, because it passes
+  `copy.marketUnit` straight from a projection. Only the tests ever saw it, while the
+  signature implied the component held an opinion the CMS could not see. Any
+  `prop = 'fallback'` on a component fed by Sanity is dead code wearing the clothes of a
+  decision — put the default in the schema's `initialValue` instead.
+- **Adding a *required* leaf inverts the migration ordering rule.** An ordinary addition is
+  safe to apply early and harmless to apply late. A required one is safe early and **fatal
+  late**: `missingLeaves` throws in the layout, which renders on all 29 pages, so deploying
+  ahead of the backfill fails the build for the whole site rather than for one page. Now a
+  row in the checklist in `docs/deploys-and-migrations.md`.
+- **`setIfMissing` means the seed and the live document can disagree, and the seed is not
+  what the site shows.** `PAGE_COPY.strategyPage.body` holds three seeded paragraphs that
+  have never been written anywhere: production already had a body an editor had typed, so the
+  step correctly left it alone. Read the dataset, not `em8-content.mjs`, to learn what a page
+  says.
+- **A copied-forward list is not a checked list.** The last handover's "Content EM8 owes"
+  carried four `teamMember.role` edits. All eight roles are populated and had been for some
+  time; the list said "unchanged from 2026-09-09" because nobody queried it. Every content
+  item in `docs/handover-2026-09-15.md` was queried against the live dataset the day it was
+  written.
+- **An alternating-ground sequence has to include the band that closes the page.** With all
+  three of `/strategy`'s sections published the arithmetic happened to work; an editor then
+  emptied one section in the Studio and the live page rendered three consecutive panelled
+  bands — chart, call to action, footer — which is the exact defect `alternatingTones` was
+  written to prevent. The homepage has passed `tones[bands.length]` into `CtaBand` since it
+  was written. A page that assembles conditional sections and then lets `CtaBand` keep its
+  own default ground is one editor away from that bug, and no gate sees it.
+- **A Bash heredoc in this environment chokes on long TSX.** Two attempts to write a test
+  file with `<<'EOF'` failed with an unterminated-quote parse error *before the file was
+  created*. Use the Write tool for anything substantial rather than debugging the quoting.
 
 ## Status
 

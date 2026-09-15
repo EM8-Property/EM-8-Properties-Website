@@ -114,7 +114,23 @@ export default async function StrategyPage() {
     ),
   ].filter(Boolean)
 
-  const tones = alternatingTones(sections.length)
+  /*
+   * `+ 1`, because the closing call to action is part of the same sequence — the homepage
+   * has said so since it was written, and this page did not, which is a defect that only
+   * appeared once an editor emptied a section.
+   *
+   * With all three sections published the arithmetic happened to work: prose(ground),
+   * pillars(panel), chart(ground), CTA(panel). Hunter then deleted the body in the Studio
+   * on 2026-09-15 — correctly, it was saying what the cards say — and the live page became
+   * pillars(ground), chart(panel), CTA(panel), on top of a footer that is also panelled:
+   * three consecutive grey bands, which is precisely the "782px of unbroken grey" that
+   * `alternatingTones` exists to prevent.
+   *
+   * So the CTA takes the last slot in the sequence rather than its own default. Nothing
+   * about the count is hardcoded: whatever combination of sections is published, the band
+   * below them lands on the opposite ground.
+   */
+  const tones = alternatingTones(sections.length + 1)
 
   return (
     <div>
@@ -136,7 +152,11 @@ export default async function StrategyPage() {
         </Band>
       ))}
 
-      <CtaBand bookACallUrl={settings?.bookACallUrl} copy={settings?.ctaBand} />
+      <CtaBand
+        bookACallUrl={settings?.bookACallUrl}
+        copy={settings?.ctaBand}
+        tone={tones[sections.length]!}
+      />
     </div>
   )
 }
