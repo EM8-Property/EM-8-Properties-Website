@@ -52,9 +52,31 @@ export type HeroVariant = 'screen' | 'band'
  * function of the box's HEIGHT. See the note at the <Image> for the measurements.
  */
 const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string }> = {
+  /*
+   * `screen` carried `p-6 sm:p-10` — an inset from the IMAGE edge, not the content column
+   * — from 2026-09-0x until 2026-09-15, and that was a decision rather than an oversight.
+   * The copy had gone onto the measure on all seven photographic pages; Hunter then split
+   * them, homepage back to the image edge, on the reasoning that the homepage hero is a
+   * photograph with a proposition laid on it and hanging the words on the body grid pulls
+   * them away from the picture.
+   *
+   * **He reversed that on 2026-09-15: the homepage copy goes back onto the measure, in
+   * line with the text below it, as the other six already are.** The split is gone and all
+   * seven are on the content column again.
+   *
+   * Why it reads as wrong on a desktop and fine everywhere else: below 1248px the measure
+   * is flush at x=24 and the two are within 16px of each other, so every phone and tablet
+   * check passed. At 1440px the column starts at about x=144 while `sm:p-10` held the copy
+   * at x=40 — the headline hung a hundred pixels left of its own body text.
+   *
+   * Both variants now carry the same three utilities. Spelled out rather than hoisted to a
+   * constant because that is how `Band`, `SiteHeader`, `SiteFooter`, every page container
+   * and `PageHero`'s own no-photograph fallback all spell it; `pageHero.test.tsx` pins both
+   * variants against the literal.
+   */
   screen: {
     box: 'min-h-svh',
-    copy: 'p-6 sm:p-10',
+    copy: 'mx-auto max-w-[1200px] px-6',
     sizes: '(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw',
   },
   band: {

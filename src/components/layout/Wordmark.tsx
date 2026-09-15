@@ -82,16 +82,26 @@ export function Wordmark({
   }
 
   /*
-   * `items-stretch` is what sizes the rule. The widest child is the letterspaced
-   * `PROPERTIES`, so the rule spans that width and overhangs `EM8` on both sides — which
-   * is the proportion in the artwork, arrived at by the layout rather than by a magic
-   * number that would go stale the moment the tracking changed.
+   * `items-center`, because `EM8` sits centred over `PROPERTIES` in the supplied artwork —
+   * it was left-aligned here until Hunter pointed it out on 2026-09-15.
+   *
+   * The rule takes `self-stretch` to opt back out of that centring and span the full width
+   * of the column. The column is as wide as its widest child, which is the letterspaced
+   * `PROPERTIES`, so the rule overhangs `EM8` on both sides exactly as the artwork does —
+   * a proportion the layout arrives at rather than a magic number that would go stale the
+   * moment the tracking changed.
+   *
+   * `-me-[0.42em]` cancels the trailing letter-space CSS adds after the final `S`. Without
+   * it the text box is 0.42em wider than the ink it contains, so centring the box leaves
+   * the word visibly a fifth of a letter left of centre — and the rule, sized by that same
+   * box, overhangs further right than left. It is the difference between centred and
+   * optically centred.
    */
   return (
-    <span className={`inline-flex flex-col items-stretch ${className}`}>
+    <span className={`inline-flex flex-col items-center ${className}`}>
       {em8}
-      <span aria-hidden="true" className="mt-2.5 h-px bg-rule" />
-      <span className="mt-2 font-wordmark text-[10px] font-light uppercase leading-none tracking-[0.42em] text-ink-secondary">
+      <span aria-hidden="true" className="mt-2.5 h-px self-stretch bg-rule" />
+      <span className="-me-[0.42em] mt-2 font-wordmark text-[10px] font-light uppercase leading-none tracking-[0.42em] text-ink-secondary">
         Properties
       </span>
     </span>
