@@ -37,16 +37,40 @@
  * above; "loaded" is the warm case. Both columns matter, and each band is chosen by the
  * worse of the two.
  *
+ * Re-measured 2026-09-15, both columns and all eight widths, when the wordmark became the
+ * new logo — `EM8` in Cormorant Garamond Light rather than `EM8 Properties` in Oswald bold,
+ * see `components/layout/Wordmark.tsx`. That is a change to the widest item in row one and
+ * to which face row one falls back to, which is this table's two variables, so it was
+ * measured against the previous commit as well rather than reasoned about.
+ *
  *   width    reservation                header            /about clearance
  *                                       loaded  blocked   loaded    blocked
- *   320px    pt-48 = 192px              113.0   153.0      +79.0     +39.0  ← row one wraps
+ *   320px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
  *   360px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
  *   375px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
  *   390px    min-[390px]:pt-36 = 144px    88.5   113.0      +55.5     +31.0  ← the tightest
- *   640px    min-[390px]:pt-36 = 144px    88.5    88.5      +74.1     +55.5
- *   767px    min-[390px]:pt-36 = 144px    88.5    88.5      +74.1     +55.5
- *   768px    md:pt-28 = 112px             62.0    62.0     +100.6     +61.0
+ *   640px    min-[390px]:pt-36 = 144px    88.5    88.5      +55.5     +55.5
+ *   767px    min-[390px]:pt-36 = 144px    88.5    88.5      +55.5     +55.5
+ *   768px    md:pt-28 = 112px             62.0    62.0      +50.0     +50.0
  *   1280px   md:pt-28 = 112px             62.0    62.0      +50.0     +50.0
+ *
+ * **Two rows above are not what the 2026-09-09 table said, and only one of them is the
+ * logo's doing.** Measuring the previous commit the same way separated them:
+ *
+ * 1. `320px blocked` really did move, and it improved: header 153.0 → 113.0, clearance
+ *    +39.0 → +79.0. That row used to carry "← row one wraps", and it no longer does. `EM8`
+ *    set in a serif is far narrower than `EM8 PROPERTIES` set in Oswald, so the wordmark,
+ *    Investor Login and the CTA now fit one row at 320px even with no webfonts. The marker
+ *    is gone with the wrap. **This is slack, not a new constraint** — nothing here was
+ *    re-tuned to collect it, and 390px blocked is still the tightest row at +31.0.
+ * 2. `640/767px loaded` (+74.1) and `768px loaded` (+100.6) were already wrong before this
+ *    change: the previous commit measures +55.5 and +50.0 for them, exactly as above. The
+ *    header height in those rows never moved, so what drifted is where the `/about` hero
+ *    paragraph sits — content edited in the Studio since 2026-09-09, with no commit to
+ *    notice it. A prose figure in a docblock has no test behind it, which is the same
+ *    lesson the 2026-09-15 handover recorded as "a grep for a fact is not a check for a
+ *    fact". The clearance floor at 320px blocked *is* pinned by an E2E test; these eight
+ *    rows are not, and they go stale silently.
  *
  * The extra chevron button costs one nav line at two of the eight rows: 375px loaded (which
  * used to fit the nav on one line, header 88.5px, +103.5px clearance) and 390px blocked

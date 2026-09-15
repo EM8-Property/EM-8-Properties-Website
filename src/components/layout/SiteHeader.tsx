@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { showsHero } from '@/lib/heroPages'
+import { Wordmark } from './Wordmark'
 import { NAV_TREE, type NavKey, type NavLabels, type NavNode } from '@/lib/navigation'
 import { NavDropdown } from '@/components/layout/NavDropdown'
 
@@ -63,6 +64,25 @@ export type HeaderCta = { label: string; href: string }
  * ... md:flex`, so at `md` and up the link is unconditionally visible regardless of
  * `accountOpen`, exactly as it always has been. Investor Login stays reachable from the
  * footer either way.
+ *
+ * **That 366px arithmetic no longer holds, and the button is still here on purpose.** The
+ * 120px in it was `EM8 PROPERTIES` in Oswald bold. The logo changed on 2026-09-15 and the
+ * mark is now `EM8` alone in a serif — see `Wordmark.tsx` — which re-measures at 390px as
+ * **49.5px loaded and 51.6px blocked**. Row one therefore carries 205.8px against the same
+ * 342px, and it would now fit with Investor Login inline. The measurement that justified
+ * this button has stopped justifying it.
+ *
+ * It is not coming out in the same change as a logo swap, for two reasons that are not
+ * inertia. The 2026-09-09 note below records that the `▾` disclosure costs a nav line at
+ * two widths, so row one is not the only thing competing for this space. And 320px, not
+ * 390px, is the width this header has repeatedly failed at, where the margin is thinner
+ * still and every previous attempt to reason about it instead of measuring it was wrong.
+ * Removing the button is a real simplification and it wants its own measurement and its own
+ * PR. Flagged to Hunter 2026-09-15.
+ *
+ * (2.1px between loaded and blocked is `next/font`'s `size-adjust` fallback doing its job —
+ * see the font's docblock in `app/layout.tsx`. A serif falling back to an unadjusted Times
+ * would not have landed within 2px, and `headerReservation.ts` is why that matters.)
  *
  * **And the disclosed link is a popover below `md`, not an in-flow sibling.** Revealing it
  * in flow re-broke row one for the same arithmetic that put it behind a button in the
@@ -146,11 +166,8 @@ export function SiteHeader({
       }
     >
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-y-3 px-6 py-4">
-        <Link
-          href="/"
-          className="font-display text-lg font-bold uppercase tracking-wide text-ink"
-        >
-          EM8 <span className="font-light text-teal-text">Properties</span>
+        <Link href="/">
+          <Wordmark />
         </Link>
 
         {/*

@@ -1,5 +1,9 @@
 import { ImageResponse } from 'next/og'
-import { ShareCardFrame, SHARE_CARD_SIZE } from '@/components/seo/shareCardFrame'
+import {
+  ShareCardFrame,
+  SHARE_CARD_SIZE,
+  shareCardFonts,
+} from '@/components/seo/shareCardFrame'
 
 /**
  * Prerendered into a file at build time rather than running satori and resvg on every
@@ -32,9 +36,11 @@ export const dynamic = 'force-static'
  * image *file* conventions; a route handler ignores them, and under the webpack type
  * plugin an excess export fails the route-handler type check outright.
  */
-export function GET() {
+export async function GET() {
+  // Both faces or neither: see `shareCardFonts`. Passing any font replaces Satori's
+  // default outright, so the headline needs one supplied too or it renders as blank boxes.
   return new ImageResponse(
     <ShareCardFrame headline="Transit-oriented development in suburban Chicago" />,
-    SHARE_CARD_SIZE,
+    { ...SHARE_CARD_SIZE, fonts: await shareCardFonts() },
   )
 }

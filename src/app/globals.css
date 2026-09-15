@@ -36,6 +36,9 @@
 @theme inline {
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-oswald), sans-serif;
+  /* The logo only. Georgia before the generic serif because it is the closest metric
+     match a Windows or macOS machine already holds for a light old-style face. */
+  --font-wordmark: var(--font-wordmark-cormorant), Georgia, 'Times New Roman', serif;
 }
 
 body {
