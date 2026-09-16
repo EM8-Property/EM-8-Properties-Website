@@ -8,7 +8,8 @@ import type {
   PROPERTY_BY_SLUG_QUERY_RESULT,
   PROPERTY_SLUGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
-import { urlForImage } from '@/sanity/image'
+import { urlForImage, urlForPhoto } from '@/sanity/image'
+import { PropertyGallery } from '@/components/property/PropertyGallery'
 import { pageMetadata, SHARE_CARD, SITE_NAME, type ShareImage } from '@/lib/seo'
 import { DealStory } from '@/components/property/DealStory'
 import { FactRail } from '@/components/property/FactRail'
@@ -75,17 +76,40 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
   if (!p) notFound()
 
   const hero = p.gallery?.[0]
+  /*
+   * Everything after the hero. `gallery[0]` is the photograph at the top of this page, so
+   * repeating it in the grid below would show the same building twice with no indication
+   * that it is the same picture. The slice happens HERE rather than inside the gallery so
+   * that this page stays the single place that decides which image is the hero.
+   */
+  const rest = p.gallery?.slice(1) ?? []
 
   return (
     <article>
       {hero && (
         <Image
-          src={urlForImage(hero).width(1800).height(700).url()}
+          src={urlForPhoto(hero, 1800, 700).width(1800).height(700).url()}
           alt={hero.alt ?? p.title ?? ''}
           width={1800}
           height={700}
           priority
-          className="h-[340px] w-full object-cover"
+          /*
+            The height is responsive because the crop is a 2.571 letterbox and
+            `object-cover` magnifies it on anything narrower than that.
+
+            At a fixed 340px this was height-driven on a phone: a 375px-wide box 340px tall
+            paints the crop 874 CSS px wide, 2.33x the viewport, so a visitor saw 43% of an
+            already-wide slice of the photograph. Hunter reported it on 2026-09-16, the
+            same complaint as the hero carousel and the same cause.
+
+            The heights are chosen so the magnification lands near 1.3x on a phone: 190px
+            at 375 wide is 1.30x, and 1.53x at 320. Desktop is untouched and did not need
+            to be — above about 875px wide the BOX is wider than the crop is shaped, so it
+            is width-driven and already paints 1:1. That is why this is three heights
+            rather than art direction with a second crop: the fault only exists where the
+            box is tall relative to its width.
+          */
+          className="h-[190px] w-full object-cover sm:h-[280px] lg:h-[340px]"
         />
       )}
       <div className="mx-auto grid max-w-[1200px] gap-10 px-6 py-10 lg:grid-cols-[1.45fr_1fr]">
@@ -102,7 +126,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
           </p>
 
           {p.overview && (
-            <div className="mt-5 text-sm leading-relaxed text-ink-secondary">
+            <div className="mt-5 space-y-4 text-sm leading-relaxed text-ink-secondary">
               <PortableText value={p.overview} />
             </div>
           )}
@@ -112,11 +136,22 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
               <h2 className="mt-8 text-lg font-bold tracking-tight text-ink">
                 The business plan
               </h2>
-              <div className="mt-2 text-sm leading-relaxed text-ink-secondary">
+              <div className="mt-2 space-y-4 text-sm leading-relaxed text-ink-secondary">
                 <PortableText value={p.businessPlan} />
               </div>
             </>
           )}
+
+          {/*
+            The photographs, above the realized figures and below the words that explain
+            the asset. A reader wants to see the building once they know what it is, and
+            before they are asked to read a return.
+
+            Renders nothing at all when a property has only its hero, which today is
+            sixteen of the eighteen — so this is a section that appears as Hunter fills the
+            galleries rather than an empty heading on every page in the meantime.
+          */}
+          <PropertyGallery photos={rest} propertyTitle={p.title} />
 
           {/*
             The realized arc, which lived on /track-record until that route was deleted.

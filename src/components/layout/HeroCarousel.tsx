@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { urlForImage } from '@/sanity/image'
+import { urlForPhoto } from '@/sanity/image'
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 import { HEADER_RESERVATION } from '@/lib/headerReservation'
 
@@ -399,7 +399,7 @@ export function HeroCarousel({
           >
             {loaded && (
               <Image
-                src={urlForImage(slide.image).width(1600).height(900).url()}
+                src={urlForPhoto(slide.image, 1600, 900).width(1600).height(900).url()}
                 alt={(slide.image as { alt?: string })?.alt ?? slide.propertyTitle ?? ''}
                 width={1600}
                 height={900}

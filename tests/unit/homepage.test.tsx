@@ -9,11 +9,19 @@ import { stripComments } from '../shared/sourceScan'
 
 const PROMISSORY = /(guaranteed|will return|assured|risk-free|no risk)/i
 
-vi.mock('@/sanity/image', () => ({
-  urlForImage: () => ({
-    width: () => ({ height: () => ({ url: () => 'https://cdn.test/x.jpg' }) }),
-  }),
-}))
+vi.mock('@/sanity/image', () => {
+  /*
+   * A chainable stub rather than a hand-spelled width().height().url() chain.
+   *
+   * The literal version broke the moment a call site chained differently: the gallery
+   * overlay calls .width().url() with no .height(), and `urlForPhoto` adds .sharpen().
+   * Returning the same object from every method means a mock cannot be wrong about the
+   * ORDER of a chain it is not testing.
+   */
+  const chain: Record<string, unknown> = { url: () => 'https://cdn.test/x.jpg' }
+  for (const m of ['width', 'height', 'auto', 'fit', 'sharpen']) chain[m] = () => chain
+  return { urlForImage: () => chain, urlForPhoto: () => chain, sourceDimensions: () => null }
+})
 
 beforeEach(() => {
   cleanup()
