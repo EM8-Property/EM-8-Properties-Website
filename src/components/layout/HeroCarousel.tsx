@@ -18,6 +18,110 @@ export type { CarouselSlide }
 const INTERVAL_MS = 6000
 
 /**
+ * How the photograph is drawn, and the one thing about it that is not the same on a phone.
+ *
+ * `object-cover` on a box taller than the crop is shaped scales the photograph until it
+ * covers the HEIGHT and throws the overflow off the sides. The crop is 1600x900, so the
+ * painted width is the box height times 1.78 — and on a phone that is most of the picture
+ * gone. Measured on the live site at 375x812 on 2026-09-16:
+ *
+ *   screen  box 957 tall  paints 1703 CSS px  4.54x the viewport  —  22% of the photo visible
+ *   band    box 453 tall  paints  813 CSS px  2.17x the viewport  —  46% of the photo visible
+ *
+ * The homepage was the complaint: an interior shot magnified until it read as two bar
+ * stools and a ceiling tile. `band` at 2.17x still reads as a room, which is why that
+ * number is the target here rather than 1.0 — it is a measured example of a crop that
+ * works, not a guess.
+ *
+ * The homepage's 957px is worth reading twice, because it rules out the obvious fix. It is
+ * NOT `min-h-svh` (812 at that size). It is the overlay — eyebrow, four-line headline,
+ * five-line paragraph, two buttons and the four stats — growing the box past its floor.
+ * Lowering `min-h-svh` on a phone therefore does nothing at all to the homepage. The
+ * height is the copy's, and the copy is the CMS's.
+ *
+ * So the photograph stops covering the box instead. Below `sm` it is capped at 400px and
+ * masked out over its last 40%, and the section's own background carries the rest. 400px
+ * paints 712 CSS px, which is 1.90x at 375 wide and 2.23x at 320 — both inside what `band`
+ * already demonstrated is legible. The box, the copy and the header reservation are all
+ * untouched, so every measurement the E2E suite pins about hero height and header
+ * clearance still holds.
+ *
+ * Two consequences worth stating rather than discovering:
+ *
+ *   - The section background is now `bg-scrim`, not `bg-panel`. `bg-panel` is #F5F5F3 and
+ *     the hero copy is white; once the photograph stops reaching the bottom of the box,
+ *     panel would put white text on near-white. `scrim` is the same #1A1A1A the gradient
+ *     below already fades to, so the masked edge of the photograph dissolves into it
+ *     rather than landing on a seam. On a desktop the photograph covers the box and this
+ *     is invisible either way.
+ *   - Above `sm` nothing changes. A tablet is not tall relative to its width in the way a
+ *     phone is, and the cap would crop the top of the picture off instead.
+ */
+const PHONE_PHOTO_CAP = 'max-h-[400px] sm:max-h-none'
+
+/**
+ * The scrim, which the cap forced to be rewritten rather than left alone — and this is the
+ * part of the change that was not obvious from the complaint.
+ *
+ * The gradient is anchored to the BOX. On the homepage that box is 957px, so `to-scrim/25`
+ * lands at the top and `from-scrim/90` at the bottom, and the eyebrow at y=192 sits under
+ * **38%** scrim. That was survivable while the photograph was magnified 4.5x, because what
+ * landed behind the copy was a small dark patch of whatever the crop happened to catch.
+ * Zoom out and the copy sits on the picture's real content, which on half these slides is
+ * a white kitchen or a pale brick elevation.
+ *
+ * Measured on all seven homepage slides at 375px wide, white eyebrow text, 2026-09-16:
+ *
+ *   photo luminance behind the eyebrow   0.19 – 0.53   (slide to slide)
+ *   contrast, box-anchored scrim @ 38%   2.76 – 4.98   — fails AA on the pale slides
+ *   contrast, photo-anchored scrim @ 73% 5.20 – 8.28   — passes AA on all of them
+ *
+ * Worth recording because it reframes the change: **the box-anchored scrim was already
+ * failing.** On the old crop the same eyebrow measured 2.42 on 382 Penn and 3.34 on ReVerb
+ * against AA's 4.5. The magnified crop was not protecting the text, it was making the
+ * failure depend on which slide was showing. What follows fixes that outright rather than
+ * restoring it.
+ *
+ * So on a phone the gradient is anchored to the PHOTOGRAPH — the same 400px the cap sets —
+ * instead of to the box. The shape is unchanged, it is just compressed into the part of
+ * the box that has a picture in it:
+ *
+ *   - top of the photo, `to-scrim/10`. Nothing is written above y=144, and that band is the
+ *     part of the change Hunter actually asked for. It stays close to clear.
+ *   - the middle stop is at **65%** rather than the default 50%, and that placement is the
+ *     whole trick. `HEADER_RESERVATION` is `pt-48` below 390px and `pt-36` at 390px and
+ *     up, so the eyebrow starts at y=192 on a small phone and y=144 on a large one — and
+ *     y=144 is 64% of the way up a 400px photo. A stop at the default 50% would have left
+ *     that eyebrow at 58% scrim and 3.79:1, failing AA on exactly the phones most people
+ *     hold. Pinning the stop at 65% puts 70% scrim at y=144 instead.
+ *   - 70% at that stop, derived from the palest slide rather than the average: 0.528
+ *     luminance needs 66.6% to reach 4.5:1, and 70% clears it with a little room.
+ *   - bottom of the photo, `from-scrim` at full opacity. Not 90%: at full opacity the
+ *     photograph's bottom edge is exactly the section's own `bg-scrim`, so the capped
+ *     photo dissolves into the background with no seam and no mask on the image. At 90% a
+ *     bright slide leaves a visible step there.
+ *
+ * The cap being a fixed 400px rather than a multiple of the viewport width is what makes
+ * that stop placement hold. A `vw`-based cap would keep the zoom constant across phones
+ * but let the photo grow taller than the copy, which walks the eyebrow up into the clear
+ * end of the gradient — at 639px wide it measured 2.85:1. With a fixed photo height the
+ * eyebrow lands at one of exactly two places, y=192 or y=144, whatever the viewport does.
+ *
+ * Above `sm` the cap is lifted and this reverts to the box-anchored gradient the desktop
+ * has always had, unchanged. The pale-slide problem is a phone problem: it exists because
+ * the copy is tall relative to the picture, which is only true on a narrow screen.
+ *
+ * The `400px` here and in `PHONE_PHOTO_CAP` are one number and have to move together —
+ * that is what makes the photo's bottom edge and the gradient's dark end the same line.
+ * Tailwind scans source for literal class names, so it cannot be interpolated from a
+ * constant; `heroCarousel.test.tsx` pins the two against each other instead.
+ */
+const PHONE_SCRIM =
+  'absolute inset-x-0 top-0 h-[400px] bg-gradient-to-t ' +
+  'from-scrim from-0% via-scrim/70 via-65% to-scrim/10 to-100% ' +
+  'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
+
+/**
  * Which shape the band takes. One prop with two named values, not two booleans.
  *
  * `screen` — the homepage. The photograph fills the first screen, the width of the
@@ -77,7 +181,29 @@ const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string }> =
   screen: {
     box: 'min-h-svh',
     copy: 'mx-auto max-w-[1200px] px-6',
-    sizes: '(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw',
+    /*
+     * The phone clause came down from 400vw to 225vw on 2026-09-16, and it is the only
+     * part of `sizes` the crop cap moved.
+     *
+     * 400vw was calibrated on a 375x812 phone where the box was the whole screen and the
+     * paint was 3.85x it. `PHONE_PHOTO_CAP` makes that box 400px, so the paint is a flat
+     * 712 CSS px below `sm` regardless of how tall the copy grows the section — 1.90x at
+     * 375 wide, 2.23x at 320, 1.11x at 639. The clause has to clear the NARROWEST phone,
+     * because that is where the multiplier is largest, so it is derived from 320 and not
+     * from 375: 712 / 320 = 2.23, rounded up.
+     *
+     * `band` is deliberately not given a phone clause, and this is the one place the two
+     * shapes stopped differing without the code following. The cap applies to both, so
+     * both now paint 712 CSS px on a phone — but `band` painted 747 before it (420px box,
+     * hinted at 100vw), so nothing about `band` moved and the 2026-09-15 reasoning that
+     * declined to correct it stands unchanged. Correcting it now would buy a third of a
+     * linear pixel on six pages for about 190KB each. See the note at the <Image>.
+     *
+     * The tablet and desktop clauses are untouched because the cap is not: `sm:max-h-none`
+     * gives the photograph the whole box back at 640px and up, so above the phone this
+     * component paints exactly what it painted yesterday.
+     */
+    sizes: '(max-width: 640px) 225vw, (max-width: 1024px) 200vw, 100vw',
   },
   band: {
     box: 'min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]',
@@ -221,7 +347,7 @@ export function HeroCarousel({
        * always been one link — but at full screen it is about four times the area, so it is
        * written down rather than assumed.
        */
-      className={`relative flex w-full flex-col justify-end overflow-hidden bg-panel ${SHAPE[variant].box}`}
+      className={`relative flex w-full flex-col justify-end overflow-hidden bg-scrim ${SHAPE[variant].box}`}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -368,20 +494,32 @@ export function HeroCarousel({
                 */
                 quality={75}
                 priority={i === 0}
-                className="h-full w-full object-cover"
+                /*
+                  `h-full` with a cap, not `h-[400px]`: above `sm` the cap is lifted and
+                  the photograph covers the box as it always has, and the whole change is
+                  confined to a phone. See `PHONE_PHOTO_CAP` for the measurements and for
+                  why lowering `min-h-svh` would not have worked.
+                */
+                className={`h-full w-full object-cover ${PHONE_PHOTO_CAP}`}
               />
             )}
             {/*
               A scrim, not a decoration. The page title sits on photography of unknown
               brightness, and this is what keeps it legible.
 
-              What carries the contrast is the photograph being dark, not the gradient:
-              measured over this, the eyebrow reads about 9.2:1 on a dark image and about
-              2.4:1 on a pale one. That is a content constraint as much as a CSS one, and
-              the Studio field description for `heroCarousel` says so. Anyone swapping in a
-              pale lobby shot has to check the title against it.
+              On a DESKTOP what carries the contrast is still the photograph being dark
+              rather than the gradient: measured over the box-anchored stops, the eyebrow
+              reads about 9.2:1 on a dark image and about 2.4:1 on a pale one. That is a
+              content constraint as much as a CSS one, the Studio field description for
+              `heroCarousel` says so, and anyone swapping in a pale lobby shot still has to
+              check the title against it.
+
+              On a PHONE that is no longer true, and deliberately: the gradient is anchored
+              to the photograph and carries the contrast itself, so the same pale lobby shot
+              measures 5.2:1 rather than 2.4:1. See `PHONE_SCRIM` for the measurements and
+              for why the phone needed its own answer.
             */}
-            <span className="absolute inset-0 bg-gradient-to-t from-scrim/90 via-scrim/55 to-scrim/25" />
+            <span className={PHONE_SCRIM} />
           </Link>
         )
       })}
