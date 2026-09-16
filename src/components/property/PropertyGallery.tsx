@@ -37,7 +37,7 @@ const THUMB = { w: 800, h: 600 }
 const FULL = 2000
 
 /**
- * Every photograph on a property, beyond the one already used as the page's hero.
+ * Every photograph on a property, including the one the page also uses as its hero.
  *
  * The Studio has allowed a `gallery` array since the schema was written and the property
  * query has always projected it, but the page only ever read `gallery[0]`. So editors
@@ -45,9 +45,11 @@ const FULL = 2000
  * on 2026-09-16. The fix is a renderer, not a schema change, and nothing had to be
  * migrated.
  *
- * `gallery[0]` is the hero and is NOT repeated here. The page passes `photos` already
- * sliced, so this component does not know about that rule and cannot disagree with the
- * page about which image is the hero.
+ * `gallery[0]` IS included: the hero is cropped to a wide letterbox, so the grid is the
+ * only place a reader can open it uncropped. That was the other way round when this
+ * shipped and Hunter asked for it changed on 2026-09-16. The page decides what the grid
+ * contains and passes it whole, so this component holds no opinion about which image is
+ * the hero and cannot disagree with the page about it.
  *
  * The thumbnails are real buttons rather than a grid of clickable divs, so they are
  * reachable by keyboard and announced as controls. Each one names the photograph it
@@ -143,7 +145,7 @@ export function PropertyGallery({
 
   const current = openAt === null ? null : photos[openAt]
   const label = (p: GalleryPhoto, i: number) =>
-    p.alt?.trim() || `${propertyTitle ?? 'Property'}, photograph ${i + 2}`
+    p.alt?.trim() || `${propertyTitle ?? 'Property'}, photograph ${i + 1}`
 
   return (
     <>

@@ -17,19 +17,25 @@ const page = stripComments(
  * to explain them cannot satisfy the assertion themselves.
  */
 describe('the property page hero and gallery', () => {
-  it('passes the gallery MINUS the hero, so the same photograph is not shown twice', () => {
+  it('passes the WHOLE gallery, so the hero can also be opened uncropped', () => {
     /*
-     * `gallery[0]` is the photograph at the top of the page. Handing the whole array to
-     * the gallery would render it again in the grid below, with nothing to tell a reader
-     * it is the same picture.
+     * This was `gallery.slice(1)` when the gallery shipped, to avoid showing the same
+     * picture twice. Hunter asked for it back on 2026-09-16, and the reason is specific:
+     * the hero is cropped to a 2.571 letterbox, so it is the one photograph on the page a
+     * reader cannot see in full. Leaving it out of the grid removed the only place they
+     * could open it uncropped.
      *
-     * The slice is pinned HERE, on the page, because the page is what decides which image
-     * is the hero. `PropertyGallery` deliberately does not know that rule — it renders
-     * exactly what it is given — so if this moves into the component the two can disagree.
+     * Pinned HERE, on the page, because the page is what decides both which image is the
+     * hero and what the grid contains. `PropertyGallery` renders exactly what it is given
+     * and holds no opinion, so if this moves into the component the two can disagree.
+     *
+     * Asserted with `includes` rather than regexes: these are literal source fragments and
+     * the escaping buys nothing.
      */
-    expect(page).toMatch(/const hero = p\.gallery\?\.\[0\]/)
-    expect(page).toMatch(/p\.gallery\?\.slice\(1\)/)
-    expect(page).toMatch(/<PropertyGallery[\s\S]{0,120}photos=\{rest\}/)
+    expect(page.includes('const hero = p.gallery?.[0]'), 'hero is no longer gallery[0]').toBe(true)
+    expect(page.includes('const photos = p.gallery ?? []'), 'the whole gallery is no longer passed').toBe(true)
+    expect(page.includes('photos={photos}'), 'PropertyGallery is not given the whole gallery').toBe(true)
+    expect(page.includes('slice(1)'), 'the hero is being sliced out of the grid again').toBe(false)
   })
 
   /*

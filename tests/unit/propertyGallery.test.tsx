@@ -61,16 +61,16 @@ describe('PropertyGallery', () => {
     expect(screen.getByRole('button', { name: /The courtyard in summer/ })).toBeTruthy()
   })
 
-  it('falls back to a numbered label when alt is empty, and counts from the hero', () => {
+  it('falls back to a numbered label when alt is empty', () => {
     /*
      * The schema requires alt, but a document created before that validation landed can
      * carry an empty one and a build must not fail on a missing word.
      *
-     * "photograph 2" for the first item in this array is deliberate: index 0 here is
-     * gallery[1] on the document, because the page already took the hero.
+     * The grid now includes the hero, so index 0 is gallery[0] and the first fallback
+     * label is "photograph 1" rather than 2.
      */
     render(<PropertyGallery photos={[photo(1, '   ')]} propertyTitle="Waverly" />)
-    expect(screen.getByRole('button', { name: /Waverly, photograph 2/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Waverly, photograph 1/ })).toBeTruthy()
   })
 
   it('gives the thumbnail image an empty alt, so the photo is announced once not twice', () => {
