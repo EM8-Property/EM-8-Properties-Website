@@ -156,6 +156,59 @@ describe('PropertyGallery', () => {
       expect(full.className).not.toMatch(/object-cover/)
     })
 
+    /*
+     * The enlarged photograph must not be lazy-loaded, and this is a correctness bug rather
+     * than a performance preference.
+     *
+     * next/image defaults to `loading="lazy"`. An unloaded image with `width: auto` inside
+     * a column flex container has no intrinsic size to resolve against, so its box computes
+     * to 0x0 — and a zero-area element never satisfies the lazy loader's intersection
+     * check, so it never loads, so it never gains a size. Shipped on 2026-09-16 and found
+     * on the deployed site: the overlay opened onto a 44px-tall dialog containing only its
+     * own controls.
+     *
+     * It passed local checking because it only bites on a COLD load — with the file already
+     * cached the intrinsic size is there on the first layout pass and the cycle never
+     * forms. Every image had been warmed by earlier testing.
+     */
+    it('loads the enlarged photograph eagerly, or it can deadlock at 0x0', async () => {
+      const user = userEvent.setup()
+      render(<PropertyGallery photos={[photo(1, 'One')]} propertyTitle="W" />)
+      await user.click(screen.getByRole('button', { name: /One/ }))
+
+      const full = within(screen.getByRole('dialog')).getByRole('img')
+      expect(full.getAttribute('loading')).not.toBe('lazy')
+    })
+
+    it('constrains the enlarged photograph on both axes, so it cannot overflow a phone', async () => {
+      /*
+       * `max-h` alone leaves the width free: a 2000px-wide photograph clamped to 720px tall
+       * is still painted 960px wide, which overflows a 375px screen. The pair of maxima
+       * with auto dimensions is the ordinary "contain within" shape.
+       *
+       * Asserted on the class string rather than by measuring, because jsdom has no layout
+       * — which is also why the 0x0 deadlock above could not have been caught by rendering
+       * it here, and had to be found on the deployed page.
+       */
+      const user = userEvent.setup()
+      render(<PropertyGallery photos={[photo(1, 'One')]} propertyTitle="W" />)
+      await user.click(screen.getByRole('button', { name: /One/ }))
+
+      const classes = within(screen.getByRole('dialog')).getByRole('img').className.split(' ')
+      expect(classes).toContain('max-w-full')
+      expect(classes).toContain('max-h-[80svh]')
+      expect(classes).toContain('h-auto')
+      expect(classes).toContain('w-auto')
+      // No definite height: several of these sources are barely 1080px wide, and a fixed
+      // height would upscale them in the one place meant to show the picture as it is.
+      const definite = classes.filter((c) => {
+        if (!c.startsWith('h-[')) return false
+        const d = c.charAt(3)
+        return d >= '0' && d <= '9'
+      })
+      expect(definite).toEqual([])
+    })
+
     it('gives the enlarged photograph real alt text', async () => {
       // The thumbnail's alt is empty because its button is labelled. The overlay image is
       // the content, so here the alt has to carry the description.
