@@ -219,10 +219,45 @@ export function PropertyGallery({
               width={FULL}
               height={Math.round((FULL * 3) / 4)}
               sizes="100vw"
-              // `h-auto` with a capped height: the photographs are not all one shape, and
-              // a fixed height would either letterbox the portrait ones or crop the wide
-              // ones in an overlay whose whole purpose is showing the photograph whole.
-              className="max-h-[80svh] w-auto rounded-card object-contain"
+              /*
+                `eager`, and this is load-bearing rather than a performance tweak.
+
+                next/image defaults to `loading="lazy"`, which waits for the element to
+                approach the viewport. That is a deadlock here: an unloaded image with
+                `width: auto` inside a column flex container has no intrinsic size to
+                resolve against, so its box computes to **0x0** — and a zero-area element
+                never satisfies the lazy loader's intersection check, so it never loads, so
+                it never gains a size. The overlay opened onto a 44px-tall dialog holding
+                nothing but its own controls.
+
+                It survived review because it only happens on a COLD load: with the file
+                already in cache the intrinsic size is available on the first layout pass
+                and the box resolves before the deadlock can form. Localhost testing had
+                warmed every one of these images, so it looked right there and failed on
+                the deployed site. **A warm cache is not a test of image loading.**
+
+                `eager` fetches unconditionally, with no intersection check, so the cycle
+                cannot start. It is also just correct for this element: the reader has
+                tapped a thumbnail and is waiting for exactly this photograph. `priority`
+                would work too and additionally emit a preload hint, which is wrong for an
+                image that does not exist at page load.
+              */
+              loading="eager"
+              /*
+                Fit inside the box on BOTH axes, rather than capping the height alone.
+
+                `max-h` with `w-auto` constrains one axis and leaves the other free, so a
+                2000px-wide photograph clamped to 720px tall is still painted 960px wide —
+                fine on a desktop, an overflow on a 375px phone. `max-w-full` closes that,
+                and the pair with `h-auto`/`w-auto` is the ordinary "contain within" shape:
+                the photograph fits whichever axis binds first and keeps its aspect ratio.
+
+                Deliberately no fixed height. These photographs are not all one shape, and a
+                definite height would upscale the small ones — several of these sources are
+                barely 1080px wide — in an overlay whose whole purpose is showing the
+                picture as it is.
+              */
+              className="h-auto max-h-[80svh] w-auto max-w-full rounded-card object-contain"
             />
 
             <div className="flex items-center gap-4">
