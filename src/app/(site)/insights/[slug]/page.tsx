@@ -9,7 +9,7 @@ import type {
   POST_SLUGS_QUERY_RESULT,
   SITE_SETTINGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
-import { urlForImage } from '@/sanity/image'
+import { urlForImage, urlForPhoto } from '@/sanity/image'
 import { formatUnits } from '@/lib/format'
 import { formatCategory, formatDate } from '@/components/insights/PostCard'
 import { Eyebrow } from '@/components/ui/Eyebrow'
@@ -105,7 +105,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
       {post.heroImage && (
         <Image
-          src={urlForImage(post.heroImage).width(1400).height(700).url()}
+          src={urlForPhoto(post.heroImage, 1400, 700).width(1400).height(700).url()}
           alt={post.heroImage.alt ?? post.title ?? ''}
           width={1400}
           height={700}
@@ -114,7 +114,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       )}
 
       {post.body && (
-        <div className="mt-6 text-[15px] leading-relaxed text-ink-secondary">
+        <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-ink-secondary">
           <PortableText value={post.body} />
         </div>
       )}

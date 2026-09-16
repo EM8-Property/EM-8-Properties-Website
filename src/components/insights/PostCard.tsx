@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Eyebrow } from '@/components/ui/Eyebrow'
-import { urlForImage } from '@/sanity/image'
+import { urlForPhoto } from '@/sanity/image'
 
 export type PostData = {
   title?: string | null
@@ -43,7 +43,7 @@ export function PostCard({ post }: { post: PostData }) {
       <Link href={`/insights/${post.slug}`} className="block">
         {post.heroImage ? (
           <Image
-            src={urlForImage(post.heroImage).width(800).height(450).url()}
+            src={urlForPhoto(post.heroImage, 800, 450).width(800).height(450).url()}
             alt={post.title ?? ''}
             width={800}
             height={450}

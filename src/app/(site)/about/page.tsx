@@ -10,7 +10,7 @@ import type {
   ABOUT_PAGE_QUERY_RESULT,
   SITE_SETTINGS_QUERY_RESULT,
 } from '@/sanity/types.generated'
-import { urlForImage } from '@/sanity/image'
+import { urlForPhoto } from '@/sanity/image'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Eyebrow } from '@/components/ui/Eyebrow'
 import { Card } from '@/components/ui/Card'
@@ -107,7 +107,7 @@ export default async function AboutPage() {
         <section id="why-em8" className="border-t border-rule bg-panel">
           <div className="mx-auto max-w-[1200px] px-6 py-14">
             <SectionHeading {...copy.whyEm8.heading} />
-            <div className="mt-6 max-w-[68ch] text-sm leading-relaxed text-ink-secondary">
+            <div className="mt-6 max-w-[68ch] space-y-4 text-sm leading-relaxed text-ink-secondary">
               <PortableText value={copy.whyEm8.body} />
             </div>
           </div>
@@ -153,7 +153,7 @@ export default async function AboutPage() {
                         */}
                         {m.photo ? (
                           <Image
-                            src={urlForImage(m.photo).width(600).height(600).url()}
+                            src={urlForPhoto(m.photo, 600, 600).width(600).height(600).url()}
                             alt={m.photo.alt ?? m.name ?? ''}
                             width={600}
                             height={600}

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card } from '@/components/ui/Card'
 import { Chip } from '@/components/ui/Chip'
-import { urlForImage } from '@/sanity/image'
+import { urlForPhoto } from '@/sanity/image'
 import { formatWalk, formatUnits } from '@/lib/format'
 
 export type PropertyCardData = {
@@ -31,7 +31,7 @@ export function PropertyCard({ property: p }: { property: PropertyCardData }) {
       <Link href={`/portfolio/${p.slug}`} className="block">
         {p.image ? (
           <Image
-            src={urlForImage(p.image).width(800).height(500).url()}
+            src={urlForPhoto(p.image, 800, 500).width(800).height(500).url()}
             alt={p.title}
             width={800}
             height={500}
