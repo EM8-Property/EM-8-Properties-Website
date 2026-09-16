@@ -77,12 +77,18 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 
   const hero = p.gallery?.[0]
   /*
-   * Everything after the hero. `gallery[0]` is the photograph at the top of this page, so
-   * repeating it in the grid below would show the same building twice with no indication
-   * that it is the same picture. The slice happens HERE rather than inside the gallery so
-   * that this page stays the single place that decides which image is the hero.
+   * The WHOLE gallery, including the photograph used as the hero.
+   *
+   * This was `gallery.slice(1)` when the gallery shipped, on the reasoning that repeating
+   * the hero in the grid below shows the same picture twice. Hunter asked for it back on
+   * 2026-09-16: the hero is cropped to a 2.571 letterbox and is the one photograph a
+   * reader cannot see in full, so leaving it out of the grid removed the only place they
+   * could open it uncropped.
+   *
+   * It is passed whole rather than re-added inside the component, so this page stays the
+   * single place that decides what the grid contains.
    */
-  const rest = p.gallery?.slice(1) ?? []
+  const photos = p.gallery ?? []
 
   return (
     <article>
@@ -147,11 +153,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
             the asset. A reader wants to see the building once they know what it is, and
             before they are asked to read a return.
 
-            Renders nothing at all when a property has only its hero, which today is
-            sixteen of the eighteen — so this is a section that appears as Hunter fills the
-            galleries rather than an empty heading on every page in the meantime.
+            Renders nothing at all for a property with no photographs, which is
+            `uteg-street-apartments` and nothing else today — so this is a section that
+            appears as the galleries are filled rather than an empty heading in the meantime.
           */}
-          <PropertyGallery photos={rest} propertyTitle={p.title} />
+          <PropertyGallery photos={photos} propertyTitle={p.title} />
 
           {/*
             The realized arc, which lived on /track-record until that route was deleted.
