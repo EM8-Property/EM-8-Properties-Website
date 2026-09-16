@@ -1,5 +1,11 @@
 # EM8 website — handover, 2026-09-16 (gallery, sharpening, and the photo upload)
 
+> **Superseded in part by `handover-2026-09-16-map-and-lightbox-fixes.md`. Read that one
+> first.** The gallery shipped here carried two bugs that this document does not know
+> about and its "Verified green" section below does not cover: the Leaflet map painted
+> through the photo overlay, and the enlarged photograph never loaded at all on a cold
+> visit. Both are fixed at `dc03782`. The rest of this file is still accurate.
+
 Second handover of 2026-09-16. `docs/handover-2026-09-16-phone-hero-crop.md` covers the
 hero carousel crop earlier the same day; this covers everything after it.
 `docs/handover-2026-09-15-logo-and-track-record.md` is still the general-state document.
@@ -154,6 +160,11 @@ Both were **my own readings being wrong**, not the site:
    before believing it.
 
 ## Verified green
+
+**This section is incomplete and was written too early.** It is accurate about the test
+suite, which was genuinely green. It is wrong by omission about the overlay: the checks
+below exercised the gallery with every image already in cache, which is precisely the
+condition under which the cold-load deadlock does not appear. See the successor handover.
 
 `npm test` **649** · `npx tsc --noEmit` · `npm run lint` · `npm run test:content` **14** ·
 `npm run build` **35 pages** · `npx playwright test` **40**.
