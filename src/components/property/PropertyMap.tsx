@@ -78,7 +78,33 @@ export function PropertyMap({
       ref={containerRef}
       role="img"
       aria-label={`Map showing the location of ${title}`}
-      className="h-64 w-full rounded-card border border-rule"
+      /*
+        `isolate` is load-bearing, and it is not a styling choice.
+
+        Leaflet assigns its own z-indexes inside this container and they are large: 400 on
+        the tile and overlay panes, 600 on markers, 700 on tooltips, 800 on `.leaflet-control`
+        and 1000 on `.leaflet-top` / `.leaflet-bottom`. Nothing scopes them. Without a
+        stacking context here those numbers compete in the ROOT context against this site's
+        own layers, which top out at `z-50` — so the map painted straight through anything
+        overlaying it.
+
+        Hunter hit this on 2026-09-16: opening a photograph in `PropertyGallery` showed the
+        Glen Ellyn street map sitting on top of the picture, zoom controls and all. The
+        overlay is `fixed inset-0 z-50`; the map's controls are 1000.
+
+        **It was never only the gallery.** `InvestorPopup` is also `z-50` and `fixed
+        inset-0`, so on any property page with coordinates the map would have punched
+        through that too — it just fires on a delay and had not been seen against a map yet.
+        Fixing it here rather than by raising the overlay is what covers both, and whatever
+        is overlaid next.
+
+        `isolation: isolate` forces a new stacking context, so every Leaflet z-index above
+        becomes relative to this div. The div itself stays at `z-index: auto` in normal
+        flow, which any positioned `z-50` element paints above. Raising the overlays to
+        `z-[1001]` instead would work today and lose to the next library that picks a bigger
+        number.
+      */
+      className="isolate h-64 w-full rounded-card border border-rule"
     />
   )
 }
