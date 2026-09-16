@@ -136,24 +136,107 @@ describe('HeroCarousel — resource budget', () => {
     //
     // Honest therefore differs. `object-cover` on a box taller than the crop is shaped
     // paints the photograph wider than the box and crops the sides off, so the painted
-    // width is the box height times 1.78. At 375x812 that is 1444 CSS px at full screen
-    // and 747 CSS px in the band — 3.85x and 1.99x the viewport width, so `100vw`
-    // understates both. What separates them is the variant the browser then picks: in the
-    // band it lands 1.87x short of the device pixels at DPR 3 and 1.17x over at DPR 1,
-    // while at full screen the same 1200w variant was painted across 1444 CSS px — 3.6x
-    // short at DPR 3 and an upscale even at DPR 1, over the whole first screen. The
-    // window above and the 1600px crop cap hold the image budget either way; the cap is
-    // also why the corrected hint still leaves full screen 2.71x short.
+    // width is the box height times 1.78.
+    //
+    // **Below `sm` neither of those heights is what paints any more.** `PHONE_PHOTO_CAP`
+    // holds the photograph to 400px on a phone in BOTH shapes, so both paint a flat 712
+    // CSS px there however tall the copy grows the box — 1.90x the viewport at 375 wide
+    // and 2.23x at 320. The phone clause is derived from 320 rather than 375 because the
+    // multiplier is largest on the narrowest screen, and a hint that is too small is the
+    // one that costs resolution.
+    //
+    // Above `sm` the cap lifts and the old derivation is untouched: at 768x1024 `screen`
+    // paints 1823 CSS px, so its tablet clause stays over 100vw, and desktop is
+    // width-driven in both shapes because the box is wider than the crop is shaped.
     const sizesFor = (variant: 'screen' | 'band') =>
       render(<HeroCarousel slides={many} variant={variant} />)
         .container.querySelector('img')!
         .getAttribute('sizes')!
 
     const screen = sizesFor('screen')
-    expect(screen).toMatch(/\(max-width:\s*640px\)\s*[34]\d\dvw/)
+    const phone = screen.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
+    expect(phone, 'no narrow-viewport clause').not.toBeNull()
+    // 712 CSS px painted over a 320px viewport is 2.23x, so the clause has to clear 223vw
+    // to stop the browser picking a variant below what it will paint. The upper bound is
+    // what stops the pre-cap 400vw — calibrated on a box four times this tall — surviving
+    // the cap unnoticed and over-fetching on every phone.
+    expect(Number(phone![1])).toBeGreaterThanOrEqual(223)
+    expect(Number(phone![1])).toBeLessThan(300)
     expect(screen.endsWith('100vw')).toBe(true)
 
+    // `band` is deliberately NOT given a phone clause. The cap applies to both shapes, so
+    // both now paint 712 CSS px on a phone — but `band` painted 747 before it, hinted at
+    // 100vw, so nothing about `band` moved and the 2026-09-15 reasoning that declined to
+    // correct it stands. Correcting it buys about a third of a linear pixel on six pages
+    // for roughly 190KB each.
     expect(sizesFor('band')).toBe('100vw')
+  })
+
+  /*
+   * The phone crop cap and the scrim that had to move with it.
+   *
+   * Hunter's complaint on 2026-09-16 was that the carousel was "too zoomed in" on a phone,
+   * and the cap is the fix: `object-cover` on a box far taller than 16:9 magnifies the
+   * photograph until it covers the HEIGHT, so the homepage was painting 1703 CSS px across
+   * a 375px screen — 4.5x, showing 22% of the picture.
+   *
+   * What makes this worth a test rather than a class string nobody reads: the fix is TWO
+   * numbers that have to stay equal. The photograph is capped at 400px and the phone scrim
+   * is 400px tall, and it is that equality which puts the gradient's fully-opaque end
+   * exactly on the photograph's bottom edge, so the capped photo dissolves into the
+   * section's own `bg-scrim` with no seam. Move one and the hero grows a visible band.
+   *
+   * Tailwind scans source for literal class names, so neither can be interpolated from a
+   * shared constant. This is the thing that holds them together instead.
+   */
+  it('caps the phone crop and the phone scrim at the same height', () => {
+    const { container } = render(<HeroCarousel slides={many} variant="screen" />)
+    const img = container.querySelector('img')!
+    const scrim = container.querySelector('a > span')!
+
+    const cap = img.className.match(/max-h-\[(\d+)px\]/)
+    expect(cap, `no phone cap on the image: ${img.className}`).not.toBeNull()
+    const scrimH = scrim.className.match(/(?:^|\s)h-\[(\d+)px\]/)
+    expect(scrimH, `no phone height on the scrim: ${scrim.className}`).not.toBeNull()
+    expect(
+      scrimH![1],
+      'the scrim no longer ends where the photograph does — the fade will show a seam',
+    ).toBe(cap![1])
+
+    // Both lift above `sm`, where the box is not tall relative to its width and the cap
+    // would crop the top off the picture instead.
+    expect(img.className).toMatch(/\bsm:max-h-none\b/)
+    expect(scrim.className).toMatch(/\bsm:h-auto\b/)
+    expect(scrim.className).toMatch(/\bsm:inset-0\b/)
+  })
+
+  /*
+   * The phone scrim carries the contrast itself, and the middle stop is where that is won.
+   *
+   * Measured on all seven homepage slides at 390x844, white text, 2026-09-16. The eyebrow
+   * lands at y=144 there — `HEADER_RESERVATION` is `pt-36` at 390px and up — which is 64%
+   * of the way up a 400px photograph, so a gradient whose middle stop sat at the default
+   * 50% left it under 58% scrim and 3.79:1 against AA's 4.5. Pinning the stop at 65% puts
+   * 70% scrim at that line, and the worst of the seven slides then measures 4.87:1.
+   *
+   * This is the assertion that would catch someone "tidying" the explicit stop positions
+   * back to Tailwind's defaults, which is a change with no visible diff and a failing
+   * contrast audit.
+   */
+  it('puts the phone scrim’s middle stop where the copy starts, not at the default 50%', () => {
+    const scrim = render(<HeroCarousel slides={many} variant="screen" />).container.querySelector(
+      'a > span',
+    )!.className
+
+    expect(scrim).toMatch(/\bvia-scrim\/70\b/)
+    expect(scrim).toMatch(/\bvia-65%/)
+    // Fully opaque at the photograph's bottom edge, so it meets `bg-scrim` exactly. At 90%
+    // a bright slide leaves a visible step there.
+    expect(scrim).toMatch(/\bfrom-scrim\b(?!\/)/)
+    // Above `sm` the desktop gradient is unchanged, stops and all.
+    expect(scrim).toMatch(/\bsm:from-scrim\/90\b/)
+    expect(scrim).toMatch(/\bsm:via-scrim\/55\b/)
+    expect(scrim).toMatch(/\bsm:to-scrim\/25\b/)
   })
 
   /*

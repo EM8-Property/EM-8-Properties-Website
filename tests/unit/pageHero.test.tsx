@@ -144,10 +144,16 @@ describe('hero geometry, both shapes', () => {
      * cropped off the sides. So the painted width is the box height times the crop's
      * aspect, and the crop is 1600x900, so that factor is 1.78.
      *
-     * At 375x812 that is 1444 CSS px in `screen` and 747 CSS px in `band` — 3.85x and
-     * 1.99x the width of the viewport. `100vw` understates the paint in BOTH shapes, so
-     * the understatement is not what decides this. What decides it is how far short of
-     * the paint the chosen variant falls.
+     * Above `sm` that is 1444 CSS px in `screen` and 747 CSS px in `band` at 375x812 —
+     * 3.85x and 1.99x the width of the viewport. `100vw` understates the paint in BOTH
+     * shapes, so the understatement is not what decides this. What decides it is how far
+     * short of the paint the chosen variant falls.
+     *
+     * Below `sm` those two numbers no longer apply to a phone at all: `PHONE_PHOTO_CAP`
+     * holds the photograph to 400px in both shapes, so both paint 712 CSS px there. That
+     * is why `screen`'s phone clause is 225vw rather than the 400vw it carried until
+     * 2026-09-16, and why `band`'s absence of one did not change — it painted 747 before
+     * the cap and 712 after, both hinted at 100vw.
      *
      * With `100vw` in `band` the browser picks 640w at DPR 1, 750w at DPR 2 and 1200w at
      * DPR 3 — worst case 1.87x short of the 2241 device px that box wants, and at DPR 1 a
@@ -165,9 +171,16 @@ describe('hero geometry, both shapes', () => {
      */
     const screen = img({ variant: 'screen' }).getAttribute('sizes')!
     // A phone is asked for several times its own width, because that is what it paints.
+    //
+    // The multiplier came down from 400vw to 225vw on 2026-09-16 and the reason is the
+    // phone crop cap, not a re-derivation of the same box: `PHONE_PHOTO_CAP` holds the
+    // photograph to 400px below `sm`, so the paint is a flat 712 CSS px there instead of
+    // the 1444 this number was calibrated against. 712 over the narrowest phone, 320px,
+    // is 2.23x — and the narrowest phone is what the clause has to clear, because that is
+    // where the multiplier is largest.
     const phone = screen.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
     expect(phone, 'no narrow-viewport clause').not.toBeNull()
-    expect(Number(phone![1])).toBeGreaterThanOrEqual(300)
+    expect(Number(phone![1])).toBeGreaterThanOrEqual(223)
     // And a tablet, by less, because it is less tall relative to its width. Asserted
     // because without it the middle clause can be deleted with every test still green.
     const tablet = screen.match(/\(max-width:\s*1024px\)\s*(\d+)vw/)
