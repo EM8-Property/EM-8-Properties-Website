@@ -257,3 +257,87 @@ Before applying a migration to the production dataset:
 - [ ] Does anything you are writing target a `drafts.` id? If so, check whether that id
       already has a **published** document. Seeding a sample over real work is invisible to
       every automated check — see "A draft can hide a published document" above.
+
+---
+
+## Deploying the code
+
+**A merge to `main` does not deploy.** Railway is connected to the GitHub repo and its
+deployments carry the branch, commit and author — which makes it look like a push trigger,
+and it is not one. Merging leaves the live site on the previous commit indefinitely.
+
+Found on 2026-09-17: PR #48 merged at 16:28 and the newest deployment was still `87d6d5d`
+from that morning. `.env.example` said "Railway deploys by connecting to the GitHub repo —
+no API key is needed" and has been corrected.
+
+The deploy is a GraphQL call against `https://backboard.railway.com/graphql/v2`.
+
+### The token is a *project* token, not a personal one
+
+This matters because the failure is confusing rather than explicit. A project token is sent
+as `Project-Access-Token`, **not** `Authorization: Bearer` — and with the Bearer header a
+query returns `Not Authorized` with `code: INTERNAL_SERVER_ERROR`, which reads like a
+server fault or an expired token rather than the wrong header.
+
+```bash
+RT=$(grep '^RAILWAY_API_TOKEN=' .env.local | cut -d= -f2-)
+curl -s https://backboard.railway.com/graphql/v2 \
+  -H "Project-Access-Token: $RT" -H 'Content-Type: application/json' \
+  -d '{"query":"query { projectToken { projectId environmentId } }"}'
+```
+
+`RAILWAY_API_TOKEN` lives in `.env.local` and is never read by the app — it is an operator
+credential, not application config, which is why it is absent from the key list in
+`.env.example`.
+
+### The identifiers
+
+| | |
+|---|---|
+| project | `4225ede5-e320-4a62-8ccb-42a437d708a3` — "EM8 Website" |
+| service | `5d00810f-87c2-4254-963e-b654812d53fd` — "EM-8-Properties-Website" |
+| environment | `4260bc70-c3ea-448f-ad04-6541f3acc773` — "production" |
+
+One service, one environment. The project token already scopes to both, so
+`projectToken { projectId environmentId }` returns them if these ever change.
+
+### Deploying a specific commit
+
+`serviceInstanceDeployV2` takes the commit explicitly. **Pass the merged SHA rather than
+relying on a `latestCommit` flag**, so that what is deployed is a commit you named and can
+verify against, rather than whatever `main` happened to point at when the call landed.
+
+```bash
+curl -s https://backboard.railway.com/graphql/v2 \
+  -H "Project-Access-Token: $RT" -H 'Content-Type: application/json' \
+  -d '{"query":"mutation($s:String!,$e:String!,$c:String!){ serviceInstanceDeployV2(serviceId:$s, environmentId:$e, commitSha:$c) }",
+       "variables":{"s":"5d00810f-87c2-4254-963e-b654812d53fd",
+                    "e":"4260bc70-c3ea-448f-ad04-6541f3acc773",
+                    "c":"<40-char sha>"}}'
+```
+
+It returns the new deployment id. Poll it with
+`query($id:String!){ deployment(id:$id){ status } }` — the terminal states are `SUCCESS`,
+`FAILED`, `CRASHED`, `REMOVED` and `SKIPPED`. A build takes a few minutes.
+
+### Then verify on the live site, not on the status
+
+`SUCCESS` means Railway built and started the container. It does not mean the change you
+merged is on the page — and this repo's history is a long argument for not confusing the
+two. Check the thing itself: fetch the deployed page and assert on the artefact your change
+produces, the way `docs/handover-2026-09-17-hero-copy-rise.md` checks that `hero-rise` is
+present in the CSS the live page actually links.
+
+Deployments for the service, newest first, with the commit each one carries:
+
+```bash
+curl -s https://backboard.railway.com/graphql/v2 \
+  -H "Project-Access-Token: $RT" -H 'Content-Type: application/json' \
+  -d '{"query":"query($p:String!,$s:String!,$e:String!){ deployments(first:6, input:{projectId:$p, serviceId:$s, environmentId:$e}){ edges { node { id status createdAt meta } } } }",
+       "variables":{"p":"4225ede5-e320-4a62-8ccb-42a437d708a3",
+                    "s":"5d00810f-87c2-4254-963e-b654812d53fd",
+                    "e":"4260bc70-c3ea-448f-ad04-6541f3acc773"}}'
+```
+
+That listing is also how the "no auto-deploy" finding above was established: one deployment
+for the merge commit, created by hand, and none from the merge itself.
