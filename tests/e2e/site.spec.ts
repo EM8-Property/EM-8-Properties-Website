@@ -1175,3 +1175,103 @@ for (const viewport of [
     expect(nextBox.y, 'nothing below the band is visible on load').toBeLessThan(innerHeight)
   })
 }
+
+/*
+ * The hero copy's entrance, on a real page — Hunter asked for the old em-8.com's fade-up
+ * on every page with an image hero, 2026-09-17.
+ *
+ * This is the only test in the suite that runs with motion ON. `playwright.config.ts` sets
+ * `reducedMotion: 'reduce'` for everything else, because most of what is asserted here is
+ * where things are and a transform moves the box `boundingBox()` reports; the reasoning is
+ * written out there. That makes this file's geometry the *resting* geometry by
+ * construction — which is precisely what has to be proven still true once the copy moves.
+ *
+ * `emulateMedia` rather than `test.use`, so the same test can read the page both ways and
+ * compare the two numbers directly. Comparing against a transcribed pixel value instead
+ * would go stale the first time the CMS copy changes length.
+ *
+ * All seven routes with an image hero, not a sample. The utility is on the shared overlay,
+ * so one route proves the mechanism — but the failure worth catching is a page that
+ * somehow does not get it, and that is per-route by definition.
+ */
+for (const route of ['/', '/about', '/insights', '/investors', '/partners', '/portfolio', '/strategy'] as const) {
+  test(`the hero copy on ${route} rises and settles where it rests`, async ({ page }) => {
+    /*
+     * Reduced motion first, and this is the reference reading: with the animation dropped
+     * the copy paints at its resting position on the first frame, so this is where the
+     * rest of the suite's clearance and fold assertions believe the eyebrow sits.
+     */
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto(route)
+    const eyebrow = page.locator('[data-hero-overlay] p').first()
+    await expect(eyebrow).toBeVisible()
+    const resting = (await eyebrow.boundingBox())!
+
+    // And the utility genuinely compiles to nothing under reduce, read off the built CSS
+    // rather than off the class string — `motion-reduce:animate-none` is a class a unit
+    // test can confirm is present and cannot confirm Tailwind emitted a rule for.
+    expect(
+      await page.locator('[data-hero-overlay]').evaluate((el) => getComputedStyle(el).animationName),
+      'the animation still runs under prefers-reduced-motion',
+    ).toBe('none')
+
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.goto(route)
+    const overlay = page.locator('[data-hero-overlay]')
+
+    /*
+     * That it animates at all, read from the computed style rather than from
+     * `getAnimations()`.
+     *
+     * `getAnimations()` is the obvious call and it is a race: `goto` resolves on load, the
+     * animation is a second long and starts when the element paints, so whether there is
+     * still one to find depends on how long the photographs took. The computed style is
+     * static and says the same thing — and it is the reading that catches the silent
+     * failure, where `animate-hero-rise` is a class name with no `--animate-hero-rise` in
+     * the theme, Tailwind emits no rule, and the page simply never animates.
+     */
+    const declared = await overlay.evaluate((el) => {
+      const s = getComputedStyle(el)
+      return {
+        name: s.animationName,
+        duration: s.animationDuration,
+        fill: s.animationFillMode,
+        timing: s.animationTimingFunction,
+      }
+    })
+    expect(declared.name, 'the hero copy does not animate').toBe('hero-rise')
+    expect(declared.duration, "the old site's entrance is a full second").toBe('1s')
+    expect(
+      declared.fill,
+      'a fill other than backwards leaves the copy holding a transform after it ends, ' +
+        'which makes the overlay a containing block for any fixed descendant',
+    ).toBe('backwards')
+    expect(declared.timing).toBe('cubic-bezier(0, 0, 0.2, 1)')
+
+    /*
+     * And where it ends up. Waiting on the element's own animations rather than on a
+     * timeout: the slide crossfade is a transition on a sibling and would keep a
+     * document-wide wait busy every six seconds forever.
+     */
+    await overlay.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)))
+    const settled = (await eyebrow.boundingBox())!
+
+    expect(
+      Math.abs(settled.y - resting.y),
+      `the hero copy on ${route} settles ${(settled.y - resting.y).toFixed(1)}px from where ` +
+        `it rests under reduced motion (${settled.y.toFixed(1)} against ${resting.y.toFixed(1)}). ` +
+        `A positive number is the animation not finishing its 48px; either way every ` +
+        `clearance and fold assertion in this file is now measuring a different page from ` +
+        `the one a visitor sees`,
+    ).toBeLessThanOrEqual(0.5)
+
+    // Nothing held afterwards. This is the `backwards` assertion above, confirmed by its
+    // consequence rather than by its declaration.
+    const after = await overlay.evaluate((el) => {
+      const s = getComputedStyle(el)
+      return { transform: s.transform, opacity: s.opacity }
+    })
+    expect(after.transform, 'the overlay is still transformed after the animation ends').toBe('none')
+    expect(after.opacity).toBe('1')
+  })
+}

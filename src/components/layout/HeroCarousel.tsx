@@ -561,10 +561,29 @@ export function HeroCarousel({
           is shared rather than per-shape, which is why it is a constant instead of a
           number spelled in `SHAPE`: see `src/lib/headerReservation.ts` for the
           measurements and why the breakpoint it uses is `md`, not `sm`.
+
+          `animate-hero-rise` is the entrance: the whole block fades up 48px over a second
+          as the page opens. It is on THIS element and not on the five inside it, which is
+          the same choice the old em-8.com made — one block moving reads as the page's
+          title arriving, and five of them staggering reads as a slideshow. The keyframes,
+          and why this is an animation rather than the old site's JS class toggle, are in
+          `src/app/globals.css`.
+
+          It is here rather than in `PageHero` because this is the branch with a
+          photograph. `PageHero`'s no-photography fallback deliberately does NOT animate:
+          that block is ink on white with nothing behind it, so there is no photograph for
+          it to arrive over, and it is the branch that renders when the CMS has lost its
+          slides — the last place to put an entrance effect on the page's only `<h1>`.
+
+          `motion-reduce:animate-none` for the same reason the auto-advance checks
+          `prefers-reduced-motion` above. Translating a full-width block of type is the
+          vestibular trigger, not the fade, so the whole animation is dropped rather than
+          the transform alone — and because the resting state IS the final keyframe,
+          dropping it renders the finished hero rather than an empty one.
         */
         <div
           data-hero-overlay
-          className={`pointer-events-none relative w-full pb-12 sm:pb-14 ${HEADER_RESERVATION} ${SHAPE[variant].copy}`}
+          className={`pointer-events-none relative w-full pb-12 sm:pb-14 animate-hero-rise motion-reduce:animate-none ${HEADER_RESERVATION} ${SHAPE[variant].copy}`}
         >
           {overlay}
         </div>
