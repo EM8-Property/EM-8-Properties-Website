@@ -68,8 +68,20 @@ body {
  * Ported from the old em-8.com, which is where Hunter asked for it from. Its values are
  * read off that site rather than guessed — the copy block there wears
  * `transition-all duration-1000 ease-out` and toggles `opacity-0 translate-y-12` to
- * `opacity-100 translate-y-0`, so this is 1s, `cubic-bezier(0, 0, 0.2, 1)` (which is what
- * Tailwind's `ease-out` compiles to) and 48px (`translate-y-12` at a 16px root).
+ * `opacity-100 translate-y-0`, so the easing is `cubic-bezier(0, 0, 0.2, 1)` (which is what
+ * Tailwind's `ease-out` compiles to) and the distance is 48px (`translate-y-12` at a 16px
+ * root).
+ *
+ * **The duration is 1.3s and is the one value that is NOT the old site's.** It shipped at
+ * the old site's 1s and Hunter asked for slightly slower the same day. Deliberately a
+ * change to the duration alone: `cubic-bezier(0, 0, 0.2, 1)` front-loads the motion — at 1s
+ * it had covered 53% of the distance by 203ms, a fifth of its run — so stretching the clock
+ * lengthens the slow settle at the end rather than the fast part at the start. That is what
+ * reads as "slower" without also reading as "late".
+ *
+ * Do not reach for a `delay` to slow it down instead. A delay holds the page's only `<h1>`
+ * invisible with nothing happening — under `backwards` fill the from-keyframe applies for
+ * the whole of it — where a longer duration is motion the entire time.
  *
  * **A CSS animation, not the old site's JS state toggle, and that is the whole point.**
  * The old site starts its copy at `opacity-0 translate-y-12` and depends on React flipping
@@ -100,7 +112,7 @@ body {
  * `position: fixed` descendant (`InvestorPopup` is one, one component away) working.
  */
 @theme {
-  --animate-hero-rise: hero-rise 1s cubic-bezier(0, 0, 0.2, 1) backwards;
+  --animate-hero-rise: hero-rise 1.3s cubic-bezier(0, 0, 0.2, 1) backwards;
 
   @keyframes hero-rise {
     from {

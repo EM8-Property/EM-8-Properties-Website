@@ -1240,7 +1240,14 @@ for (const route of ['/', '/about', '/insights', '/investors', '/partners', '/po
       }
     })
     expect(declared.name, 'the hero copy does not animate').toBe('hero-rise')
-    expect(declared.duration, "the old site's entrance is a full second").toBe('1s')
+    /*
+     * 1.3s, and the pin is deliberate rather than incidental. This is the one value here
+     * that is NOT the old site's — it shipped at em-8.com's 1s on 2026-09-17 and Hunter
+     * asked for slightly slower the same day — so it is the value most likely to be
+     * nudged again by someone who has not read why it moved. Failing here is the intended
+     * cost of changing it: update the number and the reasoning in `globals.css` together.
+     */
+    expect(declared.duration, 'the hero entrance is no longer 1.3s').toBe('1.3s')
     expect(
       declared.fill,
       'a fill other than backwards leaves the copy holding a transform after it ends, ' +
