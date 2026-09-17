@@ -562,7 +562,7 @@ export function HeroCarousel({
           number spelled in `SHAPE`: see `src/lib/headerReservation.ts` for the
           measurements and why the breakpoint it uses is `md`, not `sm`.
 
-          `animate-hero-rise` is the entrance: the whole block fades up 48px over a second
+          `animate-hero-rise` is the entrance: the whole block fades up 48px over 1.3 seconds
           as the page opens. It is on THIS element and not on the five inside it, which is
           the same choice the old em-8.com made — one block moving reads as the page's
           title arriving, and five of them staggering reads as a slideshow. The keyframes,
