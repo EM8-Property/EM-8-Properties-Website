@@ -19,6 +19,36 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'on-first-retry',
+    /**
+     * Geometry, not taste.
+     *
+     * Most of this suite measures where things are: the eyebrow's `y` against the bottom
+     * of the header, the hero's height against the fold, the painted width of a crop. The
+     * hero copy now enters with a 1s fade up from 48px (`animate-hero-rise`), and a
+     * transform moves the box `boundingBox()` reports — so every one of those assertions
+     * would be reading a position the copy is only passing through. Playwright waits for
+     * an element to be stable before acting, but these tests *measure* rather than act,
+     * and a measurement has nothing to wait for.
+     *
+     * `reduce` is honoured by `motion-reduce:animate-none` on the overlay, so the copy
+     * renders at its resting position on the first frame and the numbers mean what they
+     * did before the animation existed.
+     *
+     * The cost is that the default run never sees the animation, so the test that proves
+     * it exists opts back out with `test.use({ reducedMotion: 'no-preference' })`. That
+     * one test is also the only place the *end* of the animation is checked — that it
+     * settles exactly where the reduced-motion tests assert the copy sits.
+     *
+     * Nothing else in the suite depends on motion. The hero carousel's auto-advance is
+     * suppressed by this too, and no test asserts on it; the slide dots are driven by
+     * clicks, which are unaffected.
+     *
+     * Under `contextOptions` rather than as a top-level `use` key, which is what every
+     * example on the web shows and what `tsc` rejects here: Playwright 1.62 has no
+     * `reducedMotion` on `UseOptions`, only on `BrowserContextOptions`. Its own config
+     * docstring in `node_modules/playwright/types/test.d.ts` nests it the same way.
+     */
+    contextOptions: { reducedMotion: 'reduce' },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   ...(isRemote

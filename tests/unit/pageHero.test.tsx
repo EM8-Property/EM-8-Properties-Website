@@ -612,3 +612,126 @@ describe('the homepage no longer renders a separate stat band', () => {
     expect(pageSource).toMatch(/stats\.length\s*>\s*0/)
   })
 })
+
+/**
+ * The hero copy's entrance — Hunter asked for the old em-8.com's fade-up on every page
+ * with an image hero, 2026-09-17.
+ *
+ * Three of these four assertions are about the *failure modes of an entrance effect*
+ * rather than about the effect, because the effect itself is the part a person can see
+ * and the failures are the part nobody looks at:
+ *
+ *   - a Tailwind animation utility with no matching `--animate-*` in the theme compiles
+ *     to nothing at all, silently, and the page just never animates;
+ *   - an animation that ends anywhere but the resting position leaves the page's only
+ *     `<h1>` parked 48px down forever;
+ *   - and the old site's own version of this is *broken right now* for exactly the third
+ *     reason in its JS form — on a reload with the photograph cached its copy never
+ *     leaves `opacity-0`, measured on em-8.com on 2026-09-17.
+ *
+ * jsdom will not run the animation (no layout, no compositor — the same limit
+ * `docs/handover-2026-09-16-map-and-lightbox-fixes.md` records for the 0x0 deadlock), so
+ * what a unit test can pin is that the utility is on the right element, that the theme
+ * defines it, and that its keyframes cannot strand the copy. Where it actually *lands* is
+ * checked on a real page, in `tests/e2e/site.spec.ts`.
+ */
+describe('the hero copy rises into place', () => {
+  const globalsCss = stripComments(
+    readFileSync(resolve(import.meta.dirname, '../../src/app/globals.css'), 'utf8'),
+  ).replace(/\r\n/g, '\n')
+
+  it('animates the overlay on every page that has a photograph', () => {
+    // Both variants: `screen` is the homepage and `band` is the other six. The animation
+    // is deliberately not one of the things `SHAPE` varies — Hunter asked for it on all
+    // the pages with an image hero, and a per-variant answer here is how it would come to
+    // be on one of them.
+    for (const variant of ['screen', 'band'] as const) {
+      const overlay = render(<PageHero copy={COPY} slides={SLIDES} variant={variant} />)
+        .container.querySelector('[data-hero-overlay]')!
+      expect(overlay.className, `${variant} overlay does not animate`).toMatch(
+        /\banimate-hero-rise\b/,
+      )
+      cleanup()
+    }
+  })
+
+  it('drops the animation under prefers-reduced-motion', () => {
+    // A full-width block of type translating 48px is the vestibular trigger, so the whole
+    // animation goes rather than the transform alone. Safe to drop wholesale *because*
+    // the resting style is the end state — see the keyframe test below, which is what
+    // makes this a no-op rather than a hidden headline.
+    const { container } = render(<PageHero copy={COPY} slides={SLIDES} />)
+    expect(container.querySelector('[data-hero-overlay]')!.className).toMatch(
+      /\bmotion-reduce:animate-none\b/,
+    )
+  })
+
+  it('leaves the no-photograph fallback alone', () => {
+    /*
+     * The branch that renders when the CMS has lost its slides. There is no photograph
+     * for the copy to arrive over, and this is the page's only `<h1>` rendering in its
+     * degraded form — the last element on the site to make conditional on an animation.
+     *
+     * Asserted on the rendered class rather than on the source, so it fails if the
+     * utility is ever hoisted to a wrapper both branches share.
+     */
+    const { container } = render(<PageHero copy={COPY} slides={[]} />)
+    expect(container.querySelector('[data-hero-overlay]'), 'the fallback grew an overlay')
+      .toBeNull()
+    expect(container.innerHTML).not.toMatch(/animate-hero-rise/)
+  })
+
+  it('defines hero-rise in the theme, so the utility is not a dangling class name', () => {
+    // The failure this catches is silent in every other check in the repo: `tsc` does not
+    // read class strings, ESLint does not either, the build succeeds, and Tailwind emits
+    // no rule for an `animate-*` utility it has no theme key for. The page simply does
+    // not animate and nothing says so.
+    expect(globalsCss, 'no --animate-hero-rise in @theme').toMatch(/--animate-hero-rise:/)
+    expect(globalsCss, 'no @keyframes hero-rise').toMatch(/@keyframes\s+hero-rise\s*\{/)
+  })
+
+  it('ends at the resting position and holds nothing after it finishes', () => {
+    /*
+     * The one that matters. `from`-only keyframes mean the end of the animation is the
+     * element's own style, so the copy cannot settle anywhere but where the six geometry
+     * tests in the E2E suite assert it sits — and `backwards` fill means the animated
+     * opacity and transform are dropped the instant it completes rather than held.
+     *
+     * Held `transform` is not cosmetic: a transformed element is a containing block for
+     * `position: fixed` descendants. `InvestorPopup` is `fixed inset-0 z-50` and is one
+     * component away from this subtree. `forwards` or `both` here would be a stacking
+     * fault waiting for the first overlay someone renders inside the hero — the same
+     * shape of bug as the Leaflet z-index one in
+     * `docs/handover-2026-09-16-map-and-lightbox-fixes.md`, and fixed the same way: at the
+     * thing that creates the context, not at the thing it breaks.
+     */
+    /*
+     * Brace-counted rather than matched with a regex, and that is not fussiness: the
+     * obvious `\{([\s\S]*?\})` stops at the first closing brace, which is the end of the
+     * `from` block — so it reads a rule containing `to` as a rule containing only `from`
+     * and goes green on exactly the fault it exists to catch. Seen doing precisely that
+     * before this was rewritten.
+     */
+    const open = globalsCss.search(/@keyframes\s+hero-rise\s*\{/)
+    expect(open, 'could not find the hero-rise keyframes').toBeGreaterThan(-1)
+    let depth = 0
+    let close = globalsCss.indexOf('{', open)
+    for (let i = close; i < globalsCss.length; i++) {
+      if (globalsCss[i] === '{') depth++
+      else if (globalsCss[i] === '}' && --depth === 0) {
+        close = i
+        break
+      }
+    }
+    const keyframes = globalsCss.slice(globalsCss.indexOf('{', open) + 1, close)
+    expect(keyframes, 'hero-rise has a `to` keyframe').not.toMatch(/(^|\s)(to|100%)\s*\{/)
+
+    const animation = globalsCss.match(/--animate-hero-rise:\s*([^;]+);/)![1]
+    expect(animation, 'hero-rise holds its animated values after it ends').not.toMatch(
+      /\bforwards\b|\bboth\b/,
+    )
+    expect(animation, 'hero-rise does not apply its from-state before it starts').toMatch(
+      /\bbackwards\b/,
+    )
+  })
+})

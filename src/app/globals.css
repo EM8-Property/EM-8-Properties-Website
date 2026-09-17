@@ -61,3 +61,51 @@ body {
 .em8-basemap {
   filter: grayscale(0.85) contrast(0.92) brightness(1.06);
 }
+
+/*
+ * The hero copy's entrance: it fades up over the photograph as the page opens.
+ *
+ * Ported from the old em-8.com, which is where Hunter asked for it from. Its values are
+ * read off that site rather than guessed — the copy block there wears
+ * `transition-all duration-1000 ease-out` and toggles `opacity-0 translate-y-12` to
+ * `opacity-100 translate-y-0`, so this is 1s, `cubic-bezier(0, 0, 0.2, 1)` (which is what
+ * Tailwind's `ease-out` compiles to) and 48px (`translate-y-12` at a 16px root).
+ *
+ * **A CSS animation, not the old site's JS state toggle, and that is the whole point.**
+ * The old site starts its copy at `opacity-0 translate-y-12` and depends on React flipping
+ * a class to ever show it. **On a reload it does not flip.** Measured on em-8.com on
+ * 2026-09-17: a first visit runs the fade cleanly (opacity 0 → 0.47 at 251ms → 1.00 at
+ * 1073ms), and a reload of that same page leaves the block at `opacity: 0` and
+ * `translateY(48px)` indefinitely — the headline never appears at all. The class string
+ * still reads `opacity-0 translate-y-12`, so it is the toggle that never fires rather than
+ * a transition that stalls.
+ *
+ * An animation runs off the paint instead, so there is no state that can fail to change
+ * and no JS in the path. That matters more here than it did there: this hero carries the
+ * page's only `<h1>`, and a hero that needs JS to become visible is a page whose title can
+ * go missing.
+ *
+ * Both readings were taken in a `document.visibilityState === 'visible'` context, and that
+ * qualifier is load-bearing rather than pedantry. The first attempt at this measurement ran
+ * in a hidden browser pane, where CSS animations sit frozen at `currentTime: 0` — the new
+ * site looked just as stuck as the old one, for a reason that had nothing to do with either.
+ * That is the 2026-09-16 rule again (`docs/handover-2026-09-16-map-and-lightbox-fixes.md`):
+ * a run against state you did not establish is not a run.
+ *
+ * `backwards`, not `forwards` or `both`. The from-keyframe applies before the animation
+ * starts, which is what stops a flash of the copy at its final position on the first
+ * frame; the END state is the element's own resting style, so once it finishes the
+ * animated values are dropped entirely. Nothing is left holding `transform`, so the
+ * overlay stops being a containing block the moment it is done — which keeps any future
+ * `position: fixed` descendant (`InvestorPopup` is one, one component away) working.
+ */
+@theme {
+  --animate-hero-rise: hero-rise 1s cubic-bezier(0, 0, 0.2, 1) backwards;
+
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      transform: translateY(48px);
+    }
+  }
+}

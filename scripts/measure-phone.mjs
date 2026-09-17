@@ -61,6 +61,14 @@ async function context(width, height, dpr = 3) {
     deviceScaleFactor: dpr,
     isMobile: true,
     hasTouch: true,
+    /*
+     * The same reason `playwright.config.ts` sets it: the hero copy enters with a 1s fade
+     * up from 48px, and `clearance` below is `eyebrow.y - header bottom` — a number the
+     * transform moves. `goto`'s 1200ms settle would usually outlast it, but "usually" is
+     * how the three stale-state misreadings in `docs/handover-2026-09-16-map-and-lightbox-fixes.md`
+     * happened. This asks for the resting position instead of waiting for it.
+     */
+    reducedMotion: 'reduce',
   })
   if (BLOCK) await c.route('**/*.{woff,woff2,ttf,otf}', (r) => r.abort())
   return c
