@@ -17,7 +17,7 @@ site Hunter owns.
 ## What shipped
 
 The whole hero copy block — eyebrow, headline, intro, buttons, stats — fades up 48px over
-one second as the page opens, on all seven routes with an image hero: `/`, `/about`,
+1.3 seconds as the page opens, on all seven routes with an image hero: `/`, `/about`,
 `/insights`, `/investors`, `/partners`, `/portfolio`, `/strategy`.
 
 One block, not five staggered. That is what the old site does, and it reads as the page's
@@ -26,7 +26,9 @@ the one element both `screen` and `band` share, so the two shapes cannot drift a
 
 The numbers are **read off em-8.com, not invented**. Its copy block wears
 `transition-all duration-1000 ease-out` and toggles `opacity-0 translate-y-12`, so this is
-1s, `cubic-bezier(0, 0, 0.2, 1)` and 48px. Sampled side by side on a visible headless page:
+`cubic-bezier(0, 0, 0.2, 1)` and 48px. Sampled side by side on a visible headless page, at
+the old site's 1s — which is the duration that shipped at `242a161` and the one value that
+has since moved; see "The duration was raised to 1.3s" below:
 
 | | em-8.com | this site |
 |---|---|---|
@@ -184,9 +186,39 @@ motion for the resting position, once animated and awaited to completion — wit
 | `/portfolio` | `hero-rise` | 181.6 | 181.6 | **0.00** | `none` |
 | `/strategy` | `hero-rise` | 274.7 | 274.7 | **0.00** | `none` |
 
-`animation-duration` 1s and `animation-fill-mode` `backwards` on all seven, and
-`animation-name: none` under reduced motion on all seven. The delta is the number that
-matters: the copy lands on exactly the pixel the rest of the E2E suite believes it sits on.
+`animation-duration` 1s (raised to 1.3s afterwards — see below) and `animation-fill-mode`
+`backwards` on all seven, and `animation-name: none` under reduced motion on all seven. The
+delta is the number that matters: the copy lands on exactly the pixel the rest of the E2E
+suite believes it sits on.
+
+## The duration was raised to 1.3s
+
+Hunter asked for slightly slower a few hours after it shipped, so the animation on the live
+site runs **1.3s**, not the 1s every measurement above was taken at. PR #50. Everything else
+is unchanged: same 48px, same easing, same `backwards` fill, same `motion-reduce` escape,
+and the seven routes still settle on the pixel the reduced-motion run reports.
+
+**The duration alone, deliberately.** `cubic-bezier(0, 0, 0.2, 1)` front-loads the motion —
+at 1s it had covered 53% of the distance by 203ms, a fifth of its run — so stretching the
+clock lengthens the slow settle at the end and leaves the fast part at the start where it
+was. That is what reads as slower without also reading as late.
+
+| | 1s | 1.3s |
+|---|---|---|
+| ~200ms | 0.53 opacity, 22.7px | 0.51, 23.6px |
+| ~610ms | 0.92, 3.9px | 0.86, 6.9px |
+| ~1020ms | **1.00, done** | 0.98, 0.7px — still moving |
+| ~1230ms | — | 1.00, 0.0px |
+
+**Not a delay, and this is the part to read before the next "make it slower".** A delay
+holds the page's only `<h1>` invisible with nothing happening — under `backwards` fill the
+from-keyframe applies for the whole of it — where a longer duration is motion the entire
+time. The same note sits next to the value in `globals.css`.
+
+The E2E suite pins the duration, and that pin is intentional: this is the one value in the
+animation that is not read off em-8.com, so it is the one most likely to be nudged by
+someone who has not read why it moved. Failing that assertion is the cost of changing it —
+update the number and the reasoning together.
 
 ## The deploy does not happen on merge
 
