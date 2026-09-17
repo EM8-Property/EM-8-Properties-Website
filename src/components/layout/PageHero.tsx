@@ -195,12 +195,19 @@ export function PageHero({
             in question, while the overlay's 36px is the output of the measurement above.
             If a later change moves the overlay's phone step, this one does not have to
             follow it.
+
+            The phone leading does follow it, to 1.0, and that part is not a coincidence.
+            This branch is the page's only `h1` when it renders at all — it is what shows
+            the day the CMS loses its photography — so the headline cannot set at a
+            different rhythm here than on the seven pages it stands in for.
+            `leading-[1.08]` survives as the `sm` step, unchanged, for the same reason
+            the overlay keeps 1.1 there: neither was measured on a phone.
           */}
-          <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-tight text-ink sm:text-6xl lg:text-[64px]">
+          <h1 className="mt-4 text-4xl font-bold leading-[1] tracking-tight text-ink sm:text-6xl sm:leading-[1.08] lg:text-[64px]">
             {title}
           </h1>
           {copy.intro && (
-            <p className="mt-5 max-w-[56ch] text-sm leading-relaxed text-ink-secondary">
+            <p className="mt-5 max-w-[56ch] text-base leading-[1.55] text-ink-secondary sm:text-sm sm:leading-relaxed">
               {copy.intro}
             </p>
           )}
@@ -290,11 +297,72 @@ export function PageHero({
             wrapping to 4 lines at 30px, so 36px adds one line there rather than the two
             it adds at 360-375px. Do not read the 390x844 row as the site-wide cost.
           */}
-          <h1 className="mt-3 text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-6xl lg:text-[64px]">
+          {/*
+            **The phone step stays 36px. The leading is what changed, and the leading is
+            what was making the difference all along.**
+
+            This was opened as "make the phone hero read like the reference shot", where
+            the headline looks enormous. It is not, in the sense that matters here.
+            Measured as a share of viewport width, which is the only comparison that
+            survives crossing from a desktop mock to a phone:
+
+              reference, 96px on a ~1440 hero   6.7%
+              here, 36px on 375                 9.6%   ← already the larger of the two
+              here, 64px on 1440                4.4%
+
+            The phone headline is half again as large, relatively, as the thing it was
+            being compared to. What the reference actually has is a leading near 1.0
+            against this block's 1.1, and two lines of copy against four. The first of
+            those is free; the second is the CMS's.
+
+            So the size was costed and then not taken. Measured on the longest headline
+            the site sets ("Creating communities people choose to live in."), h1 box and
+            hero box, at the two widths where the wrap cliff sits:
+
+              375x812   36px/1.1  158px  4 lines  hero 957   ← shipped
+                        36px/1.0  141px  4 lines  hero 939   ← here, -18px
+                        40px/1.0  157px  4 lines  hero 955
+              390x844   36px/1.1  119px  3 lines  hero 908
+                        36px/1.0  108px  3 lines  hero 897   ← here, -11px
+                        37px/1.0  148px  4 lines  hero 937   ← the cliff: +40px for 1px
+                        40px/1.0  160px  4 lines  hero 949
+
+            At 375 the two are within 16px and 40px looks like a fair trade. At 390 —
+            and at 320, which wraps the same way — one point of type costs a whole line,
+            because 36px is the last size at which this headline sets in three. Growing
+            the type buys 11% and spends 40px of scroll at the widths where the hero
+            already has none; tightening the leading buys most of the same look and gives
+            11-18px back. The tight one is the one that is actually free.
+
+            `sm:leading-[1.1]` keeps the desktop leading exactly where the fold
+            measurements above found it. Tightening there would only make the six band
+            pages shorter — 64px x 0.1 is 6px a line — but the 64px/72px ceiling table is
+            the reason not to move numbers on those pages to answer a question about a
+            phone.
+
+            `sm` and `lg` are untouched: still 60px and the measured 64px.
+          */}
+          <h1 className="mt-3 text-4xl font-bold leading-[1] tracking-tight text-white sm:text-6xl sm:leading-[1.1] lg:text-[64px]">
             {title}
           </h1>
           {copy.intro && (
-            <p className="mt-4 max-w-[52ch] text-sm leading-relaxed text-white/85">
+            /*
+              16px on a phone, 14px from `sm`, and the step down is deliberate rather
+              than a typo. 14px under a 40px headline reads as a caption on a 375px
+              screen; 16px is where iOS sets body text and it is the size the intro has
+              to be for the hero to have three legible tiers rather than one loud one
+              and two quiet ones.
+
+              It costs 10px, not a line. Measured at 375x812: 14px/1.625 is 114px over 5
+              lines and 16px/1.55 is 124px over the same 5 lines — the tighter leading
+              buys back most of the size. `leading-relaxed` (1.625) at 16px would wrap to
+              6 lines and cost 39px, which is why the leading is spelled out here.
+
+              From `sm` the column is `max-w-[52ch]` against a 60-64px headline, the
+              tiers are already distinct, and 14px is what the six band pages were
+              measured at. So the phone gets the change and nothing else does.
+            */
+            <p className="mt-4 max-w-[52ch] text-base leading-[1.55] text-white/85 sm:text-sm sm:leading-relaxed">
               {copy.intro}
             </p>
           )}
