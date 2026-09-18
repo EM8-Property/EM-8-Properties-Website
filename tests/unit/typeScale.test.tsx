@@ -67,12 +67,33 @@ describe('the h1 type scale', () => {
      *
      * Pinned because it is the one number in this PR that a later reader would
      * reasonably assume came from the spec, and it did not.
+     *
+     * Re-costed when the hero was reworked against the reference shot, with the leading
+     * free to move this time, and it held for a second reason: 36px is the last size at
+     * which the longest headline on the site sets in three lines at 390px and 320px.
+     * 37px is four, and the cliff is 40px of scroll for one point of type.
      */
     it('keeps the phone step unprefixed at the measured 36px', () => {
       const tokens = h1Tokens()
       expect(tokens).toContain('text-4xl')
       expect(tokens).not.toContain('sm:text-4xl')
       expect(tokens).not.toContain('text-3xl')
+    })
+
+    /*
+     * The phone leading is 1.0, and it is pinned next to the size because it is what the
+     * size decision bought. The reference hero the phone was measured against is not set
+     * larger than this one relative to its viewport — 6.7% of viewport width against
+     * 9.6% here — it is set tighter, and 1.1 was what the block actually had wrong.
+     *
+     * `sm:leading-[1.1]` is pinned with it: the six band pages' fold measurements at
+     * 1280x720 were all taken at 1.1, and tightening there would move six pages nobody
+     * measured to answer a question about a phone.
+     */
+    it('tightens the phone leading to 1.0 and leaves the desktop leading alone', () => {
+      const tokens = h1Tokens()
+      expect(tokens).toContain('leading-[1]')
+      expect(tokens).toContain('sm:leading-[1.1]')
     })
 
     /*
@@ -109,6 +130,20 @@ describe('the h1 type scale', () => {
       const tokens = h1Tokens()
       expect(tokens).toContain('sm:text-6xl')
       expect(tokens).toContain('lg:text-[64px]')
+    })
+
+    /*
+     * And the same phone leading. This branch renders when every slide's property
+     * reference is dangling, so it is the page's only `h1` when it renders at all — a
+     * leading that stayed at 1.08 here would mean the headline sets at a different
+     * rhythm the day the CMS loses its photography. The `sm` step keeps this branch's
+     * own 1.08, which was never measured on a phone either way.
+     */
+    it('carries the phone leading of the photograph branch too', () => {
+      const tokens = h1Tokens()
+      expect(tokens).toContain('text-4xl')
+      expect(tokens).toContain('leading-[1]')
+      expect(tokens).toContain('sm:leading-[1.08]')
     })
 
     it('has dropped its old sm:text-5xl step', () => {

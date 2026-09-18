@@ -77,21 +77,70 @@ export function StatBand({
       className={`grid ${colClasses}${onPhoto ? '' : ' border-y border-rule bg-panel'}`}
       style={{ '--stat-cols': stats.length } as CSSProperties}
     >
+      {/*
+        The cell's own box differs by tone, and on a photograph the three differences are
+        all about the stats reading as part of the hero copy rather than as a widget
+        sitting near it. Measured at 375x812 on the homepage, five stats in the
+        `columns="narrow"` 2-column grid:
+
+          px-5 py-5   band 300px   figures start 20px right of the h1
+          pe-5 py-4   band 252px   figures start on the h1
+
+        - `ps-0`, spelled by leaving the inline-start padding off: the first column's
+          figure now begins on the same vertical as the eyebrow, the headline, the intro
+          and the buttons. It was inset 20px from all four, which on a phone — where the
+          grid is 2 columns wide and the copy is the full measure — reads as a misaligned
+          block rather than as a deliberate indent. `pe-5` stays, and it is what keeps
+          the 20px gutter between column one and column two.
+        - `py-4` over `py-5`: 8px a row, 24px over the three rows the five stats wrap to
+          on a phone. That is the budget the 10px label below is paid for out of.
+        - Physical `pl`/`pr` are banned in the shared primitives (asserted in
+          `tests/unit/ui.test.tsx`), so this is `pe`, not `pr`. Phase 2 mirrors it.
+
+        The white-ground tone keeps `px-5 py-5`: it has the rules and the panel fill to
+        sit inside, so its padding is the box, not an alignment.
+      */}
       {stats.map((s) => (
         <div
           key={s.label}
-          className={onPhoto ? 'px-5 py-5' : 'border-e border-rule px-5 py-5 last:border-e-0'}
+          className={onPhoto ? 'py-4 pe-5' : 'border-e border-rule px-5 py-5 last:border-e-0'}
         >
+          {/*
+            26px on a photograph against the white ground's 24px. The figure is the
+            loudest thing in the stat row and it now sits under a 40px headline rather
+            than a 36px one; 26px holds the gap between them without touching the wrap —
+            "$100M+" sets 134px wide in a 164px column at 375px, so the longest figure
+            still clears its cell. The banded version is unchanged, because nothing moved
+            above it.
+          */}
           <div
             data-stat-figure
-            className={`text-2xl font-bold tracking-tight ${onPhoto ? 'text-white' : 'text-ink'}`}
+            className={`font-bold tracking-tight ${
+              onPhoto ? 'text-[26px] text-white' : 'text-2xl text-ink'
+            }`}
           >
             {s.figure}
           </div>
+          {/*
+            10px on a photograph, up from 8px, and this is the legibility fix rather than
+            a proportion one. 8px of letter-spaced uppercase is below what a phone screen
+            renders as words — "Realized Equity Multiple" at 8px/0.16em was the worst
+            case on the homepage — and it is the only type on the site set under 10px.
+            The tracking comes in to 0.14em at the larger size so the labels still wrap
+            where they did.
+
+            It costs 33px across the three rows, against the 24px the `py-4` above gives
+            back: the stat block nets +9px, and the hero +9px on a 957px box.
+
+            8px survives on the white ground, where these labels sit in a bordered panel
+            at desktop widths and were never the phone's problem.
+          */}
           <div
             data-stat-label
-            className={`mt-1 text-[8px] font-semibold uppercase tracking-[0.16em] ${
-              onPhoto ? 'text-white/80' : 'text-ink-secondary'
+            className={`mt-1 font-semibold uppercase ${
+              onPhoto
+                ? 'text-[10px] tracking-[0.14em] text-white/80'
+                : 'text-[8px] tracking-[0.16em] text-ink-secondary'
             }`}
           >
             {s.label}
