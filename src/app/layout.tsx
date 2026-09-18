@@ -17,12 +17,19 @@ const oswald = Oswald({ variable: '--font-oswald', subsets: ['latin'] })
  * near-indistinguishable at the 24px the mark is set at, and 700 reads heavy for a serif
  * this delicate.
  *
- * **The weight is swapped here, not added, and the class in `Wordmark.tsx` cannot bolden
- * the mark on its own.** Asking for a weight a subset does not carry is how a browser ends
- * up synthesising one — and at a single step it does not even do that: with only the old
- * file loaded, the new class selects that same face and renders identically, so the change
- * would look like a no-op and be committed as one. The two edits are a pair. One weight, one
- * subset, so this still costs a single small file rather than a family.
+ * **Two weights, for the first time**, added 2026-09-18 when Hunter asked for `PROPERTIES`
+ * bolder than `EM8` rather than level with it. 600 is the mark, 700 is the lockup's second
+ * line. Every previous version of this comment argued for exactly one weight, and that is
+ * still the default to return to — but the lockup now deliberately sets its two lines at
+ * different weights, and that cannot be done from one file. The cost is one extra latin
+ * subset, not a family: the browser fetches only the weights and ranges it uses.
+ *
+ * **Neither weight can be changed from `Wordmark.tsx` alone.** Asking for a weight a subset
+ * does not carry is how a browser ends up synthesising one — and at a single step it does
+ * not even do that: with only the old file loaded, the new class selects that same face and
+ * renders identically, so the change looks like a no-op and gets committed as one. The list
+ * here and the classes there are one setting in two places, and
+ * `tests/unit/wordmark.test.tsx` pins them together.
  *
  * `adjustFontFallback` is left at its default of `true`, which is load-bearing here rather
  * than incidental. `lib/headerReservation.ts` sizes the hero's top padding against the
@@ -34,7 +41,7 @@ const oswald = Oswald({ variable: '--font-oswald', subsets: ['latin'] })
 const cormorant = Cormorant_Garamond({
   variable: '--font-wordmark-cormorant',
   subsets: ['latin'],
-  weight: '600',
+  weight: ['600', '700'],
 })
 
 export const metadata: Metadata = {

@@ -7,6 +7,36 @@ import { stripComments } from '../shared/sourceScan'
 import { ShareCardFrame } from '@/components/seo/shareCardFrame'
 import { palette } from '@/lib/tokens'
 
+const WEIGHT_OF_CLASS: Record<string, number> = {
+  'font-light': 300,
+  'font-normal': 400,
+  'font-medium': 500,
+  'font-semibold': 600,
+  'font-bold': 700,
+}
+
+/** The numeric weight a rendered span asks for, via its Tailwind class. */
+function weightOf(el: Element | undefined): number {
+  const hit = [...(el?.classList ?? [])].find((c) => c in WEIGHT_OF_CLASS)
+  const weight = hit === undefined ? undefined : WEIGHT_OF_CLASS[hit]
+  if (weight === undefined) {
+    throw new Error(`no font-weight class on: ${el?.className ?? 'nothing'}`)
+  }
+  return weight
+}
+
+/** The mark's size in px, whether it is set by a scale step or an arbitrary value. */
+function markFontSize(container: HTMLElement): number {
+  const cls = container.querySelector('.font-wordmark')?.className ?? ''
+  const arbitrary = cls.match(/text-\[(\d+(?:\.\d+)?)px\]/)
+  if (arbitrary) return Number(arbitrary[1])
+  const SCALE: Record<string, number> = { 'text-xl': 20, 'text-2xl': 24, 'text-3xl': 30 }
+  const step = Object.keys(SCALE).find((k) => cls.split(/\s+/).includes(k))
+  const size = step === undefined ? undefined : SCALE[step]
+  if (size === undefined) throw new Error(`could not read a font size from: ${cls}`)
+  return size
+}
+
 /**
  * The logo changed on 2026-09-15, from `EM8 Properties` in Oswald bold to Cormorant
  * Garamond Light with a teal `8`. It was spelled out in three files at the time. These
@@ -25,14 +55,19 @@ describe('the wordmark', () => {
   })
 
   it('sets the 8 in `teal`, not `teal-text`, and only at a size that token allows', () => {
-    // `tokens.ts` requires `tealText` below 24px. The `8` is exempt as part of a logo,
-    // but the mark is set at 24px anyway so the exemption is never the thing load-bearing.
-    // If someone shrinks it, this test is the reminder that the pair moves together.
+    // `tokens.ts` requires `tealText` below 24px. The `8` is exempt as part of a logo, but
+    // the mark is set above 24px anyway so the exemption is never the load-bearing thing.
+    //
+    // This asserts the **threshold**, not the exact size, because the threshold is what
+    // the token rule cares about. It was pinned to `text-2xl` until 2026-09-18, when the
+    // mark went to 26px and this failed for a change that was entirely safe — a test that
+    // must be edited every time the mark is resized teaches the next person to edit it
+    // without reading it. It still fails if anyone shrinks the mark under the token.
     const { container } = render(<Wordmark />)
     const eight = screen.getByText('8')
     expect(eight).toHaveClass('text-teal')
     expect(eight).not.toHaveClass('text-teal-text')
-    expect(container.querySelector('.font-wordmark')).toHaveClass('text-2xl')
+    expect(markFontSize(container)).toBeGreaterThanOrEqual(24)
   })
 
   it('draws the lockup as EM8 over a rule over PROPERTIES, and hides the rule', () => {
@@ -58,41 +93,64 @@ describe('the wordmark', () => {
 })
 
 /**
- * The mark's weight is two edits in two files, and either one alone is silently wrong.
+ * A weight is two edits in two files, and either one alone is silently wrong.
  *
- * It went Light → SemiBold on 2026-09-18, because Hunter asked for the logo at the top and
- * bottom of the page to be bolder, twice. The class here is only half of that: the
- * Cormorant subset in `app/layout.tsx` is pinned to a single weight, so `font-semibold`
- * against a subset pinned elsewhere selects that other face and paints the wrong weight. A
- * browser does not synthesise a single step, and nothing else in the suite, the typecheck
- * or the lint would report it — the classes would read as bold and the logo would not be.
+ * The logo went Light → SemiBold on 2026-09-18, and `PROPERTIES` then went on to Bold, both
+ * because Hunter asked. The classes in `Wordmark.tsx` are only half of each change: a class
+ * asking for a weight `app/layout.tsx` does not load selects a face the subset *does* carry
+ * and paints the wrong weight. A browser does not synthesise a single step, and nothing else
+ * in the suite, the typecheck or the lint would report it — the classes would read as bold
+ * and the logo would not be.
  *
  * So these pin the pair, in the spirit of `typeScale.test.tsx` pinning the phone leading
- * next to the phone size: the thing that was costed is the combination.
+ * next to the phone size: the thing that was chosen is the combination.
  */
-describe('the wordmark weight', () => {
+describe('the wordmark weights', () => {
   const layoutSource = stripComments(
     readFileSync(resolve(import.meta.dirname, '../../src/app/layout.tsx'), 'utf8'),
   )
 
-  it('sets both lines of the lockup at the same weight, and not at the Light it started from', () => {
-    // One brand asset, one weight — as it was at Light. A change that boldens `EM8` and
-    // leaves `PROPERTIES` behind splits the lockup against its own artwork.
+  /** Weights the Cormorant subset is actually built with, read off the font call. */
+  const loadedWeights = (() => {
+    const call = layoutSource.match(/Cormorant_Garamond\(\{[\s\S]*?\}\)/)
+    if (!call) throw new Error('could not find the Cormorant_Garamond call in layout.tsx')
+    return [...call[0].matchAll(/'(\d00)'/g)].map((m) => Number(m[1]))
+  })()
+
+  it('sets the mark at 600 and PROPERTIES at 700, which is an instruction not a default', () => {
+    // These were one weight until 2026-09-18 — the artwork sets them level, and this file
+    // used to argue that boldening one alone splits a single brand asset. Hunter saw the
+    // deployed 600 and asked for PROPERTIES bolder than the mark. Pinned so the next person
+    // to read that older reasoning does not quietly restore it.
     const { container } = render(<Wordmark variant="lockup" />)
-    const faces = [...container.querySelectorAll('.font-wordmark')]
-    expect(faces).toHaveLength(2)
-    for (const face of faces) {
-      expect(face).toHaveClass('font-semibold')
-      expect(face).not.toHaveClass('font-light')
+    const [mark, properties] = [...container.querySelectorAll('.font-wordmark')]
+    expect(weightOf(mark)).toBe(600)
+    expect(weightOf(properties)).toBe(700)
+  })
+
+  it('loads every weight the classes ask for, so neither line is silently another weight', () => {
+    // The other half of the pair, and the assertion that generalises: it compares the two
+    // sides rather than naming a number, so it keeps working the next time either line
+    // moves and still fails the moment a class outruns the subset.
+    //
+    // Comments are stripped because the docblocks in both files discuss the weights they
+    // replaced in order to explain why those must not come back, and a naive grep would
+    // read that prose as the setting itself.
+    const { container } = render(<Wordmark variant="lockup" />)
+    const asked = [...container.querySelectorAll('.font-wordmark')].map(weightOf)
+    expect(asked).not.toHaveLength(0)
+    for (const w of asked) {
+      expect(loadedWeights).toContain(w)
     }
   })
 
-  it('loads the weight those classes ask for, so the mark is not silently another weight', () => {
-    // The other half of the pair. Comments are stripped because the docblocks in both
-    // files discuss the weights they replaced in order to explain why they must not
-    // come back, and a naive grep would read that prose as the setting itself.
-    expect(layoutSource).toMatch(/weight:\s*'600'/)
-    expect(layoutSource).not.toMatch(/weight:\s*(?!'600')'\d00'/)
+  it('loads nothing it does not use, so the second subset stays paid for', () => {
+    // Two weights is a deliberate exception to this file's long-standing one-weight rule.
+    // A third arriving unused would be that rule eroding by accident rather than by
+    // decision, and it costs a font file per weight.
+    const { container } = render(<Wordmark variant="lockup" />)
+    const asked = [...new Set([...container.querySelectorAll('.font-wordmark')].map(weightOf))]
+    expect([...loadedWeights].sort((a, b) => a - b)).toEqual(asked.sort((a, b) => a - b))
   })
 })
 
