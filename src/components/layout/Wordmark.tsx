@@ -65,9 +65,16 @@ export function Wordmark({
    * the mark is ever set larger. Sharing a baseline with the letters, a larger glyph
    * overhangs the cap height and the baseline by the same small amount, which is the
    * relationship in the supplied artwork.
+   *
+   * `font-semibold` is weight 600, and it only renders as 600 because `app/layout.tsx` pins
+   * the Cormorant subset to 600. Those two move together — a class change here against a
+   * subset pinned to another weight silently renders that other weight, because a browser
+   * picks the one face it has rather than synthesising a step. Both spans carry the same
+   * weight, as both did at Light: the lockup's two lines are one brand asset and the supplied
+   * artwork sets them at one weight.
    */
   const em8 = (
-    <span className="font-wordmark text-2xl font-light leading-none tracking-[0.06em] text-ink">
+    <span className="font-wordmark text-2xl font-semibold leading-none tracking-[0.06em] text-ink">
       EM<span className="text-[1.06em] text-teal">8</span>
     </span>
   )
@@ -101,7 +108,7 @@ export function Wordmark({
     <span className={`inline-flex flex-col items-center ${className}`}>
       {em8}
       <span aria-hidden="true" className="mt-2.5 h-px self-stretch bg-rule" />
-      <span className="-me-[0.42em] mt-2 font-wordmark text-[10px] font-light uppercase leading-none tracking-[0.42em] text-ink-secondary">
+      <span className="-me-[0.42em] mt-2 font-wordmark text-[10px] font-semibold uppercase leading-none tracking-[0.42em] text-ink-secondary">
         Properties
       </span>
     </span>

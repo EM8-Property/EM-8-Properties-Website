@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { Wordmark } from '@/components/layout/Wordmark'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { stripComments } from '../shared/sourceScan'
 import { ShareCardFrame } from '@/components/seo/shareCardFrame'
 import { palette } from '@/lib/tokens'
 
@@ -51,6 +54,45 @@ describe('the wordmark', () => {
       (el) => el.textContent?.includes('Properties') && !el.classList.contains('sr-only'),
     )
     expect(visible.every((el) => el.querySelector('.sr-only'))).toBe(true)
+  })
+})
+
+/**
+ * The mark's weight is two edits in two files, and either one alone is silently wrong.
+ *
+ * It went Light → SemiBold on 2026-09-18, because Hunter asked for the logo at the top and
+ * bottom of the page to be bolder, twice. The class here is only half of that: the
+ * Cormorant subset in `app/layout.tsx` is pinned to a single weight, so `font-semibold`
+ * against a subset pinned elsewhere selects that other face and paints the wrong weight. A
+ * browser does not synthesise a single step, and nothing else in the suite, the typecheck
+ * or the lint would report it — the classes would read as bold and the logo would not be.
+ *
+ * So these pin the pair, in the spirit of `typeScale.test.tsx` pinning the phone leading
+ * next to the phone size: the thing that was costed is the combination.
+ */
+describe('the wordmark weight', () => {
+  const layoutSource = stripComments(
+    readFileSync(resolve(import.meta.dirname, '../../src/app/layout.tsx'), 'utf8'),
+  )
+
+  it('sets both lines of the lockup at the same weight, and not at the Light it started from', () => {
+    // One brand asset, one weight — as it was at Light. A change that boldens `EM8` and
+    // leaves `PROPERTIES` behind splits the lockup against its own artwork.
+    const { container } = render(<Wordmark variant="lockup" />)
+    const faces = [...container.querySelectorAll('.font-wordmark')]
+    expect(faces).toHaveLength(2)
+    for (const face of faces) {
+      expect(face).toHaveClass('font-semibold')
+      expect(face).not.toHaveClass('font-light')
+    }
+  })
+
+  it('loads the weight those classes ask for, so the mark is not silently another weight', () => {
+    // The other half of the pair. Comments are stripped because the docblocks in both
+    // files discuss the weights they replaced in order to explain why they must not
+    // come back, and a naive grep would read that prose as the setting itself.
+    expect(layoutSource).toMatch(/weight:\s*'600'/)
+    expect(layoutSource).not.toMatch(/weight:\s*(?!'600')'\d00'/)
   })
 })
 
