@@ -72,14 +72,21 @@
  *    fact". The clearance floor at 320px blocked *is* pinned by an E2E test; these eight
  *    rows are not, and they go stale silently.
  *
- * Re-measured again 2026-09-18, when the wordmark went Cormorant Light → Regular so the
- * logo would read slightly bolder. **All eight rows above came back identical**, so the
- * table stands and nothing here moved. The mark is the same 24px in the same face and only
- * its weight changed: `EM8` measures 49.48px → 49.70px, a difference of 0.22px. The
- * tightest row-one margin recorded below is 23.1px, at 360px with the fonts blocked — and
- * that column cannot move here by construction, because a blocked webfont weight paints in
- * the same generated `size-adjust` fallback either way. The loaded rows are the ones at
- * risk, and measuring all eight is what showed they did not move.
+ * Re-measured again 2026-09-18, when the wordmark went Cormorant Light → SemiBold so the
+ * logo would read bolder. **All eight rows above came back identical**, so the table stands
+ * and nothing here moved. The mark is the same 24px in the same face and only its weight
+ * changed. Measured at every weight the family publishes, so the next person choosing one
+ * does not have to re-derive this:
+ *
+ *   weight   300    400    500    600    700
+ *   `EM8`    49.48  49.70  50.00  50.31  50.59   px
+ *
+ * All five produce the identical eight header heights above — 1.11px across the whole
+ * ladder, against a tightest recorded row-one margin of 23.1px at 360px with the fonts
+ * blocked. That column cannot move here by construction anyway, because a blocked webfont
+ * weight paints in the same generated `size-adjust` fallback whichever weight is asked for.
+ * The loaded rows are the ones at risk, and measuring all eight is what showed they did not
+ * move.
  *
  * The extra chevron button costs one nav line at two of the eight rows: 375px loaded (which
  * used to fit the nav on one line, header 88.5px, +103.5px clearance) and 390px blocked
