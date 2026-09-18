@@ -45,12 +45,12 @@
  *
  *   width    reservation                header            /about clearance
  *                                       loaded  blocked   loaded    blocked
- *   320px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
- *   360px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
- *   375px    pt-48 = 192px              113.0   113.0      +79.0     +79.0
- *   390px    min-[390px]:pt-36 = 144px    88.5   113.0      +55.5     +31.0  ← the tightest
- *   640px    min-[390px]:pt-36 = 144px    88.5    88.5      +55.5     +55.5
- *   767px    min-[390px]:pt-36 = 144px    88.5    88.5      +55.5     +55.5
+ *   320px    pt-48 = 192px              113.0   114.0      +79.0     +78.0
+ *   360px    pt-48 = 192px              113.0   114.0      +79.0     +78.0
+ *   375px    pt-48 = 192px              113.0   114.0      +79.0     +78.0
+ *   390px    min-[390px]:pt-36 = 144px    88.5   114.0      +55.5     +30.0  ← the tightest
+ *   640px    min-[390px]:pt-36 = 144px    88.5    89.5      +55.5     +54.5
+ *   767px    min-[390px]:pt-36 = 144px    88.5    89.5      +55.5     +54.5
  *   768px    md:pt-28 = 112px             62.0    62.0      +50.0     +50.0
  *   1280px   md:pt-28 = 112px             62.0    62.0      +50.0     +50.0
  *
@@ -72,21 +72,42 @@
  *    fact". The clearance floor at 320px blocked *is* pinned by an E2E test; these eight
  *    rows are not, and they go stale silently.
  *
- * Re-measured again 2026-09-18, when the wordmark went Cormorant Light → SemiBold so the
- * logo would read bolder. **All eight rows above came back identical**, so the table stands
- * and nothing here moved. The mark is the same 24px in the same face and only its weight
- * changed. Measured at every weight the family publishes, so the next person choosing one
- * does not have to re-derive this:
+ * **The table above is the 2026-09-18 re-measurement, after the wordmark went to 26px.**
+ * Two changes landed that day, and they behave very differently against this table, which
+ * is the thing to carry forward.
+ *
+ * **1. Weight: free.** Cormorant Light → SemiBold changed nothing here. Measured at every
+ * weight the family publishes, so the next person choosing one does not re-derive it:
  *
  *   weight   300    400    500    600    700
  *   `EM8`    49.48  49.70  50.00  50.31  50.59   px
  *
- * All five produce the identical eight header heights above — 1.11px across the whole
- * ladder, against a tightest recorded row-one margin of 23.1px at 360px with the fonts
- * blocked. That column cannot move here by construction anyway, because a blocked webfont
- * weight paints in the same generated `size-adjust` fallback whichever weight is asked for.
- * The loaded rows are the ones at risk, and measuring all eight is what showed they did not
- * move.
+ * All five produce identical header heights — 1.11px across the whole ladder. And the
+ * **blocked** column cannot move for a weight change at all, by construction: a blocked
+ * webfont paints in the same generated `size-adjust` fallback whichever weight was asked
+ * for. Only the loaded rows were ever at risk, and they did not move.
+ *
+ * **2. Size: not free, and it is the blocked column that pays.** 24px → 26px left the
+ * loaded column untouched — row one's height is set by the actions block at 30px, and the
+ * wordmark's link box only grew 27.0 → 28.0, still under it — but every blocked row gained
+ * 1px, because the size-adjusted fallback scales with the size. The tightest row went
+ * +31.0 → **+30.0**.
+ *
+ * That asymmetry is the lesson: **a weight change can be reasoned about here, a size change
+ * cannot.** Sizes above 26px were costed and rejected rather than untried:
+ *
+ *   `EM8`   link box   loaded 320/390   blocked 390   tightest
+ *   24px    27.0       113.0 / 88.5     113.0         +31.0   (was live)
+ *   26px    28.0       113.0 / 88.5     114.0         +30.0   ← shipped
+ *   27px    29.0       114.0 / 89.5     115.0         +29.0
+ *   28px    29.7       114.7 / 90.2     115.0         +29.0   link box within 0.3px of 30
+ *   30px    31.8       116.8 / 92.3     117.0         +27.0   under the 28px floor
+ *
+ * 26px is the last size at which the wordmark's link box stays under the 30px actions block
+ * that sets row one, so it is the last size the **loaded** column ignores completely. 30px
+ * breaks the 28px floor this section's sweep established. `PROPERTIES` is not in this table
+ * at all — it lives in the footer, and 10px → 12px moved nothing here, which is why the
+ * size increase was spent there more freely than on the mark.
  *
  * The extra chevron button costs one nav line at two of the eight rows: 375px loaded (which
  * used to fit the nav on one line, header 88.5px, +103.5px clearance) and 390px blocked

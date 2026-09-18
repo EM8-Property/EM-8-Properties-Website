@@ -25,16 +25,18 @@
  * the bright teal — dropping it to the dark teal produces a different logo, not an
  * accessible one.
  *
- * The rule is still honoured rather than argued around, because the mark is set at 24px,
- * which is exactly the threshold `--color-teal`'s own comment names ("fills, buttons, and
- * figures 24px and up"). **If you shrink the wordmark below 24px, you are outside both the
+ * The rule is still honoured rather than argued around, because the mark is set at 26px,
+ * clear of the threshold `--color-teal`'s own comment names ("fills, buttons, and figures
+ * 24px and up"). It sat exactly on that 24px threshold until 2026-09-18, when Hunter asked
+ * for the mark slightly bigger; the margin is 2px now rather than nil, which is strictly
+ * more comfortable. **If you shrink the wordmark below 24px, you are outside both the
  * token's rule and the reason it was safe to use here.** That is the constraint, not the
- * 24px itself.
+ * 26px itself.
  *
  * ## One deliberate deviation from the supplied artwork
  *
  * The lockup's `PROPERTIES` is a very light grey in the source file — around #9A9A9A,
- * roughly 2.8:1 on white. At the 10px this renders it at, that is not quiet, it is
+ * roughly 2.8:1 on white. At the 12px this renders it at, that is not quiet, it is
  * illegible, and the logo exemption that covers the `8` would only mean nobody is obliged
  * to fix it. It is set in `ink-secondary` (#555555) instead, which reads as the same
  * recessive grey at this size and passes. Flagged to Hunter on 2026-09-15 rather than done
@@ -66,15 +68,24 @@ export function Wordmark({
    * overhangs the cap height and the baseline by the same small amount, which is the
    * relationship in the supplied artwork.
    *
-   * `font-semibold` is weight 600, and it only renders as 600 because `app/layout.tsx` pins
-   * the Cormorant subset to 600. Those two move together — a class change here against a
-   * subset pinned to another weight silently renders that other weight, because a browser
-   * picks the one face it has rather than synthesising a step. Both spans carry the same
-   * weight, as both did at Light: the lockup's two lines are one brand asset and the supplied
-   * artwork sets them at one weight.
+   * `font-semibold` is weight 600, and it only renders as 600 because `app/layout.tsx` loads
+   * 600. Those two move together — a class here asking for a weight the subset does not
+   * carry silently renders one it does, because a browser picks the face it has rather than
+   * synthesising a step. Every weight named in this file has to appear in that list, and
+   * `tests/unit/wordmark.test.tsx` pins the pair.
+   *
+   * The two lines of the lockup were one weight until 2026-09-18 — matching the supplied
+   * artwork, and the earlier reasoning that boldening one alone would split a single brand
+   * asset. Hunter looked at the deployed 600 and asked for `PROPERTIES` bolder than the
+   * mark rather than level with it, so the lockup is now 600 over 700 by instruction. That
+   * is a brand decision and his to make; it is recorded here because the file previously
+   * argued the opposite and the next person will otherwise "fix" it back.
+   *
+   * The `8` scaling with `1.06em` is what let the mark go 24px → 26px without a second
+   * number to keep in step — which is the case that choice was made for.
    */
   const em8 = (
-    <span className="font-wordmark text-2xl font-semibold leading-none tracking-[0.06em] text-ink">
+    <span className="font-wordmark text-[26px] font-semibold leading-none tracking-[0.06em] text-ink">
       EM<span className="text-[1.06em] text-teal">8</span>
     </span>
   )
@@ -108,7 +119,7 @@ export function Wordmark({
     <span className={`inline-flex flex-col items-center ${className}`}>
       {em8}
       <span aria-hidden="true" className="mt-2.5 h-px self-stretch bg-rule" />
-      <span className="-me-[0.42em] mt-2 font-wordmark text-[10px] font-semibold uppercase leading-none tracking-[0.42em] text-ink-secondary">
+      <span className="-me-[0.42em] mt-2 font-wordmark text-[12px] font-bold uppercase leading-none tracking-[0.42em] text-ink-secondary">
         Properties
       </span>
     </span>
