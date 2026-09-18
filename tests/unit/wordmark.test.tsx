@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { Wordmark } from '@/components/layout/Wordmark'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { stripComments } from '../shared/sourceScan'
 import { ShareCardFrame } from '@/components/seo/shareCardFrame'
 import { palette } from '@/lib/tokens'
 
@@ -51,6 +54,44 @@ describe('the wordmark', () => {
       (el) => el.textContent?.includes('Properties') && !el.classList.contains('sr-only'),
     )
     expect(visible.every((el) => el.querySelector('.sr-only'))).toBe(true)
+  })
+})
+
+/**
+ * The mark's weight is two edits in two files, and either one alone is silently wrong.
+ *
+ * It went Light → Regular on 2026-09-18, because Hunter asked for the logo at the top and
+ * bottom of the page to be slightly bolder. The class here is only half of that: the
+ * Cormorant subset in `app/layout.tsx` is pinned to a single weight, so `font-normal`
+ * against a 300-only subset selects the 300 face and paints the old Light mark. A browser
+ * does not synthesise a one-step difference, and nothing else in the suite, the typecheck
+ * or the lint would report it — the classes would read as bold and the logo would not be.
+ *
+ * So these pin the pair, in the spirit of `typeScale.test.tsx` pinning the phone leading
+ * next to the phone size: the thing that was costed is the combination.
+ */
+describe('the wordmark weight', () => {
+  const layoutSource = stripComments(
+    readFileSync(resolve(import.meta.dirname, '../../src/app/layout.tsx'), 'utf8'),
+  )
+
+  it('sets both lines of the lockup at the same weight, and not at Light', () => {
+    // One brand asset, one weight — as it was at Light. A change that boldens `EM8` and
+    // leaves `PROPERTIES` behind splits the lockup against its own artwork.
+    const { container } = render(<Wordmark variant="lockup" />)
+    const faces = [...container.querySelectorAll('.font-wordmark')]
+    expect(faces).toHaveLength(2)
+    for (const face of faces) {
+      expect(face).toHaveClass('font-normal')
+      expect(face).not.toHaveClass('font-light')
+    }
+  })
+
+  it('loads the weight those classes ask for, so the mark is not silently Light', () => {
+    // The other half of the pair. Comments are stripped because the docblocks in both
+    // files discuss the 300 they replaced in order to explain why it must not come back.
+    expect(layoutSource).toMatch(/weight:\s*'400'/)
+    expect(layoutSource).not.toMatch(/weight:\s*'300'/)
   })
 })
 

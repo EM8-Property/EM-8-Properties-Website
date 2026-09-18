@@ -10,10 +10,17 @@ const oswald = Oswald({ variable: '--font-oswald', subsets: ['latin'] })
 /**
  * The wordmark face, and nothing else on the site. See `components/layout/Wordmark.tsx`.
  *
- * Pinned to weight 300 because the logo is Cormorant Garamond *Light* specifically — the
- * 400 is a visibly heavier mark, and asking for a weight a subset does not carry is how a
- * browser ends up synthesising one. One weight, one subset, so this costs a single small
- * file rather than a family.
+ * Pinned to weight 400. It was 300 until 2026-09-18, when Hunter asked for the mark at the
+ * top and bottom of the page to be "a little bit" bolder. 400 is the next weight Cormorant
+ * Garamond publishes, so it is the smallest step available — see `Wordmark.tsx` for what
+ * the step measures as.
+ *
+ * **The weight is swapped here, not added, and the class in `Wordmark.tsx` cannot bolden
+ * the mark on its own.** Asking for a weight a subset does not carry is how a browser ends
+ * up synthesising one — and at a one-step difference it does not even do that: with only
+ * the 300 file loaded, `font-normal` selects that same face and renders identically, so the
+ * change would look like a no-op and be committed as one. The two edits are a pair. One
+ * weight, one subset, so this still costs a single small file rather than a family.
  *
  * `adjustFontFallback` is left at its default of `true`, which is load-bearing here rather
  * than incidental. `lib/headerReservation.ts` sizes the hero's top padding against the
@@ -25,7 +32,7 @@ const oswald = Oswald({ variable: '--font-oswald', subsets: ['latin'] })
 const cormorant = Cormorant_Garamond({
   variable: '--font-wordmark-cormorant',
   subsets: ['latin'],
-  weight: '300',
+  weight: '400',
 })
 
 export const metadata: Metadata = {
