@@ -224,23 +224,38 @@ describe('HeroCarousel — resource budget', () => {
    * The phone scrim carries the headline's contrast itself, and the middle stop is where
    * that is won.
    *
-   * It was 70% at 65% while the eyebrow sat bare on the photograph. Since the eyebrow got
-   * its own lozenge it was lightened to 50% at 50% (2026-09-22) so more of the picture
-   * shows. Measured over all seven homepage slides at 320–430 wide, against the brightest
-   * 10% of pixels behind each line, the binding case is the teal headline line at 390x844:
-   * 3.20:1 against 3.0. Any lighter and the palest slide fails it — see `PHONE_SCRIM`.
+   * The six `band` pages: measured on all seven slides at 390x844, white text, 2026-09-16.
+   * The eyebrow lands at y=144 there — `HEADER_RESERVATION` is `pt-36` at 390px and up —
+   * which is 64% of the way up a 400px photograph, so a middle stop at the default 50% left
+   * it under 58% scrim and 3.79:1 against AA's 4.5. Pinning the stop at 65% puts 70% scrim
+   * at that line. This is the assertion that would catch someone "tidying" the explicit
+   * stop positions back to Tailwind's defaults.
    *
-   * So this pins the stop against drifting lighter as much as heavier: 55% at 40% measured
-   * 2.85:1 on that line.
+   * The homepage (`screen`): 10% at 50%, Hunter's call on 2026-09-22 so the picture shows.
+   * At 10% the gradient alone no longer carries the headline; `PHONE_TEXT_SHADOW` and the
+   * `onClearPhoto` eyebrow do, and `pageHero.test.tsx` pins that they ship together.
    */
-  it('pins the phone scrim’s middle stop at the lightest value the headline survives', () => {
-    const scrim = render(<HeroCarousel slides={many} variant="screen" />).container.querySelector(
-      'a > span',
-    )!.className
+  it('keeps the band pages’ phone scrim, and gives the homepage its lighter one', () => {
+    const scrimOf = (variant: 'screen' | 'band') =>
+      render(<HeroCarousel slides={many} variant={variant} />).container.querySelector(
+        'a > span',
+      )!.className
 
-    expect(scrim).toMatch(/\bvia-scrim\/50\b/)
-    expect(scrim).toMatch(/\bvia-50%(?!\S)/)
-    expect(scrim).toMatch(/\bto-scrim\/0\b/)
+    const band = scrimOf('band')
+    expect(band).toMatch(/\bvia-scrim\/70\b/)
+    expect(band).toMatch(/\bvia-65%/)
+    expect(band).toMatch(/\bto-scrim\/10\b/)
+
+    const screenScrim = scrimOf('screen')
+    expect(screenScrim).toMatch(/\bvia-scrim\/10\b/)
+    expect(screenScrim).toMatch(/\bvia-50%(?!\S)/)
+    expect(screenScrim).toMatch(/\bto-scrim\/0\b/)
+
+    // Everything from `sm` up is one string in both, so the desktop cannot drift apart.
+    const smOf = (c: string) => c.split(/\s+/).filter((k) => k.startsWith('sm:')).join(' ')
+    expect(smOf(screenScrim)).toBe(smOf(band))
+
+    const scrim = screenScrim
     // Fully opaque at the photograph's bottom edge, so it meets `bg-scrim` exactly. At 90%
     // a bright slide leaves a visible step there.
     expect(scrim).toMatch(/\bfrom-scrim\b(?!\/)/)

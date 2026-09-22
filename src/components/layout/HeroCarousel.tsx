@@ -86,25 +86,16 @@ const PHONE_PHOTO_CAP = 'max-h-[400px] sm:max-h-none'
  * instead of to the box. The shape is unchanged, it is just compressed into the part of
  * the box that has a picture in it:
  *
- *   - top of the photo, `to-scrim/0`. Nothing is written above y=144, so that band is
- *     left fully clear.
- *   - the middle stop is 50% scrim at 50% of the photo. It was 70% at 65% until
- *     2026-09-22, when Hunter said the phone hero was faded too far to see the picture.
- *     That heavier stop existed to carry the EYEBROW to 4.5:1 while the eyebrow sat bare
- *     on the photograph. Since 2026-09-18 it sits in its own `bg-black/40` lozenge (see
- *     `Eyebrow`), which does that job, so the gradient only has to carry the headline
- *     and intro — and that is what freed the lighter stop.
- *   - The lighter stop is bounded by the headline's TEAL line, not the white ones. Measured
- *     on all seven homepage slides at 320, 375, 390 and 430 wide, 2026-09-22, against the
- *     brightest 10% of pixels behind each line rather than their mean:
- *
- *                     eyebrow (4.5)   h1 white (3.0)   h1 teal (3.0)   intro (4.5)
- *       70% @ 65%        10.49            9.42             5.32          10.79
- *       50% @ 50%         5.69            4.31             3.20           8.44
- *       55% @ 40%          —              3.83             2.85  fails     —
- *
- *     All worst cases are at 390x844, where `pt-36` puts the copy highest on the photo.
- *     Lightening further fails the teal line on the palest slide.
+ *   - top of the photo, `to-scrim/10`. Nothing is written above y=144, and that band is the
+ *     part of the change Hunter actually asked for. It stays close to clear.
+ *   - the middle stop is at **65%** rather than the default 50%, and that placement is the
+ *     whole trick. `HEADER_RESERVATION` is `pt-48` below 390px and `pt-36` at 390px and
+ *     up, so the eyebrow starts at y=192 on a small phone and y=144 on a large one — and
+ *     y=144 is 64% of the way up a 400px photo. A stop at the default 50% would have left
+ *     that eyebrow at 58% scrim and 3.79:1, failing AA on exactly the phones most people
+ *     hold. Pinning the stop at 65% puts 70% scrim at y=144 instead.
+ *   - 70% at that stop, derived from the palest slide rather than the average: 0.528
+ *     luminance needs 66.6% to reach 4.5:1, and 70% clears it with a little room.
  *   - bottom of the photo, `from-scrim` at full opacity. Not 90%: at full opacity the
  *     photograph's bottom edge is exactly the section's own `bg-scrim`, so the capped
  *     photo dissolves into the background with no seam and no mask on the image. At 90% a
@@ -125,9 +116,45 @@ const PHONE_PHOTO_CAP = 'max-h-[400px] sm:max-h-none'
  * Tailwind scans source for literal class names, so it cannot be interpolated from a
  * constant; `heroCarousel.test.tsx` pins the two against each other instead.
  */
-const PHONE_SCRIM =
+const PHONE_SCRIM_BAND =
   'absolute inset-x-0 top-0 h-[400px] bg-gradient-to-t ' +
-  'from-scrim from-0% via-scrim/50 via-50% to-scrim/0 to-100% ' +
+  'from-scrim from-0% via-scrim/70 via-65% to-scrim/10 to-100% ' +
+  'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
+
+/**
+ * The homepage's phone scrim, lighter than `PHONE_SCRIM_BAND` above by Hunter's call on
+ * 2026-09-22: "the fade on the iphone is too much, I want to see more of the image". He
+ * compared 50%, 30% and 10% mockups on a phone and chose 10%. Everything above `sm` is
+ * the same string as the band's, so the desktop does not move.
+ *
+ * **At 10% the gradient no longer carries the text on its own, and that is knowingly
+ * accepted.** Measured on all seven homepage slides at 320, 375, 390 and 430 wide, against
+ * the brightest 10% of pixels behind each line, gradient only:
+ *
+ *                   eyebrow (4.5)   h1 white (3.0)   h1 teal (3.0)
+ *     70% @ 65%        10.49            9.42             5.32
+ *     10% @ 50%         3.37            1.71             1.58
+ *     10%, 60% pill     6.16            —                —
+ *
+ * Two things cover it, and both are homepage-only for the same reason this is:
+ *
+ *   - the eyebrow's pill goes to 60% black on a phone (`onClearPhoto` in `Eyebrow`), which
+ *     is measured and passes;
+ *   - the headline and intro get `PHONE_TEXT_SHADOW` in `PageHero.tsx`, a dark halo behind
+ *     each glyph. The model above cannot score a shadow, so the headline's legibility at
+ *     10% was judged by eye on the palest slide, not measured.
+ *
+ * Why the six `band` pages did not follow: their copy sits lower on the 400px photo, over
+ * its brightest middle. At 10% their headlines measure 1.2 – 2.3:1 on the same basis,
+ * against the homepage's 1.7 – 2.8, and nobody has looked at them with the halo. If they
+ * are ever lightened, measure them first.
+ *
+ * If the halo is removed, this goes back to at least 50% at 50% (teal 3.20 on the same
+ * basis, the lightest stop measured to pass without help).
+ */
+const PHONE_SCRIM_SCREEN =
+  'absolute inset-x-0 top-0 h-[400px] bg-gradient-to-t ' +
+  'from-scrim from-0% via-scrim/10 via-50% to-scrim/0 to-100% ' +
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
@@ -164,7 +191,7 @@ export type HeroVariant = 'screen' | 'band'
  * width the browser should assume the image occupies, and `object-cover` makes that a
  * function of the box's HEIGHT. See the note at the <Image> for the measurements.
  */
-const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string }> = {
+const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string; scrim: string }> = {
   /*
    * `screen` carried `p-6 sm:p-10` — an inset from the IMAGE edge, not the content column
    * — from 2026-09-0x until 2026-09-15, and that was a decision rather than an oversight.
@@ -213,11 +240,13 @@ const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string }> =
      * component paints exactly what it painted yesterday.
      */
     sizes: '(max-width: 640px) 225vw, (max-width: 1024px) 200vw, 100vw',
+    scrim: PHONE_SCRIM_SCREEN,
   },
   band: {
     box: 'min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]',
     copy: 'mx-auto max-w-[1200px] px-6',
     sizes: '100vw',
+    scrim: PHONE_SCRIM_BAND,
   },
 }
 
@@ -525,10 +554,10 @@ export function HeroCarousel({
 
               On a PHONE that is no longer true, and deliberately: the gradient is anchored
               to the photograph and carries the contrast itself, so the same pale lobby shot
-              measures 5.2:1 rather than 2.4:1. See `PHONE_SCRIM` for the measurements and
+              measures 5.2:1 rather than 2.4:1. See `PHONE_SCRIM_BAND` and `PHONE_SCRIM_SCREEN` for the measurements and
               for why the phone needed its own answer.
             */}
-            <span className={PHONE_SCRIM} />
+            <span className={SHAPE[variant].scrim} />
           </Link>
         )
       })}

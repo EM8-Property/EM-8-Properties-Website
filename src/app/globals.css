@@ -27,6 +27,11 @@
   /* A photographic scrim, not body text — see src/lib/tokens.ts for why it does not move with `ink`. */
   --color-scrim: #1A1A1A;
 
+  /* The phone hero's headline halo, built from the scrim rather than a black of its own.
+     See PHONE_TEXT_SHADOW in src/components/layout/PageHero.tsx for why it exists. */
+  --text-shadow-halo: 0 1px 2px color-mix(in srgb, var(--color-scrim) 55%, transparent),
+    0 0 18px color-mix(in srgb, var(--color-scrim) 60%, transparent);
+
   --radius-chip: 4px;
   --radius-control: 8px;
   --radius-card: 12px;

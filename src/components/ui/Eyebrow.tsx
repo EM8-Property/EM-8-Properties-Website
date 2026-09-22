@@ -17,7 +17,7 @@ export function Eyebrow({
   tone = 'default',
 }: {
   children: React.ReactNode
-  tone?: 'default' | 'onPhoto'
+  tone?: 'default' | 'onPhoto' | 'onClearPhoto'
 }) {
   /*
    * On a photograph the label is set in a dark lozenge rather than straight on the
@@ -60,11 +60,18 @@ export function Eyebrow({
    * cover. White at 90% on the same ground is strictly better than the 80% straight on
    * the photograph that shipped before. An opaque lozenge would carry teal safely; a
    * translucent one cannot.
+   *
+   * `onClearPhoto` is the same lozenge for the homepage, whose phone scrim went to 10% on
+   * 2026-09-22 (`PHONE_SCRIM_SCREEN` in HeroCarousel.tsx). With almost no gradient under
+   * it, 40% leaves this 11px text at 3.37:1 on the palest slide, against the brightest
+   * 10% of the pixels behind it. 60% measures 6.16. Phone only: above `sm` the scrim is
+   * the old heavy one and the pill stays exactly as it was.
    */
-  if (tone === 'onPhoto') {
+  if (tone === 'onPhoto' || tone === 'onClearPhoto') {
+    const fill = tone === 'onClearPhoto' ? 'bg-black/60 sm:bg-black/40' : 'bg-black/40'
     return (
       <p className="text-[11px] font-semibold uppercase leading-[2] tracking-[0.14em]">
-        <span className="rounded-full bg-black/40 px-3 py-1 text-white/90 [-webkit-box-decoration-break:clone] [box-decoration-break:clone]">
+        <span className={`rounded-full ${fill} px-3 py-1 text-white/90 [-webkit-box-decoration-break:clone] [box-decoration-break:clone]`}>
           {children}
         </span>
       </p>

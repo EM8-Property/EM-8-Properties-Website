@@ -8,6 +8,24 @@ import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 import { HEADER_RESERVATION } from '@/lib/headerReservation'
 
 /**
+ * A soft dark halo behind the on-photo headline and intro, on a phone only.
+ *
+ * On 2026-09-22 Hunter asked for the phone scrim to drop to 10% so the photograph shows,
+ * and the gradient stopped carrying the headline's contrast (`PHONE_SCRIM_SCREEN` in
+ * `HeroCarousel.tsx` has the numbers). This shadow is what carries it now: a tight
+ * 2px drop for glyph edges and an 18px glow that darkens the photo directly behind
+ * each word rather than across the whole picture.
+ *
+ * It is on the h1 and intro, not the overlay, because `text-shadow` inherits, and on the
+ * overlay it would land on the teal button's dark label too. Lifted at `sm`, where the
+ * desktop scrim is unchanged and never needed it.
+ *
+ * Homepage (`screen`) only, like the scrim it answers. The six `band` pages keep their
+ * heavier phone scrim and render with no shadow, exactly as before.
+ */
+const PHONE_TEXT_SHADOW = 'text-shadow-halo sm:text-shadow-none'
+
+/**
  * The title block every section page opens with.
  *
  * Nullable throughout because these arrive from the CMS, and typegen cannot see that the
@@ -218,13 +236,19 @@ export function PageHero({
     )
   }
 
+  // Only the homepage's phone scrim is light enough to need these. See PHONE_TEXT_SHADOW.
+  const clearPhoto = variant === 'screen'
+  const shadow = clearPhoto ? PHONE_TEXT_SHADOW : ''
+
   return (
     <HeroCarousel
       slides={slides}
       variant={variant}
       overlay={
         <div className="max-w-[42ch]">
-          {copy.eyebrow && <Eyebrow tone="onPhoto">{copy.eyebrow}</Eyebrow>}
+          {copy.eyebrow && (
+            <Eyebrow tone={clearPhoto ? 'onClearPhoto' : 'onPhoto'}>{copy.eyebrow}</Eyebrow>
+          )}
           {/*
             `sm` is a named step; `lg` is not, and the arbitrary value is the finding.
 
@@ -342,7 +366,7 @@ export function PageHero({
 
             `sm` and `lg` are untouched: still 60px and the measured 64px.
           */}
-          <h1 className="mt-3 text-4xl font-bold leading-[1] tracking-tight text-white sm:text-6xl sm:leading-[1.1] lg:text-[64px]">
+          <h1 className={`mt-3 text-4xl font-bold leading-[1] tracking-tight text-white sm:text-6xl sm:leading-[1.1] lg:text-[64px] ${shadow}`}>
             {title}
           </h1>
           {copy.intro && (
@@ -362,7 +386,7 @@ export function PageHero({
               tiers are already distinct, and 14px is what the six band pages were
               measured at. So the phone gets the change and nothing else does.
             */
-            <p className="mt-4 max-w-[52ch] text-base leading-[1.55] text-white/85 sm:text-sm sm:leading-relaxed">
+            <p className={`mt-4 max-w-[52ch] text-base leading-[1.55] text-white/85 sm:text-sm sm:leading-relaxed ${shadow}`}>
               {copy.intro}
             </p>
           )}
