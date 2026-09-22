@@ -86,16 +86,25 @@ const PHONE_PHOTO_CAP = 'max-h-[400px] sm:max-h-none'
  * instead of to the box. The shape is unchanged, it is just compressed into the part of
  * the box that has a picture in it:
  *
- *   - top of the photo, `to-scrim/10`. Nothing is written above y=144, and that band is the
- *     part of the change Hunter actually asked for. It stays close to clear.
- *   - the middle stop is at **65%** rather than the default 50%, and that placement is the
- *     whole trick. `HEADER_RESERVATION` is `pt-48` below 390px and `pt-36` at 390px and
- *     up, so the eyebrow starts at y=192 on a small phone and y=144 on a large one — and
- *     y=144 is 64% of the way up a 400px photo. A stop at the default 50% would have left
- *     that eyebrow at 58% scrim and 3.79:1, failing AA on exactly the phones most people
- *     hold. Pinning the stop at 65% puts 70% scrim at y=144 instead.
- *   - 70% at that stop, derived from the palest slide rather than the average: 0.528
- *     luminance needs 66.6% to reach 4.5:1, and 70% clears it with a little room.
+ *   - top of the photo, `to-scrim/0`. Nothing is written above y=144, so that band is
+ *     left fully clear.
+ *   - the middle stop is 50% scrim at 50% of the photo. It was 70% at 65% until
+ *     2026-09-22, when Hunter said the phone hero was faded too far to see the picture.
+ *     That heavier stop existed to carry the EYEBROW to 4.5:1 while the eyebrow sat bare
+ *     on the photograph. Since 2026-09-18 it sits in its own `bg-black/40` lozenge (see
+ *     `Eyebrow`), which does that job, so the gradient only has to carry the headline
+ *     and intro — and that is what freed the lighter stop.
+ *   - The lighter stop is bounded by the headline's TEAL line, not the white ones. Measured
+ *     on all seven homepage slides at 320, 375, 390 and 430 wide, 2026-09-22, against the
+ *     brightest 10% of pixels behind each line rather than their mean:
+ *
+ *                     eyebrow (4.5)   h1 white (3.0)   h1 teal (3.0)   intro (4.5)
+ *       70% @ 65%        10.49            9.42             5.32          10.79
+ *       50% @ 50%         5.69            4.31             3.20           8.44
+ *       55% @ 40%          —              3.83             2.85  fails     —
+ *
+ *     All worst cases are at 390x844, where `pt-36` puts the copy highest on the photo.
+ *     Lightening further fails the teal line on the palest slide.
  *   - bottom of the photo, `from-scrim` at full opacity. Not 90%: at full opacity the
  *     photograph's bottom edge is exactly the section's own `bg-scrim`, so the capped
  *     photo dissolves into the background with no seam and no mask on the image. At 90% a
@@ -118,7 +127,7 @@ const PHONE_PHOTO_CAP = 'max-h-[400px] sm:max-h-none'
  */
 const PHONE_SCRIM =
   'absolute inset-x-0 top-0 h-[400px] bg-gradient-to-t ' +
-  'from-scrim from-0% via-scrim/70 via-65% to-scrim/10 to-100% ' +
+  'from-scrim from-0% via-scrim/50 via-50% to-scrim/0 to-100% ' +
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**

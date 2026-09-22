@@ -221,25 +221,26 @@ describe('HeroCarousel — resource budget', () => {
   })
 
   /*
-   * The phone scrim carries the contrast itself, and the middle stop is where that is won.
+   * The phone scrim carries the headline's contrast itself, and the middle stop is where
+   * that is won.
    *
-   * Measured on all seven homepage slides at 390x844, white text, 2026-09-16. The eyebrow
-   * lands at y=144 there — `HEADER_RESERVATION` is `pt-36` at 390px and up — which is 64%
-   * of the way up a 400px photograph, so a gradient whose middle stop sat at the default
-   * 50% left it under 58% scrim and 3.79:1 against AA's 4.5. Pinning the stop at 65% puts
-   * 70% scrim at that line, and the worst of the seven slides then measures 4.87:1.
+   * It was 70% at 65% while the eyebrow sat bare on the photograph. Since the eyebrow got
+   * its own lozenge it was lightened to 50% at 50% (2026-09-22) so more of the picture
+   * shows. Measured over all seven homepage slides at 320–430 wide, against the brightest
+   * 10% of pixels behind each line, the binding case is the teal headline line at 390x844:
+   * 3.20:1 against 3.0. Any lighter and the palest slide fails it — see `PHONE_SCRIM`.
    *
-   * This is the assertion that would catch someone "tidying" the explicit stop positions
-   * back to Tailwind's defaults, which is a change with no visible diff and a failing
-   * contrast audit.
+   * So this pins the stop against drifting lighter as much as heavier: 55% at 40% measured
+   * 2.85:1 on that line.
    */
-  it('puts the phone scrim’s middle stop where the copy starts, not at the default 50%', () => {
+  it('pins the phone scrim’s middle stop at the lightest value the headline survives', () => {
     const scrim = render(<HeroCarousel slides={many} variant="screen" />).container.querySelector(
       'a > span',
     )!.className
 
-    expect(scrim).toMatch(/\bvia-scrim\/70\b/)
-    expect(scrim).toMatch(/\bvia-65%/)
+    expect(scrim).toMatch(/\bvia-scrim\/50\b/)
+    expect(scrim).toMatch(/\bvia-50%(?!\S)/)
+    expect(scrim).toMatch(/\bto-scrim\/0\b/)
     // Fully opaque at the photograph's bottom edge, so it meets `bg-scrim` exactly. At 90%
     // a bright slide leaves a visible step there.
     expect(scrim).toMatch(/\bfrom-scrim\b(?!\/)/)
