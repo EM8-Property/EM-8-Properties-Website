@@ -5,6 +5,7 @@ import { HeroCarousel, type HeroVariant } from '@/components/layout/HeroCarousel
 // From lib, not from HeroCarousel: that module is `'use client'`, and a server component
 // calling a function it exports fails the build outright.
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
+import type { PhoneHeroFade } from '@/lib/phoneHeroFade'
 import { HEADER_RESERVATION } from '@/lib/headerReservation'
 
 /**
@@ -70,6 +71,7 @@ export function PageHero({
   slides,
   variant = 'band',
   stats,
+  phoneFade,
 }: {
   copy: PageHeroCopy
   slides: CarouselSlide[]
@@ -94,6 +96,8 @@ export function PageHero({
    * that empty row by forgetting the guard at the call site.
    */
   stats?: { figure: string; label: string }[]
+  /** The Studio's Home page → Phone hero fade, forwarded to `HeroCarousel`. Homepage only. */
+  phoneFade?: PhoneHeroFade
 }) {
   // The same helper HeroCarousel uses to decide what it will render, deliberately shared:
   // if these two ever disagreed, this would hand a carousel a list it then rejects, and
@@ -222,6 +226,7 @@ export function PageHero({
     <HeroCarousel
       slides={slides}
       variant={variant}
+      phoneFade={phoneFade}
       overlay={
         <div className="max-w-[42ch]">
           {copy.eyebrow && <Eyebrow tone="onPhoto">{copy.eyebrow}</Eyebrow>}

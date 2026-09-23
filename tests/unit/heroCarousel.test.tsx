@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -199,19 +199,29 @@ describe('HeroCarousel — resource budget', () => {
    * Tailwind scans source for literal class names, so neither can be interpolated from a
    * shared constant. This is the thing that holds them together instead.
    */
-  it('caps the phone crop and the phone scrim at the same height', () => {
+  it('caps the phone crop and the phone scrim at the same height, in both shapes', () => {
+    // 460px on the homepage (Hunter's slight zoom-in, 2026-09-22), 400px on the six band
+    // pages. Each pair has to agree with itself; the two shapes do not have to agree.
+    const expected = { screen: '460', band: '400' } as const
+    for (const variant of ['screen', 'band'] as const) {
+      const { container } = render(<HeroCarousel slides={many} variant={variant} />)
+      const img = container.querySelector('img')!
+      const scrim = container.querySelector('a > span')!
+      const cap = img.className.match(/max-h-\[(\d+)px\]/)
+      expect(cap, `no phone cap on the ${variant} image: ${img.className}`).not.toBeNull()
+      const scrimH = scrim.className.match(/(?:^|\s)h-\[(\d+)px\]/)
+      expect(scrimH, `no phone height on the ${variant} scrim: ${scrim.className}`).not.toBeNull()
+      expect(
+        scrimH![1],
+        `${variant}: the scrim no longer ends where the photograph does — the fade will show a seam`,
+      ).toBe(cap![1])
+      expect(cap![1], variant).toBe(expected[variant])
+      cleanup()
+    }
+
     const { container } = render(<HeroCarousel slides={many} variant="screen" />)
     const img = container.querySelector('img')!
     const scrim = container.querySelector('a > span')!
-
-    const cap = img.className.match(/max-h-\[(\d+)px\]/)
-    expect(cap, `no phone cap on the image: ${img.className}`).not.toBeNull()
-    const scrimH = scrim.className.match(/(?:^|\s)h-\[(\d+)px\]/)
-    expect(scrimH, `no phone height on the scrim: ${scrim.className}`).not.toBeNull()
-    expect(
-      scrimH![1],
-      'the scrim no longer ends where the photograph does — the fade will show a seam',
-    ).toBe(cap![1])
 
     // Both lift above `sm`, where the box is not tall relative to its width and the cap
     // would crop the top off the picture instead.
@@ -221,28 +231,79 @@ describe('HeroCarousel — resource budget', () => {
   })
 
   /*
-   * The phone scrim carries the contrast itself, and the middle stop is where that is won.
+   * The phone scrim carries the headline's contrast itself, and the middle stop is where
+   * that is won.
    *
-   * Measured on all seven homepage slides at 390x844, white text, 2026-09-16. The eyebrow
-   * lands at y=144 there — `HEADER_RESERVATION` is `pt-36` at 390px and up — which is 64%
-   * of the way up a 400px photograph, so a gradient whose middle stop sat at the default
-   * 50% left it under 58% scrim and 3.79:1 against AA's 4.5. Pinning the stop at 65% puts
-   * 70% scrim at that line, and the worst of the seven slides then measures 4.87:1.
+   * The six `band` pages: measured on all seven slides at 390x844, white text, 2026-09-16.
+   * The eyebrow lands at y=144 there — `HEADER_RESERVATION` is `pt-36` at 390px and up —
+   * which is 64% of the way up a 400px photograph, so a middle stop at the default 50% left
+   * it under 58% scrim and 3.79:1 against AA's 4.5. Pinning the stop at 65% puts 70% scrim
+   * at that line. This is the assertion that would catch someone "tidying" the explicit
+   * stop positions back to Tailwind's defaults.
    *
-   * This is the assertion that would catch someone "tidying" the explicit stop positions
-   * back to Tailwind's defaults, which is a change with no visible diff and a failing
-   * contrast audit.
+   * The homepage (`screen`): 10% at 50%, Hunter's call on 2026-09-22 so the picture shows.
+   * At 10% the gradient alone no longer carries the headline; `PHONE_TEXT_SHADOW` and the
+   * `onClearPhoto` eyebrow do, and `pageHero.test.tsx` pins that they ship together.
    */
-  it('puts the phone scrim’s middle stop where the copy starts, not at the default 50%', () => {
-    const scrim = render(<HeroCarousel slides={many} variant="screen" />).container.querySelector(
-      'a > span',
-    )!.className
+  it('hands the Studio’s phone fade to the homepage scrim only, clamped', () => {
+    const styleOf = (variant: 'screen' | 'band', phoneFade?: { veil?: number; fadeStart?: number }) =>
+      (
+        render(
+          <HeroCarousel slides={many} variant={variant} phoneFade={phoneFade} />,
+        ).container.querySelector('a > span') as HTMLElement
+      ).style
 
-    expect(scrim).toMatch(/\bvia-scrim\/70\b/)
-    expect(scrim).toMatch(/\bvia-65%/)
+    // Nothing in the Studio yet: Hunter's defaults.
+    let s = styleOf('screen')
+    expect(s.getPropertyValue('--hero-veil')).toBe('40%')
+    expect(s.getPropertyValue('--hero-fade')).toBe('25%')
+
+    cleanup()
+    s = styleOf('screen', { veil: 55, fadeStart: 20 })
+    expect(s.getPropertyValue('--hero-veil')).toBe('55%')
+    expect(s.getPropertyValue('--hero-fade')).toBe('20%')
+
+    // `validation` binds the Studio only, so out-of-range values are clamped here.
+    cleanup()
+    s = styleOf('screen', { veil: 300, fadeStart: -4 })
+    expect(s.getPropertyValue('--hero-veil')).toBe('80%')
+    expect(s.getPropertyValue('--hero-fade')).toBe('0%')
+
+    // The band pages have no editable veil and carry no variables at all.
+    cleanup()
+    s = styleOf('band', { veil: 10, fadeStart: 50 })
+    expect(s.getPropertyValue('--hero-veil')).toBe('')
+  })
+
+  it('keeps the band pages’ phone scrim, and gives the homepage its own', () => {
+    const scrimOf = (variant: 'screen' | 'band') =>
+      render(<HeroCarousel slides={many} variant={variant} />).container.querySelector(
+        'a > span',
+      )!.className
+
+    const band = scrimOf('band')
+    expect(band).toMatch(/\bvia-scrim\/70\b/)
+    expect(band).toMatch(/\bvia-65%/)
+    expect(band).toMatch(/\bto-scrim\/10\b/)
+
     // Fully opaque at the photograph's bottom edge, so it meets `bg-scrim` exactly. At 90%
     // a bright slide leaves a visible step there.
-    expect(scrim).toMatch(/\bfrom-scrim\b(?!\/)/)
+    expect(band).toMatch(/\bfrom-scrim\b(?!\/)/)
+
+    // The homepage's phone gradient is the Studio-driven veil (globals.css), and the
+    // desktop one takes over from `sm` with its own `sm:bg-gradient-to-t`.
+    const screenScrim = scrimOf('screen')
+    expect(screenScrim).toMatch(/(?:^|\s)bg-hero-phone-veil\b/)
+    expect(screenScrim).toMatch(/\bsm:bg-gradient-to-t\b/)
+    expect(screenScrim).not.toMatch(/(?:^|\s)(?:from|via|to)-/)
+
+    // Everything from `sm` up is the same in both, so the desktop cannot drift apart. The
+    // band spells `bg-gradient-to-t` unprefixed, which covers `sm` too.
+    const smOf = (c: string) =>
+      c.split(/\s+/).filter((k) => k.startsWith('sm:') && k !== 'sm:bg-gradient-to-t').join(' ')
+    expect(smOf(screenScrim)).toBe(smOf(band))
+
+    const scrim = screenScrim
     // Above `sm` the desktop gradient is unchanged, stops and all.
     expect(scrim).toMatch(/\bsm:from-scrim\/90\b/)
     expect(scrim).toMatch(/\bsm:via-scrim\/55\b/)

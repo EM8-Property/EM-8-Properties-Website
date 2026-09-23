@@ -188,7 +188,8 @@ describe('hero geometry, both shapes', () => {
     // where the multiplier is largest.
     const phone = screen.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
     expect(phone, 'no narrow-viewport clause').not.toBeNull()
-    expect(Number(phone![1])).toBeGreaterThanOrEqual(223)
+    // 460px since 2026-09-22 (a slight zoom-in): 818 CSS px over 320 is 2.56x.
+    expect(Number(phone![1])).toBeGreaterThanOrEqual(256)
     // And a tablet, by less, because it is less tall relative to its width. Asserted
     // because without it the middle clause can be deleted with every test still green.
     const tablet = screen.match(/\(max-width:\s*1024px\)\s*(\d+)vw/)
@@ -310,6 +311,31 @@ describe('PageHero copy', () => {
     const h1 = screen.getByRole('heading', { level: 1 })
     expect(h1.textContent).toBe('Realized results, not projections.')
     expect(h1.className).toMatch(/text-white/)
+  })
+
+  /*
+   * The homepage's phone veil is editable in the Studio (Home page → Phone hero fade), and
+   * `PageHero` is the hop between the page and the carousel that draws it. Pinned here so
+   * a refactor of this component cannot quietly stop forwarding it: the Studio would keep
+   * accepting edits that change nothing.
+   *
+   * No text shadow on either variant. Hunter asked for the desktop's look on the phone,
+   * and the desktop has none.
+   */
+  it('forwards the Studio’s phone fade to the homepage, with no text shadow anywhere', () => {
+    render(
+      <PageHero copy={COPY} slides={SLIDES} variant="screen" phoneFade={{ veil: 62, fadeStart: 12 }} />,
+    )
+    const scrim = document.querySelector('a > span') as HTMLElement
+    expect(scrim.style.getPropertyValue('--hero-veil')).toBe('62%')
+    expect(scrim.style.getPropertyValue('--hero-fade')).toBe('12%')
+    for (const el of [screen.getByRole('heading', { level: 1 }), screen.getByText(COPY.intro)]) {
+      expect(el.className).not.toMatch(/text-shadow/)
+    }
+
+    cleanup()
+    render(<PageHero copy={COPY} slides={SLIDES} variant="band" phoneFade={{ veil: 62 }} />)
+    expect((document.querySelector('a > span') as HTMLElement).style.getPropertyValue('--hero-veil')).toBe('')
   })
 
   it('shows the eyebrow and the intro', () => {

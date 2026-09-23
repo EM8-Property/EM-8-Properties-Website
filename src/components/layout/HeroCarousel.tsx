@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { urlForPhoto } from '@/sanity/image'
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 import { HEADER_RESERVATION } from '@/lib/headerReservation'
+import { phoneHeroFadeStyle, type PhoneHeroFade } from '@/lib/phoneHeroFade'
 
 /*
  * Re-exported so the seven pages can keep importing the type from the component they are
@@ -116,9 +117,41 @@ const PHONE_PHOTO_CAP = 'max-h-[400px] sm:max-h-none'
  * Tailwind scans source for literal class names, so it cannot be interpolated from a
  * constant; `heroCarousel.test.tsx` pins the two against each other instead.
  */
-const PHONE_SCRIM =
+const PHONE_SCRIM_BAND =
   'absolute inset-x-0 top-0 h-[400px] bg-gradient-to-t ' +
   'from-scrim from-0% via-scrim/70 via-65% to-scrim/10 to-100% ' +
+  'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
+
+/**
+ * The homepage's phone scrim: an even veil over the photograph, with the fade to solid
+ * scrim confined to its lower part. Both numbers are editable in the Studio under
+ * Home page → Phone hero fade and arrive as CSS variables (`phoneHeroFadeStyle` in
+ * src/lib/phoneHeroFade.ts, `bg-hero-phone-veil` in globals.css). Defaults: 40% veil,
+ * fade in the bottom 25%. Everything from `sm` up is the same string as the band's, so the
+ * desktop does not move.
+ *
+ * How it got here, 2026-09-22. Hunter: "the fade on the iphone is too much, I want to see
+ * more of the image". He went through 50%, 30%, 10%, lower fades, slower fades and a text
+ * shadow, and settled on the treatment that reads like the desktop hero: an even veil, no
+ * shadow, no zoom. The photo stays capped at 400px because anything taller zooms the crop
+ * in, which he rejected (that was the 2026-09-16 complaint).
+ *
+ * **Knowingly accepted: the teal headline line fails contrast on pale slides.** Measured
+ * on all seven homepage slides at 320–430 wide, against the brightest 10% of pixels behind
+ * each line, at the defaults:
+ *
+ *     eyebrow (in its 40% pill, needs 4.5)   5.88 – 6.15   passes
+ *     h1 white (needs 3.0)                   2.60 – 2.82
+ *     h1 teal (needs 3.0)                    1.34 – 1.37
+ *
+ * Raising the veil in the Studio is the lever if a slide reads badly. The lightest
+ * treatment measured to pass without help was a 50%-at-50% gradient (teal 3.20).
+ *
+ * The six `band` pages keep `PHONE_SCRIM_BAND`. Their copy sits lower on the photo, over
+ * its brightest middle, and nobody has reviewed them lighter. Measure them first.
+ */
+const PHONE_SCRIM_SCREEN =
+  'absolute inset-x-0 top-0 h-[460px] bg-hero-phone-veil sm:bg-gradient-to-t ' +
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
@@ -155,7 +188,10 @@ export type HeroVariant = 'screen' | 'band'
  * width the browser should assume the image occupies, and `object-cover` makes that a
  * function of the box's HEIGHT. See the note at the <Image> for the measurements.
  */
-const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string }> = {
+const SHAPE: Record<
+  HeroVariant,
+  { box: string; copy: string; sizes: string; scrim: string; photoCap: string }
+> = {
   /*
    * `screen` carried `p-6 sm:p-10` — an inset from the IMAGE edge, not the content column
    * — from 2026-09-0x until 2026-09-15, and that was a decision rather than an oversight.
@@ -203,12 +239,18 @@ const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string }> =
      * gives the photograph the whole box back at 640px and up, so above the phone this
      * component paints exactly what it painted yesterday.
      */
-    sizes: '(max-width: 640px) 225vw, (max-width: 1024px) 200vw, 100vw',
+    sizes: '(max-width: 640px) 256vw, (max-width: 1024px) 200vw, 100vw',
+    scrim: PHONE_SCRIM_SCREEN,
+    // 460px, not the band's 400: Hunter asked for a slight zoom-in on 2026-09-22 and
+    // chose 2.1x at 390 wide over 2.3x. Must equal the `h-[460px]` in PHONE_SCRIM_SCREEN.
+    photoCap: 'max-h-[460px] sm:max-h-none',
   },
   band: {
     box: 'min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]',
     copy: 'mx-auto max-w-[1200px] px-6',
     sizes: '100vw',
+    scrim: PHONE_SCRIM_BAND,
+    photoCap: PHONE_PHOTO_CAP,
   },
 }
 
@@ -244,6 +286,7 @@ export function HeroCarousel({
   slides,
   overlay,
   variant = 'band',
+  phoneFade,
 }: {
   slides: CarouselSlide[]
   /**
@@ -262,7 +305,13 @@ export function HeroCarousel({
    * homepage passes `screen`, and it says so at the call site.
    */
   variant?: HeroVariant
+  /**
+   * The Studio's Home page → Phone hero fade values. Read by `screen` only; `band` has no
+   * editable veil and ignores it. See `PHONE_SCRIM_SCREEN`.
+   */
+  phoneFade?: PhoneHeroFade
 }) {
+  const scrimStyle = variant === 'screen' ? phoneHeroFadeStyle(phoneFade) : undefined
   const usable = useMemo(() => usableSlides(slides), [slides])
   /*
    * `prev` is the slide being faded OUT, and it is tracked in the same state update as
@@ -500,7 +549,7 @@ export function HeroCarousel({
                   confined to a phone. See `PHONE_PHOTO_CAP` for the measurements and for
                   why lowering `min-h-svh` would not have worked.
                 */
-                className={`h-full w-full object-cover ${PHONE_PHOTO_CAP}`}
+                className={`h-full w-full object-cover ${SHAPE[variant].photoCap}`}
               />
             )}
             {/*
@@ -516,10 +565,10 @@ export function HeroCarousel({
 
               On a PHONE that is no longer true, and deliberately: the gradient is anchored
               to the photograph and carries the contrast itself, so the same pale lobby shot
-              measures 5.2:1 rather than 2.4:1. See `PHONE_SCRIM` for the measurements and
+              measures 5.2:1 rather than 2.4:1. See `PHONE_SCRIM_BAND` and `PHONE_SCRIM_SCREEN` for the measurements and
               for why the phone needed its own answer.
             */}
-            <span className={PHONE_SCRIM} />
+            <span className={SHAPE[variant].scrim} style={scrimStyle} />
           </Link>
         )
       })}
