@@ -158,7 +158,6 @@ export default async function HomePage() {
         copy={copy.hero}
         slides={(settings?.heroCarousel ?? []) as CarouselSlide[]}
         variant="screen"
-        phoneFade={copy.phoneHeroFade}
         stats={
           stats.length > 0
             ? stats.slice(0, 5).map((s) => ({ figure: s.figure ?? '', label: s.label ?? '' }))

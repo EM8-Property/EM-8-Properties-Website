@@ -143,8 +143,7 @@ export const HOME_PAGE_QUERY = defineQuery(`
     partnersTeaser { eyebrow, title, intro },
     partnersTeaserCta { label, href },
     portfolioCta { label, href },
-    popup { enabled, eyebrow, title, body, submitLabel, successMessage },
-    phoneHeroFade { veil, fadeStart }
+    popup { enabled, eyebrow, title, body, submitLabel, successMessage }
   }
 `)
 

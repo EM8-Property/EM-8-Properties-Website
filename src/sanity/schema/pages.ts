@@ -58,42 +58,6 @@ export const homePage = defineType({
       validation: (r) => r.required(),
     }),
     defineField({ name: 'popup', title: 'Homepage popup', type: 'popupBlock' }),
-    /*
-     * Optional, with the code holding the defaults, so an empty field renders exactly what
-     * shipped (40% / 25%). Phone only: the desktop hero's gradient is not editable here.
-     */
-    defineField({
-      name: 'phoneHeroFade',
-      title: 'Phone hero fade',
-      type: 'object',
-      description:
-        'How dark the photo is behind the homepage headline on a phone. Does not affect ' +
-        'the computer view. Lighter shows more photo but makes the text harder to read ' +
-        'on bright photos.',
-      options: { collapsible: true, collapsed: true },
-      fields: [
-        defineField({
-          name: 'veil',
-          title: 'Veil strength (%)',
-          type: 'number',
-          description:
-            'How much the whole photo is darkened, 0 to 80. Default 40. Raise it if the ' +
-            'headline is hard to read on a bright slide.',
-          initialValue: 40,
-          validation: (r) => r.min(0).max(80).integer(),
-        }),
-        defineField({
-          name: 'fadeStart',
-          title: 'Fade to black starts at (% from the bottom of the photo)',
-          type: 'number',
-          description:
-            'Where the photo starts fading into the dark section below, 0 to 60. Default ' +
-            '25. Higher starts the fade further up; 5 is just the bottom edge.',
-          initialValue: 25,
-          validation: (r) => r.min(0).max(60).integer(),
-        }),
-      ],
-    }),
   ],
   preview: { prepare: () => ({ title: 'Home page' }) },
 })

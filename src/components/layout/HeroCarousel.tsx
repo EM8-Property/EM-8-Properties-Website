@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { urlForPhoto } from '@/sanity/image'
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 import { HEADER_RESERVATION } from '@/lib/headerReservation'
-import { phoneHeroFadeStyle, type PhoneHeroFade } from '@/lib/phoneHeroFade'
 
 /*
  * Re-exported so the seven pages can keep importing the type from the component they are
@@ -123,36 +122,27 @@ const PHONE_SCRIM_BAND =
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
- * The homepage's phone scrim: an even veil over the photograph, with the fade to solid
- * scrim confined to its lower part. Both numbers are editable in the Studio under
- * Home page → Phone hero fade and arrive as CSS variables (`phoneHeroFadeStyle` in
- * src/lib/phoneHeroFade.ts, `bg-hero-phone-veil` in globals.css). Defaults: 40% veil,
- * fade in the bottom 25%. Everything from `sm` up is the same string as the band's, so the
- * desktop does not move.
+ * The homepage's scrim: the desktop gradient over the whole box, with a darker middle on
+ * a phone.
  *
- * How it got here, 2026-09-22. Hunter: "the fade on the iphone is too much, I want to see
- * more of the image". He went through 50%, 30%, 10%, lower fades, slower fades and a text
- * shadow, and settled on the treatment that reads like the desktop hero: an even veil, no
- * shadow, no zoom. The photo stays capped at 400px because anything taller zooms the crop
- * in, which he rejected (that was the 2026-09-16 complaint).
+ * Hunter, 2026-09-23: make the phone "like the computer". On a phone the homepage
+ * photograph is no longer capped (see `photoCap` in `SHAPE.screen`), so it covers the
+ * whole hero, stats included, as it does on a desktop, under the same 90% / 25% ends.
+ * The middle stop is **75% below `sm`** and the desktop's 55% from `sm` up: he then asked
+ * for "a higher middle gradient" and chose 75% over 65% from mockups. On a phone the
+ * middle of this tall box is where the paragraph, buttons and first stats sit, so that is
+ * the stop that carries them.
  *
- * **Knowingly accepted: the teal headline line fails contrast on pale slides.** Measured
- * on all seven homepage slides at 320–430 wide, against the brightest 10% of pixels behind
- * each line, at the defaults:
+ * The cost he chose knowingly: covering a hero that is 900–1070px tall on a phone zooms
+ * the 16:9 crop in about 4x at 390 wide (he compared it against 1.8x, 2.1x, 2.3x and 2.7x
+ * mockups). It replaces the 2026-09-22 phone treatment — a 40% veil over a 460px photo,
+ * tunable in the Studio — and that Studio setting was removed with it.
  *
- *     eyebrow (in its 40% pill, needs 4.5)   5.88 – 6.15   passes
- *     h1 white (needs 3.0)                   2.60 – 2.82
- *     h1 teal (needs 3.0)                    1.34 – 1.37
- *
- * Raising the veil in the Studio is the lever if a slide reads badly. The lightest
- * treatment measured to pass without help was a 50%-at-50% gradient (teal 3.20).
- *
- * The six `band` pages keep `PHONE_SCRIM_BAND`. Their copy sits lower on the photo, over
- * its brightest middle, and nobody has reviewed them lighter. Measure them first.
+ * The six `band` pages keep `PHONE_SCRIM_BAND` and their 400px phone photo.
  */
-const PHONE_SCRIM_SCREEN =
-  'absolute inset-x-0 top-0 h-[460px] bg-hero-phone-veil sm:bg-gradient-to-t ' +
-  'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
+const SCRIM_SCREEN =
+  'absolute inset-0 bg-gradient-to-t from-scrim/90 from-0% via-scrim/75 via-50% to-scrim/25 to-100% ' +
+  'sm:via-scrim/55'
 
 /**
  * Which shape the band takes. One prop with two named values, not two booleans.
@@ -218,32 +208,21 @@ const SHAPE: Record<
     box: 'min-h-svh',
     copy: 'mx-auto max-w-[1200px] px-6',
     /*
-     * The phone clause came down from 400vw to 225vw on 2026-09-16, and it is the only
-     * part of `sizes` the crop cap moved.
+     * The phone clause is 600vw because the photograph covers the whole box again on a
+     * phone (2026-09-23, "like the computer"), and `object-cover` makes the painted width
+     * the box HEIGHT times 1.78. The box is tallest relative to its width on the narrowest
+     * phone, so that is what the clause has to clear: about 1070px tall at 320 wide paints
+     * about 1900 CSS px, 5.9x. It was 225vw / 256vw while the phone photo was capped at
+     * 400 / 460px (2026-09-16 to 09-22), and 400vw before that.
      *
-     * 400vw was calibrated on a 375x812 phone where the box was the whole screen and the
-     * paint was 3.85x it. `PHONE_PHOTO_CAP` makes that box 400px, so the paint is a flat
-     * 712 CSS px below `sm` regardless of how tall the copy grows the section — 1.90x at
-     * 375 wide, 2.23x at 320, 1.11x at 639. The clause has to clear the NARROWEST phone,
-     * because that is where the multiplier is largest, so it is derived from 320 and not
-     * from 375: 712 / 320 = 2.23, rounded up.
-     *
-     * `band` is deliberately not given a phone clause, and this is the one place the two
-     * shapes stopped differing without the code following. The cap applies to both, so
-     * both now paint 712 CSS px on a phone — but `band` painted 747 before it (420px box,
-     * hinted at 100vw), so nothing about `band` moved and the 2026-09-15 reasoning that
-     * declined to correct it stands unchanged. Correcting it now would buy a third of a
-     * linear pixel on six pages for about 190KB each. See the note at the <Image>.
-     *
-     * The tablet and desktop clauses are untouched because the cap is not: `sm:max-h-none`
-     * gives the photograph the whole box back at 640px and up, so above the phone this
-     * component paints exactly what it painted yesterday.
+     * Byte cost is bounded by the source, not by this number: the Sanity crop is capped at
+     * 1600px wide, so every variant at or above it is the same asset (see the note at the
+     * <Image>). This only changes what a DPR-1 phone asks for.
      */
-    sizes: '(max-width: 640px) 256vw, (max-width: 1024px) 200vw, 100vw',
-    scrim: PHONE_SCRIM_SCREEN,
-    // 460px, not the band's 400: Hunter asked for a slight zoom-in on 2026-09-22 and
-    // chose 2.1x at 390 wide over 2.3x. Must equal the `h-[460px]` in PHONE_SCRIM_SCREEN.
-    photoCap: 'max-h-[460px] sm:max-h-none',
+    sizes: '(max-width: 640px) 600vw, (max-width: 1024px) 200vw, 100vw',
+    scrim: SCRIM_SCREEN,
+    // No phone cap: the photograph covers the box at every width, as on a desktop.
+    photoCap: '',
   },
   band: {
     box: 'min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]',
@@ -286,7 +265,6 @@ export function HeroCarousel({
   slides,
   overlay,
   variant = 'band',
-  phoneFade,
 }: {
   slides: CarouselSlide[]
   /**
@@ -305,13 +283,7 @@ export function HeroCarousel({
    * homepage passes `screen`, and it says so at the call site.
    */
   variant?: HeroVariant
-  /**
-   * The Studio's Home page → Phone hero fade values. Read by `screen` only; `band` has no
-   * editable veil and ignores it. See `PHONE_SCRIM_SCREEN`.
-   */
-  phoneFade?: PhoneHeroFade
 }) {
-  const scrimStyle = variant === 'screen' ? phoneHeroFadeStyle(phoneFade) : undefined
   const usable = useMemo(() => usableSlides(slides), [slides])
   /*
    * `prev` is the slide being faded OUT, and it is tracked in the same state update as
@@ -565,10 +537,10 @@ export function HeroCarousel({
 
               On a PHONE that is no longer true, and deliberately: the gradient is anchored
               to the photograph and carries the contrast itself, so the same pale lobby shot
-              measures 5.2:1 rather than 2.4:1. See `PHONE_SCRIM_BAND` and `PHONE_SCRIM_SCREEN` for the measurements and
+              measures 5.2:1 rather than 2.4:1. See `PHONE_SCRIM_BAND` and `SCRIM_SCREEN` for the measurements and
               for why the phone needed its own answer.
             */}
-            <span className={SHAPE[variant].scrim} style={scrimStyle} />
+            <span className={SHAPE[variant].scrim} />
           </Link>
         )
       })}

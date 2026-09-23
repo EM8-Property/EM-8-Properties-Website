@@ -71,12 +71,12 @@ at the painted geometry and blends the gradient per pixel. Nothing in CI audits 
 - `pageHero.test.tsx`: `PageHero` forwards `phoneFade` on `screen`, not on `band`, and no
   text shadow exists on either.
 
-## Not done
+## Shipped, then superseded
 
-- **Not merged or deployed.** The merge was refused by the session's permission
-  classifier and is Hunter's to do. Then deploy the merge SHA per
-  `docs/deploys-and-migrations.md`, check `/` at 390 on the Railway domain, and run
-  `bash scripts/deploy-studio.sh` so the new field appears in the Studio.
+Merged as `6f7cc68` (PR #59), deployed as Railway `d120eba4` and verified on the live page
+(460px photo, 40% / 25%, no shadow), Studio redeployed with the new field. **Superseded the
+next day** by `docs/handover-2026-09-23-phone-hero-full-bleed.md`: the phone homepage now
+matches the desktop and the Studio field was removed.
 
 ## Still open
 
