@@ -7,6 +7,15 @@ import { HeroCarousel, type HeroVariant } from '@/components/layout/HeroCarousel
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 import { HEADER_RESERVATION } from '@/lib/headerReservation'
 
+/*
+ * The homepage's phone headline (concept B, 2026-09-23). 40px, and 42px from 390 wide, at
+ * 1.02 leading: with the intro paragraph gone on a phone, the headline is the first screen's
+ * one loud element, and the scroll cost that held it at 36px (see the note on the h1 below)
+ * went with the paragraph. 40px below 390 so "communities" still fits a 320px screen's
+ * 272px measure. `sm` and up are the shared scale, untouched.
+ */
+const HOME_PHONE_H1 = 'text-[40px] leading-[1.02] min-[390px]:text-[42px]'
+
 /**
  * The title block every section page opens with.
  *
@@ -136,6 +145,11 @@ export function PageHero({
     </>
   )
 
+  // The homepage's phone treatment (concept B, 2026-09-23): no intro paragraph, a bigger
+  // headline, the secondary call to action as a text link, and a three-stat strip. Every
+  // one of those is phone-only; from `sm` up the homepage renders exactly as before.
+  const isHome = variant === 'screen' && hasPhoto
+
   const buttons = (copy.primaryCta?.href || copy.secondaryCta?.href) && (
     // pointer-events re-enabled here only. The overlay wrapper disables them so the
     // photograph underneath stays clickable; the buttons have to opt back in.
@@ -144,7 +158,10 @@ export function PageHero({
         <Button href={copy.primaryCta.href}>{copy.primaryCta.label}</Button>
       )}
       {copy.secondaryCta?.href && copy.secondaryCta.label && (
-        <Button href={copy.secondaryCta.href} variant={hasPhoto ? 'onPhoto' : 'secondary'}>
+        <Button
+          href={copy.secondaryCta.href}
+          variant={isHome ? 'onPhotoLink' : hasPhoto ? 'onPhoto' : 'secondary'}
+        >
           {copy.secondaryCta.label}
         </Button>
       )}
@@ -342,7 +359,11 @@ export function PageHero({
 
             `sm` and `lg` are untouched: still 60px and the measured 64px.
           */}
-          <h1 className="mt-3 text-4xl font-bold leading-[1] tracking-tight text-white sm:text-6xl sm:leading-[1.1] lg:text-[64px]">
+          <h1
+            className={`mt-3 font-bold tracking-tight text-white sm:text-6xl sm:leading-[1.1] lg:text-[64px] ${
+              isHome ? HOME_PHONE_H1 : 'text-4xl leading-[1]'
+            }`}
+          >
             {title}
           </h1>
           {copy.intro && (
@@ -362,14 +383,47 @@ export function PageHero({
               tiers are already distinct, and 14px is what the six band pages were
               measured at. So the phone gets the change and nothing else does.
             */
-            <p className="mt-4 max-w-[52ch] text-base leading-[1.55] text-white/85 sm:text-sm sm:leading-relaxed">
+            <p
+              className={`mt-4 max-w-[52ch] text-base leading-[1.55] text-white/85 sm:text-sm sm:leading-relaxed ${
+                isHome ? 'hidden sm:block' : ''
+              }`}
+            >
               {copy.intro}
             </p>
           )}
           {buttons}
-          {statBand}
+          {stats && stats.length > 0 && <StatStrip stats={stats.slice(0, 3)} />}
+          {statBand && <div className="hidden sm:block">{statBand}</div>}
         </div>
       }
     />
+  )
+}
+
+/**
+ * The homepage's phone stat strip: one slim row of the first three stats under a teal
+ * hairline, in place of the full five-stat grid, which shows from `sm` up.
+ *
+ * Hunter, 2026-09-23 (concept B): the phone hero was "too text heavy" to have any wow. Five
+ * stats in three rows were a third of the screen; three in one row keep the proof on the
+ * first screen at a fraction of the height. Which three is the Studio's order — the first
+ * three `heroStat` documents — so it stays editable there.
+ */
+function StatStrip({ stats }: { stats: { figure: string; label: string }[] }) {
+  return (
+    <dl className="mt-6 grid grid-cols-3 gap-4 border-t border-teal/60 pt-4 sm:hidden">
+      {stats.map((s) => (
+        <div key={s.label} className="min-w-0">
+          <dt className="sr-only">{s.label}</dt>
+          <dd className="text-[22px] font-bold leading-none tracking-tight text-white">{s.figure}</dd>
+          <dd
+            aria-hidden="true"
+            className="mt-1.5 text-[9px] font-semibold uppercase leading-[1.35] tracking-[0.18em] text-white/70"
+          >
+            {s.label}
+          </dd>
+        </div>
+      ))}
+    </dl>
   )
 }

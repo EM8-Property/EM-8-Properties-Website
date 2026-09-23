@@ -188,8 +188,8 @@ describe('hero geometry, both shapes', () => {
     // where the multiplier is largest.
     const phone = screen.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
     expect(phone, 'no narrow-viewport clause').not.toBeNull()
-    // Uncapped again since 2026-09-23 ("like the computer"): ~1900 CSS px over 320 is ~5.9x.
-    expect(Number(phone![1])).toBeGreaterThanOrEqual(595)
+    // One screen tall on a phone since concept B (2026-09-23): 812 / 375 × 1.78 ≈ 3.85x.
+    expect(Number(phone![1])).toBeGreaterThanOrEqual(385)
     // And a tablet, by less, because it is less tall relative to its width. Asserted
     // because without it the middle clause can be deleted with every test still green.
     const tablet = screen.match(/\(max-width:\s*1024px\)\s*(\d+)vw/)
@@ -326,6 +326,48 @@ describe('PageHero copy', () => {
       }
       cleanup()
     }
+  })
+
+  /*
+   * Concept B, the homepage on a phone (Hunter, 2026-09-23: "maybe too text heavy"): the
+   * intro paragraph hidden, the secondary call to action as a text link, and a strip of the
+   * first three stats in place of the five-stat grid. Every one of those is phone-only and
+   * homepage-only; the band pages and every width from `sm` are unchanged.
+   */
+  it('lightens the homepage hero on a phone, and nothing else', () => {
+    const STATS = [
+      { figure: '$100M+', label: 'Assets under management' },
+      { figure: '1,350+', label: 'Units managed' },
+      { figure: '750+', label: 'Units sold' },
+      { figure: '2.18x', label: 'Realized equity multiple' },
+    ]
+    const withCtas = {
+      ...COPY,
+      primaryCta: { label: 'View portfolio', href: '/portfolio' },
+      secondaryCta: { label: 'Read our thinking', href: '/insights' },
+    }
+
+    const { container } = render(
+      <PageHero copy={withCtas} slides={SLIDES} variant="screen" stats={STATS} />,
+    )
+    expect(screen.getByText(COPY.intro).className).toMatch(/(?:^|\s)hidden\b/)
+    expect(screen.getByText(COPY.intro).className).toMatch(/\bsm:block\b/)
+    expect(screen.getByRole('link', { name: 'Read our thinking' }).className).toMatch(/\bunderline\b/)
+
+    const strip = container.querySelector('dl')!
+    expect(strip.className).toMatch(/\bsm:hidden\b/)
+    expect([...strip.querySelectorAll('dt')].map((d) => d.textContent)).toEqual(
+      STATS.slice(0, 3).map((s) => s.label),
+    )
+    // The full grid is still rendered, for `sm` and up.
+    expect(container.querySelector('[data-stat-band]')!.parentElement!.parentElement!.className).toMatch(
+      /\bhidden sm:block\b/,
+    )
+
+    cleanup()
+    render(<PageHero copy={withCtas} slides={SLIDES} variant="band" />)
+    expect(screen.getByText(COPY.intro).className).not.toMatch(/(?:^|\s)hidden\b/)
+    expect(screen.getByRole('link', { name: 'Read our thinking' }).className).not.toMatch(/\bunderline\b/)
   })
 
   it('shows the eyebrow and the intro', () => {

@@ -714,28 +714,26 @@ test('/about sits exactly on the clearance floor, with the webfonts blocked', as
 /*
  * The type scale, asserted where it was decided.
  *
- * 390x844 is the review viewport (spec §11) and it is also the only phone width where
- * the homepage hero had any slack left after PR 3 — 51px of it. The phone step was
- * chosen against that number: 36px spends 53px of it and costs 2px of page length,
- * where §7's own lowest reading of 40px spends 110px and costs 60px.
- *
  * A unit test already pins the class tokens. This pins the COMPUTED size, which is the
- * thing the measurement was taken against and the thing a Tailwind config change could
- * move without touching a single class name.
+ * thing the decisions were taken against and the thing a Tailwind config change could move
+ * without touching a single class name.
+ *
+ * The band pages' phone step is 36px, measured in PR 4 against the hero's scroll slack
+ * (see the table in PageHero.tsx). The homepage's is 42px at this width since concept B
+ * (Hunter, 2026-09-23): its intro paragraph is hidden on a phone, which is what spent that
+ * slack, so its headline became the first screen's one loud element.
  */
-test('the headline renders at the measured 36px on a phone', async ({ page }) => {
+test('the headline renders at its decided phone size, on the homepage and a band page', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/')
+  const size = async (path: string) => {
+    await page.goto(path)
+    return page.locator('h1').first().evaluate((el) => getComputedStyle(el).fontSize)
+  }
 
-  const fontSize = await page
-    .locator('h1')
-    .first()
-    .evaluate((el) => getComputedStyle(el).fontSize)
-
+  expect(await size('/'), 'the homepage phone headline (concept B): see HOME_PHONE_H1').toBe('42px')
   expect(
-    fontSize,
-    `the phone headline is the one value in PR 4 derived from measurement rather than ` +
-      `from spec §7 — see the table in PageHero.tsx before changing it`,
+    await size('/about'),
+    'the band pages keep the measured 36px: see the table in PageHero.tsx before changing it',
   ).toBe('36px')
 })
 

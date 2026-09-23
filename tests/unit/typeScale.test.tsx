@@ -53,9 +53,11 @@ function h1Tokens(): string[] {
 }
 
 describe('the h1 type scale', () => {
+  // The six band pages. The homepage's phone step differs since 2026-09-23 and is pinned
+  // in its own block below; from `sm` up the two share this scale.
   describe('on a photograph', () => {
     beforeEach(() => {
-      render(<PageHero copy={COPY} slides={SLIDES} variant="screen" />)
+      render(<PageHero copy={COPY} slides={SLIDES} variant="band" />)
     })
 
     /*
@@ -114,6 +116,34 @@ describe('the h1 type scale', () => {
       const tokens = h1Tokens()
       expect(tokens).not.toContain('sm:text-4xl')
       expect(tokens).not.toContain('lg:text-5xl')
+    })
+  })
+
+  /*
+   * The homepage on a phone, concept B (Hunter, 2026-09-23: "not giving me that wow factor
+   * ... maybe too text heavy"). The intro paragraph is hidden below `sm` there, and it was
+   * the paragraph's scroll cost that held the phone step at 36px. With it gone, the
+   * headline is the first screen's one loud element: 40px, 42px from 390 wide, at 1.02.
+   * 40px under 390 so the longest word, "communities", fits a 320px screen's 272px measure.
+   */
+  describe('on the homepage photograph, on a phone', () => {
+    beforeEach(() => {
+      render(<PageHero copy={COPY} slides={SLIDES} variant="screen" />)
+    })
+
+    it('sets the phone step at 40px, 42px from 390 wide, at 1.02', () => {
+      const tokens = h1Tokens()
+      expect(tokens).toContain('text-[40px]')
+      expect(tokens).toContain('min-[390px]:text-[42px]')
+      expect(tokens).toContain('leading-[1.02]')
+      expect(tokens).not.toContain('text-4xl')
+    })
+
+    it('shares the band pages’ scale from sm up', () => {
+      const tokens = h1Tokens()
+      expect(tokens).toContain('sm:text-6xl')
+      expect(tokens).toContain('sm:leading-[1.1]')
+      expect(tokens).toContain('lg:text-[64px]')
     })
   })
 

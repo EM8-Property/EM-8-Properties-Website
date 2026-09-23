@@ -122,27 +122,24 @@ const PHONE_SCRIM_BAND =
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
- * The homepage's scrim: the desktop gradient over the whole box, with a darker middle on
- * a phone.
+ * The homepage's scrim. On a phone, `bg-hero-phone-scrim` (globals.css): the top of the
+ * photograph nearly clear, darkening through the lower third where the headline, button and
+ * stat strip sit. From `sm` up, the desktop's 90% / 55% / 25%, unchanged.
  *
- * Hunter, 2026-09-23: make the phone "like the computer". On a phone the homepage
- * photograph is no longer capped (see `photoCap` in `SHAPE.screen`), so it covers the
- * whole hero, stats included, as it does on a desktop, under the same 90% / 25% ends.
- * The middle stop is **75% below `sm`** and the desktop's 55% from `sm` up: he then asked
- * for "a higher middle gradient" and chose 75% over 65% from mockups. On a phone the
- * middle of this tall box is where the paragraph, buttons and first stats sit, so that is
- * the stop that carries them.
+ * Hunter, 2026-09-23. The phone homepage had just gone full-bleed "like the computer",
+ * and on his phone it was "not giving me that wow factor ... maybe too text heavy". From
+ * three mocked concepts he chose B: the paragraph dropped on phones, a bigger headline,
+ * one button plus a text link, and a single strip of three stats (`PageHero`), which is
+ * what lets the top half of the photo stay clear.
  *
- * The cost he chose knowingly: covering a hero that is 900–1070px tall on a phone zooms
- * the 16:9 crop in about 4x at 390 wide (he compared it against 1.8x, 2.1x, 2.3x and 2.7x
- * mockups). It replaces the 2026-09-22 phone treatment — a 40% veil over a 460px photo,
- * tunable in the Studio — and that Studio setting was removed with it.
+ * The photo still covers the whole box on a phone (see `photoCap` in `SHAPE.screen`),
+ * but that box is now one screen tall rather than 900–1070px, so the zoom is ~3.9x.
  *
  * The six `band` pages keep `PHONE_SCRIM_BAND` and their 400px phone photo.
  */
 const SCRIM_SCREEN =
-  'absolute inset-0 bg-gradient-to-t from-scrim/90 from-0% via-scrim/75 via-50% to-scrim/25 to-100% ' +
-  'sm:via-scrim/55'
+  'absolute inset-0 bg-hero-phone-scrim sm:bg-gradient-to-t ' +
+  'sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
  * Which shape the band takes. One prop with two named values, not two booleans.
@@ -208,18 +205,17 @@ const SHAPE: Record<
     box: 'min-h-svh',
     copy: 'mx-auto max-w-[1200px] px-6',
     /*
-     * The phone clause is 600vw because the photograph covers the whole box again on a
-     * phone (2026-09-23, "like the computer"), and `object-cover` makes the painted width
-     * the box HEIGHT times 1.78. The box is tallest relative to its width on the narrowest
-     * phone, so that is what the clause has to clear: about 1070px tall at 320 wide paints
-     * about 1900 CSS px, 5.9x. It was 225vw / 256vw while the phone photo was capped at
-     * 400 / 460px (2026-09-16 to 09-22), and 400vw before that.
+     * The phone clause is 400vw. The photograph covers the whole box on a phone, and
+     * `object-cover` makes the painted width the box HEIGHT times 1.78. Since the concept-B
+     * redesign (2026-09-23) the phone copy is short enough that the box is one screen
+     * tall, so the widest multiplier is a tall narrow phone: 812 / 375 × 1.78 ≈ 3.85x.
+     * History: 400vw until 2026-09-16, 225vw / 256vw while the phone photo was capped,
+     * 600vw for one day while the phone paragraph made the box ~1070px tall.
      *
-     * Byte cost is bounded by the source, not by this number: the Sanity crop is capped at
-     * 1600px wide, so every variant at or above it is the same asset (see the note at the
-     * <Image>). This only changes what a DPR-1 phone asks for.
+     * Byte cost is bounded by the source: the Sanity crop is capped at 1600px wide, so
+     * every variant at or above it is the same asset (see the note at the <Image>).
      */
-    sizes: '(max-width: 640px) 600vw, (max-width: 1024px) 200vw, 100vw',
+    sizes: '(max-width: 640px) 400vw, (max-width: 1024px) 200vw, 100vw',
     scrim: SCRIM_SCREEN,
     // No phone cap: the photograph covers the box at every width, as on a desktop.
     photoCap: '',
