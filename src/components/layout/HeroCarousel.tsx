@@ -122,24 +122,27 @@ const PHONE_SCRIM_BAND =
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
- * The homepage's scrim: the desktop gradient, at every width, over the whole box.
+ * The homepage's scrim: the desktop gradient over the whole box, with a darker middle on
+ * a phone.
  *
  * Hunter, 2026-09-23: make the phone "like the computer". On a phone the homepage
  * photograph is no longer capped (see `photoCap` in `SHAPE.screen`), so it covers the
- * whole hero, stats included, exactly as it does on a desktop, and this is the same
- * 90% / 55% / 25% gradient the desktop has always had. One string, no `sm:` variant,
- * because there is nothing left to differ.
+ * whole hero, stats included, as it does on a desktop, under the same 90% / 25% ends.
+ * The middle stop is **75% below `sm`** and the desktop's 55% from `sm` up: he then asked
+ * for "a higher middle gradient" and chose 75% over 65% from mockups. On a phone the
+ * middle of this tall box is where the paragraph, buttons and first stats sit, so that is
+ * the stop that carries them.
  *
  * The cost he chose knowingly: covering a hero that is 900–1070px tall on a phone zooms
  * the 16:9 crop in about 4x at 390 wide (he compared it against 1.8x, 2.1x, 2.3x and 2.7x
  * mockups). It replaces the 2026-09-22 phone treatment — a 40% veil over a 460px photo,
- * tunable in the Studio — and that Studio setting was removed with it, since the phone now
- * simply matches the desktop.
+ * tunable in the Studio — and that Studio setting was removed with it.
  *
  * The six `band` pages keep `PHONE_SCRIM_BAND` and their 400px phone photo.
  */
 const SCRIM_SCREEN =
-  'absolute inset-0 bg-gradient-to-t from-scrim/90 from-0% via-scrim/55 via-50% to-scrim/25 to-100%'
+  'absolute inset-0 bg-gradient-to-t from-scrim/90 from-0% via-scrim/75 via-50% to-scrim/25 to-100% ' +
+  'sm:via-scrim/55'
 
 /**
  * Which shape the band takes. One prop with two named values, not two booleans.

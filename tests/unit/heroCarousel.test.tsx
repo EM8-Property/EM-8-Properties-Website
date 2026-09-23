@@ -216,7 +216,7 @@ describe('HeroCarousel — resource budget', () => {
    * so it is pinned to be exactly the band's `sm:` stops with the prefix dropped. If the
    * desktop gradient ever changes, the homepage's phone moves with it.
    */
-  it('keeps the band pages’ phone scrim, and gives the homepage the desktop gradient', () => {
+  it('keeps the band pages’ phone scrim, and gives the homepage the desktop gradient with a darker phone middle', () => {
     const scrimOf = (variant: 'screen' | 'band') =>
       render(<HeroCarousel slides={many} variant={variant} />).container.querySelector(
         'a > span',
@@ -232,12 +232,17 @@ describe('HeroCarousel — resource budget', () => {
     expect(band).toMatch(/\bsm:via-scrim\/55\b/)
     expect(band).toMatch(/\bsm:to-scrim\/25\b/)
 
+    // The homepage on a phone: the desktop's ends, with the middle at 75% (Hunter chose it
+    // over 65% on 2026-09-23). From `sm` up the middle returns to the desktop's 55%, so the
+    // computer view is the band's desktop gradient exactly.
     const home = scrimOf('screen')
-    expect(home).not.toMatch(/\bsm:/)
+    expect(home).toMatch(/(?:^|\s)via-scrim\/75\b/)
+    expect(home).toMatch(/\bsm:via-scrim\/55\b/)
     const stops = (c: string, prefix: string) =>
       c.split(/\s+/).filter((k) => /^(?:from|via|to)-/.test(k.slice(prefix.length)) && k.startsWith(prefix))
         .map((k) => k.slice(prefix.length)).sort().join(' ')
-    expect(stops(home, '')).toBe(stops(band, 'sm:'))
+    const desktop = stops(home, '').replace('via-scrim/75', 'via-scrim/55')
+    expect(desktop).toBe(stops(band, 'sm:'))
   })
 
   /*
