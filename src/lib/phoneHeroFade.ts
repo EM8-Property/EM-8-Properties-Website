@@ -12,7 +12,7 @@ import type { CSSProperties } from 'react'
  * `docs/deploys-and-migrations.md`, "required() is a lie"), so they are clamped here as
  * well. Anything missing or unusable falls back to what Hunter chose on 2026-09-22.
  */
-export const PHONE_HERO_FADE_DEFAULTS = { veil: 40, fadeStart: 5 } as const
+export const PHONE_HERO_FADE_DEFAULTS = { veil: 40, fadeStart: 25 } as const
 
 export type PhoneHeroFade = { veil?: number | null; fadeStart?: number | null } | null | undefined
 

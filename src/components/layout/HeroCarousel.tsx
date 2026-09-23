@@ -124,10 +124,10 @@ const PHONE_SCRIM_BAND =
 
 /**
  * The homepage's phone scrim: an even veil over the photograph, with the fade to solid
- * scrim confined to its bottom edge. Both numbers are editable in the Studio under
+ * scrim confined to its lower part. Both numbers are editable in the Studio under
  * Home page → Phone hero fade and arrive as CSS variables (`phoneHeroFadeStyle` in
  * src/lib/phoneHeroFade.ts, `bg-hero-phone-veil` in globals.css). Defaults: 40% veil,
- * fade in the bottom 5%. Everything from `sm` up is the same string as the band's, so the
+ * fade in the bottom 25%. Everything from `sm` up is the same string as the band's, so the
  * desktop does not move.
  *
  * How it got here, 2026-09-22. Hunter: "the fade on the iphone is too much, I want to see
@@ -151,7 +151,7 @@ const PHONE_SCRIM_BAND =
  * its brightest middle, and nobody has reviewed them lighter. Measure them first.
  */
 const PHONE_SCRIM_SCREEN =
-  'absolute inset-x-0 top-0 h-[400px] bg-hero-phone-veil sm:bg-gradient-to-t ' +
+  'absolute inset-x-0 top-0 h-[460px] bg-hero-phone-veil sm:bg-gradient-to-t ' +
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
@@ -188,7 +188,10 @@ export type HeroVariant = 'screen' | 'band'
  * width the browser should assume the image occupies, and `object-cover` makes that a
  * function of the box's HEIGHT. See the note at the <Image> for the measurements.
  */
-const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string; scrim: string }> = {
+const SHAPE: Record<
+  HeroVariant,
+  { box: string; copy: string; sizes: string; scrim: string; photoCap: string }
+> = {
   /*
    * `screen` carried `p-6 sm:p-10` — an inset from the IMAGE edge, not the content column
    * — from 2026-09-0x until 2026-09-15, and that was a decision rather than an oversight.
@@ -236,14 +239,18 @@ const SHAPE: Record<HeroVariant, { box: string; copy: string; sizes: string; scr
      * gives the photograph the whole box back at 640px and up, so above the phone this
      * component paints exactly what it painted yesterday.
      */
-    sizes: '(max-width: 640px) 225vw, (max-width: 1024px) 200vw, 100vw',
+    sizes: '(max-width: 640px) 256vw, (max-width: 1024px) 200vw, 100vw',
     scrim: PHONE_SCRIM_SCREEN,
+    // 460px, not the band's 400: Hunter asked for a slight zoom-in on 2026-09-22 and
+    // chose 2.1x at 390 wide over 2.3x. Must equal the `h-[460px]` in PHONE_SCRIM_SCREEN.
+    photoCap: 'max-h-[460px] sm:max-h-none',
   },
   band: {
     box: 'min-h-[420px] sm:min-h-[500px] lg:min-h-[560px]',
     copy: 'mx-auto max-w-[1200px] px-6',
     sizes: '100vw',
     scrim: PHONE_SCRIM_BAND,
+    photoCap: PHONE_PHOTO_CAP,
   },
 }
 
@@ -542,7 +549,7 @@ export function HeroCarousel({
                   confined to a phone. See `PHONE_PHOTO_CAP` for the measurements and for
                   why lowering `min-h-svh` would not have worked.
                 */
-                className={`h-full w-full object-cover ${PHONE_PHOTO_CAP}`}
+                className={`h-full w-full object-cover ${SHAPE[variant].photoCap}`}
               />
             )}
             {/*

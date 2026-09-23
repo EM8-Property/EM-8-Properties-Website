@@ -5,15 +5,18 @@ show more of the image, and do not change the desktop hero. PR #59.
 
 ## Where it landed
 
-**Homepage, phone only:** an even **40% veil** over the photo, **no text shadow**, and a
-fade to solid scrim only in the **bottom 5%** of the photo. Both numbers are **editable in
+**Homepage, phone only:** an even **40% veil** over the photo, **no text shadow**, a fade
+to solid scrim in the **bottom 25%** of the photo, and the photo **460px** tall (a slight
+zoom-in: 2.1x at 390 wide, from 1.8x; the band pages stay 400px). Both numbers are **editable in
 the Studio** under *Home page → Phone hero fade* (`homePage.phoneHeroFade.veil`,
 `.fadeStart`).
 
 | | before (live) | after |
 |---|---|---|
-| phone scrim, `/` | 100% / 70% @ 65% / 10% | 100% @ 0 → **40%** @ **5%** → 40% |
-| Studio control | none | veil 0–80 (default 40), fadeStart 0–60 (default 5) |
+| phone scrim, `/` | 100% / 70% @ 65% / 10% | 100% @ 0 → **40%** @ **25%** → 40% |
+| phone photo, `/` | 400px, 1.8x at 390 | **460px**, 2.1x at 390 (2.56x at 320) |
+| `sizes` phone clause | 225vw | **256vw** (818 CSS px over 320) |
+| Studio control | none | veil 0–80 (default 40), fadeStart 0–60 (default 25) |
 | text shadow | none | none |
 
 **Unchanged, verified against live computed styles:** `/` at 1440 and 768, `/investors` at
@@ -40,9 +43,9 @@ the Studio** under *Home page → Phone hero fade* (`homePage.phoneHeroFade.veil
 ## Knowingly accepted: contrast on pale slides
 
 Hunter went through 50%, 30%, 10%, lower fades, slower (eased) fades, a text-shadow halo,
-a taller photo (rejected: it zooms the crop in, the 2026-09-16 complaint) and the desktop
-veil. He chose this and explicitly dropped the shadow. Measured over all seven slides at
-320–430 wide, against the brightest 10% of pixels behind each line, at the defaults:
+a taller photo (2.7x rejected as too zoomed; 2.1x chosen over 2.3x) and the desktop veil. He chose this and explicitly dropped the shadow. Measured over all seven slides at
+320–430 wide, against the brightest 10% of pixels behind each line, at 40% veil with a 5% fade and the 400px photo (the 25% fade and 460px photo put the
+headline over the same veil, so the headline figures carry over; not re-measured):
 
 | | needs | measures |
 |---|---|---|
@@ -61,9 +64,9 @@ at the painted geometry and blends the gradient per pixel. Nothing in CI audits 
 
 668 unit, `tsc`, `eslint`, `next build` (35 pages) clean.
 
-- `heroCarousel.test.tsx`: the band keeps 70/65/10. The homepage uses
+- `heroCarousel.test.tsx`: each shape's photo cap equals its scrim height (460 / 400). The band keeps 70/65/10. The homepage uses
   `bg-hero-phone-veil` and no phone stops. Both share their `sm:` classes. The Studio
-  values reach `--hero-veil` / `--hero-fade`, defaulting to 40/5 and clamped to 0–80 /
+  values reach `--hero-veil` / `--hero-fade`, defaulting to 40/25 and clamped to 0–80 /
   0–60. The band ignores them.
 - `pageHero.test.tsx`: `PageHero` forwards `phoneFade` on `screen`, not on `band`, and no
   text shadow exists on either.

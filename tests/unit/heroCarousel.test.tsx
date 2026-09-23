@@ -199,19 +199,29 @@ describe('HeroCarousel — resource budget', () => {
    * Tailwind scans source for literal class names, so neither can be interpolated from a
    * shared constant. This is the thing that holds them together instead.
    */
-  it('caps the phone crop and the phone scrim at the same height', () => {
+  it('caps the phone crop and the phone scrim at the same height, in both shapes', () => {
+    // 460px on the homepage (Hunter's slight zoom-in, 2026-09-22), 400px on the six band
+    // pages. Each pair has to agree with itself; the two shapes do not have to agree.
+    const expected = { screen: '460', band: '400' } as const
+    for (const variant of ['screen', 'band'] as const) {
+      const { container } = render(<HeroCarousel slides={many} variant={variant} />)
+      const img = container.querySelector('img')!
+      const scrim = container.querySelector('a > span')!
+      const cap = img.className.match(/max-h-\[(\d+)px\]/)
+      expect(cap, `no phone cap on the ${variant} image: ${img.className}`).not.toBeNull()
+      const scrimH = scrim.className.match(/(?:^|\s)h-\[(\d+)px\]/)
+      expect(scrimH, `no phone height on the ${variant} scrim: ${scrim.className}`).not.toBeNull()
+      expect(
+        scrimH![1],
+        `${variant}: the scrim no longer ends where the photograph does — the fade will show a seam`,
+      ).toBe(cap![1])
+      expect(cap![1], variant).toBe(expected[variant])
+      cleanup()
+    }
+
     const { container } = render(<HeroCarousel slides={many} variant="screen" />)
     const img = container.querySelector('img')!
     const scrim = container.querySelector('a > span')!
-
-    const cap = img.className.match(/max-h-\[(\d+)px\]/)
-    expect(cap, `no phone cap on the image: ${img.className}`).not.toBeNull()
-    const scrimH = scrim.className.match(/(?:^|\s)h-\[(\d+)px\]/)
-    expect(scrimH, `no phone height on the scrim: ${scrim.className}`).not.toBeNull()
-    expect(
-      scrimH![1],
-      'the scrim no longer ends where the photograph does — the fade will show a seam',
-    ).toBe(cap![1])
 
     // Both lift above `sm`, where the box is not tall relative to its width and the cap
     // would crop the top off the picture instead.
@@ -246,7 +256,7 @@ describe('HeroCarousel — resource budget', () => {
     // Nothing in the Studio yet: Hunter's defaults.
     let s = styleOf('screen')
     expect(s.getPropertyValue('--hero-veil')).toBe('40%')
-    expect(s.getPropertyValue('--hero-fade')).toBe('5%')
+    expect(s.getPropertyValue('--hero-fade')).toBe('25%')
 
     cleanup()
     s = styleOf('screen', { veil: 55, fadeStart: 20 })

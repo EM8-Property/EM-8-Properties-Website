@@ -60,7 +60,7 @@ export const homePage = defineType({
     defineField({ name: 'popup', title: 'Homepage popup', type: 'popupBlock' }),
     /*
      * Optional, with the code holding the defaults, so an empty field renders exactly what
-     * shipped (40% / 5%). Phone only: the desktop hero's gradient is not editable here.
+     * shipped (40% / 25%). Phone only: the desktop hero's gradient is not editable here.
      */
     defineField({
       name: 'phoneHeroFade',
@@ -88,8 +88,8 @@ export const homePage = defineType({
           type: 'number',
           description:
             'Where the photo starts fading into the dark section below, 0 to 60. Default ' +
-            '5 (just the bottom edge). Higher starts the fade further up.',
-          initialValue: 5,
+            '25. Higher starts the fade further up; 5 is just the bottom edge.',
+          initialValue: 25,
           validation: (r) => r.min(0).max(60).integer(),
         }),
       ],

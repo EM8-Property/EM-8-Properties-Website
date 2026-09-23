@@ -188,7 +188,8 @@ describe('hero geometry, both shapes', () => {
     // where the multiplier is largest.
     const phone = screen.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
     expect(phone, 'no narrow-viewport clause').not.toBeNull()
-    expect(Number(phone![1])).toBeGreaterThanOrEqual(223)
+    // 460px since 2026-09-22 (a slight zoom-in): 818 CSS px over 320 is 2.56x.
+    expect(Number(phone![1])).toBeGreaterThanOrEqual(256)
     // And a tablet, by less, because it is less tall relative to its width. Asserted
     // because without it the middle clause can be deleted with every test still green.
     const tablet = screen.match(/\(max-width:\s*1024px\)\s*(\d+)vw/)
