@@ -144,11 +144,11 @@ describe('HeroCarousel — resource budget', () => {
     // than the box and crops the sides off, so the painted width is the box HEIGHT times
     // 1.78, and the hint has to describe that rather than the box.
     //
-    // `screen` covers its whole box on a phone again since 2026-09-23 ("like the
-    // computer"), and that box is 900–1070px tall because the copy grows it. The narrowest
-    // phone is where the multiplier is largest: about 1070px at 320 wide paints about 1900
-    // CSS px, 5.9x. So the clause has to clear ~595vw. The upper bound stops it drifting
-    // into a number nothing paints.
+    // `screen` covers its whole box on a phone, and since the concept-B redesign
+    // (2026-09-23) the phone copy is short enough that the box is one screen tall. The
+    // widest multiplier is then a tall narrow phone: 812 / 375 × 1.78 ≈ 3.85x, so the
+    // clause has to clear ~385vw. The upper bound stops it drifting into a number nothing
+    // paints (it was 600vw for one day while the phone paragraph made the box ~1070px).
     //
     // `band` keeps its 400px phone cap, painting 712 CSS px, and is hinted at 100vw on
     // purpose: it painted 747 before the cap, so the 2026-09-15 reasoning that declined to
@@ -161,8 +161,8 @@ describe('HeroCarousel — resource budget', () => {
     const screen = sizesFor('screen')
     const phone = screen.match(/\(max-width:\s*640px\)\s*(\d+)vw/)
     expect(phone, 'no narrow-viewport clause').not.toBeNull()
-    expect(Number(phone![1])).toBeGreaterThanOrEqual(595)
-    expect(Number(phone![1])).toBeLessThan(700)
+    expect(Number(phone![1])).toBeGreaterThanOrEqual(385)
+    expect(Number(phone![1])).toBeLessThan(500)
     expect(screen.endsWith('100vw')).toBe(true)
 
     expect(sizesFor('band')).toBe('100vw')
@@ -216,7 +216,7 @@ describe('HeroCarousel — resource budget', () => {
    * so it is pinned to be exactly the band's `sm:` stops with the prefix dropped. If the
    * desktop gradient ever changes, the homepage's phone moves with it.
    */
-  it('keeps the band pages’ phone scrim, and gives the homepage the desktop gradient with a darker phone middle', () => {
+  it('keeps the band pages’ phone scrim, and gives the homepage its own phone gradient', () => {
     const scrimOf = (variant: 'screen' | 'band') =>
       render(<HeroCarousel slides={many} variant={variant} />).container.querySelector(
         'a > span',
@@ -232,17 +232,16 @@ describe('HeroCarousel — resource budget', () => {
     expect(band).toMatch(/\bsm:via-scrim\/55\b/)
     expect(band).toMatch(/\bsm:to-scrim\/25\b/)
 
-    // The homepage on a phone: the desktop's ends, with the middle at 75% (Hunter chose it
-    // over 65% on 2026-09-23). From `sm` up the middle returns to the desktop's 55%, so the
-    // computer view is the band's desktop gradient exactly.
+    // The homepage on a phone: `bg-hero-phone-scrim` (globals.css), the concept-B gradient
+    // that leaves the top of the photo clear. From `sm` up it is the band's desktop
+    // gradient exactly, stops and all, so the computer view cannot drift.
     const home = scrimOf('screen')
-    expect(home).toMatch(/(?:^|\s)via-scrim\/75\b/)
-    expect(home).toMatch(/\bsm:via-scrim\/55\b/)
-    const stops = (c: string, prefix: string) =>
-      c.split(/\s+/).filter((k) => /^(?:from|via|to)-/.test(k.slice(prefix.length)) && k.startsWith(prefix))
-        .map((k) => k.slice(prefix.length)).sort().join(' ')
-    const desktop = stops(home, '').replace('via-scrim/75', 'via-scrim/55')
-    expect(desktop).toBe(stops(band, 'sm:'))
+    expect(home).toMatch(/(?:^|\s)bg-hero-phone-scrim\b/)
+    expect(home).toMatch(/\bsm:bg-gradient-to-t\b/)
+    expect(home).not.toMatch(/(?:^|\s)(?:from|via|to)-/)
+    const smStops = (c: string) =>
+      c.split(/\s+/).filter((k) => /^sm:(?:from|via|to)-/.test(k)).sort().join(' ')
+    expect(smStops(home)).toBe(smStops(band))
   })
 
   /*

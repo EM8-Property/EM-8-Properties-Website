@@ -1,12 +1,22 @@
 import Link from 'next/link'
 
+/*
+ * `onPhotoLink` is the homepage hero's secondary call to action (concept B, 2026-09-23): an
+ * underlined text link on a phone, so the first screen carries one button rather than two,
+ * and the same outlined `onPhoto` button from `sm` up. The border is transparent on a
+ * phone rather than absent, so the box, and the tap target, are the button's own size.
+ */
+const ONPHOTO_LINK =
+  'border border-transparent text-white underline decoration-white/60 underline-offset-4 ' +
+  'hover:decoration-white sm:border-white/70 sm:no-underline sm:hover:border-white sm:hover:bg-white/10'
+
 export function Button({
   href,
   variant = 'primary',
   children,
 }: {
   href: string
-  variant?: 'primary' | 'secondary' | 'onPhoto'
+  variant?: 'primary' | 'secondary' | 'onPhoto' | 'onPhotoLink'
   children: React.ReactNode
 }) {
   const base =
@@ -35,7 +45,9 @@ export function Button({
       ? 'bg-teal text-ink hover:bg-teal-hover'
       : variant === 'onPhoto'
         ? 'border border-white/70 text-white hover:border-white hover:bg-white/10'
-        : 'border border-rule text-ink hover:border-teal'
+        : variant === 'onPhotoLink'
+          ? ONPHOTO_LINK
+          : 'border border-rule text-ink hover:border-teal'
   return (
     <Link href={href} className={`${base} ${style}`}>
       {children}

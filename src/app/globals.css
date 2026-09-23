@@ -47,6 +47,23 @@ body {
 }
 
 /*
+ * The homepage hero's phone scrim (concept B, Hunter 2026-09-23): the top of the
+ * photograph left nearly clear, darkening only through the lower third where the headline,
+ * button and stat strip sit. Four stops, which Tailwind's from/via/to cannot express, so
+ * it lives here. Built from `--color-scrim`, not a black of its own. From `sm` up,
+ * `sm:bg-gradient-to-t` and the desktop stops replace it (see SCRIM_SCREEN).
+ */
+@utility bg-hero-phone-scrim {
+  background-image: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-scrim) 95%, transparent) 0%,
+    color-mix(in srgb, var(--color-scrim) 70%, transparent) 40%,
+    color-mix(in srgb, var(--color-scrim) 10%, transparent) 68%,
+    color-mix(in srgb, var(--color-scrim) 15%, transparent) 100%
+  );
+}
+
+/*
  * Property map basemap.
  *
  * OpenStreetMap's default tiles are far more saturated than the light institutional
