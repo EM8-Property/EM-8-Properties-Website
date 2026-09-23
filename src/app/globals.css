@@ -27,11 +27,6 @@
   /* A photographic scrim, not body text — see src/lib/tokens.ts for why it does not move with `ink`. */
   --color-scrim: #1A1A1A;
 
-  /* The phone hero's headline halo, built from the scrim rather than a black of its own.
-     See PHONE_TEXT_SHADOW in src/components/layout/PageHero.tsx for why it exists. */
-  --text-shadow-halo: 0 1px 2px color-mix(in srgb, var(--color-scrim) 55%, transparent),
-    0 0 18px color-mix(in srgb, var(--color-scrim) 60%, transparent);
-
   --radius-chip: 4px;
   --radius-control: 8px;
   --radius-card: 12px;
@@ -63,6 +58,26 @@ body {
  * The teal marker is drawn by Leaflet as a vector and sits above this layer, so it keeps
  * its brand colour while the map behind it recedes.
  */
+/*
+ * The homepage's phone hero veil: an even darkening over the whole photograph, and a fade
+ * to solid scrim only in its bottom edge so the 400px photo meets the section's `bg-scrim`
+ * with no seam. Both numbers come from the Studio (Home page → Phone hero fade) as
+ * `--hero-veil` and `--hero-fade`, set inline by `phoneHeroFadeStyle` in
+ * src/lib/phoneHeroFade.ts. The fallbacks here are the same defaults, for the case where
+ * the variables are missing entirely.
+ *
+ * Built from `--color-scrim` so the veil is the scrim token, not a black of its own. From
+ * `sm` up, `sm:bg-gradient-to-t` replaces this and the desktop gradient is untouched.
+ */
+@utility bg-hero-phone-veil {
+  background-image: linear-gradient(
+    to top,
+    var(--color-scrim) 0%,
+    color-mix(in srgb, var(--color-scrim) var(--hero-veil, 40%), transparent) var(--hero-fade, 5%),
+    color-mix(in srgb, var(--color-scrim) var(--hero-veil, 40%), transparent) 100%
+  );
+}
+
 .em8-basemap {
   filter: grayscale(0.85) contrast(0.92) brightness(1.06);
 }

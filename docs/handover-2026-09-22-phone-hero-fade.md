@@ -1,68 +1,79 @@
 # EM8 website — handover, 2026-09-22 (the phone hero's fade)
 
-One task. Hunter: the fade on the hero image on an iPhone is too much, show more of the
-image, and do not change the desktop hero. He was shown 50%, 30% and 10% mockups on a
-phone and chose **10%**. PR #59.
+One task, many rounds. Hunter: the fade on the homepage hero on an iPhone is too much,
+show more of the image, and do not change the desktop hero. PR #59.
 
-## What shipped: homepage, phone only
+## Where it landed
 
-| | before | after |
+**Homepage, phone only:** an even **40% veil** over the photo, **no text shadow**, and a
+fade to solid scrim only in the **bottom 5%** of the photo. Both numbers are **editable in
+the Studio** under *Home page → Phone hero fade* (`homePage.phoneHeroFade.veil`,
+`.fadeStart`).
+
+| | before (live) | after |
 |---|---|---|
-| phone scrim, `screen` | 100% / **70% @ 65%** / 10% | 100% / **10% @ 50%** / 0% |
-| headline + intro | no shadow | `text-shadow-halo` (phone only) |
-| eyebrow pill | `bg-black/40` | **`bg-black/60`** on phone, 40% from `sm` |
+| phone scrim, `/` | 100% / 70% @ 65% / 10% | 100% @ 0 → **40%** @ **5%** → 40% |
+| Studio control | none | veil 0–80 (default 40), fadeStart 0–60 (default 5) |
+| text shadow | none | none |
 
-- `PHONE_SCRIM_SCREEN` and `PHONE_SCRIM_BAND` in `HeroCarousel.tsx` are chosen through
-  `SHAPE[variant].scrim`. Their `sm:` halves are one string, and a test pins that.
-- `--text-shadow-halo` in `globals.css` is built from `--color-scrim`, not a raw colour,
-  because the lint rule bans colour literals in components. The class is
-  `text-shadow-halo` (Tailwind 4.3's `text-shadow-*` namespace).
-- `Eyebrow` has a new tone, `onClearPhoto`. `PageHero` passes it, plus the shadow, only
-  when `variant === 'screen'`.
+**Unchanged, verified against live computed styles:** `/` at 1440 and 768, `/investors` at
+1440 and 390, `/about` at 390. The six band pages keep `PHONE_SCRIM_BAND` exactly.
 
-**Unchanged, verified against the live computed styles:** the desktop on `/` and
-`/investors` at 1440, and `/investors` and `/about` at 390. The six `band` pages are exactly
-as they were.
+## How the Studio values reach the page
 
-## Why the six inner pages did not follow
+`HOME_PAGE_QUERY` projects `phoneHeroFade { veil, fadeStart }` → `page.tsx` → `PageHero`
+→ `HeroCarousel` (`phoneFade` prop, read only when `variant === 'screen'`) →
+`phoneHeroFadeStyle()` in `src/lib/phoneHeroFade.ts`, which clamps and writes
+`--hero-veil` / `--hero-fade` inline on the scrim span → the `bg-hero-phone-veil`
+`@utility` in `globals.css` reads them. From `sm` up, `sm:bg-gradient-to-t` plus the old
+`sm:` stops replace it.
 
-They were first included by accident, because the phone scrim was one shared constant.
-Screenshots looked fine, but measuring them showed their copy sits lower on the 400px photo,
-over its brightest middle. At 10%, measured against the brightest 10% of pixels behind each
-line with the gradient only:
+- **A class per value would not work.** Tailwind only emits classes written literally in
+  source, and these are whatever an editor types. Hence CSS variables.
+- **Clamped in code as well as validated in the Studio**, because `validation` binds the
+  Studio only (see `docs/deploys-and-migrations.md`). An empty field renders the defaults.
+- The field is an **addition**, which is safe to deploy in any order. The Studio must be
+  redeployed **after merge** for editors to see it: `bash scripts/deploy-studio.sh`.
+- Values take effect on **publish**, through the existing revalidation webhook. No code
+  deploy is needed to tune them.
 
-| | eyebrow, 40% pill (4.5) | eyebrow, 60% pill | h1 (3.0) |
-|---|---|---|---|
-| homepage, worst of 4 widths | 3.37 | **6.16** | 1.71 (teal 1.58) |
-| /investors, /portfolio, /insights | ~3.0 | 5.7 | **1.2** |
-| /partners, /about, /strategy | 3.9–4.4 | 6.8–7.5 | 1.5–2.3 |
+## Knowingly accepted: contrast on pale slides
 
-The homepage was what Hunter looked at and approved. The band pages were scoped back out
-rather than shipped unreviewed. **If he asks for them too, measure them with the halo and
-show him the pale slides first.**
+Hunter went through 50%, 30%, 10%, lower fades, slower (eased) fades, a text-shadow halo,
+a taller photo (rejected: it zooms the crop in, the 2026-09-16 complaint) and the desktop
+veil. He chose this and explicitly dropped the shadow. Measured over all seven slides at
+320–430 wide, against the brightest 10% of pixels behind each line, at the defaults:
 
-## What is and is not measured
+| | needs | measures |
+|---|---|---|
+| eyebrow, in its existing 40% pill | 4.5 | 5.88 – 6.15 ✓ |
+| h1 white | 3.0 | 2.60 – 2.82 |
+| h1 teal ("choose to live in.") | 3.0 | **1.34 – 1.37** |
 
-- The pill at 60% is **measured** and passes on every page and width.
-- The headline at 10% **fails on the gradient alone** and is carried by the halo. The
-  pixel model cannot score a text shadow, so its legibility was **judged by eye** on the
-  palest slide (the white kitchen), not measured. That is the soft spot in this change.
-- The lightest scrim that passed with no help was 50% at 50% (teal 3.20). If the halo is
-  ever removed, go back to at least that.
+**The lever is the Studio's veil.** The lightest treatment measured to pass without help
+was a 50%-at-50% gradient (teal 3.20). The eyebrow pill is unchanged from live (an interim
+60% phone pill was reverted once the veil made it unnecessary).
 
-These numbers come from a one-off script that draws each live slide into a canvas at the
-painted geometry and blends the gradient per pixel. It is not committed. They do not
-reconcile with the 09-16 figures, which used a different sampling method, so compare
-within a table, not across handovers. Nothing in CI audits contrast, same as before.
+The measuring script is a one-off and is not committed. It canvas-draws each live slide
+at the painted geometry and blends the gradient per pixel. Nothing in CI audits contrast.
 
-## Verified
+## Tests
 
-- 667 unit tests, `tsc`, `eslint`, `next build` (35 pages) clean.
-- `heroCarousel.test.tsx` pins both scrims and their shared `sm:` string.
-  `pageHero.test.tsx` pins that the halo and 60% pill appear on `screen` and not on `band`.
-- **Not yet merged or deployed**: the merge was refused by the session's permission
-  classifier and is Hunter's to do. Railway does not auto-deploy. After merging, deploy the
-  merge SHA per `docs/deploys-and-migrations.md` and check `/` at 390 on the Railway domain.
+668 unit, `tsc`, `eslint`, `next build` (35 pages) clean.
+
+- `heroCarousel.test.tsx`: the band keeps 70/65/10. The homepage uses
+  `bg-hero-phone-veil` and no phone stops. Both share their `sm:` classes. The Studio
+  values reach `--hero-veil` / `--hero-fade`, defaulting to 40/5 and clamped to 0–80 /
+  0–60. The band ignores them.
+- `pageHero.test.tsx`: `PageHero` forwards `phoneFade` on `screen`, not on `band`, and no
+  text shadow exists on either.
+
+## Not done
+
+- **Not merged or deployed.** The merge was refused by the session's permission
+  classifier and is Hunter's to do. Then deploy the merge SHA per
+  `docs/deploys-and-migrations.md`, check `/` at 390 on the Railway domain, and run
+  `bash scripts/deploy-studio.sh` so the new field appears in the Studio.
 
 ## Still open
 

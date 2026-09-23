@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, cleanup } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -235,7 +235,37 @@ describe('HeroCarousel — resource budget', () => {
    * At 10% the gradient alone no longer carries the headline; `PHONE_TEXT_SHADOW` and the
    * `onClearPhoto` eyebrow do, and `pageHero.test.tsx` pins that they ship together.
    */
-  it('keeps the band pages’ phone scrim, and gives the homepage its lighter one', () => {
+  it('hands the Studio’s phone fade to the homepage scrim only, clamped', () => {
+    const styleOf = (variant: 'screen' | 'band', phoneFade?: { veil?: number; fadeStart?: number }) =>
+      (
+        render(
+          <HeroCarousel slides={many} variant={variant} phoneFade={phoneFade} />,
+        ).container.querySelector('a > span') as HTMLElement
+      ).style
+
+    // Nothing in the Studio yet: Hunter's defaults.
+    let s = styleOf('screen')
+    expect(s.getPropertyValue('--hero-veil')).toBe('40%')
+    expect(s.getPropertyValue('--hero-fade')).toBe('5%')
+
+    cleanup()
+    s = styleOf('screen', { veil: 55, fadeStart: 20 })
+    expect(s.getPropertyValue('--hero-veil')).toBe('55%')
+    expect(s.getPropertyValue('--hero-fade')).toBe('20%')
+
+    // `validation` binds the Studio only, so out-of-range values are clamped here.
+    cleanup()
+    s = styleOf('screen', { veil: 300, fadeStart: -4 })
+    expect(s.getPropertyValue('--hero-veil')).toBe('80%')
+    expect(s.getPropertyValue('--hero-fade')).toBe('0%')
+
+    // The band pages have no editable veil and carry no variables at all.
+    cleanup()
+    s = styleOf('band', { veil: 10, fadeStart: 50 })
+    expect(s.getPropertyValue('--hero-veil')).toBe('')
+  })
+
+  it('keeps the band pages’ phone scrim, and gives the homepage its own', () => {
     const scrimOf = (variant: 'screen' | 'band') =>
       render(<HeroCarousel slides={many} variant={variant} />).container.querySelector(
         'a > span',
@@ -246,19 +276,24 @@ describe('HeroCarousel — resource budget', () => {
     expect(band).toMatch(/\bvia-65%/)
     expect(band).toMatch(/\bto-scrim\/10\b/)
 
-    const screenScrim = scrimOf('screen')
-    expect(screenScrim).toMatch(/\bvia-scrim\/10\b/)
-    expect(screenScrim).toMatch(/\bvia-50%(?!\S)/)
-    expect(screenScrim).toMatch(/\bto-scrim\/0\b/)
+    // Fully opaque at the photograph's bottom edge, so it meets `bg-scrim` exactly. At 90%
+    // a bright slide leaves a visible step there.
+    expect(band).toMatch(/\bfrom-scrim\b(?!\/)/)
 
-    // Everything from `sm` up is one string in both, so the desktop cannot drift apart.
-    const smOf = (c: string) => c.split(/\s+/).filter((k) => k.startsWith('sm:')).join(' ')
+    // The homepage's phone gradient is the Studio-driven veil (globals.css), and the
+    // desktop one takes over from `sm` with its own `sm:bg-gradient-to-t`.
+    const screenScrim = scrimOf('screen')
+    expect(screenScrim).toMatch(/(?:^|\s)bg-hero-phone-veil\b/)
+    expect(screenScrim).toMatch(/\bsm:bg-gradient-to-t\b/)
+    expect(screenScrim).not.toMatch(/(?:^|\s)(?:from|via|to)-/)
+
+    // Everything from `sm` up is the same in both, so the desktop cannot drift apart. The
+    // band spells `bg-gradient-to-t` unprefixed, which covers `sm` too.
+    const smOf = (c: string) =>
+      c.split(/\s+/).filter((k) => k.startsWith('sm:') && k !== 'sm:bg-gradient-to-t').join(' ')
     expect(smOf(screenScrim)).toBe(smOf(band))
 
     const scrim = screenScrim
-    // Fully opaque at the photograph's bottom edge, so it meets `bg-scrim` exactly. At 90%
-    // a bright slide leaves a visible step there.
-    expect(scrim).toMatch(/\bfrom-scrim\b(?!\/)/)
     // Above `sm` the desktop gradient is unchanged, stops and all.
     expect(scrim).toMatch(/\bsm:from-scrim\/90\b/)
     expect(scrim).toMatch(/\bsm:via-scrim\/55\b/)

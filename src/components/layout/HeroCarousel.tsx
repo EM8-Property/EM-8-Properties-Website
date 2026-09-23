@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { urlForPhoto } from '@/sanity/image'
 import { usableSlides, type CarouselSlide } from '@/lib/heroSlides'
 import { HEADER_RESERVATION } from '@/lib/headerReservation'
+import { phoneHeroFadeStyle, type PhoneHeroFade } from '@/lib/phoneHeroFade'
 
 /*
  * Re-exported so the seven pages can keep importing the type from the component they are
@@ -122,39 +123,35 @@ const PHONE_SCRIM_BAND =
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
- * The homepage's phone scrim, lighter than `PHONE_SCRIM_BAND` above by Hunter's call on
- * 2026-09-22: "the fade on the iphone is too much, I want to see more of the image". He
- * compared 50%, 30% and 10% mockups on a phone and chose 10%. Everything above `sm` is
- * the same string as the band's, so the desktop does not move.
+ * The homepage's phone scrim: an even veil over the photograph, with the fade to solid
+ * scrim confined to its bottom edge. Both numbers are editable in the Studio under
+ * Home page → Phone hero fade and arrive as CSS variables (`phoneHeroFadeStyle` in
+ * src/lib/phoneHeroFade.ts, `bg-hero-phone-veil` in globals.css). Defaults: 40% veil,
+ * fade in the bottom 5%. Everything from `sm` up is the same string as the band's, so the
+ * desktop does not move.
  *
- * **At 10% the gradient no longer carries the text on its own, and that is knowingly
- * accepted.** Measured on all seven homepage slides at 320, 375, 390 and 430 wide, against
- * the brightest 10% of pixels behind each line, gradient only:
+ * How it got here, 2026-09-22. Hunter: "the fade on the iphone is too much, I want to see
+ * more of the image". He went through 50%, 30%, 10%, lower fades, slower fades and a text
+ * shadow, and settled on the treatment that reads like the desktop hero: an even veil, no
+ * shadow, no zoom. The photo stays capped at 400px because anything taller zooms the crop
+ * in, which he rejected (that was the 2026-09-16 complaint).
  *
- *                   eyebrow (4.5)   h1 white (3.0)   h1 teal (3.0)
- *     70% @ 65%        10.49            9.42             5.32
- *     10% @ 50%         3.37            1.71             1.58
- *     10%, 60% pill     6.16            —                —
+ * **Knowingly accepted: the teal headline line fails contrast on pale slides.** Measured
+ * on all seven homepage slides at 320–430 wide, against the brightest 10% of pixels behind
+ * each line, at the defaults:
  *
- * Two things cover it, and both are homepage-only for the same reason this is:
+ *     eyebrow (in its 40% pill, needs 4.5)   5.88 – 6.15   passes
+ *     h1 white (needs 3.0)                   2.60 – 2.82
+ *     h1 teal (needs 3.0)                    1.34 – 1.37
  *
- *   - the eyebrow's pill goes to 60% black on a phone (`onClearPhoto` in `Eyebrow`), which
- *     is measured and passes;
- *   - the headline and intro get `PHONE_TEXT_SHADOW` in `PageHero.tsx`, a dark halo behind
- *     each glyph. The model above cannot score a shadow, so the headline's legibility at
- *     10% was judged by eye on the palest slide, not measured.
+ * Raising the veil in the Studio is the lever if a slide reads badly. The lightest
+ * treatment measured to pass without help was a 50%-at-50% gradient (teal 3.20).
  *
- * Why the six `band` pages did not follow: their copy sits lower on the 400px photo, over
- * its brightest middle. At 10% their headlines measure 1.2 – 2.3:1 on the same basis,
- * against the homepage's 1.7 – 2.8, and nobody has looked at them with the halo. If they
- * are ever lightened, measure them first.
- *
- * If the halo is removed, this goes back to at least 50% at 50% (teal 3.20 on the same
- * basis, the lightest stop measured to pass without help).
+ * The six `band` pages keep `PHONE_SCRIM_BAND`. Their copy sits lower on the photo, over
+ * its brightest middle, and nobody has reviewed them lighter. Measure them first.
  */
 const PHONE_SCRIM_SCREEN =
-  'absolute inset-x-0 top-0 h-[400px] bg-gradient-to-t ' +
-  'from-scrim from-0% via-scrim/10 via-50% to-scrim/0 to-100% ' +
+  'absolute inset-x-0 top-0 h-[400px] bg-hero-phone-veil sm:bg-gradient-to-t ' +
   'sm:inset-0 sm:h-auto sm:from-scrim/90 sm:from-0% sm:via-scrim/55 sm:via-50% sm:to-scrim/25 sm:to-100%'
 
 /**
@@ -282,6 +279,7 @@ export function HeroCarousel({
   slides,
   overlay,
   variant = 'band',
+  phoneFade,
 }: {
   slides: CarouselSlide[]
   /**
@@ -300,7 +298,13 @@ export function HeroCarousel({
    * homepage passes `screen`, and it says so at the call site.
    */
   variant?: HeroVariant
+  /**
+   * The Studio's Home page → Phone hero fade values. Read by `screen` only; `band` has no
+   * editable veil and ignores it. See `PHONE_SCRIM_SCREEN`.
+   */
+  phoneFade?: PhoneHeroFade
 }) {
+  const scrimStyle = variant === 'screen' ? phoneHeroFadeStyle(phoneFade) : undefined
   const usable = useMemo(() => usableSlides(slides), [slides])
   /*
    * `prev` is the slide being faded OUT, and it is tracked in the same state update as
@@ -557,7 +561,7 @@ export function HeroCarousel({
               measures 5.2:1 rather than 2.4:1. See `PHONE_SCRIM_BAND` and `PHONE_SCRIM_SCREEN` for the measurements and
               for why the phone needed its own answer.
             */}
-            <span className={SHAPE[variant].scrim} />
+            <span className={SHAPE[variant].scrim} style={scrimStyle} />
           </Link>
         )
       })}

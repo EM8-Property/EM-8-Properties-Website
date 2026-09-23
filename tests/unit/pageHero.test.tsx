@@ -313,37 +313,28 @@ describe('PageHero copy', () => {
   })
 
   /*
-   * The phone scrim is 10% (Hunter, 2026-09-22), which leaves the teal headline line at
-   * 2.33:1 on the palest slide from the gradient alone. This halo is what carries it, so
-   * the two are one decision: drop the shadow and the scrim has to go back to 50%. See
-   * `PHONE_SCRIM_SCREEN` in HeroCarousel.tsx.
+   * The homepage's phone veil is editable in the Studio (Home page → Phone hero fade), and
+   * `PageHero` is the hop between the page and the carousel that draws it. Pinned here so
+   * a refactor of this component cannot quietly stop forwarding it: the Studio would keep
+   * accepting edits that change nothing.
+   *
+   * No text shadow on either variant. Hunter asked for the desktop's look on the phone,
+   * and the desktop has none.
    */
-  it('puts a phone-only halo and a darker pill on the homepage, and nowhere else', () => {
-    const parts = () => ({
-      scrim: document.querySelector('a > span')!.className,
-      pill: screen.getByText(COPY.eyebrow).className,
-      text: [screen.getByRole('heading', { level: 1 }), screen.getByText(COPY.intro)],
-    })
-
-    render(<PageHero copy={COPY} slides={SLIDES} variant="screen" />)
-    const home = parts()
-    expect(home.scrim).toMatch(/\bvia-scrim\/10\b/)
-    // 60% on a phone measures 6.16:1 at 10% scrim; 40% measured 3.37.
-    expect(home.pill).toMatch(/\bbg-black\/60\b/)
-    expect(home.pill).toMatch(/\bsm:bg-black\/40\b/)
-    for (const el of home.text) {
-      expect(el.className).toMatch(/(?:^|\s)text-shadow-halo\b/)
-      expect(el.className).toMatch(/\bsm:text-shadow-none\b/)
+  it('forwards the Studio’s phone fade to the homepage, with no text shadow anywhere', () => {
+    render(
+      <PageHero copy={COPY} slides={SLIDES} variant="screen" phoneFade={{ veil: 62, fadeStart: 12 }} />,
+    )
+    const scrim = document.querySelector('a > span') as HTMLElement
+    expect(scrim.style.getPropertyValue('--hero-veil')).toBe('62%')
+    expect(scrim.style.getPropertyValue('--hero-fade')).toBe('12%')
+    for (const el of [screen.getByRole('heading', { level: 1 }), screen.getByText(COPY.intro)]) {
+      expect(el.className).not.toMatch(/text-shadow/)
     }
 
-    // The six band pages render exactly as they did before 2026-09-22.
     cleanup()
-    render(<PageHero copy={COPY} slides={SLIDES} variant="band" />)
-    const band = parts()
-    expect(band.scrim).toMatch(/\bvia-scrim\/70\b/)
-    expect(band.pill).toMatch(/(?:^|\s)bg-black\/40\b/)
-    expect(band.pill).not.toMatch(/bg-black\/60/)
-    for (const el of band.text) expect(el.className).not.toMatch(/text-shadow/)
+    render(<PageHero copy={COPY} slides={SLIDES} variant="band" phoneFade={{ veil: 62 }} />)
+    expect((document.querySelector('a > span') as HTMLElement).style.getPropertyValue('--hero-veil')).toBe('')
   })
 
   it('shows the eyebrow and the intro', () => {
