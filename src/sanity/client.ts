@@ -33,7 +33,7 @@ export const sanityClient = createClient({
  * Every read goes through here so all content shares one cache tag.
  *
  * The `sanity` tag is what /api/revalidate purges when a document is published, which is
- * how an edit reaches the live site in about a minute instead of waiting for a full
+ * how an edit reaches the live site on the next page load instead of waiting for a full
  * rebuild. Fetching directly off `sanityClient` elsewhere would skip the tag and leave
  * that page stale until the next deploy.
  */

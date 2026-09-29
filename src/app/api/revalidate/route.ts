@@ -7,7 +7,7 @@ import { verifyRevalidateRequest } from '@/lib/revalidate'
  *
  * Every read in the app goes through `fetchSanity`, which tags its request `sanity`.
  * Purging that one tag re-renders anything backed by CMS content, so a publish reaches
- * the live site in about a minute without a rebuild or a redeploy.
+ * the live site on the next page load, without a rebuild or a redeploy.
  *
  * Point a Sanity webhook at POST https://<host>/api/revalidate with the header
  * `x-revalidate-secret: <SANITY_REVALIDATE_SECRET>`.
@@ -19,9 +19,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ revalidated: false, error: verified.message }, { status: verified.status })
   }
 
-  // Next 16 requires a cacheLife profile as the second argument. 'max' purges entries
-  // regardless of how recently they were cached, which is what a publish webhook wants —
-  // the editor has just changed the content and expects to see it.
-  revalidateTag('sanity', 'max')
+  // `{ expire: 0 }`, not 'max'. 'max' is stale-while-revalidate: the first visit after a
+  // publish is served the old page while the new one renders, so the editor refreshes,
+  // sees no change, and it appears only on the second or third refresh. `{ expire: 0 }`
+  // makes that first visit wait for fresh content instead. It is Next's documented choice
+  // for a webhook — `updateTag` would do the same but only runs inside Server Actions.
+  revalidateTag('sanity', { expire: 0 })
   return NextResponse.json({ revalidated: true, tag: 'sanity' })
 }
