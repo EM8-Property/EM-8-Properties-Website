@@ -320,6 +320,27 @@ It returns the new deployment id. Poll it with
 `query($id:String!){ deployment(id:$id){ status } }` — the terminal states are `SUCCESS`,
 `FAILED`, `CRASHED`, `REMOVED` and `SKIPPED`. A build takes a few minutes.
 
+### A redeploy of the same commit must rebuild, or it rolls content back
+
+**`NO_CACHE=1` is set on the Railway service. Do not remove it to speed up builds.**
+
+Pages are prerendered from Sanity inside the Docker build step. Railway caches Docker
+layers, and that step's cache key covers only the source and its declared `ARG`s. So a
+redeploy of the same commit after a runtime-only variable change reuses the old build
+layer, along with the content snapshot it took. Changing a token, the Resend key or the lead
+recipient are all runtime-only.
+
+Publishes made since that build were only ever in the previous container's Next cache, so
+the new container quietly serves older content until the next publish.
+
+Found on 2026-10-01. Hunter published a new homepage title at 18:26 UTC. Three same-commit
+redeploys followed for token and email settings, and none of their build logs contains a
+Next build. em-8.com went back to the old title, while Sanity held the new one.
+
+`NO_CACHE=1` makes every build run `npm ci` and `next build` from scratch, about two minutes.
+To confirm a deploy actually built, check that its build log contains Next's route table,
+not just a Railway success.
+
 ### Then verify on the live site, not on the status
 
 `SUCCESS` means Railway built and started the container. It does not mean the change you
