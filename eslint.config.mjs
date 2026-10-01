@@ -126,6 +126,10 @@ const eslintConfig = defineConfig([
     // from minified vendor code and fails CI.
     "dist/**",
     ".sanity/**",
+    // Claude Code's local worktrees, each a full checkout with its own `.next/` and `dist/`.
+    // Untracked, so CI never sees them, but a local `npx eslint .` crawls every one and
+    // reports ~94,000 problems from build output that is not this checkout's.
+    ".claude/**",
   ]),
 ]);
 

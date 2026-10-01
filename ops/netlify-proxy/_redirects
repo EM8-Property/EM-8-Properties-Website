@@ -1,0 +1,17 @@
+# Deployed to the OLD Netlify site (em8-properties.netlify.app), which is where em-8.com's
+# DNS points. em-8.com is registered in a former employee's Wix account, so its DNS cannot
+# be changed; Netlify is the only thing EM8 can reach that sits in the domain's path.
+# See docs/handover-2026-10-01-netlify-proxy-cutover.md before changing anything here.
+#
+# Rules are matched top to bottom; the first match wins.
+
+# 1. One address. http and www both land on https://em-8.com, explicitly, because Netlify
+#    warns that paths handled by a proxy may not get its automatic HTTP -> HTTPS redirect.
+http://em-8.com/*       https://em-8.com/:splat  301!
+http://www.em-8.com/*   https://em-8.com/:splat  301!
+https://www.em-8.com/*  https://em-8.com/:splat  301!
+
+# 2. Everything else is proxied (200, not a redirect) to the site on Railway, so the
+#    address bar stays em-8.com. Netlify must not cache it: the site sends
+#    Netlify-CDN-Cache-Control: no-store on every response (next.config.ts).
+/*  https://em-8-properties-website-production.up.railway.app/:splat  200!

@@ -17,7 +17,7 @@ record, or a blog.
 | `docs/disclaimer-draft.md` | Unreviewed draft footer disclaimer, pending securities counsel. |
 | `docs/deploys-and-migrations.md` | How the dataset and the code ship separately, and the ordering rule that keeps the live site up. Read before applying any migration. |
 | `docs/resource-budget.md` | Why the Lighthouse budget is where it is, and two image traps. |
-| `docs/handover-2026-09-29-publish-first-refresh.md` | **Current state**: why a Studio publish needed several refreshes, the one-line fix (`revalidateTag` with `{ expire: 0 }`), what was and was not verified, and five open review items. Every earlier handover, back to 09-01, is kept in `docs/`. **The deploy sequence is in `handover-2026-09-15.md` § Deploying and is manual: Railway auto-deploy is off and merging ships nothing.** If you write the next handover, change this row in the same commit. It went stale again after 09-15 and was caught on 09-29. |
+| `docs/handover-2026-10-01-netlify-proxy-cutover.md` | **Current state**: em-8.com is live, served through the **old Netlify site proxying to Railway**, because the domain sits in a former employee's Wix account and its DNS cannot be changed. Why, the caching trap the `Netlify-CDN-Cache-Control` header closes, rollback, and the 2027-09-03 renewal that takes the site **and company email** down if the domain is not recovered. Every earlier handover, back to 09-01, is kept in `docs/`. **The deploy sequence is in `handover-2026-09-15.md` § Deploying and is manual: Railway auto-deploy is off and merging ships nothing.** If you write the next handover, change this row in the same commit. It went stale again after 09-15 and was caught on 09-29. |
 
 ## Getting started
 
