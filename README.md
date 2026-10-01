@@ -472,6 +472,11 @@ The day em-8.com went live. Details in `docs/handover-2026-10-01-netlify-proxy-c
   `SANITY_API_WRITE_TOKEN` note under Environment. The unit suite mocks the write and the
   E2E suite mocks the endpoint, both deliberately, so only a real submission tests this
   path. Do one after any change to tokens or to `/api/lead`.
+- **`RESEND_API_KEY` and `LEAD_NOTIFICATION_EMAIL` are one setting in two places** while
+  the sandbox sender is in use. Resend delivers only to the owner of the account the key
+  belongs to. On 2026-10-01 the key was swapped to a new account and deployed with the old
+  recipient, so every send was refused until the recipient was fixed. After touching
+  either one, submit a test lead and check it was saved with `emailed: true`.
 - **`netlify deploy` builds by default and reads the project it is run from.** Use
   `--no-build`, from a folder outside any repo, linked with `netlify link --id`, deploying
   a subfolder, `--alias` for a draft first. In PowerShell, `npx` is blocked by the
@@ -515,8 +520,10 @@ by his decision. They still apply.
 4. ~~Point the Sanity publish webhook at `POST /api/revalidate`~~ — done, with filter
    `_type != "lead"`, drafts excluded.
 5. Confirm the Resend sender domain. **Blocked until EM8 controls em-8.com's DNS.** Until
-   then notifications come from Resend's sandbox to hsheyman@gmail.com, and pointing them
-   anywhere else makes every send fail.
+   then notifications come from Resend's sandbox sender, which delivers only to the
+   address that owns the Resend account. Since 2026-10-01 that account is owned by
+   **info@em-8.com**, and `LEAD_NOTIFICATION_EMAIL` is info@em-8.com to match. Change one
+   without the other and every send fails.
 6. Add a second owner to the GitHub org (spec §8 accepted this risk; it is still a single
    point of failure). **Open.**
 7. ~~DNS cutover in Wix~~ — impossible without the Wix account. em-8.com is proxied through
