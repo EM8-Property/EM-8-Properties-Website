@@ -472,6 +472,11 @@ The day em-8.com went live. Details in `docs/handover-2026-10-01-netlify-proxy-c
   `SANITY_API_WRITE_TOKEN` note under Environment. The unit suite mocks the write and the
   E2E suite mocks the endpoint, both deliberately, so only a real submission tests this
   path. Do one after any change to tokens or to `/api/lead`.
+- **A settings-only redeploy used to roll the live content back.** Railway reused the cached
+  Docker build layer, along with its prerendered content, for any redeploy of the same
+  commit. That silently undid every publish made since the last real build. `NO_CACHE=1` on
+  the service now forces a full build each time. Do not remove it. See
+  `docs/deploys-and-migrations.md`.
 - **`RESEND_API_KEY` and `LEAD_NOTIFICATION_EMAIL` are one setting in two places** while
   the sandbox sender is in use. Resend delivers only to the owner of the account the key
   belongs to. On 2026-10-01 the key was swapped to a new account and deployed with the old

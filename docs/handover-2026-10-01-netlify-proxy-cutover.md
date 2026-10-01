@@ -14,7 +14,7 @@ not been able to for an unknown time. That is fixed; see its own section below.
 | | |
 |---|---|
 | em-8.com | **The new site**, via the Netlify proxy. Netlify production deploy `6abea31a6b4c95b557bb6f8f`, published 2026-10-01 |
-| Railway | `5aad98b`, deployment `ea7d8931`. `NEXT_PUBLIC_SITE_URL=https://em-8.com`, `LEAD_NOTIFICATION_EMAIL=info@em-8.com` with the matching info@em-8.com Resend key, and an Editor `SANITY_API_WRITE_TOKEN`. Its own hostname still serves, and canonicalises to em-8.com. `main` is ahead by docs only |
+| Railway | `f62ab5b`, deployment `58211f04`, a full uncached build. Variables: `NEXT_PUBLIC_SITE_URL=https://em-8.com`, `LEAD_NOTIFICATION_EMAIL=info@em-8.com` with the matching info@em-8.com Resend key, an Editor `SANITY_API_WRITE_TOKEN`, and **`NO_CACHE=1`** (see below). Its own hostname still serves, and canonicalises to em-8.com |
 | Netlify site | `em8-properties` (id `8966d670-47d3-4566-a53b-042e6ccb8287`), in **"botanalagoz's team"** (Pro). Hunter's own account, hunter@em-8.com, has been an **Owner** there since 2026-10-01 |
 | Old repo | `botanalagoz/em8-properties`, which Netlify builds from. `main` is `92f7fe1`, the same files as `ops/netlify-proxy/` here |
 | Rollback | Netlify deploy `6a9216eacdc8b11e08799c32`, the old Vite site as of 2026-08-28 |
@@ -224,6 +224,25 @@ every notification fails, while leads are saved with `emailed: false` and nobody
    what can never go stale. Deliberately not changed on launch day.
 9. Rate-limit sharing behind Netlify, and connecting GitHub so Netlify builds from Git.
    Both are minor.
+
+## Same-commit redeploys were rolling content back
+
+Found in the final check of the session.
+
+- **What happened:** after the Resend and recipient redeploys, em-8.com showed the old
+  homepage title "EM8 Properties - About", while Sanity held "EM8 Properties", published
+  18:26 UTC.
+- **Why:** only the 18:06 deploy had actually run `next build`, because the site-address
+  change altered a build `ARG`. The 18:21, 18:33 and 18:38 redeploys changed runtime-only
+  variables, so Railway reused the cached build layer, and its content snapshot predated
+  the publish. Their build logs contain no Next build.
+- **Fixed:** set `NO_CACHE=1` on the service, then redeployed `main` (`58211f04`). Its log
+  shows the full build, both em-8.com and Railway serve "EM8 Properties", and Netlify reads
+  `fwd=miss`. One `fwd=stale` was seen while Railway swapped containers; it served fresh
+  content and did not recur.
+- **The full write-up** is in `docs/deploys-and-migrations.md`. Earlier same-commit
+  redeploys in this repo's history may have done the same briefly. No record shows whether
+  any did.
 
 ## Code review, 2026-10-01
 
