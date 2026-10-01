@@ -53,6 +53,13 @@ npm run dev                  # production dataset
 - Build-time vs runtime: `next build` prerenders every route, so the two `NEXT_PUBLIC_`
   Sanity values plus the read token are needed at **build** time, not just runtime. The
   Dockerfile passes them as `ARG`/`ENV` for this reason.
+- **`SANITY_API_WRITE_TOKEN` on Railway must have the Editor role.** It is what saves every
+  form submission. With a Viewer token Sanity answers `403 permission "create" required`
+  and every investor sees "Could not save your message". That was live until 2026-10-01,
+  and nothing in CI can see it. The token in the main checkout's `.env.local` is a Viewer
+  named "Claude (Robot)". **Never copy it to Railway.**
+- `NEXT_PUBLIC_SITE_URL` is `https://em-8.com` in production. It is inlined at **build**
+  time, so changing it needs a redeploy.
 
 ## Content
 
@@ -449,10 +456,38 @@ measure; the other by CI rendering in a font nobody had thought about.
   file with `<<'EOF'` failed with an unterminated-quote parse error *before the file was
   created*. Use the Write tool for anything substantial rather than debugging the quoting.
 
+### Found on 2026-10-01
+
+The day em-8.com went live. Details in `docs/handover-2026-10-01-netlify-proxy-cutover.md`.
+
+- **em-8.com is served through the old Netlify site, proxying to Railway.** Its DNS cannot
+  be changed: the domain is in a former employee's Wix account. A "check the live site" now
+  means em-8.com, and a change to how it is wired means `ops/netlify-proxy/`, not DNS.
+- **A CDN in front of Next honours `s-maxage`.** Prerendered pages send
+  `s-maxage=31536000`, so a proxy that caches would freeze the site for a year while
+  `/api/revalidate` purges only the origin. `Netlify-CDN-Cache-Control: no-store` in
+  `next.config.ts` is what stops it. Check `Cache-Status: … fwd=miss` after any change to
+  headers or to the proxy.
+- **The lead form was failing in production, with every gate green.** See the
+  `SANITY_API_WRITE_TOKEN` note under Environment. The unit suite mocks the write and the
+  E2E suite mocks the endpoint, both deliberately, so only a real submission tests this
+  path. Do one after any change to tokens or to `/api/lead`.
+- **`netlify deploy` builds by default and reads the project it is run from.** Use
+  `--no-build`, from a folder outside any repo, linked with `netlify link --id`, deploying
+  a subfolder, `--alias` for a draft first. In PowerShell, `npx` is blocked by the
+  execution policy. Use `npx.cmd`.
+- **A Netlify Reviewer cannot deploy, and a Git push from someone Netlify does not
+  recognise waits for an Owner.** The PR got "pending review", and its merge produced no
+  deploy at all, even after the author became an Owner.
+- **Commands that look ordinary are refused by Claude Code's auto-mode classifier:** adding
+  a Sanity CORS origin ("Security Weaken"), committing in a repo owned by someone else, even
+  locally ("Modify Shared Resources"), and `gh pr merge` without the user's word in that
+  turn. Ask for each one up front.
+
 ## Status
 
-Tasks 1–15 complete. Task 14 descoped (see the plan). Task 16's infrastructure is built;
-the deploy has not happened.
+**Live at https://em-8.com since 2026-10-01**, through the Netlify proxy described above.
+Tasks 1–15 complete, Task 14 descoped (see the plan), Task 16 deployed.
 
 Content is live in the `production` dataset: ten properties with photography, six team
 members, five hero stats, and the four success factors. Two realized deals carry their
@@ -468,18 +503,23 @@ Walk Score and Transit Score were built and then removed on 2026-08-30, pending 
 key. See the commit for the schema fields, query projection, and fact tiles if they come
 back.
 
-**Before launch:**
+**The launch checklist.** Hunter launched on 2026-10-01 with items 2, 3, 5 and 6 still open,
+by his decision. They still apply.
 
 1. ~~Enter real content~~ — done. Supply the remaining spec §9 figures, then re-run
    `npm run test:content`.
 2. Replace the draft disclaimer with counsel's version. Nothing automated will catch it —
-   the draft reads like finished copy.
-3. Deploy to Railway (an **EM8-owned team**, not a personal account — spec §8), add its
-   CORS origin, set all env vars including the read token.
-4. Point the Sanity publish webhook at `POST /api/revalidate` with an
-   `x-revalidate-secret` header.
-5. Confirm the Resend sender domain, or lead notifications fail silently to
-   `emailed: false` — the lead is saved, but nobody is told.
+   the draft reads like finished copy. **Open.**
+3. Move Railway to an **EM8-owned team**, not a personal account (spec §8). Deployed,
+   CORS added, env vars set. **Still on a personal workspace.**
+4. ~~Point the Sanity publish webhook at `POST /api/revalidate`~~ — done, with filter
+   `_type != "lead"`, drafts excluded.
+5. Confirm the Resend sender domain. **Blocked until EM8 controls em-8.com's DNS.** Until
+   then notifications come from Resend's sandbox to hsheyman@gmail.com, and pointing them
+   anywhere else makes every send fail.
 6. Add a second owner to the GitHub org (spec §8 accepted this risk; it is still a single
-   point of failure).
-7. DNS cutover in Wix. Leave the old site up two weeks as a rollback path.
+   point of failure). **Open.**
+7. ~~DNS cutover in Wix~~ — impossible without the Wix account. em-8.com is proxied through
+   Netlify instead. The old site is Netlify deploy `6a9216ea…`, one click to restore.
+8. **Recover em-8.com from the former employee's Wix account before it renews on
+   2027-09-03.** The website and the company's email both depend on it.
