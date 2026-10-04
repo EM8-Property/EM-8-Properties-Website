@@ -827,7 +827,7 @@ test('Current Offerings renders above the filter row on /portfolio', async ({ pa
  * margin" differently enough that neither loop stands in for the other.
  *
  * Both 320px and 390px, per the task brief, rather than only 320px: 390px is the width
- * the rest of this file already treats as the phone baseline (`the four nav parents are
+ * the rest of this file already treats as the phone baseline (`the five nav parents are
  * visible on a phone`, `the homepage renders five bands`), and it is also where the
  * homepage hero box stops matching `min-h-svh` bit-for-bit (844px there; 897px at 375px
  * and 360px, 1014px at 320px) because the stats now live in the overlay — this test does
@@ -869,7 +869,7 @@ for (const width of [320, 390] as const) {
  * passed while the rendered header showed two items. Asserted on the rendered page at the
  * review viewport for that reason (spec §11).
  */
-test('the four nav parents are visible on a phone without a tap', async ({ page }) => {
+test('the five nav parents are visible on a phone without a tap', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
 
@@ -877,10 +877,11 @@ test('the four nav parents are visible on a phone without a tap', async ({ page 
   const nav = header.locator('#site-nav')
   await expect(nav).toBeVisible()
 
-  // Four children of the nav: two dropdown groups and two plain links. Counted on the nav
+  // Five children of the nav: two dropdown groups and three plain links (Contact joined
+  // on 2026-10-04). Counted on the nav
   // rather than by label, because the labels are CMS content now and a test that pins
   // wording fails when someone edits their own copy.
-  await expect(nav.locator(':scope > *')).toHaveCount(4)
+  await expect(nav.locator(':scope > *')).toHaveCount(5)
 
   for (const child of await nav.locator(':scope > *').all()) {
     await expect(child).toBeVisible()
