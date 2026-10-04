@@ -105,7 +105,7 @@ export const SITE_SETTINGS_QUERY = defineQuery(
       aboutUs, aboutEm8, whyEm8, ourTeam,
       strategy, whyMidwest, partners, portfolio, insights
     },
-    footerLabels { investors },
+    footerLabels { investors, contact },
     dealStoryHeading,
     ctaBand {
       heading { eyebrow, title, intro },
@@ -190,6 +190,17 @@ export const PARTNERS_PAGE_QUERY = defineQuery(`
     facts[] { label, value },
     formTitle,
     submitLabel
+  }
+`)
+
+export const CONTACT_PAGE_QUERY = defineQuery(`
+  *[_id == "contactPage"][0] {
+    seo { title, description },
+    heading { eyebrow, title, intro },
+    detailsHeading { eyebrow, title, intro },
+    formTitle,
+    submitLabel,
+    successMessage
   }
 `)
 

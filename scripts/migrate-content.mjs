@@ -801,6 +801,9 @@ async function backfillChromeLabels(apply) {
   if (!doc.footerLabels?.investors) {
     fill['footerLabels.investors'] = SITE_SETTINGS.footerLabels.investors
   }
+  if (!doc.footerLabels?.contact) {
+    fill['footerLabels.contact'] = SITE_SETTINGS.footerLabels.contact
+  }
   if (!doc.ctaBand?.emailLabel) fill['ctaBand.emailLabel'] = CTA_BAND.emailLabel
 
   if (Object.keys(fill).length === 0) {

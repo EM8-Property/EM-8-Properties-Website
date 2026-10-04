@@ -10,7 +10,8 @@
  * title *on* the photograph instead, the homepage has rejoined them, and /investors — which
  * had no photograph at all — has been added, so all seven section pages open on the
  * photograph. (/strategy replaced /track-record, deleted in Task 10, so the count stays
- * seven.)
+ * seven.) /contact is an eighth: not a section of the site, but a page a stranger lands
+ * on, and it opens the way the rest do.
  *
  * They do not all open at the same SIZE, and this list is deliberately indifferent to
  * that: the homepage runs the full screen and the other six a 420/500/560px band. That
@@ -32,6 +33,7 @@ export const HERO_PATHS = [
   '/partners',
   '/about',
   '/investors',
+  '/contact',
 ] as const
 
 export function showsHero(pathname: string | null | undefined): boolean {

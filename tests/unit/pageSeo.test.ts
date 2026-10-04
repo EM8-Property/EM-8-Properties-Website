@@ -73,6 +73,7 @@ describe('the seeded page SEO copy', () => {
   it('covers every page singleton', () => {
     expect(entries.map(([id]) => id).sort()).toEqual([
       'aboutPage',
+      'contactPage',
       'homePage',
       'insightsPage',
       'investorsPage',

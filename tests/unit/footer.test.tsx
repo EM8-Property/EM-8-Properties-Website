@@ -27,6 +27,7 @@ const props = {
   contactEmail: 'info@em-8.com',
   labels: LABELS,
   investorsLabel: 'Investors',
+  contactLabel: 'Contact',
 }
 
 describe('SiteFooter', () => {
@@ -52,7 +53,7 @@ describe('SiteFooter', () => {
 
   it('exposes every primary route so the footer is a real second navigation', () => {
     render(<SiteFooter {...props} />)
-    for (const label of ['Portfolio', 'Strategy', 'Insights', 'Partners', 'About Us', 'Investors']) {
+    for (const label of ['Portfolio', 'Strategy', 'Insights', 'Partners', 'About Us', 'Investors', 'Contact']) {
       expect(screen.getByRole('link', { name: label })).toBeDefined()
     }
   })
@@ -81,6 +82,11 @@ describe('SiteFooter', () => {
     expect(screen.getByRole('link', { name: 'Invest With Us' }).getAttribute('href')).toBe(
       '/investors',
     )
+  })
+
+  it('labels the contact link from its own leaf, since the nav tree has no word for it either', () => {
+    render(<SiteFooter {...props} contactLabel="Get In Touch" />)
+    expect(screen.getByRole('link', { name: 'Get In Touch' }).getAttribute('href')).toBe('/contact')
   })
 
   it('uses no physical-direction utilities', () => {

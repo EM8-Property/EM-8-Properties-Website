@@ -734,6 +734,7 @@ export const SITE_SETTINGS = {
    */
   footerLabels: {
     investors: 'Investors',
+    contact: 'Contact',
   },
   /**
    * The heading above a sold property's realized figures. Backfilled by the same step as
@@ -816,6 +817,23 @@ export const PAGE_COPY = {
     },
     leadershipTitle: 'Operators and investors who know these suburbs',
     boardTitle: 'The people we answer to',
+  },
+
+  contactPage: {
+    heading: {
+      eyebrow: 'Contact',
+      title: 'Questions about EM8? Start here.',
+      intro:
+        'Curious about our properties, how we work, or what we are building next? Send us a note and someone on the team will get back to you.',
+    },
+    detailsHeading: {
+      eyebrow: 'Other Ways To Reach Us',
+      title: 'Prefer email or a call?',
+      intro: 'Write to us directly, or put a time on the calendar.',
+    },
+    formTitle: 'Send us a message',
+    submitLabel: 'Send message',
+    successMessage: 'Thank you — we’ve got your message and someone will be in touch.',
   },
 
   partnersPage: {
@@ -1071,6 +1089,11 @@ export const PAGE_SEO = {
     title: 'Partners',
     description:
       'EM8 works with Kinzie, Advantage, and municipalities across the Chicago MSA as one accountable team.',
+  },
+  contactPage: {
+    title: 'Contact',
+    description:
+      'Get in touch with EM8 Properties to learn more about our transit-oriented housing in suburban Chicago.',
   },
   investorsPage: {
     title: 'Investors',

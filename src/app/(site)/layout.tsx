@@ -107,6 +107,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         contactEmail={site.contactEmail!}
         labels={site.navLabels as NavLabels}
         investorsLabel={site.footerLabels!.investors!}
+        contactLabel={site.footerLabels!.contact!}
       />
     </>
   )
