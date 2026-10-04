@@ -24,6 +24,7 @@ const COMPLETE = {
     partners: 'Partners',
     portfolio: 'Portfolio',
     insights: 'Insights',
+    contact: 'Contact',
   },
 }
 
@@ -48,6 +49,7 @@ describe('required siteSettings leaves', () => {
       'navLabels.partners',
       'navLabels.portfolio',
       'navLabels.insights',
+      'navLabels.contact',
     ])
   })
 

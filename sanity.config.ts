@@ -57,6 +57,7 @@ export default defineConfig({
                 ['homePage', 'Home page'],
                 ['aboutPage', 'About page'],
                 ['partnersPage', 'Partners page'],
+                ['contactPage', 'Contact page'],
                 ['investorsPage', 'Investors page'],
                 // These three hold only their search title and description — the rest of
                 // each page is generated from the property and post collections.

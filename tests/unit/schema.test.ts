@@ -217,6 +217,7 @@ describe('navLabels on siteSettings', () => {
     'partners',
     'portfolio',
     'insights',
+    'contact',
   ]
 
   it('carries one field per nav node, in bar order', () => {

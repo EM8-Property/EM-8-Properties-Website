@@ -33,6 +33,7 @@ describe('page copy schema', () => {
     // changed, not which type arrived or whether it was pinned. The list says both.
     expect([...SINGLETON_TYPES].sort()).toEqual([
       'aboutPage',
+      'contactPage',
       'homePage',
       'insightsPage',
       'investorsPage',
@@ -46,12 +47,14 @@ describe('page copy schema', () => {
 
 describe('seeded page copy', () => {
   it('carries copy for every page that has any', () => {
+    // Eight since /contact joined on 2026-10-04, with its heading and form copy.
     // Seven, not four. /portfolio and /insights joined when their headings moved out of
     // TSX; /strategy joined too, as the one page whose heading was never in TSX at all.
     // Each carries a heading (and /strategy an empty body), the rest of every page being
     // generated from the property and post collections.
     expect(Object.keys(PAGE_COPY).sort()).toEqual([
       'aboutPage',
+      'contactPage',
       'homePage',
       'insightsPage',
       'investorsPage',

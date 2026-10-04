@@ -38,12 +38,12 @@ async function anonymousQuery(groq: string): Promise<{ status: number; count: nu
 
 const CONTENT_TYPES =
   '["property","post","teamMember","focusCard","testimonial","heroStat","siteSettings",' +
-  '"homePage","aboutPage","partnersPage","investorsPage","portfolioPage","insightsPage",' +
+  '"homePage","aboutPage","partnersPage","contactPage","investorsPage","portfolioPage","insightsPage",' +
   '"strategyPage"]'
 
 /** Every page singleton, each of which must carry a complete `seo` block. */
 const PAGE_IDS =
-  '["homePage","aboutPage","partnersPage","investorsPage","portfolioPage","insightsPage",' +
+  '["homePage","aboutPage","partnersPage","contactPage","investorsPage","portfolioPage","insightsPage",' +
   '"strategyPage"]'
 
 /**

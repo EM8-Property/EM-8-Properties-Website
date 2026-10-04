@@ -34,6 +34,7 @@ const NAV: readonly { href: string; key: NavKey }[] = [
   { href: '/insights', key: 'insights' },
   { href: '/partners', key: 'partners' },
   { href: '/about', key: 'aboutUs' },
+  { href: '/contact', key: 'contact' },
 ]
 
 /**

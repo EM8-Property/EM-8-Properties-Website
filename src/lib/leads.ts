@@ -12,12 +12,16 @@ export class LeadSpamError extends Error {}
  * accreditation flag; that field is the Rule 506(c) artifact. The overlay never asks, so
  * filing it under the same source would fill the investor list with keep-in-touch leads
  * recording an accreditation nobody asserted.
+ *
+ * `contact` is /contact, for anyone who only wants to ask a question or learn more. Like
+ * the overlay it never asks about accreditation, so it must not share `keep-in-touch`.
  */
 export const LEAD_SOURCES = [
   'keep-in-touch',
   'site-submission',
   'newsletter',
   'homepage-popup',
+  'contact',
 ] as const
 
 const SOURCES = LEAD_SOURCES
@@ -27,7 +31,7 @@ const SOURCES = LEAD_SOURCES
  * address and nothing else — requiring a name there would defeat the point of having a
  * low-friction ask at all.
  */
-const SOURCES_REQUIRING_NAME: readonly string[] = ['keep-in-touch', 'site-submission', 'homepage-popup']
+const SOURCES_REQUIRING_NAME: readonly string[] = ['keep-in-touch', 'site-submission', 'homepage-popup', 'contact']
 export type LeadSource = (typeof SOURCES)[number]
 
 export type LeadInput = {

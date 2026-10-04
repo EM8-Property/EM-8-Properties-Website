@@ -141,6 +141,11 @@ export const REQUIRED_SITE_SETTINGS: readonly RequiredLeaf[] = [
     groq: '"navInsights": navLabels.insights',
     describe: 'navLabels.insights — the Insights tab renders with no words in it',
   },
+  {
+    path: 'navLabels.contact',
+    groq: '"navContact": navLabels.contact',
+    describe: 'navLabels.contact — the Contact tab renders with no words in it',
+  },
 ] as const
 
 function valueAt(source: unknown, path: string): unknown {

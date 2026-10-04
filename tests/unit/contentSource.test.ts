@@ -470,6 +470,7 @@ describe('the seeded nav labels', () => {
     'partners',
     'portfolio',
     'insights',
+    'contact',
   ]
 
   it('covers every nav node', () => {
@@ -488,7 +489,7 @@ describe('the seeded nav labels', () => {
      * See the fuller measurement and length-versus-width point in schema.test.ts.
      */
     const labels = (SITE_SETTINGS as any).navLabels
-    for (const bar of ['aboutUs', 'strategy', 'portfolio', 'insights']) {
+    for (const bar of ['aboutUs', 'strategy', 'portfolio', 'insights', 'contact']) {
       expect(labels[bar].length, `${bar} = "${labels[bar]}"`).toBeLessThanOrEqual(10)
     }
     for (const child of ['aboutEm8', 'whyEm8', 'ourTeam', 'whyMidwest', 'partners']) {

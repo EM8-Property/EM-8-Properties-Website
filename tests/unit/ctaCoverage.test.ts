@@ -31,17 +31,18 @@ const routes = pageFiles(siteDir).map((file) => ({ file, route: routeOf(file) })
  * the narrative with a call to action, and /insights exists to be linked from LinkedIn —
  * an article that ends with nothing to do next wastes the arrival it was written to earn.
  *
- * `/investors` and `/partners` are the two exceptions, and deliberately so: each already
- * leads with a full form. A second, lower-friction email capture underneath would compete
+ * `/investors`, `/partners` and `/contact` are the three exceptions, and deliberately so:
+ * each already leads with a full form. /contact is nothing but that form. A second, lower-friction email capture underneath would compete
  * with the ask the page is built around.
  */
-const HAS_OWN_FORM = ['/investors', '/partners']
+const HAS_OWN_FORM = ['/investors', '/partners', '/contact']
 
 describe('every page offers a way to make contact', () => {
   it('covers every route, so the assertions below cannot go vacuous', () => {
     expect(routes.map((r) => r.route).sort()).toEqual([
       '/',
       '/about',
+      '/contact',
       '/insights',
       '/insights/[slug]',
       '/investors',

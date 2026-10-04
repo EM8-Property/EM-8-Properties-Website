@@ -40,6 +40,7 @@ export type NavKey =
   | 'partners'
   | 'portfolio'
   | 'insights'
+  | 'contact'
 
 export type NavNode = {
   /** Stable across label edits. It is the `siteSettings.navLabels` key and the React key. */
@@ -100,6 +101,9 @@ export const NAV_TREE = [
   },
   { key: 'portfolio', href: '/portfolio' },
   { key: 'insights', href: '/insights' },
+  // Added 2026-10-04 at Hunter's request: /contact as a fifth tab, labelled "Contact"
+  // rather than "Contact Us" so the phone row can keep its type a size larger.
+  { key: 'contact', href: '/contact' },
 ] as const satisfies readonly NavNode[]
 
 /**

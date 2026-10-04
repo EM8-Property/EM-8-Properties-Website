@@ -20,6 +20,7 @@ const LABELS = {
   partners: 'Partners',
   portfolio: 'Portfolio',
   insights: 'Insights',
+  contact: 'Contact',
 }
 
 const props = {
@@ -52,7 +53,7 @@ describe('SiteFooter', () => {
 
   it('exposes every primary route so the footer is a real second navigation', () => {
     render(<SiteFooter {...props} />)
-    for (const label of ['Portfolio', 'Strategy', 'Insights', 'Partners', 'About Us', 'Investors']) {
+    for (const label of ['Portfolio', 'Strategy', 'Insights', 'Partners', 'About Us', 'Contact', 'Investors']) {
       expect(screen.getByRole('link', { name: label })).toBeDefined()
     }
   })

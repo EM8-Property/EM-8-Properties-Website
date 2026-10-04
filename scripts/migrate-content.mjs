@@ -1024,11 +1024,11 @@ async function backfillNavLabels(apply) {
   if (!doc.dealStoryHeading) fill.dealStoryHeading = SITE_SETTINGS.dealStoryHeading
 
   if (Object.keys(fill).length === 0) {
-    console.log('  nav labels  all nine labels and the deal heading already set — left untouched')
+    console.log('  nav labels  every nav label and the deal heading already set — left untouched')
     return
   }
 
-  console.log(`  nav labels  filling ${Object.keys(fill).length} of 10:`)
+  console.log(`  nav labels  filling ${Object.keys(fill).length}:`)
   for (const [path, value] of Object.entries(fill)) {
     console.log(`              ${path} -> "${value}"`)
   }

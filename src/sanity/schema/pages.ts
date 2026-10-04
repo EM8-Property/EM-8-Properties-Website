@@ -198,6 +198,46 @@ export const partnersPage = defineType({
   preview: { prepare: () => ({ title: 'Partners page' }) },
 })
 
+/**
+ * /contact, for anyone who only wants to reach out and learn more about EM8.
+ *
+ * Every other form on the site asks something of the sender: /investors wants a check
+ * size and an accreditation declaration, /partners wants an address. This one asks for a
+ * name, an email and a question, and files under its own lead source so the team can tell
+ * a general enquiry from an investor lead.
+ *
+ * The email address and the book-a-call link are not fields here. They are
+ * `siteSettings.contactEmail` and `siteSettings.bookACallUrl`, which the footer and the
+ * closing call to action already read, so the three places cannot disagree.
+ */
+export const contactPage = defineType({
+  name: 'contactPage',
+  title: 'Contact page',
+  type: 'document',
+  fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
+    defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
+    defineField({
+      name: 'detailsHeading',
+      title: 'Other ways to reach us',
+      type: 'headingBlock',
+      description:
+        'The heading above the email address and the book-a-call link, beside the form. ' +
+        'Both come from Site settings.',
+      validation: (r) => r.required(),
+    }),
+    defineField({ name: 'formTitle', type: 'string', validation: (r) => r.required().max(60) }),
+    defineField({ name: 'submitLabel', type: 'string', validation: (r) => r.required().max(40) }),
+    defineField({
+      name: 'successMessage',
+      type: 'string',
+      description: 'Shown in place of the form once a message has been sent.',
+      validation: (r) => r.required().max(160),
+    }),
+  ],
+  preview: { prepare: () => ({ title: 'Contact page' }) },
+})
+
 export const investorsPage = defineType({
   name: 'investorsPage',
   title: 'Investors page',

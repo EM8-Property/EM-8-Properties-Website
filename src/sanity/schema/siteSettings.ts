@@ -257,6 +257,15 @@ export const siteSettings = defineType({
           description: 'Goes to /insights. A plain link with no menu.',
           validation: (r) => r.required().max(10),
         }),
+        defineField({
+          name: 'contact',
+          title: 'Contact (tab)',
+          type: 'string',
+          description:
+            'Goes to /contact. A plain link with no menu, and the last tab. Keep it short: ' +
+            'on a phone all five tabs share one row.',
+          validation: (r) => r.required().max(10),
+        }),
       ],
     }),
     /**

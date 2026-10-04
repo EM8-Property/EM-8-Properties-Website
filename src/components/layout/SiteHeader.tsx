@@ -306,6 +306,13 @@ export function SiteHeader({
           `order-last` puts it after the two actions on a phone, which with `basis-full` is
           what makes it row two.
 
+          The phone type scales with the viewport, `clamp(9px, 2.4vw, 11px)` with a 10px gap,
+          so that all five tabs fit one row once /contact joined them (2026-10-04, Hunter's
+          call, after comparing mocks). Measured on /about with the fonts loaded, one row needs
+          9px at 375px, 9.5px at 390px, 10.5px at 414px and 11px at 430px; 2.4vw stays under
+          each. Below about 360px, or before the webfonts arrive, the row wraps to two lines,
+          which is the height `HEADER_RESERVATION` already reserves for.
+
           `md:order-2` against the actions box's `md:order-3` is what places it between the
           wordmark and the actions on a desktop. That pair is not decorative and it is not
           interchangeable with `md:order-none`, which is what shipped first and which does
@@ -329,7 +336,7 @@ export function SiteHeader({
         */}
         <nav
           id="site-nav"
-          className="order-last flex basis-full flex-wrap items-center gap-x-5 gap-y-2 text-[11px] font-semibold uppercase tracking-wide text-ink-secondary md:order-2 md:ms-auto md:me-5 md:basis-auto md:text-xs md:font-medium md:normal-case md:tracking-normal"
+          className="order-last flex basis-full flex-wrap items-center gap-x-2.5 gap-y-2 text-[clamp(9px,2.4vw,11px)] font-semibold uppercase tracking-[0.02em] text-ink-secondary md:order-2 md:ms-auto md:me-5 md:basis-auto md:gap-x-5 md:text-xs md:font-medium md:normal-case md:tracking-normal"
         >
           {NAV_TREE.map((node: NavNode) =>
             node.children ? (
