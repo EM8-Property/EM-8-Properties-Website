@@ -15,6 +15,7 @@ const LABELS: NavLabels = {
   partners: 'Partners',
   portfolio: 'Portfolio',
   insights: 'Insights',
+  contact: 'Contact',
 }
 
 /**

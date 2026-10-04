@@ -34,6 +34,7 @@ const NAV: readonly { href: string; key: NavKey }[] = [
   { href: '/insights', key: 'insights' },
   { href: '/partners', key: 'partners' },
   { href: '/about', key: 'aboutUs' },
+  { href: '/contact', key: 'contact' },
 ]
 
 /**
@@ -50,7 +51,6 @@ export function SiteFooter({
   contactEmail,
   labels,
   investorsLabel,
-  contactLabel,
 }: {
   disclaimer: string
   contactEmail: string
@@ -58,8 +58,6 @@ export function SiteFooter({
   labels: NavLabels
   /** `siteSettings.footerLabels.investors` — the one link the top navigation has no word for. */
   investorsLabel: string
-  /** `siteSettings.footerLabels.contact` — /contact is reached from here and from nowhere in the top navigation. */
-  contactLabel: string
 }) {
   return (
     <footer className="mt-16 border-t border-rule bg-panel">
@@ -89,9 +87,6 @@ export function SiteFooter({
             */}
             <Link href="/investors" className="hover:text-ink">
               {investorsLabel}
-            </Link>
-            <Link href="/contact" className="hover:text-ink">
-              {contactLabel}
             </Link>
           </nav>
         </div>

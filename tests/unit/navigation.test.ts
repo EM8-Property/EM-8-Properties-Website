@@ -6,15 +6,17 @@ import { NAV_TREE, NAV_KEYS, navDestinations } from '@/lib/navigation'
 import { REQUIRED_SITE_SETTINGS } from '@/lib/requiredContent'
 
 describe('the nav tree', () => {
-  it('is the two dropdowns and the two plain links spec §5 specifies', () => {
+  it('is the two dropdowns and the three plain links', () => {
     // Named rather than counted. `expected 5 to be 4` says a number changed, not which
     // tab arrived — and this shape is Hunter's instruction of 2026-09-08, so a diff here
-    // is a product change and should read like one.
+    // is a product change and should read like one. Contact joined on 2026-10-04, also
+    // Hunter's instruction.
     expect(NAV_TREE.map((n) => n.key)).toEqual([
       'aboutUs',
       'strategy',
       'portfolio',
       'insights',
+      'contact',
     ])
   })
 
@@ -58,7 +60,9 @@ describe('the nav tree', () => {
     ])
   })
 
-  it('lists nine label keys, parents and children alike', () => {
+  it('lists ten label keys, parents and children alike', () => {
+    // Ten since Contact joined the bar on 2026-10-04: an addition, as the note below
+    // anticipated.
     // Nine, not the ten §5's prose counts. The tenth in its table is Investor Login,
     // which names a third-party product and stays a literal — see the plan's "Three
     // things the spec gets wrong". Nine is also the reversible count: a tenth later is an
@@ -73,6 +77,7 @@ describe('the nav tree', () => {
       'partners',
       'portfolio',
       'insights',
+      'contact',
     ])
   })
 

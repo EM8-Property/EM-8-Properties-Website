@@ -35,6 +35,7 @@ const LABELS: NavLabels = {
   partners: 'Partners',
   portfolio: 'Portfolio',
   insights: 'Insights',
+  contact: 'Contact',
 }
 
 const props = { agoraUrl: 'https://x.test', cta: CTA, labels: LABELS }

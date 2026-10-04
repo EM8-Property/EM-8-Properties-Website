@@ -11,7 +11,7 @@ const COMPLETE = {
   disclaimer: 'x',
   headerCta: { label: 'Invest With Us', href: '/investors' },
   ctaBand: { heading: { title: 'x' }, submitLabel: 'x', emailLabel: 'x' },
-  footerLabels: { investors: 'Investors', contact: 'Contact' },
+  footerLabels: { investors: 'Investors' },
   // Nine labels, because nine leaves are required. A fixture that is complete in name only
   // makes `returns nothing for a complete document` assert the opposite of its name.
   navLabels: {
@@ -24,6 +24,7 @@ const COMPLETE = {
     partners: 'Partners',
     portfolio: 'Portfolio',
     insights: 'Insights',
+    contact: 'Contact',
   },
 }
 
@@ -39,7 +40,6 @@ describe('required siteSettings leaves', () => {
       'ctaBand.submitLabel',
       'ctaBand.emailLabel',
       'footerLabels.investors',
-      'footerLabels.contact',
       'navLabels.aboutUs',
       'navLabels.aboutEm8',
       'navLabels.whyEm8',
@@ -49,6 +49,7 @@ describe('required siteSettings leaves', () => {
       'navLabels.partners',
       'navLabels.portfolio',
       'navLabels.insights',
+      'navLabels.contact',
     ])
   })
 

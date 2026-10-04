@@ -23,6 +23,7 @@ const LABELS: NavLabels = {
   partners: 'Partners',
   portfolio: 'Portfolio',
   insights: 'Insights',
+  contact: 'Contact',
 }
 
 const props = { agoraUrl: 'https://em8.agorareal.com', cta: CTA, labels: LABELS }

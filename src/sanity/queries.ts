@@ -103,9 +103,9 @@ export const SITE_SETTINGS_QUERY = defineQuery(
     headerCta { label, href },
     navLabels {
       aboutUs, aboutEm8, whyEm8, ourTeam,
-      strategy, whyMidwest, partners, portfolio, insights
+      strategy, whyMidwest, partners, portfolio, insights, contact
     },
-    footerLabels { investors, contact },
+    footerLabels { investors },
     dealStoryHeading,
     ctaBand {
       heading { eyebrow, title, intro },

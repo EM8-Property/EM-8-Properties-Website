@@ -721,6 +721,7 @@ export const SITE_SETTINGS = {
     partners: 'Partners',
     portfolio: 'Portfolio',
     insights: 'Insights',
+    contact: 'Contact',
   },
   /**
    * The footer's one label of its own.
@@ -734,7 +735,6 @@ export const SITE_SETTINGS = {
    */
   footerLabels: {
     investors: 'Investors',
-    contact: 'Contact',
   },
   /**
    * The heading above a sold property's realized figures. Backfilled by the same step as

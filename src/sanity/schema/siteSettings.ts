@@ -257,6 +257,15 @@ export const siteSettings = defineType({
           description: 'Goes to /insights. A plain link with no menu.',
           validation: (r) => r.required().max(10),
         }),
+        defineField({
+          name: 'contact',
+          title: 'Contact (tab)',
+          type: 'string',
+          description:
+            'Goes to /contact. A plain link with no menu, and the last tab. Keep it short: ' +
+            'on a phone all five tabs share one row.',
+          validation: (r) => r.required().max(10),
+        }),
       ],
     }),
     /**
@@ -291,8 +300,8 @@ export const siteSettings = defineType({
       title: 'Footer links',
       type: 'object',
       description:
-        'The footer repeats the navigation and adds two links of its own. Only those extras ' +
-        'are set here; the rest follow the navigation labels above.',
+        'The footer repeats the navigation and adds one link of its own. Only that extra ' +
+        'one is set here; the rest follow the navigation labels above.',
       options: { collapsible: true, collapsed: true },
       fields: [
         defineField({
@@ -300,13 +309,6 @@ export const siteSettings = defineType({
           title: 'Investors (footer only)',
           type: 'string',
           description: 'Goes to /investors. It appears in the footer and nowhere else.',
-          validation: (r) => r.required().max(24),
-        }),
-        defineField({
-          name: 'contact',
-          title: 'Contact (footer only)',
-          type: 'string',
-          description: 'Goes to /contact. It appears in the footer and nowhere else.',
           validation: (r) => r.required().max(24),
         }),
       ],
