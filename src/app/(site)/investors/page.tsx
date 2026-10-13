@@ -46,7 +46,7 @@ const FIELDS: FieldSpec[] = [
     name: 'checkSize',
     label: 'Typical check size',
     type: 'select',
-    options: ['Under $100k', '$100k–$250k', '$250k–$1M', '$1M+'],
+    options: ['Under $250k', '$250k–$1M', '$1M+'],
   },
   { name: 'message', label: 'What are you looking for?', type: 'textarea' },
   {
