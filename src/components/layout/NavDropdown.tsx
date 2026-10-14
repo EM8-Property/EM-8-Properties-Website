@@ -1,9 +1,32 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import Link from 'next/link'
 import type { NavKey, NavLabels, NavNode } from '@/lib/navigation'
+
+/**
+ * How long a mouse-opened panel survives the pointer leaving it.
+ *
+ * It used to close on the very `pointerleave`, and Hunter found on 2026-10-14 that he had
+ * to move "very slow" to get from a label to its panel: the label row is 16px tall, and a
+ * pointer that drifted a pixel off it on the way down, or cut the corner towards a child,
+ * shut the panel before it arrived. 300ms forgives a path that strays without making a
+ * panel the reader has genuinely left hang around. Moving onto the OTHER parent does not
+ * wait for this at all: see `OPEN_EVENT`.
+ */
+export const HOVER_CLOSE_DELAY_MS = 300
+
+/**
+ * Broadcast when a panel opens, so the other one closes at once.
+ *
+ * Before the close delay, two panels could never be open together under a mouse, because
+ * leaving one closed it before the pointer reached the next. With the delay, sliding from
+ * About Us to Strategy would leave About Us's panel up for 300ms under Strategy's, and
+ * About Us's panel is wide enough to sit beneath the Strategy label. A window event rather
+ * than lifting the state into `SiteHeader`, because the two groups share nothing else.
+ */
+const OPEN_EVENT = 'em8:nav-dropdown-open'
 
 /**
  * One navigation parent and its panel.
@@ -100,16 +123,45 @@ export function NavDropdown({
    * that closes the panel, so it cannot leak into an unrelated later gesture either.
    */
   const suppressToggleRef = useRef(false)
+  /** The pending close after the mouse leaves, cancelled if it comes back in time. */
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const panelId = `nav-panel-${node.key}`
   const label = labels[node.key]
   const children = (node.children ?? []).filter((c) => !hiddenKeys?.includes(c.key))
 
+  const cancelPendingClose = () => {
+    if (closeTimerRef.current === null) return
+    clearTimeout(closeTimerRef.current)
+    closeTimerRef.current = null
+  }
+
   const close = (refocus: boolean) => {
+    cancelPendingClose()
     setOpen(false)
     suppressToggleRef.current = false
     if (refocus) toggleRef.current?.focus()
   }
+
+  // Tell the other parent we opened; it closes without waiting out its delay.
+  useEffect(() => {
+    if (open) window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: node.key }))
+  }, [open, node.key])
+
+  useEffect(() => {
+    const onOtherOpened = (event: Event) => {
+      if ((event as CustomEvent<NavKey>).detail === node.key) return
+      if (closeTimerRef.current !== null) clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+      setOpen(false)
+      suppressToggleRef.current = false
+    }
+    window.addEventListener(OPEN_EVENT, onOtherOpened)
+    return () => {
+      window.removeEventListener(OPEN_EVENT, onOtherOpened)
+      if (closeTimerRef.current !== null) clearTimeout(closeTimerRef.current)
+    }
+  }, [node.key])
 
   const handleToggleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     // Only a pointer-driven click (detail >= 1) can be the tail end of the pointerenter
@@ -176,13 +228,15 @@ export function NavDropdown({
 
   const onPointerEnter = (event: React.PointerEvent) => {
     if (event.pointerType !== 'mouse') return
+    cancelPendingClose()
     if (!open) suppressToggleRef.current = true
     setOpen(true)
   }
 
   const onPointerLeave = (event: React.PointerEvent) => {
     if (event.pointerType !== 'mouse') return
-    close(false)
+    cancelPendingClose()
+    closeTimerRef.current = setTimeout(() => close(false), HOVER_CLOSE_DELAY_MS)
   }
 
   return (
@@ -282,26 +336,35 @@ export function NavDropdown({
         pairings the dark re-theme has to unpick and this surface is not becoming the eighth.
 
         One element for both breakpoints, so the accessible names stay unique.
+
+        **The 4px between the label and the card is padding on this element, not margin on
+        the card.** It was `mt-1` until 2026-10-14, which left a 4px strip belonging to
+        neither the label nor the panel: crossing it fired `pointerleave` on the group and
+        shut the panel under a mouse on its way down (measured on em-8.com at 1024px: label
+        bottom 38.7, panel top 42.7). Padding keeps the same look and makes the strip part
+        of the group, so the pointer never leaves it between the two.
       */}
       <div
         ref={panelRef}
         id={panelId}
         hidden={!open}
-        className="absolute start-6 top-full z-50 mt-1 flex w-44 flex-col rounded-card border border-rule bg-ground p-2 shadow-sm md:start-0"
+        className="absolute start-6 top-full z-50 pt-1 md:start-0"
       >
-        {children.map((child) => (
-          <Link
-            key={child.key}
-            href={child.href!}
-            onClick={() => {
-              close(false)
-              onNavigate?.()
-            }}
-            className="rounded-control px-2 py-1.5 text-ink-secondary hover:bg-panel hover:text-ink"
-          >
-            {labels[child.key]}
-          </Link>
-        ))}
+        <div className="flex w-44 flex-col rounded-card border border-rule bg-ground p-2 shadow-sm">
+          {children.map((child) => (
+            <Link
+              key={child.key}
+              href={child.href!}
+              onClick={() => {
+                close(false)
+                onNavigate?.()
+              }}
+              className="rounded-control px-2 py-1.5 text-ink-secondary hover:bg-panel hover:text-ink"
+            >
+              {labels[child.key]}
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

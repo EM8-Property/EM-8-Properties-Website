@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
+import { render, screen, act, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { NavDropdown } from '@/components/layout/NavDropdown'
+import { NavDropdown, HOVER_CLOSE_DELAY_MS } from '@/components/layout/NavDropdown'
 import { NAV_TREE } from '@/lib/navigation'
 import type { NavLabels, NavNode } from '@/lib/navigation'
 
@@ -429,5 +429,124 @@ describe('NavDropdown, a parent that is also a link', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
     await user.pointer({ target: toggle, keys: '[TouchA]' })
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  })
+})
+
+describe('NavDropdown, getting from a label to its panel with a mouse', () => {
+  /*
+   * Hunter, 2026-10-14: the About Us and Strategy panels "don't always stay open" and he
+   * had to move "very slow" to keep them up. Two causes, tests for both below: the panel
+   * closed on the very `pointerleave`, and there was a 4px strip between the label and the
+   * card that belonged to neither, so crossing it was a `pointerleave`.
+   *
+   * `fireEvent`, not userEvent: userEvent awaits its own internal delays, which never
+   * resolve under fake timers and hang the test rather than failing it (the same note as
+   * `investorPopup.test.tsx`). React builds `onPointerEnter`/`onPointerLeave` from
+   * `pointerover`/`pointerout`, so those are the events dispatched.
+   */
+  const enter = (el: Element, from: Element = document.body) =>
+    fireEvent.pointerOver(el, { pointerType: 'mouse', relatedTarget: from })
+  const leave = (el: Element, to: Element = document.body) =>
+    fireEvent.pointerOut(el, { pointerType: 'mouse', relatedTarget: to })
+  const advance = (ms: number) =>
+    act(async () => {
+      vi.advanceTimersByTime(ms)
+    })
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('stays open for a moment after the pointer slips off, then closes', async () => {
+    const { container } = render(<NavDropdown node={strategy} labels={LABELS} />)
+    const group = container.firstElementChild!
+    const toggle = screen.getByRole('button', { name: /open the strategy menu/i })
+
+    enter(group)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+
+    leave(group)
+    expect(
+      toggle.getAttribute('aria-expanded'),
+      'the panel closed the instant the pointer left, which is what made it fiddly to reach',
+    ).toBe('true')
+
+    await advance(HOVER_CLOSE_DELAY_MS - 50)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+
+    await advance(100)
+    expect(
+      toggle.getAttribute('aria-expanded'),
+      'a panel the reader has left must still close',
+    ).toBe('false')
+  })
+
+  it('keeps the panel open if the pointer comes back before the delay runs out', async () => {
+    const { container } = render(<NavDropdown node={strategy} labels={LABELS} />)
+    const group = container.firstElementChild!
+    const toggle = screen.getByRole('button', { name: /open the strategy menu/i })
+
+    enter(group)
+    leave(group)
+    await advance(HOVER_CLOSE_DELAY_MS / 2)
+    enter(group)
+    await advance(HOVER_CLOSE_DELAY_MS * 2)
+
+    expect(
+      toggle.getAttribute('aria-expanded'),
+      'the close queued by the first leave fired after the pointer had come back',
+    ).toBe('true')
+  })
+
+  it('closes the other panel at once when the pointer moves to the other parent', () => {
+    /*
+     * With the delay, sliding from About Us to Strategy would otherwise leave About Us's
+     * panel up for the length of the delay, under Strategy's.
+     */
+    const { container } = render(
+      <>
+        <NavDropdown node={realAboutUs} labels={LABELS} />
+        <NavDropdown node={strategy} labels={LABELS} />
+      </>,
+    )
+    const [aboutGroup, strategyGroup] = [...container.children]
+    const aboutToggle = screen.getByRole('button', { name: /open the about us menu/i })
+    const strategyToggle = screen.getByRole('button', { name: /open the strategy menu/i })
+
+    enter(aboutGroup!)
+    expect(aboutToggle.getAttribute('aria-expanded')).toBe('true')
+
+    leave(aboutGroup!, strategyGroup!)
+    enter(strategyGroup!, aboutGroup!)
+    expect(strategyToggle.getAttribute('aria-expanded')).toBe('true')
+    expect(aboutToggle.getAttribute('aria-expanded'), 'two panels were open at once').toBe(
+      'false',
+    )
+  })
+
+  it('a touch tap is untouched by the delay: it neither opens nor closes on hover', () => {
+    // The delay is for a mouse. A pen or finger `pointerout` must not queue a close.
+    const { container } = render(<NavDropdown node={strategy} labels={LABELS} />)
+    const group = container.firstElementChild!
+    const toggle = screen.getByRole('button', { name: /open the strategy menu/i })
+
+    fireEvent.pointerOver(group, { pointerType: 'touch' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('has no gap between the label and the panel that belongs to neither', () => {
+    /*
+     * The space under the label is padding on the panel element, which is inside the
+     * group, rather than margin, which is outside every box. jsdom has no layout, so the
+     * class string is what it can check; the E2E test `the pointer can travel from a nav
+     * label down into its panel` checks the geometry on a real build.
+     */
+    const { container } = render(<NavDropdown node={strategy} labels={LABELS} />)
+    const panel = container.querySelector('#nav-panel-strategy')!
+    expect(panel.className).not.toMatch(/(?:^|\s)(?:[a-z]+:)*-?m[ty]?-/)
+    expect(panel.className).toMatch(/(?:^|\s)pt-1(?:\s|$)/)
   })
 })
