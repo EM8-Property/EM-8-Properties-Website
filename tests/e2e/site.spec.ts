@@ -1069,6 +1069,61 @@ for (const width of [320, 390] as const) {
 }
 
 /*
+ * A mouse can get from a nav label down into its panel without the panel closing.
+ *
+ * Hunter, 2026-10-14: on a computer the About Us and Strategy panels "don't always stay
+ * open", and he had to move "very slow" to keep them up. On em-8.com at 1024px the label
+ * row ended at y=38.7 and the card began at y=42.7, and the 4px between them belonged to
+ * no element in the group, so a pointer crossing it fired `pointerleave` and the panel shut.
+ *
+ * Two fixes, two assertions. The panel's own box now starts where the label ends (the
+ * spacing is padding inside it), which is asserted directly, since the close delay added
+ * alongside would otherwise hide a reintroduced gap from a walk that moves quickly. Then
+ * the walk goes 1px at a time, the slow movement that failed for him, from the middle of
+ * the label straight down to the first child, checking the panel at every step. The leave
+ * assertion at the end pins the other half: a panel the pointer has left still closes.
+ */
+for (const key of ['aboutUs', 'strategy'] as const) {
+  test(`the pointer can travel from a nav label down into its ${key} panel at 1280px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto('/about')
+
+    const toggle = page.locator(`#site-nav button[aria-controls="nav-panel-${key}"]`)
+    const label = toggle.locator('xpath=preceding-sibling::a[1]')
+    const panel = page.locator(`#nav-panel-${key}`)
+    const firstChild = panel.locator('a').first()
+
+    const from = (await label.boundingBox())!
+    const x = from.x + Math.min(from.width / 2, 12)
+    await page.mouse.move(x, from.y + from.height / 2)
+    await expect(panel).toBeVisible()
+
+    // Against the label ROW (the panel's previous sibling), not the link, which is
+    // centred in it and a fraction shorter.
+    const row = (await panel.locator('xpath=preceding-sibling::*[1]').boundingBox())!
+    const panelBox = (await panel.boundingBox())!
+    expect(
+      panelBox.y,
+      `the ${key} panel starts ${(panelBox.y - (row.y + row.height)).toFixed(1)}px below its label row, a strip the pointer crosses outside the group`,
+    ).toBeLessThanOrEqual(row.y + row.height + 0.5)
+
+    const to = (await firstChild.boundingBox())!
+    for (let y = from.y + from.height / 2; y <= to.y + to.height / 2; y += 1) {
+      await page.mouse.move(x, y)
+      expect(
+        await panel.isVisible(),
+        `the ${key} panel closed with the pointer at y=${y.toFixed(1)}, between its label (bottom ${(from.y + from.height).toFixed(1)}) and its first link (top ${to.y.toFixed(1)})`,
+      ).toBe(true)
+    }
+
+    await page.mouse.move(x, 700)
+    await expect(panel).toBeHidden()
+  })
+}
+
+/*
  * The panel opens on a tap and does not navigate on that tap.
  *
  * §5's requirement for a touch device, and the case a hover-only panel fails silently:
