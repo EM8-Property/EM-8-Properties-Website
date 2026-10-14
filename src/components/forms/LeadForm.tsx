@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { HONEYPOT_FIELD } from '@/lib/leads'
 import type { LeadSource } from '@/lib/leads'
+import { TURNSTILE_FIELD } from '@/lib/turnstile'
+import { useTurnstile } from './useTurnstile'
 
 export type FieldSpec = {
   name: string
@@ -33,6 +35,7 @@ export function LeadForm({
 }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle')
   const [error, setError] = useState<string | null>(null)
+  const { containerRef, getToken, reset, interactive, enabled } = useTurnstile(source)
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -40,22 +43,27 @@ export function LeadForm({
     setError(null)
 
     const data = Object.fromEntries(new FormData(e.currentTarget).entries())
+    // Usually already there: the widget runs while the visitor types. If Cloudflare
+    // wants a checkbox ticked, this waits for it.
+    const token = await getToken()
     try {
       const res = await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, source }),
+        body: JSON.stringify({ ...data, source, ...(token ? { [TURNSTILE_FIELD]: token } : {}) }),
       })
       const json = await res.json()
       if (!json.ok) {
         setError(json.error ?? 'Something went wrong')
         setStatus('idle')
+        reset()
         return
       }
       setStatus('sent')
     } catch {
       setError('Could not reach the server. Please try again.')
       setStatus('idle')
+      reset()
     }
   }
 
@@ -110,6 +118,19 @@ export function LeadForm({
           <input type="text" name={HONEYPOT_FIELD} tabIndex={-1} autoComplete="off" />
         </label>
       </div>
+
+      {/*
+        Cloudflare Turnstile. Empty for nearly everyone; it shows a checkbox only to a
+        visitor Cloudflare is unsure about. Until then it is taken out of the grid with
+        `absolute`: in flow, even at zero height it is a grid row, and the gap on either
+        side of it pushed the button 12px lower than before Turnstile was added.
+      */}
+      {enabled && (
+        <div
+          ref={containerRef}
+          className={interactive ? undefined : 'absolute'}
+        />
+      )}
 
       {error && (
         <p role="alert" className="text-xs text-danger">

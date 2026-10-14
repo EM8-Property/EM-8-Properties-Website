@@ -9,6 +9,7 @@ import {
 import { writeClient } from '@/sanity/writeClient'
 import { resendSender } from '@/lib/email'
 import { rateLimit, isPowerOfTen } from '@/lib/rateLimit'
+import { verifyTurnstile, TURNSTILE_FIELD } from '@/lib/turnstile'
 
 function callerKey(request: Request): string {
   // The RIGHT-most X-Forwarded-For entry, not the left-most.
@@ -80,7 +81,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Submission is too large' }, { status: 413 })
     }
 
-    const input = parseLead(JSON.parse(raw))
+    const body = JSON.parse(raw)
+    const input = parseLead(body)
+
+    // After parseLead, not before: a Turnstile token is single-use, so a submission
+    // refused for a mistyped email must not have spent it. The honeypot also stays
+    // first, so a bot it catches is still answered with a quiet success.
+    const check = await verifyTurnstile(body[TURNSTILE_FIELD])
+    if (check.outcome === 'fail') {
+      console.warn('Turnstile refused a submission', {
+        source: input.source,
+        errorCodes: check.errorCodes,
+      })
+      return NextResponse.json(
+        {
+          ok: false,
+          // Answered with an error, unlike the honeypot. A person can fail this too (a
+          // token that expired while they typed, or a blocked Cloudflare script), and
+          // they need to know their message did not go through.
+          error:
+            'We could not confirm this was sent by a person. Please reload the page and try again.',
+        },
+        { status: 400 },
+      )
+    }
+    if (check.outcome === 'unavailable') {
+      // Let through, see verifyTurnstile. Loud, because a misconfigured secret looks
+      // exactly like this and would otherwise leave the forms unprotected unnoticed.
+      console.error('Turnstile could not be checked, submission accepted unverified', {
+        errorCodes: check.errorCodes,
+      })
+    }
+
     const result = await submitLead(input, {
       create: (doc) => writeClient.create(doc as never),
       sender: resendSender,
