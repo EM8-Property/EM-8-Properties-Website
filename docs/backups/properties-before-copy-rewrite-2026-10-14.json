@@ -1,0 +1,2183 @@
+[
+ {
+  "_createdAt": "2026-09-15T17:14:42Z",
+  "_id": "drafts.property-uteg-street-apartments",
+  "_rev": "3Ge3NstRynLMiXd9C9eoBC",
+  "_type": "property",
+  "_updatedAt": "2026-09-15T17:14:42Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Value-add multifamily in Crystal Lake, Illinois. Acquired 2018, sold 2022 after 4 years.",
+  "city": "Crystal Lake",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 42.230944,
+   "lng": -88.329724
+  },
+  "dealStory": {
+   "acquiredYear": 2018,
+   "equityMultiple": "1.52x",
+   "exitYear": 2022,
+   "grossIrr": 6,
+   "salePrice": 5100000
+  },
+  "featured": false,
+  "order": 200,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "uteg-street-apartments"
+  },
+  "state": "IL",
+  "status": "sold",
+  "title": "Uteg Street Apartments"
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-157-and-cicero",
+  "_rev": "EqjN3RANcyKWVFCIZP7Eq5",
+  "_system": {
+   "base": {
+    "id": "property-157-and-cicero",
+    "rev": "zw2N4vRZfRbuHOZHsh9ZkA"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-18T16:57:34Z",
+  "assetClass": "mixed-use",
+  "businessPlan": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Delivered and stabilized. The retail is leased to tenants who draw on the building and the blocks around it."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "cardBlurb": "Ground-up mixed-use, finished in 2024. Apartments over street-level retail, three minutes on foot from the Oak Forest Metra station.",
+  "city": "Oak Forest",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.60697,
+   "lng": -87.7367
+  },
+  "featured": true,
+  "gallery": [
+   {
+    "_key": "m59cgv0ln28",
+    "_type": "image",
+    "alt": "Street elevation of the apartment building with ground-floor commercial space",
+    "asset": {
+     "_ref": "image-44af75e793ad2ce6e1394a1a95b6d0a967ee1453-2528x1686-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "property-157-and-cicero-0",
+    "_type": "image",
+    "alt": "157 & Cicero, Oak Forest",
+    "asset": {
+     "_ref": "image-04c37374686073f6bf650aa6ebd92a0a41989278-4160x3117-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "tuhchr723ie",
+    "_type": "image",
+    "alt": "Townhome entrance with a dark front door and clipped hedges",
+    "asset": {
+     "_ref": "image-bc7150bc685726a128ba15e8441786fe1735b1b4-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "6a4e0az2y8f",
+    "_type": "image",
+    "alt": "Resident lounge with a fireplace, timber ceiling and seating groups",
+    "asset": {
+     "_ref": "image-41970582b83755db2f70153173d14cefc14345cd-1920x1280-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "msqzj0yt0cj",
+    "_type": "image",
+    "alt": "Resident lounge and kitchen with a dining table and a slatted timber screen",
+    "asset": {
+     "_ref": "image-845e167524303ed3dce3304f364177333dde5bd3-1920x1280-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "q0e4ldk9h1q",
+    "_type": "image",
+    "alt": "Elevator lobby with a timber-panelled wall and a built-in bench",
+    "asset": {
+     "_ref": "image-159565f1a34f93488111c722e14ef1244ae77d5a-1920x1280-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "c1i3iwmqsnc",
+    "_type": "image",
+    "alt": "Apartment dining area beside the kitchen, with a balcony door",
+    "asset": {
+     "_ref": "image-c63b58938ddb542dc93af3aed970947382569241-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "ccercoufq4c",
+    "_type": "image",
+    "alt": "Living room with a wall-mounted television and a sofa",
+    "asset": {
+     "_ref": "image-45ac7cab2ca20beece0c8f79f15e66a0d9540a7e-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "hdbhcauauhf",
+    "_type": "image",
+    "alt": "Bedroom with a window and framed prints above the bed",
+    "asset": {
+     "_ref": "image-aba1965159eee08c0f0886b58825def09f553911-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "mw2na6ssnje",
+    "_type": "image",
+    "alt": "Bathroom with a tub and shower and a single vanity",
+    "asset": {
+     "_ref": "image-794cdcf2bf657c4b784e4e58abfc21dbce457251-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "gevvg6zp1b9",
+    "_type": "image",
+    "alt": "Laundry closet with a stacked washer and dryer and wire shelving",
+    "asset": {
+     "_ref": "image-a49c8800bfae29e78cff8e482c309749c3357615-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "0xcsx4ga8a4c",
+    "_type": "image",
+    "alt": "Bedroom seen from the hallway, with a window beyond the bed",
+    "asset": {
+     "_ref": "image-c3d996b7af469fa7fe3a62007affdf5968011e57-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "13toi64hvf49",
+    "_type": "image",
+    "alt": "Reach-in closet with hanging clothes and a basket",
+    "asset": {
+     "_ref": "image-8dd4f1a7cab98d768bf03d450400a2dcd5de94d7-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "prjfycplmk",
+    "_type": "image",
+    "alt": "Bathroom with a wide mirror and a white vanity",
+    "asset": {
+     "_ref": "image-a042f0c7e1ed7ad4cf0f26e7db23e01dd9cf0c4d-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "gjwy0q9mjbd",
+    "_type": "image",
+    "alt": "Kitchen with a white island, three stools and stainless appliances",
+    "asset": {
+     "_ref": "image-a4e9b6d6884bcf0376f94c0b6c0080fd684b933f-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "tg549737hzj",
+    "_type": "image",
+    "alt": "Kitchen island with a dishwasher, looking through to the dining area",
+    "asset": {
+     "_ref": "image-f4ed5c6cf09fc311513d862fdee946d47b1e701f-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "sh3ii0xd72p",
+    "_type": "image",
+    "alt": "Carpeted staircase with framed prints on the wall",
+    "asset": {
+     "_ref": "image-a6507cb85d414a5f8ec9f1bd37816e5b4670a2ba-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "6p31n32d3kn",
+    "_type": "image",
+    "alt": "Home office set up in the corner of a living room",
+    "asset": {
+     "_ref": "image-88bf65ec4c8879759d39b159f1abd47e02b339ea-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "c90kl2iwks",
+    "_type": "image",
+    "alt": "Bedroom with a large window and a low bed",
+    "asset": {
+     "_ref": "image-02cbcb091f3b43dccc4ffd625991d2b404ab69eb-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "59l3zwfad3h",
+    "_type": "image",
+    "alt": "Upstairs hallway with doors to the bedrooms",
+    "asset": {
+     "_ref": "image-c20f8dc8373e3d6e4047d5e854c03b06905a336b-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "q5qcigl8c2",
+    "_type": "image",
+    "alt": "Walk-in closet with hanging rails and shelving",
+    "asset": {
+     "_ref": "image-82027452304530ce4ffa54be46f922192df99337-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "8d77ln5fvkq",
+    "_type": "image",
+    "alt": "Bathroom with a glass shower enclosure and a white vanity",
+    "asset": {
+     "_ref": "image-20a567138437ab5576622d5976779d50c5e1f243-1086x1448-png",
+     "_type": "reference"
+    }
+   }
+  ],
+  "metraStation": "Oak Forest",
+  "order": 20,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "We built 157 & Cicero from the ground up with the City of Oak Forest, on a site the city had been trying to get activated for years."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   },
+   {
+    "_key": "b1",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b1s0",
+      "_type": "span",
+      "marks": [],
+      "text": "This is how we prefer to work. The city had a plan for its downtown, and we built what the plan asked for, a few minutes from the Metra platform."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "retailUnitCount": 3,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "oak-forest-1"
+  },
+  "state": "IL",
+  "status": "stabilized",
+  "title": "Oak Forest 1 ",
+  "unitCount": 90,
+  "walkMinutes": 2,
+  "yearBuilt": 2024
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-382-penn",
+  "_rev": "so3QSRzrZ08VB5m0w2kaxG",
+  "_system": {
+   "base": {
+    "id": "property-382-penn",
+    "rev": "JzpY1qksZQ4DeVr5f9qCWk"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-23T01:57:24Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Eighty-eight apartments in Glen Ellyn. We renovate units as they turn instead of emptying the building, so it earns while it leases.",
+  "city": "Glen Ellyn",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.87671,
+   "lng": -88.07318
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "h0d1zkxlicv",
+    "_type": "image",
+    "alt": "Kitchen with white cabinets, a green tiled backsplash and a stone counter",
+    "asset": {
+     "_ref": "image-2b424b0211b046b5b4da88fbc8c772406b6281c8-5000x3333-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "93q6d8bs408",
+    "_type": "image",
+    "alt": "Four-storey brick building with 382 PENN lettering on the facade",
+    "asset": {
+     "_ref": "image-bac1628afa3a7d44eb2e32ec3a3c0843b6822b6b-1920x1279-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "wyvna3chrtd",
+    "_type": "image",
+    "alt": "Entrance lobby with seating and a glazed entry door",
+    "asset": {
+     "_ref": "image-e281531cf6692ee901c9e0c74b51f90a01e04b86-1440x1920-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "lgvdkfr814d",
+    "_type": "image",
+    "alt": "Elevator landing and corridor on a residential floor",
+    "asset": {
+     "_ref": "image-a088032cbc291a9a1479c8fe7819e26dc0b90b82-1920x1280-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "u8wh7ijd8c",
+    "_type": "image",
+    "alt": "Seating area with patterned wallpaper and a pair of armchairs",
+    "asset": {
+     "_ref": "image-ab41014e60a920a3ae845ebab8d4d42a57a28dae-1920x1271-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "fqkx7o52hc7",
+    "_type": "image",
+    "alt": "Fitness room with a treadmill, weight bench and cable machine",
+    "asset": {
+     "_ref": "image-28b1c798f5ac0fb17ee0c986f39c90b756bd8d27-1920x1424-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "frdwirvb20u",
+    "_type": "image",
+    "alt": "Fitness room with kettlebells, an exercise bike and a weight bench",
+    "asset": {
+     "_ref": "image-29ed160ae85bfe817620817472f030eaccb9e356-1920x1435-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "ikrf23671j9",
+    "_type": "image",
+    "alt": "Kitchen counter with a stainless refrigerator and a gooseneck tap",
+    "asset": {
+     "_ref": "image-1c58c1bc7befc50847234a2a2cf648fae702374b-5000x3333-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "qw64usar86",
+    "_type": "image",
+    "alt": "Living and dining area with a sage accent wall and a large window",
+    "asset": {
+     "_ref": "image-22a12a02716ef9c47207e3c5f967d83bb4852a62-5000x3334-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "hwviaacglss",
+    "_type": "image",
+    "alt": "Dining table beside the kitchen breakfast bar",
+    "asset": {
+     "_ref": "image-64478c8b078e247687bee05b19b30ac7afa8b77e-5000x3333-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "51elxz67i84",
+    "_type": "image",
+    "alt": "Bedroom with a desk and a window with vertical blinds",
+    "asset": {
+     "_ref": "image-09905622778404cb34fd5c28236d1aedf782d52b-5000x3334-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "4zo04ghzt79",
+    "_type": "image",
+    "alt": "Bathroom with a tiled tub surround and a grey vanity",
+    "asset": {
+     "_ref": "image-e4448c28659767d3fcfe9f39f22b662b2aeb082c-5000x3333-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "unv5x7py0vp",
+    "_type": "image",
+    "alt": "Studio apartment with the kitchen, breakfast bar and living area in one room",
+    "asset": {
+     "_ref": "image-555f7bffa6ad5410e49c95eeb48641dd7c8184b0-4292x2872-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "msosw8xwq2b",
+    "_type": "image",
+    "alt": "Bedroom with a sage accent wall and a large window",
+    "asset": {
+     "_ref": "image-51ec32739defcca3518eb769182bf66a0e1ade6b-4316x2864-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "3i2mcyiap4d",
+    "_type": "image",
+    "alt": "Studio with the bed to one side and the living area beyond",
+    "asset": {
+     "_ref": "image-71a15167625a5f78aaa29f077a61f4862648c369-1080x715-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "5i3vi3qn7m6",
+    "_type": "image",
+    "alt": "In-unit washer and dryer beside the living area",
+    "asset": {
+     "_ref": "image-4a99eadaa3ee0204cbc3479fb97aa9395a5f3dc0-4316x2876-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "xu3gorek57",
+    "_type": "image",
+    "alt": "Bathroom with a tiled walk-in shower and a grey vanity",
+    "asset": {
+     "_ref": "image-992226bb144a0ab7bbe76feaa4bfcb81a00959e2-4280x2832-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 60,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Eighty-eight apartments on Pennsylvania Avenue in Glen Ellyn, a DuPage County suburb with good schools and a downtown people actually use. "
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "382-penn-apartments"
+  },
+  "state": "IL",
+  "status": "stabilized",
+  "title": "382 Penn Apartments",
+  "unitCount": 88,
+  "yearRenovated": 2025
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-antioch-industrial",
+  "_rev": "35MWcLZKtacnpdIZC5APFl",
+  "_system": {
+   "base": {
+    "id": "property-antioch-industrial",
+    "rev": "zw2N4vRZfRbuHOZHsh6LsJ"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-18T14:16:03Z",
+  "assetClass": "industrial",
+  "businessPlan": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Held on a net lease, so the tenant carries the operating costs, and we still get a check in the mail every month."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "cardBlurb": "A 36,530-square-foot manufacturing building on a net lease, renovated in 2021. It sits in Lake County's medical and biopharmaceutical corridor.",
+  "city": "Antioch",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 42.4863,
+   "lng": -88.09087
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "7cfdf5c27b53",
+    "_type": "image",
+    "alt": "Antioch Industrial",
+    "asset": {
+     "_ref": "image-11abd3347bb51b2210af9c0c4602065b1e8b6be1-5280x3956-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "property-antioch-industrial-0",
+    "_type": "image",
+    "alt": "Antioch Industrial, Antioch",
+    "asset": {
+     "_ref": "image-eb4fd4014d83b732ba925285754fb70cebd5ec23-5280x3956-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "c9fb03674aad",
+    "_type": "image",
+    "alt": "Antioch Industrial",
+    "asset": {
+     "_ref": "image-63c0366d6a954900fed400684b4fae0d42582043-5280x3956-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 80,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "A purpose-built manufacturing facility on Drom Court in Antioch, put up in 1989 and heavily renovated in 2021. Lake County’s medical and biopharmaceutical corridor runs through here."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "antioch-industrial"
+  },
+  "squareFeet": 36530,
+  "state": "IL",
+  "status": "stabilized",
+  "title": "Antioch Industrial",
+  "unitCount": 1,
+  "yearBuilt": 1989,
+  "yearRenovated": 2021
+ },
+ {
+  "_createdAt": "2026-08-31T04:07:29Z",
+  "_id": "property-antioch-shopping-plaza",
+  "_rev": "dZ9OtxTg3BJgkSl5pxeO5H",
+  "_system": {
+   "base": {
+    "id": "property-antioch-shopping-plaza",
+    "rev": "OvvpYB6g0VfY8HZIgmZVP2"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-16T20:29:29Z",
+  "assetClass": "retail",
+  "businessPlan": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "The anchor is the whole thesis. We subdivide the 33,540-square-foot former grocery into ten right-sized bays of roughly 2,850 square feet each, which is the format that actually leases in a suburban strip: service retail, food and drink, fitness, and medical."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   },
+   {
+    "_key": "b1",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b1s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Alongside that, a million dollars of capital goes into demising walls and storefronts, mechanical and electrical repair, a resurfaced lot, and new signage and paint. Most of it is leasing cost rather than cosmetics."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   },
+   {
+    "_key": "b2",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b2s0",
+      "_type": "span",
+      "marks": [],
+      "text": "In-place rent averages just over $7 a square foot against a stabilized target near $11, so the upside is in re-letting space that is either empty or badly under-rented rather than in raising rents on sitting tenants. Occupancy is underwritten to 90% by year three."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   },
+   {
+    "_key": "b3",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b3s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Longer term, the parcel sits beside our Main & Orchard development, and the two together are worth more than either alone. Holding to redevelop stays an option rather than a requirement, because the stabilized centre pays its own way."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "cardBlurb": "An 87,762-square-foot open-air retail center on Orchard Street, bought at $51 a square foot with half the building empty and the anchor space dark.",
+  "city": "Antioch",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 42.479085,
+   "lng": -88.09984
+  },
+  "featured": true,
+  "gallery": [
+   {
+    "_key": "566ea9dc3f58",
+    "_type": "image",
+    "alt": "Antioch Shopping plaza",
+    "asset": {
+     "_ref": "image-e918b2f943edbc8470113c8d2781077a5350572a-5280x3956-jpg",
+     "_type": "reference"
+    },
+    "crop": {
+     "_type": "sanity.imageCrop",
+     "bottom": 0.16014680123446492,
+     "left": 0,
+     "right": 0,
+     "top": 0.18950704812745015
+    },
+    "hotspot": {
+     "_type": "sanity.imageHotspot",
+     "height": 0.5782800900825757,
+     "width": 1,
+     "x": 0.5,
+     "y": 0.5507131537242472
+    }
+   },
+   {
+    "_key": "477abbaba31e",
+    "_type": "image",
+    "alt": "Shopping Plaza Diagram",
+    "asset": {
+     "_ref": "image-2652c965fcd5244f8fc2e25e564d9187ad49ef64-1192x640-png",
+     "_type": "reference"
+    }
+   }
+  ],
+  "offering": {
+   "summary": "A value-add retail acquisition in downtown Antioch: buy at a discounted basis driven by vacancy, subdivide and re-let the dark anchor, and stabilize at 90% occupancy. Underwritten over a seven-year hold with a refinance in year two.",
+   "targetEquityMultiple": "2.26x",
+   "targetHoldYears": 7,
+   "targetIrr": "18.68%"
+  },
+  "order": 85,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Antioch Shopping Plaza is an 87,762-square-foot open-air retail center at 460–510 Orchard Street, built in 1965 and sitting on 5.9 acres with 306 parking spaces in the middle of downtown Antioch."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   },
+   {
+    "_key": "b1",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b1s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Half the building is empty by floor area, including a 33,540-square-foot former grocery anchor the previous owner could not re-let. That vacancy is the reason the basis is $51 a square foot against an estimated replacement cost near $120."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   },
+   {
+    "_key": "b2",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b2s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Downtown Antioch anchors the Chain of Lakes retail corridor and is connected to Chicago by Metra. The village has its own TIF district and is investing in the corridor, and EM8 is already building Main & Orchard next door."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": true,
+  "retailUnitCount": 12,
+  "showInPortfolio": false,
+  "slug": {
+   "_type": "slug",
+   "current": "antioch-shopping-plaza"
+  },
+  "squareFeet": 87762,
+  "state": "IL",
+  "status": "under-contract",
+  "title": "Antioch Shopping Plaza",
+  "yearBuilt": 1965
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-boulevard-central-station",
+  "_rev": "zw2N4vRZfRbuHOZHsh05sf",
+  "_system": {
+   "base": {
+    "id": "property-boulevard-central-station",
+    "rev": "lYjce2BcTBp5dOrgZdmB7j"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-18T13:45:44Z",
+  "assetClass": "mixed-use",
+  "businessPlan": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "We bought it in June 2026 from distressed sellers well below replacement cost. The work here is operational rather than structural: tighten up management, and lease the retail to businesses the commuters and residents will actually use. "
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "cardBlurb": "Mixed-use development with street-level retail, built in 2021 and bought in 2026. The Tinley Park Metra platform is directly across the street.",
+  "city": "Tinley Park",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.57576,
+   "lng": -87.78197
+  },
+  "featured": true,
+  "gallery": [
+   {
+    "_key": "6aa7aef6c258",
+    "_type": "image",
+    "alt": "Tinley Property Photo",
+    "asset": {
+     "_ref": "image-ae806bde1090a1308f00ed5b8db45201b708a7ad-985x734-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "g9ie4pq5adk",
+    "_type": "image",
+    "alt": "The building from the station approach, with the Metra canopy alongside",
+    "asset": {
+     "_ref": "image-003bc9a02151883dec97fc2b8a96f0923a1dbb70-1920x1282-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "zw4cydp23md",
+    "_type": "image",
+    "alt": "Resident lounge with a bar-height counter, stools and a wall-mounted television",
+    "asset": {
+     "_ref": "image-ecab1546d0bf61da41cf0c41482be8d11f46e633-1920x1282-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "kx3cmwylsp",
+    "_type": "image",
+    "alt": "Community kitchen with a stone island, bar stools and a patterned tile wall",
+    "asset": {
+     "_ref": "image-4682e0ff5811ac78b47035b9bad36d5aabddc3cf-1920x1283-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "kppaci9ddv",
+    "_type": "image",
+    "alt": "Four-storey mixed-use building with ground-floor retail, seen from the street",
+    "asset": {
+     "_ref": "image-409834a09f6b46aaab392ae587fda8b540752236-1920x1282-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "ijpezi2udk8",
+    "_type": "image",
+    "alt": "Conference room off the resident corridor",
+    "asset": {
+     "_ref": "image-6b3e2bdbf8805f16ab85dc28ac3d13861d2027a2-1920x1920-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "xq4hijd1muj",
+    "_type": "image",
+    "alt": "Fitness centre with cardio equipment and wall-mounted screens",
+    "asset": {
+     "_ref": "image-cdeacde172697673154a70c0688e8fc32ae1ad7d-1920x1920-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "87mneaho4xu",
+    "_type": "image",
+    "alt": "Second fitness room with strength equipment and a mirrored wall",
+    "asset": {
+     "_ref": "image-c8dad29547d3e86d2e62eb250753c9fd4d652ead-1920x1920-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "22k25izaak1",
+    "_type": "image",
+    "alt": "Open-plan apartment kitchen and living area with an island and pendant lights",
+    "asset": {
+     "_ref": "image-a34fb7343bc2042c5437b2c41a373227e4e9ca06-1087x1446-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "5o3acjibk1",
+    "_type": "image",
+    "alt": "Bedroom with a large window and an ensuite bathroom beyond",
+    "asset": {
+     "_ref": "image-151341e8daeb67654173e09f0359b9c1e8e74bc8-1087x1447-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "dsnyue8wexu",
+    "_type": "image",
+    "alt": "Bathroom with a tub and shower, tiled floor and a single vanity",
+    "asset": {
+     "_ref": "image-ab54966cc35c988380cab82a3f40c13fa1f8a676-1087x1447-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "4il6xyvu7og",
+    "_type": "image",
+    "alt": "In-unit laundry closet with a stacked washer and dryer",
+    "asset": {
+     "_ref": "image-d376d1b29d482285425bf6fad5bee02d52bae6a7-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "ypbxivprbh",
+    "_type": "image",
+    "alt": "Hallway looking through to a bedroom and walk-in closet",
+    "asset": {
+     "_ref": "image-502a5e431172ae6d4b89e715a7e8363074f97eba-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "axgpuxx9lom",
+    "_type": "image",
+    "alt": "Primary bedroom with a bench at the foot of the bed and a corner window",
+    "asset": {
+     "_ref": "image-43ce535a364d02f03f93110f7a3275a253f9e20e-1086x1448-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "j8z1kupcvw",
+    "_type": "image",
+    "alt": "Ensuite bathroom with a glass shower, opening to a walk-in closet",
+    "asset": {
+     "_ref": "image-9d7f1e30d973d3413d8e5b0f469ac0ec034c315c-1087x1447-png",
+     "_type": "reference"
+    }
+   }
+  ],
+  "metraStation": "Tinley Park",
+  "order": 10,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "The Boulevard at Central Station sits directly across from the Tinley Park Metra station, and Harmony Square. This is the core of downtown Tinley, a true class A location."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   },
+   {
+    "_key": "b1",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b1s0",
+      "_type": "span",
+      "marks": [],
+      "text": ""
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "retailUnitCount": 5,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "boulevard-at-central-station"
+  },
+  "state": "IL",
+  "status": "stabilized",
+  "title": "The Boulevard at Central Station",
+  "unitCount": 66,
+  "walkMinutes": 1,
+  "yearBuilt": 2021
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-burbank-manor",
+  "_rev": "3Ge3NstRynLMiXd9C9bp8B",
+  "_system": {
+   "base": {
+    "id": "property-burbank-manor",
+    "rev": "TIqCG7iRvlfzFx4OYdhpuj"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-15T17:14:42Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "A 173-unit senior garden apartment community in Burbank. We bought it in December 2020 and sold it in July 2022.",
+  "city": "Burbank",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.75352,
+   "lng": -87.76693
+  },
+  "dealStory": {
+   "acquired": "We bought it in December 2020: 173 units of senior garden apartments in Burbank, built in 1984.",
+   "acquiredYear": 2020,
+   "equityMultiple": "1.99x",
+   "executed": "We stabilized operations and brought the rent roll up to market over the hold, finishing at 96% occupancy.",
+   "exitYear": 2022,
+   "exited": "Sold in July 2022 for $20.5 million, a realized cap rate of 5.49%.",
+   "grossIrr": 51.7,
+   "salePrice": 20500000
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "property-burbank-manor-0",
+    "_type": "image",
+    "alt": "Burbank Manor Apartments, Burbank",
+    "asset": {
+     "_ref": "image-12ad02654a8b24fdc6adf193015d474f11e3e2a5-5472x3648-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 90,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "A 173-unit senior garden apartment community built in 1984, roughly 148,000 square feet on Pinehurst Court."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "burbank-manor-apartments"
+  },
+  "squareFeet": 148034,
+  "state": "IL",
+  "status": "sold",
+  "title": "Burbank Manor Apartments",
+  "unitCount": 173,
+  "yearBuilt": 1984
+ },
+ {
+  "_createdAt": "2026-09-15T17:14:42Z",
+  "_id": "property-crestline-apartments",
+  "_rev": "OvvpYB6g0VfY8HZIgmpao8",
+  "_system": {
+   "base": {
+    "id": "property-crestline-apartments",
+    "rev": "7pv3yZKvixJXwdFR0bveLK"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-16T22:32:27Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Value-add multifamily in Alsip, Illinois. Acquired 2020, sold 2023 after 3 years.",
+  "city": "Alsip",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.6841,
+   "lng": -87.7126
+  },
+  "dealStory": {
+   "acquiredYear": 2020,
+   "equityMultiple": "2.25x",
+   "exitYear": 2023,
+   "grossIrr": 15.5,
+   "salePrice": 17300000
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "4e8e2744e867",
+    "_type": "image",
+    "alt": "property image",
+    "asset": {
+     "_ref": "image-a97dc95c2e134ece3753346d27d0053cf056af58-1800x1342-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 200,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "crestline-villa-apartments"
+  },
+  "state": "IL",
+  "status": "sold",
+  "title": "Crestline Villa Apartments"
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-embassy-apartments",
+  "_rev": "3Ge3NstRynLMiXd9C9bp8B",
+  "_type": "property",
+  "_updatedAt": "2026-09-15T17:14:42Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Seventy-two apartments on South Shaddle Avenue in Mundelein. We bought it in August 2021 and sold it in June 2023.",
+  "city": "Mundelein",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 42.26109,
+   "lng": -87.98964
+  },
+  "dealStory": {
+   "acquired": "We bought it in August 2021: 72 apartments in two-story garden buildings in Mundelein, built in 1972.",
+   "acquiredYear": 2021,
+   "equityMultiple": "1.37x",
+   "executed": "We renovated the unit interiors and repositioned the rent roll while occupancy held in the mid-nineties.",
+   "exitYear": 2023,
+   "exited": "Sold in June 2023 for $10.0 million, a realized cap rate of 6.36%.",
+   "grossIrr": 19,
+   "salePrice": 10000000
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "property-embassy-apartments-0",
+    "_type": "image",
+    "alt": "Embassy Apartments, Mundelein",
+    "asset": {
+     "_ref": "image-d603b21b9f4407cba540536f360e1221a30087aa-2048x1365-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 100,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Seventy-two apartments in two-story garden buildings on South Shaddle Avenue in Mundelein, built in 1972."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "embassy-apartments"
+  },
+  "state": "IL",
+  "status": "sold",
+  "title": "Embassy Apartments",
+  "unitCount": 72,
+  "yearBuilt": 1972
+ },
+ {
+  "_createdAt": "2026-09-15T17:14:42Z",
+  "_id": "property-knox-and-kilpatrick",
+  "_rev": "lYjce2BcTBp5dOrgZdmIG8",
+  "_system": {
+   "base": {
+    "id": "property-knox-and-kilpatrick",
+    "rev": "3Ge3NstRynLMiXd9C9bp8B"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-16T22:32:30Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Value-add multifamily in Oak Forest, Illinois. Acquired 2019, sold 2025 after 6.5 years.",
+  "city": "Oak Forest",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.614172,
+   "lng": -87.733105
+  },
+  "dealStory": {
+   "acquiredYear": 2019,
+   "equityMultiple": "3.10x",
+   "exitYear": 2025,
+   "grossIrr": 29.2,
+   "salePrice": 8200000
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "b48f94fbd5ac",
+    "_type": "image",
+    "alt": "knox photo",
+    "asset": {
+     "_ref": "image-a1682d8b14779894dd1031069a0845419e196f8c-1800x1350-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 200,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "knox-in-oak-forest"
+  },
+  "state": "IL",
+  "status": "sold",
+  "title": "Knox in Oak Forest"
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-oak-forest-k",
+  "_rev": "JzpY1qksZQ4DeVr5f9qEE2",
+  "_system": {
+   "base": {
+    "id": "property-oak-forest-k",
+    "rev": "7o2FPess4sF3q3IJ1oK5dJ"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-18T16:56:41Z",
+  "assetClass": "multifamily",
+  "businessPlan": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "The renovation wrapped in 2025. We modernized interiors unit by unit and rebuilt the exterior facade. We hold and operate it at the improved rent level now."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "cardBlurb": "Forty apartments across two buildings, modernized inside and refaced outside. The work finished in 2025.",
+  "city": "Oak Forest",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.60682,
+   "lng": -87.73899
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "tcnsimm35rs",
+    "_type": "image",
+    "alt": "Bedroom with a window above the bed looking onto the courtyard",
+    "asset": {
+     "_ref": "image-18a240a94acd341c220acdb56109eba6cb244edf-2390x1792-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "8gnuu9x9y0l",
+    "_type": "image",
+    "alt": "Kitchen with white shaker cabinets, a tiled backsplash and stainless appliances",
+    "asset": {
+     "_ref": "image-7ed9f70cb75969000d21bc73760b27b52b92efa2-2390x1792-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "49lcla1jy0d",
+    "_type": "image",
+    "alt": "Open living area looking through to the kitchen breakfast bar",
+    "asset": {
+     "_ref": "image-bcaf3dfedd132f2f112c013b737953d939f38d8f-2528x1684-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "3oj6652u9et",
+    "_type": "image",
+    "alt": "Living room with a window seat and a breakfast bar with stools",
+    "asset": {
+     "_ref": "image-47d80fd9dfc1720ddba56d2f044c5f50d8a593da-2390x1792-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "c465hhnc22e",
+    "_type": "image",
+    "alt": "Bedroom with an adjacent laundry closet and refrigerator alcove",
+    "asset": {
+     "_ref": "image-56ebca6ac281fbc45fc89cfa832a450d0aa6b501-2390x1792-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "g6ygx12mbpo",
+    "_type": "image",
+    "alt": "Bathroom with a vanity and open shelving above the toilet",
+    "asset": {
+     "_ref": "image-2a5e88f63d906ce7df7af09a15f7516396d23ea6-2390x1792-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "2xzy6hk6h8h",
+    "_type": "image",
+    "alt": "Kitchen with white cabinets, a green tiled backsplash and a peninsula",
+    "asset": {
+     "_ref": "image-3d182379087c3a18679883afc967d7da6fe4f134-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "k3h8pmo5bt",
+    "_type": "image",
+    "alt": "The same kitchen from the living side, with stools at the peninsula",
+    "asset": {
+     "_ref": "image-e065899567cd5284e57f1d26bb47638048c304f6-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "5xdl8jzapex",
+    "_type": "image",
+    "alt": "Gas range and stainless dishwasher against the green tile backsplash",
+    "asset": {
+     "_ref": "image-1df7ea262dd3d05a95d7a20f52fd597f09c3a81d-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "r26h2c5vcr",
+    "_type": "image",
+    "alt": "Entry hall with a console table and a round mirror",
+    "asset": {
+     "_ref": "image-0679655a6559721374329a9b06b71fc2c04c1f45-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "asuobqu1rpl",
+    "_type": "image",
+    "alt": "Living room looking through the entry towards the kitchen",
+    "asset": {
+     "_ref": "image-cb608b079287645b492ba6680a474c591ad5db97-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "l5g9uuohmmr",
+    "_type": "image",
+    "alt": "Living room with a sofa and rug, with the kitchen beyond",
+    "asset": {
+     "_ref": "image-64ec9f6755057988c99e242c95720f4bd20cf256-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "mhm0vx53bz",
+    "_type": "image",
+    "alt": "Hallway with a laundry closet and open linen shelving",
+    "asset": {
+     "_ref": "image-2a9af3552d0b4d71785e0f0836cd67a4bf7b97c0-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "8o7cec437n6",
+    "_type": "image",
+    "alt": "Bathroom with a tub and shower and a grey tiled surround",
+    "asset": {
+     "_ref": "image-ab3d246a39aab34f175b4b273f8c35767f8e1cf5-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "kzswjzln0m",
+    "_type": "image",
+    "alt": "Two-storey apartment building with a covered walkway, seen across the lawn",
+    "asset": {
+     "_ref": "image-79c732bde7ce81fb22287eb0ed495af584f0783d-1920x1280-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "metraStation": "Oak Forest",
+  "order": 50,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Two buildings, on Lamon Avenue and West 157th Street, a few minutes from the Metra station. We closed on them separately in late 2022 and early 2023."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "oak-forest-k"
+  },
+  "state": "IL",
+  "status": "stabilized",
+  "title": "Oak Forest K",
+  "unitCount": 40,
+  "walkMinutes": 2,
+  "yearRenovated": 2025
+ },
+ {
+  "_createdAt": "2026-09-15T17:14:42Z",
+  "_id": "property-oakwood-apartments",
+  "_rev": "dZ9OtxTg3BJgkSl5pxvBex",
+  "_system": {
+   "base": {
+    "id": "property-oakwood-apartments",
+    "rev": "3Ge3NstRynLMiXd9C9bp8B"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-16T22:32:33Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Value-add multifamily in Kenosha, Wisconsin. Acquired 2021, sold 2025 after 3.7 years.",
+  "city": "Kenosha",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 42.590736,
+   "lng": -87.857731
+  },
+  "dealStory": {
+   "acquiredYear": 2021,
+   "equityMultiple": "2.61x",
+   "exitYear": 2025,
+   "grossIrr": 31.8,
+   "salePrice": 5500000
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "4819d047c27c",
+    "_type": "image",
+    "alt": "Oakwood apartments",
+    "asset": {
+     "_ref": "image-e954f61b19d47781a79be72aa7d140051327c17d-1800x1350-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 200,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "oak-apartments-in-kenosha"
+  },
+  "state": "WI",
+  "status": "sold",
+  "title": "Oak Apartments in Kenosha"
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-park-townhomes",
+  "_rev": "OvvpYB6g0VfY8HZIgmpBro",
+  "_system": {
+   "base": {
+    "id": "property-park-townhomes",
+    "rev": "lYjce2BcTBp5dOrgZdbQuN"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-16T22:27:13Z",
+  "assetClass": "townhomes",
+  "businessPlan": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Held for income. We refinanced in the first quarter of 2026, and it continues to run at a high leased rate."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "cardBlurb": "Forty townhomes on Green Bay Road. New supply on the North Shore is scarce and the older stock rarely trades, so we hold this one for income.",
+  "city": "Highland Park",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 42.1869,
+   "lng": -87.8036
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "ih4efgwzr",
+    "_type": "image",
+    "alt": "Park Townhomes entrance sign with planting beds",
+    "asset": {
+     "_ref": "image-c8ec32a4c63183362958603de36584f37b4c1eaf-2730x1536-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "property-park-townhomes-0",
+    "_type": "image",
+    "alt": "Park Townhomes at Highland Park",
+    "asset": {
+     "_ref": "image-f0a732a10659acf6c20b6075de6812268b3d4d4b-5568x3712-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "tpmssp9l7qn",
+    "_type": "image",
+    "alt": "Tree-lined path between the townhome rows in autumn",
+    "asset": {
+     "_ref": "image-f321813b2a99cf80ed04fb03463416138f6d541e-1920x1920-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "bonffs9uu0v",
+    "_type": "image",
+    "alt": "Kitchen with a white island and stools, with the staircase beyond",
+    "asset": {
+     "_ref": "image-380ac3a5ea5fae3dcf0a8b84aa7fa511dcfc633b-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "ewx04az6so",
+    "_type": "image",
+    "alt": "Living room with exposed timber beams and a wall of windows",
+    "asset": {
+     "_ref": "image-ef364591928cb8c0469f580dc544fc51e05c03fc-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "c9x6gegzm1m",
+    "_type": "image",
+    "alt": "Powder room with a white vanity and framed prints",
+    "asset": {
+     "_ref": "image-c2de13dbce20d8cc311951a5182fba28a1ec2d3e-768x1344-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "g68y5ey8waf",
+    "_type": "image",
+    "alt": "Staircase with a gallery wall of framed pictures",
+    "asset": {
+     "_ref": "image-9b7a32618d233a9e281f768a523f3a8fe3e7745c-768x1344-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "zkeikk03drh",
+    "_type": "image",
+    "alt": "Bedroom with a dark accent wall and a mid-century bed",
+    "asset": {
+     "_ref": "image-1e9adef72c1f0022626a483f78f5880637f3ec56-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "294ubkqqpaa",
+    "_type": "image",
+    "alt": "Bathroom with a tub and shower, a vanity and a framed print",
+    "asset": {
+     "_ref": "image-9927eb52ab7ffb37998ed6b676a28d8b34aa56ef-1248x832-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "rr1wryrjn4l",
+    "_type": "image",
+    "alt": "Laundry closet with a stacked washer and dryer, off the living area",
+    "asset": {
+     "_ref": "image-e2e617e4105dad0778fc0c47e8dc2dd4a5410748-1024x1024-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "ikmp0pdorv",
+    "_type": "image",
+    "alt": "Kitchen with a timber island, exposed beams and stainless appliances",
+    "asset": {
+     "_ref": "image-0864d3caef4e5e35f4ab68dbeb473d0da73b5804-8192x5464-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "rxxbbv828v",
+    "_type": "image",
+    "alt": "Open living area with exposed timber beams and a dark accent wall",
+    "asset": {
+     "_ref": "image-b8b4dac8d8e6547df2cae50ea968b5e7b0e2de4a-899x600-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "6zfj758dded",
+    "_type": "image",
+    "alt": "Kitchen with a large white island and stainless appliances",
+    "asset": {
+     "_ref": "image-0a2ba0ec6cd5f2a3ef139f71cd3345ba72651928-8192x5464-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "rzgi9nr8r4f",
+    "_type": "image",
+    "alt": "Kitchen with a laundry closet and the staircase beyond",
+    "asset": {
+     "_ref": "image-87ff81be83826557c173a6e83db22b1ecc952237-8192x5464-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "4byhcl0l7xo",
+    "_type": "image",
+    "alt": "Powder room with a window and a dark-framed mirror",
+    "asset": {
+     "_ref": "image-983225eac67a031168970aeb88a2033226820211-8192x5464-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "3yyqj3k24bp",
+    "_type": "image",
+    "alt": "Room with a dark accent wall, a wide window and a through-wall air conditioner",
+    "asset": {
+     "_ref": "image-bd705585bf05319c86465cddf88e6d3cd2935cbe-8192x5464-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "imb444chcb",
+    "_type": "image",
+    "alt": "Bathroom with a tiled tub surround and a wide mirror",
+    "asset": {
+     "_ref": "image-20da0072fd8f1c7578d58ebddf20c9be095f4d35-8192x5464-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "qmt5cjis58",
+    "_type": "image",
+    "alt": "Bedroom with a double closet",
+    "asset": {
+     "_ref": "image-1b7c87c4a5e3fd8ed7b8579df2ea72b7c942a870-8192x5464-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "cv31y5g4vjl",
+    "_type": "image",
+    "alt": "The same path in summer, with mown lawns either side",
+    "asset": {
+     "_ref": "image-4ff30d56c1ac518bd962a14f531ec237cababf52-1920x1280-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 70,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Forty townhomes on Green Bay Road in Highland Park. New supply on the North Shore is scarce, and the stock that exists rarely comes to market."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "park-townhomes-highland-park"
+  },
+  "state": "IL",
+  "status": "stabilized",
+  "title": "Park Townhomes at Highland Park",
+  "unitCount": 40,
+  "yearBuilt": 1960
+ },
+ {
+  "_createdAt": "2026-09-15T17:14:42Z",
+  "_id": "property-pinetree-apartments",
+  "_rev": "dZ9OtxTg3BJgkSl5pxvCSn",
+  "_system": {
+   "base": {
+    "id": "property-pinetree-apartments",
+    "rev": "3Ge3NstRynLMiXd9C9bp8B"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-16T22:32:37Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Value-add multifamily in Hanover Park, Illinois. Acquired 2018, sold 2022 after 3.7 years.",
+  "city": "Hanover Park",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.99287,
+   "lng": -88.146483
+  },
+  "dealStory": {
+   "acquiredYear": 2018,
+   "equityMultiple": "2.59x",
+   "exitYear": 2022,
+   "grossIrr": 28.4,
+   "salePrice": 6400000
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "c1060985f05e",
+    "_type": "image",
+    "alt": "Pinetree Apartments",
+    "asset": {
+     "_ref": "image-309fdf7e7dcec98dd50b37cf045fca50160403f6-1800x1030-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 200,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "pinetree-apartments"
+  },
+  "state": "IL",
+  "status": "sold",
+  "title": "Pinetree Apartments"
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-reverb-woodland-trails",
+  "_rev": "nKPsF4n8UldNoiB8R70Wlh",
+  "_system": {
+   "base": {
+    "id": "property-reverb-woodland-trails",
+    "rev": "nKPsF4n8UldNoiB8R70QWz"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-25T13:23:52Z",
+  "assetClass": "multifamily",
+  "businessPlan": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Stabilized and held for income. We upgraded the interiors and common areas before lease-up, and it has run essentially full since."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "cardBlurb": "Seventy-two apartments in Oak Forest. We rebuilt the interiors and the shared spaces in 2022, and it has run essentially full since.",
+  "city": "Oak Forest",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.60218,
+   "lng": -87.74385
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "d10d2d0282f7",
+    "_type": "image",
+    "alt": "Reverb Living Room",
+    "asset": {
+     "_ref": "image-1b3296f445ca540f3007427b27001da4cd1c0fdd-1335x855-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "property-reverb-woodland-trails-0",
+    "_type": "image",
+    "alt": "ReVerb — Woodland Trails, Oak Forest",
+    "asset": {
+     "_ref": "image-adb389d4d1a86dd53dbd560cbd0ded8ae85a6211-1128x709-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "tua0ilnotac",
+    "_type": "image",
+    "alt": "Galley kitchen with oak cabinets, black granite counters and stainless appliances",
+    "asset": {
+     "_ref": "image-9411c6d581ffcaf3f6b164b288e2cdf862fb36fe-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "i4v7otaqo2s",
+    "_type": "image",
+    "alt": "Open living room with grey plank flooring, looking through to the kitchen",
+    "asset": {
+     "_ref": "image-8a418e8a8e7bfc9364db723dd45fd38a6aa7b0f1-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "08cm9toh2gq4",
+    "_type": "image",
+    "alt": "Living room with sliding doors onto a private balcony",
+    "asset": {
+     "_ref": "image-e8c53a4567699f0d4566f105962eb4b6da66f631-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "tlwtqlw5cx",
+    "_type": "image",
+    "alt": "Bedroom with a double closet and a stacked washer and dryer",
+    "asset": {
+     "_ref": "image-c736605f1dcae69d6d906488b3c9fb63adc335d0-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "fold89u5g9f",
+    "_type": "image",
+    "alt": "Bathroom with a tiled tub and shower and a pedestal sink",
+    "asset": {
+     "_ref": "image-91cb88b92ea61148c9d1582e729121a543b5c59f-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "0ejp7pb5b5dm",
+    "_type": "image",
+    "alt": "White gazebo on the lawn between two-storey apartment buildings",
+    "asset": {
+     "_ref": "image-effc2149c1c67d5d511d8a36429220556bb41968-1920x1440-png",
+     "_type": "reference"
+    }
+   }
+  ],
+  "metraStation": "Oak Forest",
+  "order": 40,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Seventy-two apartments on LeClaire Avenue in Oak Forest. We renovated it inside and out, and it has run at full occupancy since."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "reverb-woodland-trails"
+  },
+  "state": "IL",
+  "status": "stabilized",
+  "title": "ReVerb — Woodland Trails",
+  "unitCount": 72,
+  "walkMinutes": 5,
+  "yearRenovated": 2022
+ },
+ {
+  "_createdAt": "2026-09-15T17:14:42Z",
+  "_id": "property-station-hills-belle-court",
+  "_rev": "lYjce2BcTBp5dOrgZdmJIs",
+  "_system": {
+   "base": {
+    "id": "property-station-hills-belle-court",
+    "rev": "3Ge3NstRynLMiXd9C9bp8B"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-16T22:32:39Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Value-add multifamily in Kenosha, Wisconsin. Acquired 2020, sold 2025 after 4.2 years.",
+  "city": "Kenosha",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 42.581393,
+   "lng": -87.870414
+  },
+  "dealStory": {
+   "acquiredYear": 2020,
+   "equityMultiple": "2.82x",
+   "exitYear": 2025,
+   "grossIrr": 32,
+   "salePrice": 13000000
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "286b985ad8a0",
+    "_type": "image",
+    "alt": "Station Hill and Belle Court Apartments",
+    "asset": {
+     "_ref": "image-97b86c7d8dc49fb7b1fc6a014797b0a1a316379d-1800x1181-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 200,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "station-hills-and-belle-court-apartments"
+  },
+  "state": "WI",
+  "status": "sold",
+  "title": "Station Hills & Belle Court Apartments"
+ },
+ {
+  "_createdAt": "2026-08-31T00:00:28Z",
+  "_id": "property-waverly-creek",
+  "_rev": "zw2N4vRZfRbuHOZHsh8iyn",
+  "_system": {
+   "base": {
+    "id": "property-waverly-creek",
+    "rev": "OvvpYB6g0VfY8HZIgmXLI6"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-18T14:10:54Z",
+  "assetClass": "townhomes",
+  "cardBlurb": "Ground-up townhomes with a retail component, delivered in 2026. Still leasing. Five minutes on foot from the Oak Forest Metra station.",
+  "city": "Oak Forest",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.60868,
+   "lng": -87.73677
+  },
+  "featured": true,
+  "gallery": [
+   {
+    "_key": "aafda58846f9",
+    "_type": "image",
+    "alt": "Waverly Creek",
+    "asset": {
+     "_ref": "image-58b6c855772cd30205ff960381ef9be2a1a8b9b2-5280x3956-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "property-waverly-creek-0",
+    "_type": "image",
+    "alt": "Waverly Creek Townhomes, Oak Forest",
+    "asset": {
+     "_ref": "image-26f2aa5495721a51e37b80fc61137d5c6ac817ee-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "13ab3eb50bb5",
+    "_type": "image",
+    "alt": "Waverly Creek Townhomes, Oak Forest",
+    "asset": {
+     "_ref": "image-c844be29278b444fe193ad786f3040faf17bb069-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "2154f012fc35",
+    "_type": "image",
+    "alt": "Waverly Creek Townhomes, Oak Forest",
+    "asset": {
+     "_ref": "image-981a0f05bd3886240f022f39a1a3045ddc895bca-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "f2fa9b73ab2c",
+    "_type": "image",
+    "alt": "Waverly Creek Townhomes, Oak Forest",
+    "asset": {
+     "_ref": "image-517940c8accc63c5d3c89d8632669b88e5780f87-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "ed3113dc6e98",
+    "_type": "image",
+    "alt": "Waverly Creek Townhomes, Oak Forest",
+    "asset": {
+     "_ref": "image-b3296a0dda9f271d340ecb6a66fb00ca6fae48cb-1448x1086-png",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "04a71eaf053d",
+    "_type": "image",
+    "alt": "Waverly Creek",
+    "asset": {
+     "_ref": "image-fbd04c3c7f4dd905a3b92c1db56ac87b488559d6-5280x3956-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "1582bb86ccd6",
+    "_type": "image",
+    "alt": "Waverly Creek",
+    "asset": {
+     "_ref": "image-39e5b8b06d6a36f4448e0c8aa295a0ed09779300-5280x3956-jpg",
+     "_type": "reference"
+    }
+   },
+   {
+    "_key": "5aea3b4d3dcf",
+    "_type": "image",
+    "alt": "Waverly Creek",
+    "asset": {
+     "_ref": "image-c3db4ea7a9c2c5d07051fd8d95f2d8cd6bc6d910-5280x3956-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "metraStation": "Oak Forest",
+  "order": 30,
+  "overview": [
+   {
+    "_key": "b0",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b0s0",
+      "_type": "span",
+      "marks": [],
+      "text": "A ground-up townhome development at 156th and Cicero, delivered in May 2026 and leasing now."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   },
+   {
+    "_key": "b1",
+    "_type": "block",
+    "children": [
+     {
+      "_key": "b1s0",
+      "_type": "span",
+      "marks": [],
+      "text": "Townhomes fill a real gap in Oak Forest. Some households want more room than an apartment gives them but do not want to leave a walkable part of town with the train nearby."
+     }
+    ],
+    "markDefs": [],
+    "style": "normal"
+   }
+  ],
+  "publiclyOffered": false,
+  "retailUnitCount": 2,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "waverly-creek-townhomes"
+  },
+  "state": "IL",
+  "status": "stabilized",
+  "title": "Waverly Creek Townhomes",
+  "unitCount": 29,
+  "walkMinutes": 5,
+  "yearBuilt": 2026
+ },
+ {
+  "_createdAt": "2026-09-15T17:14:42Z",
+  "_id": "property-worth-apartments",
+  "_rev": "dZ9OtxTg3BJgkSl5pxvCjP",
+  "_system": {
+   "base": {
+    "id": "property-worth-apartments",
+    "rev": "3Ge3NstRynLMiXd9C9bp8B"
+   }
+  },
+  "_type": "property",
+  "_updatedAt": "2026-09-16T22:32:43Z",
+  "assetClass": "multifamily",
+  "cardBlurb": "Value-add multifamily in Worth, Illinois. Acquired 2020, sold 2022 after 2.5 years.",
+  "city": "Worth",
+  "coordinates": {
+   "_type": "geopoint",
+   "lat": 41.690232,
+   "lng": -87.782551
+  },
+  "dealStory": {
+   "acquiredYear": 2020,
+   "equityMultiple": "1.81x",
+   "exitYear": 2022,
+   "grossIrr": 18.1,
+   "salePrice": 4400000
+  },
+  "featured": false,
+  "gallery": [
+   {
+    "_key": "acbd1c4fae25",
+    "_type": "image",
+    "alt": "Worth Apartments",
+    "asset": {
+     "_ref": "image-3b2667faef12f447b7ff4d30f190b25f307475e3-1800x1071-jpg",
+     "_type": "reference"
+    }
+   }
+  ],
+  "order": 200,
+  "showInPortfolio": true,
+  "slug": {
+   "_type": "slug",
+   "current": "worth-apartments"
+  },
+  "state": "IL",
+  "status": "sold",
+  "title": "Worth Apartments"
+ }
+]
