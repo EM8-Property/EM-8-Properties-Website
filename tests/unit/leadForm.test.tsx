@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LeadForm, type FieldSpec } from '@/components/forms/LeadForm'
 import { HONEYPOT_FIELD } from '@/lib/leads'
+import { TURNSTILE_FIELD } from '@/lib/turnstile'
 
 const fields: FieldSpec[] = [
   { name: 'firstName', label: 'First name', type: 'text', required: true },
@@ -135,5 +136,111 @@ describe('LeadForm', () => {
 
     await waitFor(() => expect(screen.getByRole('button')).toBeDisabled())
     release?.()
+  })
+})
+
+describe('LeadForm with Turnstile', () => {
+  type Options = Record<string, (...args: unknown[]) => unknown> & { action?: string }
+
+  function fakeTurnstile() {
+    const api = {
+      options: undefined as Options | undefined,
+      render: vi.fn((_el: HTMLElement, opts: Options) => {
+        api.options = opts
+        return 'widget-1'
+      }),
+      reset: vi.fn(),
+      remove: vi.fn(),
+    }
+    window.turnstile = api as never
+    return api
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    delete window.turnstile
+  })
+
+  it('renders no widget and sends no token when the build has no site key', async () => {
+    vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', '')
+    const api = fakeTurnstile()
+    const bodies: string[] = []
+    vi.stubGlobal('fetch', async (_url: string, init?: RequestInit) => {
+      bodies.push(String(init?.body))
+      return ok()
+    })
+    const user = userEvent.setup()
+
+    render(<LeadForm source="contact" fields={fields} submitLabel="Send" />)
+    await fillAndSubmit(user)
+
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(api.render).not.toHaveBeenCalled()
+    expect(JSON.parse(bodies[0]!)).not.toHaveProperty(TURNSTILE_FIELD)
+  })
+
+  it('posts the token Cloudflare issued, tagged with the form it came from', async () => {
+    vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'site')
+    const api = fakeTurnstile()
+    const bodies: string[] = []
+    vi.stubGlobal('fetch', async (_url: string, init?: RequestInit) => {
+      bodies.push(String(init?.body))
+      return ok()
+    })
+    const user = userEvent.setup()
+
+    render(<LeadForm source="contact" fields={fields} submitLabel="Send" />)
+    await waitFor(() => expect(api.render).toHaveBeenCalled())
+    expect(api.options?.action).toBe('contact')
+    act(() => {
+      api.options!.callback!('tok-123')
+    })
+    await fillAndSubmit(user)
+
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(JSON.parse(bodies[0]!)[TURNSTILE_FIELD]).toBe('tok-123')
+    expect(await screen.findByText(/thank you/i)).toBeDefined()
+  })
+
+  it('waits for a token that arrives after the click, as when a visitor ticks the checkbox', async () => {
+    vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'site')
+    const api = fakeTurnstile()
+    const bodies: string[] = []
+    vi.stubGlobal('fetch', async (_url: string, init?: RequestInit) => {
+      bodies.push(String(init?.body))
+      return ok()
+    })
+    const user = userEvent.setup()
+
+    render(<LeadForm source="contact" fields={fields} submitLabel="Send" />)
+    await waitFor(() => expect(api.render).toHaveBeenCalled())
+    await fillAndSubmit(user)
+    expect(bodies).toHaveLength(0)
+
+    act(() => {
+      api.options!.callback!('late-tok')
+    })
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(JSON.parse(bodies[0]!)[TURNSTILE_FIELD]).toBe('late-tok')
+  })
+
+  it('resets the widget after a refusal, because a token works only once', async () => {
+    vi.stubEnv('NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'site')
+    const api = fakeTurnstile()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ ok: false, error: 'Nope' }), { status: 400 })),
+    )
+    const user = userEvent.setup()
+
+    render(<LeadForm source="contact" fields={fields} submitLabel="Send" />)
+    await waitFor(() => expect(api.render).toHaveBeenCalled())
+    act(() => {
+      api.options!.callback!('tok')
+    })
+    await fillAndSubmit(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nope')
+    expect(api.reset).toHaveBeenCalledWith('widget-1')
   })
 })
