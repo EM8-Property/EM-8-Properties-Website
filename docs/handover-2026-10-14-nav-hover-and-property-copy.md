@@ -81,18 +81,17 @@ and `createOrReplace` it.
 **Uteg Street** exists only as `drafts.property-uteg-street-apartments`. Its draft was
 updated, but it is still unpublished and does not appear on em-8.com.
 
-### Still open with Hunter
+### Hunter's answers, the same day
 
-1. **Attribution of seven sold deals.** EM8's May 2026 portfolio sheet lists only Burbank
-   and Embassy as EM8 deals. Crestline, Knox, Oakwood, Pinetree, Station Hills & Belle Court,
-   Uteg and Worth are filed as Deshe Real Estate Group deals. Their copy avoids "we" until he
-   decides how the site should present them.
-2. **Antioch Shopping Plaza status.** The site says under contract, and Antioch Industrial's
-   plan says so too. The last contingency date found was July 10, 2026, with no closing
-   documents. If it has closed, update `status` and that sentence.
-3. **Names.** Should "Oak Forest 1" become One Fifty Seven, and "Oak Apartments in Kenosha"
-   become Oakwood Apartments, to match the documents?
-4. Should Uteg Street be published?
+1. **The seven sold deals filed as Deshe Real Estate Group deals** (Crestline, Knox,
+   Oakwood, Pinetree, Station Hills & Belle Court, Uteg, Worth): the site **can say "we"**.
+   The six published overviews were switched to "we" and verified live.
+2. **Antioch Shopping Plaza is still under contract.** No change. When it closes, update
+   `status` here and the sentence in Antioch Industrial's business plan that says so.
+3. **Names stay.** "Oak Forest 1" and "Oak Apartments in Kenosha" keep their titles, even
+   though the documents say One Fifty Seven and Oakwood. The body copy on Oak Forest 1,
+   Waverly Creek and Oak Forest K still calls the project One Fifty Seven.
+4. **Uteg Street stays unpublished.** Its draft was not switched to "we".
 5. The 10-04 handover's open items are unchanged: the domain, the read token in Railway
    build logs, the test lead, and the Editor token.
 
