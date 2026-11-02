@@ -157,20 +157,20 @@ describe('published content', () => {
   })
 
   it('does not expose investor PII to anonymous callers', async () => {
-    // Regression guard for the C1 finding: the dataset was created public, so anyone
-    // holding the project id — which ships in the client bundle by design — could read
-    // every lead document: names, emails, phones, check sizes, and the 506(c)
-    // accreditation flag. If someone flips the dataset back to public, this fails.
+    // Regression guard for the C1 finding: the dataset is public, so anyone holding the
+    // project id — which ships in the client bundle by design — can read every document
+    // with a plain id: names, emails, phones, check sizes, and the 506(c) accreditation
+    // flag. A private dataset is not on the current Sanity plan, so leads are kept out of
+    // reach by their `lead.` id instead (see submitLead).
     const leads = await anonymousQuery('*[_type=="lead"]')
     expect(leads.count, 'lead documents are readable without a token').toBe(0)
 
-    // And prove the check has teeth: content that definitely exists must also be
-    // invisible anonymously. Otherwise a zero above could just mean "no leads yet".
-    const settings = await anonymousQuery('*[_type=="siteSettings"]')
-    expect(
-      settings.count,
-      'the dataset is readable without a token — it is public, and leads will be exposed the moment one is submitted',
-    ).toBe(0)
+    // The zero above could just mean "no leads yet". This is the property that makes it
+    // hold for the next one too: every lead, read with the token, carries a dotted id.
+    const plainIds = await client.fetch<string[]>(
+      '*[_type=="lead" && !(_id in path("lead.**")) && !(_id in path("drafts.**"))]._id',
+    )
+    expect(plainIds, 'leads stored under a plain id are readable without a token').toEqual([])
   })
 
   it('publishes a siteSettings document with every leaf the site cannot render without', async () => {

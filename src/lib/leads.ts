@@ -26,6 +26,9 @@ export const LEAD_SOURCES = [
 
 const SOURCES = LEAD_SOURCES
 
+/** Every lead id starts with this. See submitLead for why the dot matters. */
+export const LEAD_ID_PREFIX = 'lead.'
+
 /**
  * Sources that collect a name. `newsletter` is the homepage CTA, which asks for an email
  * address and nothing else — requiring a name there would defeat the point of having a
@@ -177,6 +180,12 @@ export async function submitLead(
     ...input,
     // Written last so no field of `input` can ever override them. `input` is already
     // whitelisted by parseLead; this is defence in depth.
+    //
+    // The `lead.` prefix is what keeps investor PII private. The dataset has to stay
+    // public (private datasets are not on the current Sanity plan), and Sanity hides any
+    // document whose id contains a dot from tokenless reads, even in a public dataset.
+    // A lead with a plain id is readable by anyone holding the project id.
+    _id: `${LEAD_ID_PREFIX}${crypto.randomUUID()}`,
     _type: 'lead',
     submittedAt: new Date().toISOString(),
     exportedToAgora: false,

@@ -149,6 +149,19 @@ describe('submitLead', () => {
     expect(seen[0]).toMatchObject({ _type: 'lead' })
   })
 
+  it('files every lead under a dotted id, which Sanity hides from tokenless reads', async () => {
+    const seen: Record<string, unknown>[] = []
+    const create = async (doc: Record<string, unknown>) => {
+      seen.push(doc)
+      return { _id: String(doc._id) }
+    }
+    const send = async () => {}
+    await submitLead(parseLead(valid), { create, sender: { send } })
+    await submitLead(parseLead(valid), { create, sender: { send } })
+    expect(String(seen[0]?._id)).toMatch(/^lead\.[0-9a-f-]{36}$/)
+    expect(seen[1]?._id).not.toBe(seen[0]?._id)
+  })
+
   it('stamps its own submittedAt rather than trusting the client', async () => {
     const seen: Record<string, unknown>[] = []
     const create = async (doc: Record<string, unknown>) => {
