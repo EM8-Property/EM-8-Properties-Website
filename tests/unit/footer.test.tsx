@@ -28,6 +28,7 @@ const props = {
   contactEmail: 'info@em-8.com',
   labels: LABELS,
   investorsLabel: 'Investors',
+  privacyLabel: 'Privacy',
 }
 
 describe('SiteFooter', () => {
@@ -81,6 +82,15 @@ describe('SiteFooter', () => {
     render(<SiteFooter {...props} investorsLabel="Invest With Us" />)
     expect(screen.getByRole('link', { name: 'Invest With Us' }).getAttribute('href')).toBe(
       '/investors',
+    )
+  })
+
+  it('links the privacy statement, labelled from its own leaf', () => {
+    // Every page needs a route to /privacy, and the footer is the one element on every
+    // page. The word comes from siteSettings like every other footer label.
+    render(<SiteFooter {...props} privacyLabel="Privacy Statement" />)
+    expect(screen.getByRole('link', { name: 'Privacy Statement' }).getAttribute('href')).toBe(
+      '/privacy',
     )
   })
 

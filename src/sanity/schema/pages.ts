@@ -451,3 +451,52 @@ export const strategyPage = defineType({
   ],
   preview: { prepare: () => ({ title: 'Strategy page' }) },
 })
+
+/**
+ * The privacy statement at /privacy, linked from every page's footer.
+ *
+ * Legal text in the CMS rather than in TSX, for the reason the footer disclaimer is: it
+ * has to be correctable by whoever reviews it, without a developer and without a deploy.
+ * The body describes what the code does (the lead form fields, the IP-keyed rate limit,
+ * the popup's localStorage flag, the services a submission passes through), so a change
+ * to any of those needs a matching edit here.
+ */
+export const privacyPage = defineType({
+  name: 'privacyPage',
+  title: 'Privacy page',
+  type: 'document',
+  fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
+    defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
+    defineField({
+      name: 'effectiveDate',
+      title: 'Effective date',
+      type: 'date',
+      description: 'Shown under the heading. Change it whenever the statement changes.',
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: 'body',
+      title: 'Statement',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [
+            { title: 'Paragraph', value: 'normal' },
+            { title: 'Section heading', value: 'h2' },
+          ],
+          lists: [{ title: 'Bullet', value: 'bullet' }],
+          marks: {
+            decorators: [
+              { title: 'Bold', value: 'strong' },
+              { title: 'Italic', value: 'em' },
+            ],
+          },
+        },
+      ],
+      validation: (r) => r.required(),
+    }),
+  ],
+  preview: { prepare: () => ({ title: 'Privacy page' }) },
+})

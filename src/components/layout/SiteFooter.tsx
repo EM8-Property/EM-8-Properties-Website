@@ -51,6 +51,7 @@ export function SiteFooter({
   contactEmail,
   labels,
   investorsLabel,
+  privacyLabel,
 }: {
   disclaimer: string
   contactEmail: string
@@ -58,6 +59,8 @@ export function SiteFooter({
   labels: NavLabels
   /** `siteSettings.footerLabels.investors` — the one link the top navigation has no word for. */
   investorsLabel: string
+  /** `siteSettings.footerLabels.privacy` — the link to /privacy beside the copyright line. */
+  privacyLabel: string
 }) {
   return (
     <footer className="mt-16 border-t border-rule bg-panel">
@@ -98,9 +101,16 @@ export function SiteFooter({
         <p className="mt-10 max-w-4xl text-[10px] leading-relaxed text-ink-secondary">
           {disclaimer}
         </p>
-        <p className="mt-6 text-[10px] text-ink-secondary">
-          © {new Date().getFullYear()} EM8 Properties. All rights reserved.
-        </p>
+        {/*
+          The privacy link sits with the copyright line rather than in the site map above:
+          it is a legal notice about the whole site, not a section of it.
+        */}
+        <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-ink-secondary">
+          <p>© {new Date().getFullYear()} EM8 Properties. All rights reserved.</p>
+          <Link href="/privacy" className="underline hover:text-ink">
+            {privacyLabel}
+          </Link>
+        </div>
       </div>
     </footer>
   )

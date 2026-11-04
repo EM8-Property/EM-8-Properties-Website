@@ -107,6 +107,35 @@ export type CtaLink = {
   href?: string;
 };
 
+export type PrivacyPage = {
+  _id: string;
+  _type: "privacyPage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  seo?: SeoBlock;
+  heading?: HeadingBlock;
+  effectiveDate?: string;
+  body?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal" | "h2";
+    listItem?: "bullet";
+    markDefs?: Array<{
+      href?: string;
+      _type: "link";
+      _key: string;
+    }>;
+    level?: number;
+    _type: "block";
+    _key: string;
+  }>;
+};
+
 export type StrategyPage = {
   _id: string;
   _type: "strategyPage";
@@ -337,6 +366,7 @@ export type SiteSettings = {
   };
   footerLabels?: {
     investors?: string;
+    privacy?: string;
   };
   dealStoryHeading?: string;
   ctaBand?: CtaBand;
@@ -716,6 +746,7 @@ export type AllSanitySchemaTypes =
   | HeroBlock
   | HeadingBlock
   | CtaLink
+  | PrivacyPage
   | StrategyPage
   | InsightsPage
   | PortfolioPage
@@ -1109,7 +1140,7 @@ export type CURRENT_OFFERINGS_QUERY_RESULT = Array<{
 
 // Source: src/sanity/queries.ts
 // Variable: SITE_SETTINGS_QUERY
-// Query: *[_type == "siteSettings"][0] {    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,    headerCta { label, href },    navLabels {      aboutUs, aboutEm8, whyEm8, ourTeam,      strategy, whyMidwest, partners, portfolio, insights, contact    },    footerLabels { investors },    dealStoryHeading,    ctaBand {      heading { eyebrow, title, intro },      submitLabel, emailLabel, successMessage, callTitle, callBody, callLabel    },    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }  }
+// Query: *[_type == "siteSettings"][0] {    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,    headerCta { label, href },    navLabels {      aboutUs, aboutEm8, whyEm8, ourTeam,      strategy, whyMidwest, partners, portfolio, insights, contact    },    footerLabels { investors, privacy },    dealStoryHeading,    ctaBand {      heading { eyebrow, title, intro },      submitLabel, emailLabel, successMessage, callTitle, callBody, callLabel    },    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }  }
 export type SITE_SETTINGS_QUERY_RESULT = {
   agoraPortalUrl: string | null;
   contactEmail: string | null;
@@ -1140,6 +1171,7 @@ export type SITE_SETTINGS_QUERY_RESULT = {
   } | null;
   footerLabels: {
     investors: string | null;
+    privacy: string | null;
   } | null;
   dealStoryHeading: string | null;
   ctaBand: {
@@ -1903,6 +1935,41 @@ export type STRATEGY_PAGE_QUERY_RESULT =
       marketSource: string | null;
     }
   | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      body: Array<{
+        children?: Array<{
+          marks?: Array<string>;
+          text?: string;
+          _type: "span";
+          _key: string;
+        }>;
+        style?: "h2" | "normal";
+        listItem?: "bullet";
+        markDefs?: Array<{
+          href?: string;
+          _type: "link";
+          _key: string;
+        }>;
+        level?: number;
+        _type: "block";
+        _key: string;
+      }> | null;
+      pillarsHeading: null;
+      pillars: null;
+      marketHeading: null;
+      marketBars: null;
+      marketUnit: null;
+      marketSource: null;
+    }
+  | {
       seo: null;
       heading: null;
       body: Array<
@@ -1943,6 +2010,135 @@ export type STRATEGY_PAGE_QUERY_RESULT =
     }
   | null;
 
+// Source: src/sanity/queries.ts
+// Variable: PRIVACY_PAGE_QUERY
+// Query: *[_id == "privacyPage"][0] {    seo { title, description },    heading { eyebrow, title, intro },    effectiveDate,    body  }
+export type PRIVACY_PAGE_QUERY_RESULT =
+  | {
+      seo: null;
+      heading: null;
+      effectiveDate: null;
+      body: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: null;
+      effectiveDate: null;
+      body: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      effectiveDate: null;
+      body: null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      effectiveDate: null;
+      body: Array<{
+        children?: Array<{
+          marks?: Array<string>;
+          text?: string;
+          _type: "span";
+          _key: string;
+        }>;
+        style?:
+          "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+        listItem?: "bullet" | "number";
+        markDefs?: Array<{
+          href?: string;
+          _type: "link";
+          _key: string;
+        }>;
+        level?: number;
+        _type: "block";
+        _key: string;
+      }> | null;
+    }
+  | {
+      seo: {
+        title: string | null;
+        description: string | null;
+      } | null;
+      heading: {
+        eyebrow: string | null;
+        title: string | null;
+        intro: string | null;
+      } | null;
+      effectiveDate: string | null;
+      body: Array<{
+        children?: Array<{
+          marks?: Array<string>;
+          text?: string;
+          _type: "span";
+          _key: string;
+        }>;
+        style?: "h2" | "normal";
+        listItem?: "bullet";
+        markDefs?: Array<{
+          href?: string;
+          _type: "link";
+          _key: string;
+        }>;
+        level?: number;
+        _type: "block";
+        _key: string;
+      }> | null;
+    }
+  | {
+      seo: null;
+      heading: null;
+      effectiveDate: null;
+      body: Array<
+        | {
+            children?: Array<{
+              marks?: Array<string>;
+              text?: string;
+              _type: "span";
+              _key: string;
+            }>;
+            style?:
+              "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+            listItem?: "bullet" | "number";
+            markDefs?: Array<{
+              href?: string;
+              _type: "link";
+              _key: string;
+            }>;
+            level?: number;
+            _type: "block";
+            _key: string;
+          }
+        | {
+            asset?: SanityImageAssetReference;
+            media?: unknown;
+            hotspot?: SanityImageHotspot;
+            crop?: SanityImageCrop;
+            _type: "image";
+            _key: string;
+          }
+      > | null;
+    }
+  | null;
+
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
@@ -1958,7 +2154,7 @@ declare module "@sanity/client" {
     '*[_type == "focusCard"] | order(order asc) { _id, title, description }': FOCUS_CARDS_QUERY_RESULT;
     '\n  *[_type == "testimonial" && consentOnRecord == true] | order(order asc) {\n    _id, quote, attribution, descriptor, investorSince, featured\n  }\n': TESTIMONIALS_QUERY_RESULT;
     '\n  *[_type == "property" && publiclyOffered == true] | order(order asc) {\n    _id, title, "slug": slug.current, assetClass, status, city, state,\n    metraStation, walkMinutes, unitCount, retailUnitCount, yearBuilt, cardBlurb,\n    "image": gallery[0], offering\n  }\n': CURRENT_OFFERINGS_QUERY_RESULT;
-    '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    headerCta { label, href },\n    navLabels {\n      aboutUs, aboutEm8, whyEm8, ourTeam,\n      strategy, whyMidwest, partners, portfolio, insights, contact\n    },\n    footerLabels { investors },\n    dealStoryHeading,\n    ctaBand {\n      heading { eyebrow, title, intro },\n      submitLabel, emailLabel, successMessage, callTitle, callBody, callLabel\n    },\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
+    '*[_type == "siteSettings"][0] {\n    agoraPortalUrl, contactEmail, bookACallUrl, disclaimer, defaultShareImage,\n    headerCta { label, href },\n    navLabels {\n      aboutUs, aboutEm8, whyEm8, ourTeam,\n      strategy, whyMidwest, partners, portfolio, insights, contact\n    },\n    footerLabels { investors, privacy },\n    dealStoryHeading,\n    ctaBand {\n      heading { eyebrow, title, intro },\n      submitLabel, emailLabel, successMessage, callTitle, callBody, callLabel\n    },\n    heroCarousel[]{ image, "slug": property->slug.current, "propertyTitle": property->title }\n  }': SITE_SETTINGS_QUERY_RESULT;
     '\n  *[_id == "homePage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro,\n           primaryCta { label, href }, secondaryCta { label, href } },\n    factorsHeading { eyebrow, title, intro },\n    insightsHeading { eyebrow, title, intro },\n    portfolioHeading { eyebrow, title, intro },\n    testimonialsHeading { eyebrow, title, intro },\n    partnersTeaser { eyebrow, title, intro },\n    partnersTeaserCta { label, href },\n    portfolioCta { label, href },\n    popup { enabled, eyebrow, title, body, submitLabel, successMessage }\n  }\n': HOME_PAGE_QUERY_RESULT;
     '\n  *[_id == "aboutPage"][0] {\n    seo { title, description },\n    hero { eyebrow, title, titleAccent, titleSuffix, intro },\n    factorsHeading { eyebrow, title, intro },\n    whyEm8 { heading { eyebrow, title, intro }, body },\n    leadershipTitle,\n    boardTitle\n  }\n': ABOUT_PAGE_QUERY_RESULT;
     '\n  *[_id == "aboutPage"][0] {\n    "whyEm8": defined(whyEm8.body)\n  }\n': NAV_SECTIONS_QUERY_RESULT;
@@ -1968,5 +2164,6 @@ declare module "@sanity/client" {
     '\n  *[_id == "portfolioPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    offeringsHeading { eyebrow, title, intro }\n  }\n': PORTFOLIO_PAGE_QUERY_RESULT;
     '\n  *[_id == "insightsPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro }\n  }\n': INSIGHTS_PAGE_QUERY_RESULT;
     '\n  *[_id == "strategyPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    body,\n    pillarsHeading { eyebrow, title, intro },\n    pillars[] { icon, eyebrow, title, body },\n    marketHeading { eyebrow, title, intro },\n    marketBars[] { label, value, highlight },\n    marketUnit,\n    marketSource\n  }\n': STRATEGY_PAGE_QUERY_RESULT;
+    '\n  *[_id == "privacyPage"][0] {\n    seo { title, description },\n    heading { eyebrow, title, intro },\n    effectiveDate,\n    body\n  }\n': PRIVACY_PAGE_QUERY_RESULT;
   }
 }

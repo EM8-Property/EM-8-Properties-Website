@@ -311,6 +311,13 @@ export const siteSettings = defineType({
           description: 'Goes to /investors. It appears in the footer and nowhere else.',
           validation: (r) => r.required().max(24),
         }),
+        defineField({
+          name: 'privacy',
+          title: 'Privacy (footer only)',
+          type: 'string',
+          description: 'Goes to /privacy, beside the copyright line on every page.',
+          validation: (r) => r.required().max(24),
+        }),
       ],
     }),
     /**

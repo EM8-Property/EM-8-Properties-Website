@@ -105,7 +105,7 @@ export const SITE_SETTINGS_QUERY = defineQuery(
       aboutUs, aboutEm8, whyEm8, ourTeam,
       strategy, whyMidwest, partners, portfolio, insights, contact
     },
-    footerLabels { investors },
+    footerLabels { investors, privacy },
     dealStoryHeading,
     ctaBand {
       heading { eyebrow, title, intro },
@@ -264,5 +264,15 @@ export const STRATEGY_PAGE_QUERY = defineQuery(`
     marketBars[] { label, value, highlight },
     marketUnit,
     marketSource
+  }
+`)
+
+/** The privacy statement. Every field is required; the page throws on a missing one. */
+export const PRIVACY_PAGE_QUERY = defineQuery(`
+  *[_id == "privacyPage"][0] {
+    seo { title, description },
+    heading { eyebrow, title, intro },
+    effectiveDate,
+    body
   }
 `)

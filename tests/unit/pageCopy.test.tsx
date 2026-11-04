@@ -39,6 +39,7 @@ describe('page copy schema', () => {
       'investorsPage',
       'partnersPage',
       'portfolioPage',
+      'privacyPage',
       'siteSettings',
       'strategyPage',
     ])
@@ -60,6 +61,7 @@ describe('seeded page copy', () => {
       'investorsPage',
       'partnersPage',
       'portfolioPage',
+      'privacyPage',
       'strategyPage',
     ])
   })
