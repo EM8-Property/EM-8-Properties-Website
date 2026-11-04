@@ -54,6 +54,37 @@ const block = (text, i) => ({
 })
 export const portable = (paragraphs) => paragraphs.map(block)
 
+/**
+ * Portable Text with the two structures a legal page needs and an essay does not:
+ * section headings and bullet lists. Each entry is a paragraph string, `{ h2: text }`, or
+ * `{ li: text }`. Any `**bold**` run becomes a strong span, which is the one inline mark
+ * the privacy statement uses. Keys are positional, as in `portable`.
+ */
+export const richPortable = (entries) =>
+  entries.map((entry, i) => {
+    const raw = typeof entry === 'string' ? entry : (entry.h2 ?? entry.li)
+    const children = raw
+      .split(/(\*\*[^*]+\*\*)/)
+      .filter(Boolean)
+      .map((part, j) => {
+        const bold = /^\*\*([^*]+)\*\*$/.exec(part)
+        return {
+          _type: 'span',
+          _key: `b${i}s${j}`,
+          text: bold ? bold[1] : part,
+          marks: bold ? ['strong'] : [],
+        }
+      })
+    return {
+      _type: 'block',
+      _key: `b${i}`,
+      style: entry.h2 ? 'h2' : 'normal',
+      ...(entry.li ? { listItem: 'bullet', level: 1 } : {}),
+      markDefs: [],
+      children,
+    }
+  })
+
 export const PROPERTIES = [
   {
     _id: 'property-boulevard-central-station',
@@ -735,6 +766,7 @@ export const SITE_SETTINGS = {
    */
   footerLabels: {
     investors: 'Investors',
+    privacy: 'Privacy',
   },
   /**
    * The heading above a sold property's realized figures. Backfilled by the same step as
@@ -1061,6 +1093,57 @@ export const PAGE_COPY = {
       'Year-over-year rent growth by metropolitan area, Apartment List, June 2026. ' +
       'Past market conditions are not a projection of future results.',
   },
+  /**
+   * The privacy statement, approved by Hunter on 2026-11-04 (not yet reviewed by
+   * counsel). Every claim in it describes what the code does: the
+   * lead form fields, the IP-keyed rate limit, the popup's localStorage flag, and the
+   * services a submission passes through. Change any of those and this must change too.
+   *
+   * The effective date is Hunter's call, not the publish date.
+   */
+  privacyPage: {
+    heading: {
+      eyebrow: 'Legal',
+      title: 'Privacy Statement',
+      intro:
+        'What information EM8 Properties LLC collects through em-8.com, what we do with it, and who else handles it.',
+    },
+    effectiveDate: '2025-01-04',
+    body: richPortable([
+      { h2: 'What we collect' },
+      '**Information you give us.** Our forms ask for some or all of the following, depending on which form you use:',
+      { li: 'First and last name' },
+      { li: 'Email address' },
+      { li: 'Phone number' },
+      { li: 'Investor type and the investment size you are considering' },
+      { li: 'Whether you confirm you are an accredited investor' },
+      { li: 'A property address, if you are telling us about a property' },
+      { li: 'Any message you write' },
+      'The newsletter signup asks only for your email address.',
+      '**Information collected automatically.** Like most websites, our hosting providers record standard technical data when you visit, such as your IP address, browser type and the pages you request. We use your IP address to limit repeated form submissions and to investigate abuse. We do not use advertising or analytics trackers.',
+      '**Information stored in your browser.** If you close the investor popup on our homepage, your browser remembers that so the popup does not appear again. This stays on your device and is not sent to us.',
+      { h2: 'How we use it' },
+      'We use the information you submit to reply to you, to send you updates about EM8 and our investment opportunities if you asked for them, and to add you to our investor records if you are an investor. We do not sell your personal information.',
+      { h2: 'Who else handles it' },
+      'We use a few service providers to run the site. Each handles your information only to provide its service to us:',
+      { li: '**Sanity** stores form submissions and the content of this site.' },
+      { li: '**Resend** delivers the email that tells our team about each submission.' },
+      { li: '**Cloudflare Turnstile** checks that a form submission comes from a person, not a bot. It runs in your browser when you use a form.' },
+      { li: '**Railway** and **Netlify** host and serve the website.' },
+      { li: "**Agora** runs our investor portal. If you are an investor, we may add your details to Agora so you can reach offering materials. When you log in to the portal or verify your accredited status, Agora's own privacy policy applies." },
+      'We may also disclose information when the law requires it.',
+      { h2: 'How long we keep it' },
+      'We keep form submissions for as long as we have a business relationship with you or need them for our records.',
+      { h2: 'Your choices' },
+      'You can ask us to see, correct or delete the information you have given us, or to stop sending you emails, by writing to info@em-8.com. Every marketing email we send includes a way to unsubscribe.',
+      { h2: 'Children' },
+      'This site is not meant for anyone under 18, and we do not knowingly collect their information.',
+      { h2: 'Changes' },
+      'If we change this statement, we will update the effective date at the top of this page.',
+      { h2: 'Contact' },
+      'EM8 Properties LLC, info@em-8.com',
+    ]),
+  },
 }
 
 /**
@@ -1114,6 +1197,11 @@ export const PAGE_SEO = {
     title: 'Strategy',
     description:
       'How EM8 chooses markets in suburban Chicago, and the partners we build with.',
+  },
+  privacyPage: {
+    title: 'Privacy Statement',
+    description:
+      'What information EM8 Properties collects through em-8.com, how we use it, which service providers handle it, and how to reach us about it.',
   },
 }
 

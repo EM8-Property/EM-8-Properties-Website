@@ -49,6 +49,7 @@ describe('every page offers a way to make contact', () => {
       '/partners',
       '/portfolio',
       '/portfolio/[slug]',
+      '/privacy',
       '/strategy',
     ])
   })
