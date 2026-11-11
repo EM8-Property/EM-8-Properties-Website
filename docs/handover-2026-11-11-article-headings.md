@@ -57,8 +57,10 @@ makes it darker too, so it stands out against the grey body text.
 43049864899 the `checks` job passed: lint, typecheck and the 710 unit tests. The `build` job
 ran `npm run build` successfully, then failed three times at the Playwright browser install
 (see "CI flake" below), so its E2E and Lighthouse steps never ran. As a substitute, the
-production build and all 49 E2E tests passed locally. **Lighthouse has not been run on this
-commit.** The next CI run that gets past the install will cover it.
+production build and all 49 E2E tests passed locally.
+
+**Closed the same day:** run 43067372518 on `c9518bd`, which carries this code plus two doc
+commits, passed every step: lint, typecheck, unit, build, E2E and the Lighthouse budget.
 
 Railway deployment `241ca649` reached `SUCCESS`. Its build log has `Compiled successfully`
 and `Generating static pages (39/39)`, so it was a real Next build, not a cached layer.
@@ -80,12 +82,38 @@ runner's DNS, not the code. `npm run build` had passed in the same job. Two reru
 (`ubuntu-26.04`, `20261101.186.1`) is the same one that passed #77 on 11/4. GitHub's status
 page said all systems operational. If it persists, a cached Playwright install, or
 dropping `--with-deps` in favour of the image's own fonts, would take apt out of the path.
+It had cleared by 16:52, when run 43067372518 installed the browser normally.
+
+A **second, different** failure hit run 43060799768 (`e207c28`, a doc-only commit) at
+16:45: `npm run build` itself failed with 10 errors, all in Cormorant Garamond (the wordmark
+face). Inter and Oswald were fine:
+
+```
+Module not found: Can't resolve '@vercel/turbopack-next/internal/font/google/font'
+next/font/google queries have exactly one entry
+```
+
+`next/font/google` downloads Google's stylesheet at build time and rewrites each font file
+`url()` into a Turbopack import whose query is a JSON blob. That message comes from
+Turbopack's query parser when the blob splits into more than one `key=value` entry, which
+an `&` inside the font URL would cause. The stylesheet itself was fetched, since the
+failing `@font-face` blocks are in the log. **The URL Google sent is not in the log**: Next
+truncates it at `https://fonts.gs…`. So the exact cause is unproven. From here, 16 fetches
+of the same stylesheet with Next's user agent all returned plain
+`fonts.gstatic.com/s/cormorantgaramond/v21/….woff2` URLs. The next run, 7 minutes later,
+built normally. A clean local build also passed.
+
+**This can hit Railway too.** Railway runs the same `next build`, which fetches from Google
+Fonts. If it happens there, the deploy fails and the site stays on the previous build. That
+is not an outage: deploy again. Self-hosting the three fonts with `next/font/local` (the same
+woff2 files, committed to the repo) would remove Google from the build entirely.
 
 ## Open
 
 1. Bold in the NITA article, if Hunter wants any: apply it in the Studio and publish.
-2. Confirm the next CI run on `main` is fully green (E2E and Lighthouse), since this
-   commit's never got past the browser install.
+2. Whether to self-host the fonts so builds no longer depend on Google Fonts (see above).
+   Hunter's call. It changes how every page loads its fonts, so it needs a side-by-side
+   check before shipping.
 3. `RAILWAY_API_TOKEN` in the main checkout's `.env.local` was replaced on 11/11 with the
    project token Hunter pasted in chat. It deployed this change and answers `projectToken`.
 4. Earlier open items are unchanged: the domain, the read token in Railway build logs, the
