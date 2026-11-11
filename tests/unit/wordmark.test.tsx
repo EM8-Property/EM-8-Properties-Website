@@ -97,7 +97,7 @@ describe('the wordmark', () => {
  *
  * The logo went Light → SemiBold on 2026-09-18, and `PROPERTIES` then went on to Bold, both
  * because Hunter asked. The classes in `Wordmark.tsx` are only half of each change: a class
- * asking for a weight `app/layout.tsx` does not load selects a face the subset *does* carry
+ * asking for a weight `app/fonts.ts` does not load selects a face the subset *does* carry
  * and paints the wrong weight. A browser does not synthesise a single step, and nothing else
  * in the suite, the typecheck or the lint would report it — the classes would read as bold
  * and the logo would not be.
@@ -106,15 +106,17 @@ describe('the wordmark', () => {
  * next to the phone size: the thing that was chosen is the combination.
  */
 describe('the wordmark weights', () => {
-  const layoutSource = stripComments(
-    readFileSync(resolve(import.meta.dirname, '../../src/app/layout.tsx'), 'utf8'),
+  // Self-hosted since 2026-11-11: the weights are the `src` entries of the latin call in
+  // `app/fonts.ts`, which used to be `weight: [...]` on `Cormorant_Garamond` in layout.tsx.
+  const fontsSource = stripComments(
+    readFileSync(resolve(import.meta.dirname, '../../src/app/fonts.ts'), 'utf8'),
   )
 
-  /** Weights the Cormorant subset is actually built with, read off the font call. */
+  /** Weights the Cormorant latin subset is actually built with, read off the font call. */
   const loadedWeights = (() => {
-    const call = layoutSource.match(/Cormorant_Garamond\(\{[\s\S]*?\}\)/)
-    if (!call) throw new Error('could not find the Cormorant_Garamond call in layout.tsx')
-    return [...call[0].matchAll(/'(\d00)'/g)].map((m) => Number(m[1]))
+    const call = fontsSource.match(/cormorantLatin = localFont\(\{[\s\S]*?\n\}\)/)
+    if (!call) throw new Error('could not find the cormorantLatin call in app/fonts.ts')
+    return [...call[0].matchAll(/weight: '(\d00)'/g)].map((m) => Number(m[1]))
   })()
 
   it('sets the mark at 600 and PROPERTIES at 700, which is an instruction not a default', () => {

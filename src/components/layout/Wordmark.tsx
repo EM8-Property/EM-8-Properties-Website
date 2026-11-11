@@ -68,10 +68,10 @@ export function Wordmark({
    * overhangs the cap height and the baseline by the same small amount, which is the
    * relationship in the supplied artwork.
    *
-   * `font-semibold` is weight 600, and it only renders as 600 because `app/layout.tsx` loads
+   * `font-semibold` is weight 600, and it only renders as 600 because `app/fonts.ts` loads
    * 600. Those two move together — a class here asking for a weight the subset does not
    * carry silently renders one it does, because a browser picks the face it has rather than
-   * synthesising a step. Every weight named in this file has to appear in that list, and
+   * synthesising a step. Every weight named in this file has to appear in its `src` weights, and
    * `tests/unit/wordmark.test.tsx` pins the pair.
    *
    * The two lines of the lockup were one weight until 2026-09-18 — matching the supplied
