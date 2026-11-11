@@ -86,8 +86,7 @@ dropping `--with-deps` in favour of the image's own fonts, would take apt out of
 1. Bold in the NITA article, if Hunter wants any: apply it in the Studio and publish.
 2. Confirm the next CI run on `main` is fully green (E2E and Lighthouse), since this
    commit's never got past the browser install.
-3. The Railway token in `.env.local` is still the dead one. Hunter pasted a new project
-   token in chat on 11/11 and it deployed this change. The credential guard blocks writing
-   it to `.env.local`.
+3. `RAILWAY_API_TOKEN` in the main checkout's `.env.local` was replaced on 11/11 with the
+   project token Hunter pasted in chat. It deployed this change and answers `projectToken`.
 4. Earlier open items are unchanged: the domain, the read token in Railway build logs, the
    Editor token, and the hosted Studio redeploy for "Privacy page".
