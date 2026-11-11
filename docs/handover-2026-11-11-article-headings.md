@@ -7,7 +7,7 @@ Studio and said the headings and bolding did not show on the website.
 
 | | |
 |---|---|
-| em-8.com | Railway `c2c2779`, deployment `241ca649`, through the Netlify proxy (unchanged) |
+| em-8.com | Railway `e0c63e6`, deployment `9edd0e3b` (fonts). The heading fix went out first as `c2c2779`, deployment `241ca649`. Netlify proxy unchanged |
 | The change | `c2c2779`, pushed straight to `main` at Hunter's choice (no branch, no PR) |
 | The article | `post-what-a-village-wants-built`, slug `NITA-case-for-TOD`, published 15:27 UTC |
 
@@ -103,17 +103,54 @@ of the same stylesheet with Next's user agent all returned plain
 `fonts.gstatic.com/s/cormorantgaramond/v21/….woff2` URLs. The next run, 7 minutes later,
 built normally. A clean local build also passed.
 
-**This can hit Railway too.** Railway runs the same `next build`, which fetches from Google
-Fonts. If it happens there, the deploy fails and the site stays on the previous build. That
-is not an outage: deploy again. Self-hosting the three fonts with `next/font/local` (the same
-woff2 files, committed to the repo) would remove Google from the build entirely.
+Railway ran the same `next build`, so the same failure could have failed a deploy. Hunter
+chose to remove the dependency, and that change shipped the same day (next section).
+
+## Fonts self-hosted (e0c63e6)
+
+`src/app/fonts.ts` replaces `next/font/google` with seventeen `next/font/local` calls. They
+use Google's own woff2 files, copied byte for byte from the last Google build into
+`src/app/fonts/`, with Google's `unicode-range` for each subset and one `font-family` per
+font. Only the latin file of each font is preloaded. `globals.css` names the families in
+`--font-sans`, `--font-display` and `--font-wordmark`, and declares the three fallback faces
+with the exact metrics `next/font/google` had computed. `layout.tsx` imports the module for
+its side effects only. `next build` no longer contacts Google.
+
+**Trap found on the way:** next/font/local's `variable` names the family after the JS binding
+under Turbopack ("cormorant"), not the declared `font-family`. Through `var(--font-…)` the
+wordmark would have rendered in Times, and Inter and Oswald worked only because family names
+are case-insensitive. Hence the hard-coded names. `tests/unit/fonts.test.ts` pins all of it,
+including that nothing imports `next/font/google` again.
+
+**Verified identical**, before and after:
+
+| check | result |
+|---|---|
+| `@font-face` rules | 25 and 25: same families, weights, ranges, file contents and fallback metrics |
+| Preloads | the same 3 latin files, same content hashes |
+| Canvas render of Inter 400/500/600/700, Oswald 500/700, Cormorant 600/700 | identical pixel hashes and text widths |
+| Google build vs self-hosted build, same local server, 390px | pixel-identical (max diff 6/765, JPEG noise) |
+| em-8.com before vs after the deploy, 390px, whole screen | **max diff 0** |
+| Live font files | byte-identical to `src/app/fonts/`; no request to Google |
+
+A screenshot of em-8.com once differed from a local build in Inter text. That was Chrome
+choosing subpixel vs grayscale anti-aliasing by environment (localhost vs the live origin),
+not the fonts. The Google build differed from live in exactly the same way.
+
+Shipped: CI run 43072858163 passed every step, including E2E and Lighthouse. Railway
+deployment `9edd0e3b` built `e0c63e6` with a full Next build, and all 12 main pages return 200.
+
+## Content note
+
+The Boulevard article (`aca31ce3…`) opens with "fake bold": Unicode Mathematical Sans-Serif
+Bold letters (𝗘𝗫𝗖𝗜𝗧𝗜𝗡𝗚 𝗡𝗘𝗪𝗦…), probably pasted from a LinkedIn post. Screen readers and
+search engines don't read them as words, and no site font contains them. Not changed. The
+fix is to retype those lines in the Studio with real bold.
 
 ## Open
 
 1. Bold in the NITA article, if Hunter wants any: apply it in the Studio and publish.
-2. Whether to self-host the fonts so builds no longer depend on Google Fonts (see above).
-   Hunter's call. It changes how every page loads its fonts, so it needs a side-by-side
-   check before shipping.
+2. The fake-bold opening of the Boulevard article (above), if Hunter wants it fixed.
 3. `RAILWAY_API_TOKEN` in the main checkout's `.env.local` was replaced on 11/11 with the
    project token Hunter pasted in chat. It deployed this change and answers `projectToken`.
 4. Earlier open items are unchanged: the domain, the read token in Railway build logs, the
