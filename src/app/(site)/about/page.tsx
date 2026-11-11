@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { PortableText } from 'next-sanity'
+import { RichText } from '@/components/ui/RichText'
 import { seoMetadata } from '@/lib/pageSeo'
 import Image from 'next/image'
 import { fetchSanity } from '@/sanity/client'
@@ -108,7 +108,7 @@ export default async function AboutPage() {
           <div className="mx-auto max-w-[1200px] px-6 py-14">
             <SectionHeading {...copy.whyEm8.heading} />
             <div className="mt-6 max-w-[68ch] space-y-4 text-sm leading-relaxed text-ink-secondary">
-              <PortableText value={copy.whyEm8.body} />
+              <RichText value={copy.whyEm8.body} />
             </div>
           </div>
         </section>

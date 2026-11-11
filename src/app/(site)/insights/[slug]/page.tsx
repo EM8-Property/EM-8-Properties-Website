@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { PortableText } from 'next-sanity'
+import { RichText } from '@/components/ui/RichText'
 import { fetchSanity } from '@/sanity/client'
 import { POST_BY_SLUG_QUERY, POST_SLUGS_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
 import type {
@@ -115,7 +115,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
       {post.body && (
         <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-ink-secondary">
-          <PortableText value={post.body} />
+          <RichText value={post.body} />
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { PortableText } from 'next-sanity'
+import { RichText } from '@/components/ui/RichText'
 import { fetchSanity } from '@/sanity/client'
 import { PROPERTY_BY_SLUG_QUERY, PROPERTY_SLUGS_QUERY } from '@/sanity/queries'
 import type {
@@ -133,7 +133,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 
           {p.overview && (
             <div className="mt-5 space-y-4 text-sm leading-relaxed text-ink-secondary">
-              <PortableText value={p.overview} />
+              <RichText value={p.overview} />
             </div>
           )}
 
@@ -143,7 +143,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
                 The business plan
               </h2>
               <div className="mt-2 space-y-4 text-sm leading-relaxed text-ink-secondary">
-                <PortableText value={p.businessPlan} />
+                <RichText value={p.businessPlan} />
               </div>
             </>
           )}

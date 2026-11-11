@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { PortableText } from 'next-sanity'
+import { RichText } from '@/components/ui/RichText'
 import { seoMetadata } from '@/lib/pageSeo'
 import { fetchSanity } from '@/sanity/client'
 import { STRATEGY_PAGE_QUERY, SITE_SETTINGS_QUERY } from '@/sanity/queries'
@@ -95,7 +95,7 @@ export default async function StrategyPage() {
         key="body"
         className="max-w-[68ch] space-y-4 text-sm leading-relaxed text-ink-secondary"
       >
-        <PortableText value={copy.body} />
+        <RichText value={copy.body} />
       </div>
     ),
     copy.pillarsHeading?.title && pillars.length > 0 && (
