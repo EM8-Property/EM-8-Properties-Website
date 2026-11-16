@@ -167,11 +167,11 @@ export const jobPosting = defineType({
  * A candidate's application, written by /api/apply and never edited in the Studio.
  *
  * Its id carries a dot (`application.<uuid>`), which hides it from tokenless reads of the
- * public dataset; see `LEAD_ID_PREFIX`. The resume itself is NOT stored here: a Sanity file
- * asset in a public dataset can be listed by anyone holding the project id, so the file is
- * only ever sent as an email attachment. This record is the safety net for the person, not
- * the file: `emailed: false` means the team was never told, and the candidate can be asked
- * to resend.
+ * public dataset; see `LEAD_ID_PREFIX`. The resume and cover letter are NOT stored here: a
+ * Sanity file asset in a public dataset can be listed by anyone holding the project id, so
+ * the files are only ever sent as email attachments. This record is the safety net for the
+ * person, not the files: `emailed: false` means the team was never told, and the candidate
+ * can be asked to resend.
  */
 export const jobApplication = defineType({
   name: 'jobApplication',
@@ -188,10 +188,11 @@ export const jobApplication = defineType({
     defineField({ name: 'linkedin', title: 'LinkedIn', type: 'url' }),
     defineField({ name: 'message', title: 'Note', type: 'text' }),
     defineField({ name: 'resumeFilename', title: 'Resume file name', type: 'string' }),
+    defineField({ name: 'coverLetterFilename', title: 'Cover letter file name', type: 'string' }),
     defineField({ name: 'submittedAt', type: 'datetime' }),
     defineField({
       name: 'emailed',
-      title: 'Team was emailed the resume',
+      title: 'Team was emailed the files',
       type: 'boolean',
       description: 'False means the application was saved but the email with the resume failed. Ask the candidate to resend it.',
     }),

@@ -2,9 +2,10 @@
  * Job applications from /careers/[slug]: parse, validate, save, email.
  *
  * Kept apart from `leads.ts` on purpose. A lead is a small JSON body capped at 20 KB; an
- * application carries a resume of up to 5 MB as multipart form data, goes to a different
- * document type, and its email has an attachment. Folding it into the lead path would mean
- * raising the lead endpoint's body cap two hundredfold for every form on the site.
+ * application carries a resume and an optional cover letter, up to 5 MB each, as multipart
+ * form data, goes to a different document type, and its email has attachments. Folding it
+ * into the lead path would mean raising the lead endpoint's body cap five hundredfold for
+ * every form on the site.
  *
  * Plain functions with their effects passed in, like `submitLead`, so the whole flow is
  * unit-testable without a network.
@@ -17,11 +18,14 @@ export { LeadValidationError as ApplicationValidationError, LeadSpamError as App
 /** Every application id starts with this. The dot hides it from tokenless reads. */
 export const APPLICATION_ID_PREFIX = 'application.'
 
-/** The resume ceiling. Resend's limit is 40 MB per email; 5 MB is a long resume. */
+/**
+ * The ceiling on each file, the resume and the optional cover letter alike. Resend's
+ * limit is 40 MB per email, so two at 5 MB fit with room to spare.
+ */
 export const MAX_RESUME_BYTES = 5 * 1024 * 1024
 
-/** The whole request: the resume plus a few KB of fields and multipart framing. */
-export const MAX_APPLICATION_BYTES = MAX_RESUME_BYTES + 64 * 1024
+/** The whole request: both files plus a few KB of fields and multipart framing. */
+export const MAX_APPLICATION_BYTES = 2 * MAX_RESUME_BYTES + 64 * 1024
 
 /**
  * Accepted resume formats, identified by their first bytes rather than the browser's
@@ -56,6 +60,7 @@ export type ApplicationInput = {
   linkedin?: string
   message?: string
   resume: Resume
+  coverLetter?: Resume
 }
 
 /** The subset of `File` this module reads, so tests can pass a plain object. */
@@ -77,30 +82,41 @@ function isFileLike(v: unknown): v is FileLike {
 }
 
 /** Leaves a file name safe to put in an email header: no path, no control characters. */
-export function safeFilename(name: string, ext: string): string {
+export function safeFilename(name: string, ext: string, fallback = 'resume'): string {
   const base = name.split(/[\\/]/).pop() ?? ''
   const clean = base.replace(/[^\w.\- ()]/g, '_').replace(/^\.+/, '').slice(0, 100)
-  const stem = clean.replace(/\.[^.]*$/, '') || 'resume'
+  const stem = clean.replace(/\.[^.]*$/, '') || fallback
   return `${stem}.${ext}`
+}
+
+/** Checks one uploaded document. `what` names it in every message the candidate sees. */
+async function parseDocument(file: FileLike, what: 'resume' | 'cover letter'): Promise<Resume> {
+  if (file.size > MAX_RESUME_BYTES) {
+    throw new LeadValidationError(`Your ${what} is larger than 5 MB. Please attach a smaller file.`)
+  }
+  const content = new Uint8Array(await file.arrayBuffer())
+  const format = RESUME_FORMATS.find((f) => f.magic.every((b, i) => content[i] === b))
+  if (!format) {
+    throw new LeadValidationError(`Please attach your ${what} as a PDF or Word document.`)
+  }
+  return {
+    filename: safeFilename(file.name, format.ext, what === 'resume' ? 'resume' : 'cover-letter'),
+    contentType: format.type,
+    content,
+  }
 }
 
 export async function parseResume(file: unknown): Promise<Resume> {
   if (!isFileLike(file) || file.size === 0) {
     throw new LeadValidationError('Please attach your resume.')
   }
-  if (file.size > MAX_RESUME_BYTES) {
-    throw new LeadValidationError('Your resume is larger than 5 MB. Please attach a smaller file.')
-  }
-  const content = new Uint8Array(await file.arrayBuffer())
-  const format = RESUME_FORMATS.find((f) => f.magic.every((b, i) => content[i] === b))
-  if (!format) {
-    throw new LeadValidationError('Please attach your resume as a PDF or Word document.')
-  }
-  return {
-    filename: safeFilename(file.name, format.ext),
-    contentType: format.type,
-    content,
-  }
+  return parseDocument(file, 'resume')
+}
+
+/** Optional: an empty file input posts a zero-byte file, which means "none". */
+export async function parseCoverLetter(file: unknown): Promise<Resume | undefined> {
+  if (!isFileLike(file) || file.size === 0) return undefined
+  return parseDocument(file, 'cover letter')
 }
 
 /**
@@ -152,6 +168,7 @@ export async function parseApplication(form: {
   if (message && message.length > MAX_MESSAGE) throw new LeadValidationError('Note is too long')
 
   const resume = await parseResume(form.get('resume'))
+  const coverLetter = await parseCoverLetter(form.get('coverLetter'))
 
   return {
     jobSlug,
@@ -162,6 +179,7 @@ export async function parseApplication(form: {
     ...(linkedin ? { linkedin } : {}),
     ...(message ? { message } : {}),
     resume,
+    ...(coverLetter ? { coverLetter } : {}),
   }
 }
 
@@ -188,13 +206,20 @@ export async function submitApplication(
     patch?: (id: string, fields: Record<string, unknown>) => Promise<unknown>
   },
 ): Promise<{ id: string; emailed: boolean }> {
-  const { resume, jobSlug: _slug, ...fields } = input
+  const { resume, coverLetter: rawCover, jobSlug: _slug, ...fields } = input
   void _slug
+  // Two files both called "Document.pdf" would arrive as two identical attachment names,
+  // and the team could not tell which was which.
+  const coverLetter =
+    rawCover && rawCover.filename === resume.filename
+      ? { ...rawCover, filename: `Cover letter - ${rawCover.filename}` }
+      : rawCover
   const doc = await deps.create({
     ...fields,
     job: { _type: 'reference', _ref: job._id, _weak: true },
     jobTitle: job.title,
     resumeFilename: resume.filename,
+    ...(coverLetter ? { coverLetterFilename: coverLetter.filename } : {}),
     // Last, so nothing above can override them.
     _id: `${APPLICATION_ID_PREFIX}${crypto.randomUUID()}`,
     _type: 'jobApplication',
@@ -214,14 +239,16 @@ export async function submitApplication(
         input.phone ? `Phone: ${input.phone}` : '',
         input.linkedin ? `LinkedIn: ${input.linkedin}` : '',
         `Resume: attached (${resume.filename})`,
+        coverLetter ? `Cover letter: attached (${coverLetter.filename})` : 'Cover letter: none',
         input.message ? `\n${input.message}` : '',
         '\nReply to this email to answer the candidate directly.',
       ]
         .filter(Boolean)
         .join('\n'),
-      attachments: [
-        { filename: resume.filename, content: Buffer.from(resume.content).toString('base64') },
-      ],
+      attachments: [resume, ...(coverLetter ? [coverLetter] : [])].map((f) => ({
+        filename: f.filename,
+        content: Buffer.from(f.content).toString('base64'),
+      })),
     })
   } catch {
     emailed = false

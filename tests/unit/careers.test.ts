@@ -224,3 +224,46 @@ describe('submitApplication', () => {
     expect(patch).toHaveBeenCalledWith(expect.any(String), { emailed: false })
   })
 })
+
+describe('cover letter', () => {
+  it('is optional: an empty file input means none', async () => {
+    const out = await parseApplication(form({ ...VALID, coverLetter: file('', []) }))
+    expect(out).not.toHaveProperty('coverLetter')
+  })
+
+  it('gets the same format and size checks as the resume, named in the message', async () => {
+    await expect(
+      parseApplication(form({ ...VALID, coverLetter: file('letter.pdf', [0x4d, 0x5a, 0x90, 0x00]) })),
+    ).rejects.toThrow('Please attach your cover letter as a PDF or Word document.')
+    await expect(
+      parseApplication(form({ ...VALID, coverLetter: file('letter.pdf', PDF, MAX_RESUME_BYTES + 1) })),
+    ).rejects.toThrow('Your cover letter is larger than 5 MB.')
+  })
+
+  it('is emailed as a second attachment and recorded by name, never stored', async () => {
+    const input = await parseApplication(form({ ...VALID, coverLetter: file('Letter.docx', DOCX) }))
+    const create = vi.fn(async (doc: Record<string, unknown>) => ({ _id: doc._id as string }))
+    const send = vi.fn(async () => {})
+    await submitApplication(input, { _id: 'j', title: 'Controller' }, { create, send })
+
+    const doc = create.mock.calls[0]![0]
+    expect(doc.coverLetterFilename).toBe('Letter.docx')
+    expect(doc).not.toHaveProperty('coverLetter')
+    const msg = (send.mock.calls[0] as unknown as [{ body: string; attachments: { filename: string }[] }])[0]
+    expect(msg.attachments.map((a) => a.filename)).toEqual(['Ada CV.pdf', 'Letter.docx'])
+    expect(msg.body).toContain('Cover letter: attached (Letter.docx)')
+  })
+
+  it('is renamed when it has the same file name as the resume', async () => {
+    const input = await parseApplication(
+      form({ ...VALID, resume: file('Document.pdf', PDF), coverLetter: file('Document.pdf', PDF) }),
+    )
+    const send = vi.fn(async () => {})
+    await submitApplication(input, { _id: 'j', title: 'Controller' }, {
+      create: async (d) => ({ _id: d._id as string }),
+      send,
+    })
+    const msg = (send.mock.calls[0] as unknown as [{ attachments: { filename: string }[] }])[0]
+    expect(msg.attachments.map((a) => a.filename)).toEqual(['Document.pdf', 'Cover letter - Document.pdf'])
+  })
+})
