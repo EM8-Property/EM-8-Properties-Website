@@ -52,6 +52,7 @@ export function SiteFooter({
   labels,
   investorsLabel,
   privacyLabel,
+  careersLabel,
 }: {
   disclaimer: string
   contactEmail: string
@@ -61,6 +62,8 @@ export function SiteFooter({
   investorsLabel: string
   /** `siteSettings.footerLabels.privacy` — the link to /privacy beside the copyright line. */
   privacyLabel: string
+  /** `siteSettings.footerLabels.careers` — /careers is in the footer site map only. */
+  careersLabel: string
 }) {
   return (
     <footer className="mt-16 border-t border-rule bg-panel">
@@ -90,6 +93,10 @@ export function SiteFooter({
             */}
             <Link href="/investors" className="hover:text-ink">
               {investorsLabel}
+            </Link>
+            {/* Footer only, like /investors: hiring is not what a visitor arrives for. */}
+            <Link href="/careers" className="hover:text-ink">
+              {careersLabel}
             </Link>
           </nav>
         </div>

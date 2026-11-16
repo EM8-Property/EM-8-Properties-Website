@@ -105,7 +105,7 @@ export const SITE_SETTINGS_QUERY = defineQuery(
       aboutUs, aboutEm8, whyEm8, ourTeam,
       strategy, whyMidwest, partners, portfolio, insights, contact
     },
-    footerLabels { investors, privacy },
+    footerLabels { investors, privacy, careers },
     dealStoryHeading,
     ctaBand {
       heading { eyebrow, title, intro },
@@ -274,5 +274,41 @@ export const PRIVACY_PAGE_QUERY = defineQuery(`
     heading { eyebrow, title, intro },
     effectiveDate,
     body
+  }
+`)
+
+/** /careers, and the copy around every job's application form. */
+export const CAREERS_PAGE_QUERY = defineQuery(`
+  *[_id == "careersPage"][0] {
+    seo { title, description },
+    heading { eyebrow, title, intro },
+    openingsTitle,
+    emptyMessage,
+    formTitle,
+    submitLabel,
+    successMessage
+  }
+`)
+
+/**
+ * Every posting marked open, newest first. The closing date is checked in code
+ * (`isJobOpen`), not here: GROQ's `now()` is a datetime and the field is a date, and the
+ * comparison belongs in Chicago time, which GROQ cannot express.
+ */
+export const OPEN_JOBS_QUERY = defineQuery(`
+  *[_type == "jobPosting" && open == true && defined(slug.current)] | order(datePosted desc) {
+    _id, _updatedAt, title, "slug": slug.current, open, datePosted, validThrough,
+    employmentType, workplace, location { city, state }, salary { min, max, unit, note }, summary
+  }
+`)
+
+export const JOB_BY_SLUG_QUERY = defineQuery(`
+  *[_type == "jobPosting" && slug.current == $slug][0] {
+    _id, title, "slug": slug.current, open, datePosted, validThrough,
+    employmentType, workplace,
+    location { streetAddress, city, state, postalCode },
+    salary { min, max, unit, note },
+    summary,
+    sections[] { _key, heading, body, items }
   }
 `)

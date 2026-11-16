@@ -318,6 +318,13 @@ export const siteSettings = defineType({
           description: 'Goes to /privacy, beside the copyright line on every page.',
           validation: (r) => r.required().max(24),
         }),
+        defineField({
+          name: 'careers',
+          title: 'Careers (footer only)',
+          type: 'string',
+          description: 'Goes to /careers. It appears in the footer site map.',
+          validation: (r) => r.required().max(24),
+        }),
       ],
     }),
     /**

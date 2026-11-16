@@ -29,6 +29,7 @@ const props = {
   labels: LABELS,
   investorsLabel: 'Investors',
   privacyLabel: 'Privacy',
+  careersLabel: 'Careers',
 }
 
 describe('SiteFooter', () => {
@@ -92,6 +93,11 @@ describe('SiteFooter', () => {
     expect(screen.getByRole('link', { name: 'Privacy Statement' }).getAttribute('href')).toBe(
       '/privacy',
     )
+  })
+
+  it('links /careers in the site map, labelled from its own leaf', () => {
+    render(<SiteFooter {...props} careersLabel="Join Us" />)
+    expect(screen.getByRole('link', { name: 'Join Us' }).getAttribute('href')).toBe('/careers')
   })
 
   it('uses no physical-direction utilities', () => {

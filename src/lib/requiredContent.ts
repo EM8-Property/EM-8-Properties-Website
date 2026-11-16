@@ -84,6 +84,11 @@ export const REQUIRED_SITE_SETTINGS: readonly RequiredLeaf[] = [
     groq: '"footerPrivacy": footerLabels.privacy',
     describe: 'footerLabels.privacy — the footer link to /privacy has no words in it',
   },
+  {
+    path: 'footerLabels.careers',
+    groq: '"footerCareers": footerLabels.careers',
+    describe: 'footerLabels.careers — the footer link to /careers has no words in it',
+  },
   /*
    * The nine navigation labels, spec §5. Hunter's decision of 2026-09-08 put the words in
    * Sanity and left the structure in code; `src/lib/navigation.ts` is the other half, and

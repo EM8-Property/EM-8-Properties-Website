@@ -500,3 +500,49 @@ export const privacyPage = defineType({
   ],
   preview: { prepare: () => ({ title: 'Privacy page' }) },
 })
+
+/**
+ * /careers, and the words around each job's application form.
+ *
+ * The jobs themselves are `jobPosting` documents; this holds only what is the same for
+ * every role. The empty-state message is required because the list really can be empty:
+ * a careers page with a heading and nothing under it reads as broken.
+ */
+export const careersPage = defineType({
+  name: 'careersPage',
+  title: 'Careers page',
+  type: 'document',
+  fields: [
+    defineField({ name: 'seo', type: 'seoBlock', validation: (r) => r.required() }),
+    defineField({ name: 'heading', type: 'headingBlock', validation: (r) => r.required() }),
+    defineField({
+      name: 'openingsTitle',
+      title: 'Open roles heading',
+      type: 'string',
+      validation: (r) => r.required().max(60),
+    }),
+    defineField({
+      name: 'emptyMessage',
+      title: 'No open roles message',
+      type: 'text',
+      rows: 2,
+      description: 'Shown in place of the list when no role is accepting applications.',
+      validation: (r) => r.required().max(240),
+    }),
+    defineField({
+      name: 'formTitle',
+      title: 'Application form heading',
+      type: 'string',
+      description: 'Above the form on every job page.',
+      validation: (r) => r.required().max(60),
+    }),
+    defineField({ name: 'submitLabel', type: 'string', validation: (r) => r.required().max(40) }),
+    defineField({
+      name: 'successMessage',
+      type: 'string',
+      description: 'Shown in place of the form once an application has been sent.',
+      validation: (r) => r.required().max(200),
+    }),
+  ],
+  preview: { prepare: () => ({ title: 'Careers page' }) },
+})

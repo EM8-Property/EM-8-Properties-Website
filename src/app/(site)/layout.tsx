@@ -100,7 +100,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         drift apart — `SiteFooter` explains why that is now preferred to the literals it
         used to carry. Non-null for the same reason every other leaf here is: the
         `missingLeaves` throw above covers all of them, including
-        `footerLabels.investors` and `footerLabels.privacy`, and TypeScript cannot see that through the array.
+        `footerLabels.investors`, `footerLabels.privacy` and `footerLabels.careers`, and TypeScript cannot see that through the array.
       */}
       <SiteFooter
         disclaimer={site.disclaimer!}
@@ -108,6 +108,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         labels={site.navLabels as NavLabels}
         investorsLabel={site.footerLabels!.investors!}
         privacyLabel={site.footerLabels!.privacy!}
+        careersLabel={site.footerLabels!.careers!}
       />
     </>
   )

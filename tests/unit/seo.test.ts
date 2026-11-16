@@ -119,6 +119,8 @@ describe('every content route declares its own canonical', () => {
     expect(routes.map((r) => r.route).sort()).toEqual([
       '/',
       '/about',
+      '/careers',
+      '/careers/[slug]',
       '/contact',
       '/insights',
       '/insights/[slug]',
