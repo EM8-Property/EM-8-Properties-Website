@@ -16,14 +16,16 @@ const RESUME_ACCEPT = '.pdf,.doc,.docx'
 /* `field-border`, not `rule`: an input's border has to meet 3:1. See LeadForm. */
 const inputClass = 'w-full min-w-0 rounded-control border border-field-border px-3 py-2 text-xs'
 const labelClass = 'text-[10px] font-semibold uppercase tracking-[0.15em] text-ink-secondary'
+const fileClass =
+  'text-xs text-ink-secondary file:me-3 file:rounded-control file:border file:border-field-border file:bg-ground file:px-3 file:py-2 file:text-[11px] file:font-semibold file:uppercase file:tracking-wide file:text-ink hover:file:border-teal'
 
 /**
- * The job application: name, contact details, an optional LinkedIn and note, and a
- * required resume.
+ * The job application: name, contact details, an optional LinkedIn and note, a
+ * required resume and an optional cover letter.
  *
  * Multipart rather than the JSON every other form posts, because of the file. It goes to
- * /api/apply, which checks the resume is really a PDF or Word file, saves the application
- * and emails the team with the resume attached.
+ * /api/apply, which checks each file is really a PDF or Word document, saves the application
+ * and emails the team with the files attached.
  */
 export function ApplicationForm({
   jobSlug,
@@ -43,10 +45,15 @@ export function ApplicationForm({
     setError(null)
     const data = new FormData(e.currentTarget)
 
-    const resume = data.get('resume')
-    if (resume instanceof File && resume.size > MAX_RESUME_BYTES) {
-      setError('Your resume is larger than 5 MB. Please attach a smaller file.')
-      return
+    for (const [field, what] of [
+      ['resume', 'resume'],
+      ['coverLetter', 'cover letter'],
+    ] as const) {
+      const file = data.get(field)
+      if (file instanceof File && file.size > MAX_RESUME_BYTES) {
+        setError(`Your ${what} is larger than 5 MB. Please attach a smaller file.`)
+        return
+      }
     }
 
     setStatus('sending')
@@ -117,9 +124,22 @@ export function ApplicationForm({
           required
           accept={RESUME_ACCEPT}
           aria-describedby="resume-hint"
-          className="text-xs text-ink-secondary file:me-3 file:rounded-control file:border file:border-field-border file:bg-ground file:px-3 file:py-2 file:text-[11px] file:font-semibold file:uppercase file:tracking-wide file:text-ink hover:file:border-teal"
+          className={fileClass}
         />
         <span id="resume-hint" className="text-[11px] text-ink-secondary">
+          PDF or Word, up to 5 MB.
+        </span>
+      </label>
+      <label className="grid min-w-0 gap-1.5">
+        <span className={labelClass}>Cover letter (optional)</span>
+        <input
+          type="file"
+          name="coverLetter"
+          accept={RESUME_ACCEPT}
+          aria-describedby="cover-letter-hint"
+          className={fileClass}
+        />
+        <span id="cover-letter-hint" className="text-[11px] text-ink-secondary">
           PDF or Word, up to 5 MB.
         </span>
       </label>

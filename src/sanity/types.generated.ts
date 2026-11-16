@@ -427,6 +427,7 @@ export type JobApplication = {
   linkedin?: string;
   message?: string;
   resumeFilename?: string;
+  coverLetterFilename?: string;
   submittedAt?: string;
   emailed?: boolean;
 };

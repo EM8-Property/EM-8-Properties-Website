@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     const raw = await readCapped(request, MAX_APPLICATION_BYTES)
     if (!raw) {
       return NextResponse.json(
-        { ok: false, error: 'Your resume is larger than 5 MB. Please attach a smaller file.' },
+        { ok: false, error: 'Your files are too large. Please attach files of 5 MB or less each.' },
         { status: 413 },
       )
     }
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
       patch: (id, fields) => writeClient.patch(id).set(fields).commit(),
     })
     if (!result.emailed) {
-      console.error('Application saved but the email with the resume failed', { id: result.id })
+      console.error('Application saved but the email with the attachments failed', { id: result.id })
     }
     return NextResponse.json({ ok: true })
   } catch (err) {
