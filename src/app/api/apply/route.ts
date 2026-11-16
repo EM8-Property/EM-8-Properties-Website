@@ -5,6 +5,7 @@ import {
   ApplicationValidationError,
   ApplicationSpamError,
   MAX_APPLICATION_BYTES,
+  FILES_TOO_LARGE_MESSAGE,
 } from '@/lib/applications'
 import { isJobOpen } from '@/lib/jobTaxonomy'
 import { writeClient } from '@/sanity/writeClient'
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
     const raw = await readCapped(request, MAX_APPLICATION_BYTES)
     if (!raw) {
       return NextResponse.json(
-        { ok: false, error: 'Your files are too large. Please attach files of 5 MB or less each.' },
+        { ok: false, error: FILES_TOO_LARGE_MESSAGE },
         { status: 413 },
       )
     }
