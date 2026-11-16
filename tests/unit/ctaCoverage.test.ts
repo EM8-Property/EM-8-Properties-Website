@@ -35,13 +35,15 @@ const routes = pageFiles(siteDir).map((file) => ({ file, route: routeOf(file) })
  * each already leads with a full form. /contact is nothing but that form. A second, lower-friction email capture underneath would compete
  * with the ask the page is built around.
  */
-const HAS_OWN_FORM = ['/investors', '/partners', '/contact']
+const HAS_OWN_FORM = ['/investors', '/partners', '/contact', '/careers/[slug]']
 
 describe('every page offers a way to make contact', () => {
   it('covers every route, so the assertions below cannot go vacuous', () => {
     expect(routes.map((r) => r.route).sort()).toEqual([
       '/',
       '/about',
+      '/careers',
+      '/careers/[slug]',
       '/contact',
       '/insights',
       '/insights/[slug]',
@@ -58,7 +60,9 @@ describe('every page offers a way to make contact', () => {
     const source = stripComments(readFileSync(file, 'utf8'))
 
     if (HAS_OWN_FORM.includes(route)) {
-      expect(source, `${route} should rely on its own form`).toMatch(/<LeadForm/)
+      // A job page's form is the application, which uploads a resume and so is not a
+      // LeadForm. An investor email capture beside it would be the wrong ask.
+      expect(source, `${route} should rely on its own form`).toMatch(/<LeadForm|<ApplicationForm/)
       return
     }
 

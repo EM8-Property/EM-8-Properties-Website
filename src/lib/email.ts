@@ -1,5 +1,6 @@
 import 'server-only'
 import type { EmailSender } from './leads'
+import type { ApplicationEmail } from './applications'
 import { resolveSenderAddress } from './emailFrom'
 
 /**
@@ -37,4 +38,36 @@ export const resendSender: EmailSender = {
       throw new Error(`Resend failed: ${res.status}`)
     }
   },
+}
+
+/**
+ * The application notification: same inbox and sender as a lead, plus the resume as an
+ * attachment and the candidate as Reply-To, so answering the email answers them.
+ */
+export async function sendApplicationEmail(msg: ApplicationEmail): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY
+  const to = process.env.LEAD_NOTIFICATION_EMAIL
+  if (!apiKey || !to) {
+    throw new Error('RESEND_API_KEY or LEAD_NOTIFICATION_EMAIL is not configured')
+  }
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: resolveSenderAddress(process.env.RESEND_FROM),
+      to: [to],
+      reply_to: msg.replyTo,
+      subject: msg.subject,
+      text: msg.body,
+      attachments: msg.attachments,
+    }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Resend failed: ${res.status}`)
+  }
 }

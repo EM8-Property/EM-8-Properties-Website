@@ -767,6 +767,7 @@ export const SITE_SETTINGS = {
   footerLabels: {
     investors: 'Investors',
     privacy: 'Privacy',
+    careers: 'Careers',
   },
   /**
    * The heading above a sold property's realized figures. Backfilled by the same step as
@@ -1144,6 +1145,25 @@ export const PAGE_COPY = {
       'EM8 Properties LLC, info@em-8.com',
     ]),
   },
+  /**
+   * /careers and the words around each job's application form. The jobs themselves are
+   * `JOBS` below. The intro is drawn from the "About EM8" paragraph of the first posting.
+   */
+  careersPage: {
+    heading: {
+      eyebrow: 'Careers',
+      title: 'Work With Us',
+      intro:
+        "We're a small, entrepreneurial team that develops and owns multifamily and retail properties with local governments, and we're looking to grow.",
+    },
+    openingsTitle: 'Open roles',
+    emptyMessage:
+      'We have no open roles right now. Check back here, or write to info@em-8.com if you would like us to keep you in mind.',
+    formTitle: 'Apply for this role',
+    submitLabel: 'Submit application',
+    successMessage:
+      'Thank you. Your application is in, and we will be in touch if there is a fit.',
+  },
 }
 
 /**
@@ -1203,7 +1223,89 @@ export const PAGE_SEO = {
     description:
       'What information EM8 Properties collects through em-8.com, how we use it, which service providers handle it, and how to reach us about it.',
   },
+  careersPage: {
+    title: 'Careers',
+    description:
+      'Open roles at EM8 Properties, a small team developing and owning multifamily and retail properties in suburban Chicago.',
+  },
 }
+
+/**
+ * Job postings, seeded once with createIfNotExists. After that the Studio owns them:
+ * re-running the step never overwrites a posting an editor has changed or closed.
+ *
+ * The Controller role is Hunter's text of 2026-11-16, with three typo fixes: a missing
+ * comma after "packages", a doubled "and," in the CAM line, and "for new project" ->
+ * "for a new project". "property managed properties" was read as third-party managed.
+ */
+export const JOBS = [
+  {
+    _id: 'job-controller',
+    _type: 'jobPosting',
+    title: 'Controller',
+    slug: { _type: 'slug', current: 'controller' },
+    open: true,
+    datePosted: '2026-11-16',
+    employmentType: 'FULL_TIME',
+    workplace: 'on-site',
+    location: { city: 'Oak Forest', state: 'IL', postalCode: '60452' },
+    salary: { min: 80000, max: 105000, unit: 'YEAR', note: 'base, depending on experience' },
+    summary:
+      'EM8 Properties is hiring a Controller in Oak Forest, IL to own bookkeeping, the month-end close, property manager oversight and development accounting across our entities.',
+    sections: [
+      {
+        _key: 'about',
+        _type: 'jobSection',
+        heading: 'About EM8',
+        body:
+          "EM8 Properties develops and owns multifamily and retail properties. We partner with local governments to create communities people choose to live in. We're a small, entrepreneurial team, and we're looking to grow.",
+      },
+      {
+        _key: 'responsibilities',
+        _type: 'jobSection',
+        heading: 'Responsibilities',
+        items: [
+          'Handle bookkeeping, including AP/AR, coding, journal entries, intercompany, and vendor and 1099 setup.',
+          'Reconcile bank, operating, escrow, and reserve accounts across all entities every month, and flag unreconciled items.',
+          'Complete monthly balance sheet accounting, including account reconciliations, accruals, prepaids, deposits, security deposits, debt and loan balances, and fixed assets.',
+          'Review the monthly property manager packages, tie them out to the GL, and approve the financials.',
+          'Prepare CAM estimates and annual reconciliations for in-house managed properties, and review the PM-prepared reconciliations for third-party managed properties.',
+          'Analyze budget vs. actual variances each month and quarter, write the commentary, and follow up with property managers on the drivers.',
+          'Manage development accounting for a new project starting in 2027, including project budgets and cost-to-complete, draw requests, lender and equity reporting, capitalization vs. expense, and retainage.',
+          'Coordinate with our outside accounting firm on tax, prepare workpapers and K-1 support, handle property tax and sales/use items, and manage deadlines.',
+        ],
+      },
+      {
+        _key: 'qualifications',
+        _type: 'jobSection',
+        heading: 'Qualifications',
+        items: [
+          'Practical real estate accounting experience',
+          'Development or construction accounting experience: draws, cost tracking, capitalization',
+          "Experience reviewing a third-party manager's books, and building or fixing a month-end close",
+          'Experience with QuickBooks and AppFolio',
+          'Comfort with partnership and multi-entity structures (waterfall and LP reporting a plus)',
+          'Clear writing and the confidence to challenge numbers',
+          'Comfort building processes in a lean team',
+          'Proactive self-starter with strong judgment, who takes ownership of tasks and flags potential roadblocks',
+        ],
+      },
+      {
+        _key: 'benefits',
+        _type: 'jobSection',
+        heading: 'What we offer',
+        items: [
+          'Competitive compensation and incentive program participation',
+          'Full suite of benefits, including medical and dental',
+          'Generous paid time off',
+          'Employee discounts and wellness initiatives, like an onsite gym',
+          'Hybrid work environment (based on business or position needs)',
+          'Direct access to ownership',
+        ],
+      },
+    ],
+  },
+]
 
 /**
  * The closing call to action, shared by every page.

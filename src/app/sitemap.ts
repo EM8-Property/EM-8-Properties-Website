@@ -1,11 +1,13 @@
 import type { MetadataRoute } from 'next'
 import { fetchSanity } from '@/sanity/client'
-import { PROPERTY_SLUGS_QUERY, ALL_POSTS_QUERY } from '@/sanity/queries'
+import { PROPERTY_SLUGS_QUERY, ALL_POSTS_QUERY, OPEN_JOBS_QUERY } from '@/sanity/queries'
 import type {
   PROPERTY_SLUGS_QUERY_RESULT,
   ALL_POSTS_QUERY_RESULT,
+  OPEN_JOBS_QUERY_RESULT,
 } from '@/sanity/types.generated'
 import { siteUrl } from '@/lib/siteUrl'
+import { isJobOpen } from '@/lib/jobTaxonomy'
 
 /**
  * Every property appears once, at /portfolio/[slug]. /track-record used to be a second
@@ -18,9 +20,10 @@ import { siteUrl } from '@/lib/siteUrl'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl()
 
-  const [propertySlugs, posts] = await Promise.all([
+  const [propertySlugs, posts, jobs] = await Promise.all([
     fetchSanity<PROPERTY_SLUGS_QUERY_RESULT>(PROPERTY_SLUGS_QUERY),
     fetchSanity<ALL_POSTS_QUERY_RESULT>(ALL_POSTS_QUERY),
+    fetchSanity<OPEN_JOBS_QUERY_RESULT>(OPEN_JOBS_QUERY),
   ])
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -37,6 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/contact`, changeFrequency: 'yearly', priority: 0.6 },
     { url: `${base}/about`, changeFrequency: 'yearly', priority: 0.6 },
     { url: `${base}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${base}/careers`, changeFrequency: 'weekly', priority: 0.5 },
   ]
 
   return [
@@ -52,5 +56,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'yearly' as const,
       priority: 0.7,
     })),
+    // Open roles only, with the real last edit: Google's job-posting guidance asks for a
+    // sitemap `lastmod` so it recrawls a posting when it changes or closes. A closed role
+    // leaves this list and its page 404s.
+    ...jobs
+      .filter((j) => isJobOpen(j))
+      .map((j) => ({
+        url: `${base}/careers/${j.slug}`,
+        lastModified: new Date(j._updatedAt),
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      })),
   ]
 }

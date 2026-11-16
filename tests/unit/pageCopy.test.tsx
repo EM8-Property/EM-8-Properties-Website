@@ -33,6 +33,7 @@ describe('page copy schema', () => {
     // changed, not which type arrived or whether it was pinned. The list says both.
     expect([...SINGLETON_TYPES].sort()).toEqual([
       'aboutPage',
+      'careersPage',
       'contactPage',
       'homePage',
       'insightsPage',
@@ -55,6 +56,7 @@ describe('seeded page copy', () => {
     // generated from the property and post collections.
     expect(Object.keys(PAGE_COPY).sort()).toEqual([
       'aboutPage',
+      'careersPage',
       'contactPage',
       'homePage',
       'insightsPage',

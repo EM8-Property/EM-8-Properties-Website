@@ -31,6 +31,7 @@ import {
   PAGE_COPY,
   PAGE_SEO,
   CTA_BAND,
+  JOBS,
   oldImage,
   portable,
 } from './content/em8-content.mjs'
@@ -804,6 +805,9 @@ async function backfillChromeLabels(apply) {
   if (!doc.footerLabels?.privacy) {
     fill['footerLabels.privacy'] = SITE_SETTINGS.footerLabels.privacy
   }
+  if (!doc.footerLabels?.careers) {
+    fill['footerLabels.careers'] = SITE_SETTINGS.footerLabels.careers
+  }
   if (!doc.ctaBand?.emailLabel) fill['ctaBand.emailLabel'] = CTA_BAND.emailLabel
 
   if (Object.keys(fill).length === 0) {
@@ -1299,7 +1303,40 @@ async function buildDocuments() {
  * `offerings-heading-cleanup` had to run AFTER it deployed, so no single step could have
  * been correct at either moment. See docs/deploys-and-migrations.md.
  */
+/**
+ * Seeds each job in `JOBS` that does not exist yet. createIfNotExists, so a posting an
+ * editor has since changed, closed or deleted-and-recreated is never touched.
+ */
+async function seedJobsIfMissing(apply) {
+  const ids = JOBS.map((j) => j._id)
+  const present = new Set((await query(`*[_id in ${JSON.stringify(ids)}]._id`)) ?? [])
+  const docs = JOBS.filter((j) => !present.has(j._id))
+  for (const j of JOBS) {
+    console.log(`  job       ${j._id} ${present.has(j._id) ? 'already exists — left untouched' : '— seeding'}`)
+  }
+  if (docs.length === 0 || !apply) return
+  const res = await fetch(`${API}/data/mutate/${dataset}`, {
+    method: 'POST',
+    headers: { ...auth, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mutations: docs.map((doc) => ({ createIfNotExists: doc })) }),
+  })
+  if (!res.ok) throw new Error(`job seed failed ${res.status}: ${await res.text()}`)
+  console.log(`  job       seeded ${docs.length}`)
+}
+
+/**
+ * Everything /careers needs before its code deploys: the careersPage document, the
+ * footer's Careers label, and the seeded jobs. All three are additions, so this is safe to
+ * run ahead of the deploy, and must be: the build throws without the first two.
+ */
+async function addCareers(apply) {
+  await seedPagesIfMissing(apply)
+  await backfillChromeLabels(apply)
+  await seedJobsIfMissing(apply)
+}
+
 const STEPS = {
+  careers: addCareers,
   carousel: seedCarouselIfEmpty,
   pages: seedPagesIfMissing,
   seo: backfillPageSeo,

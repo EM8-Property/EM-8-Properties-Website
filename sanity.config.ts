@@ -65,6 +65,7 @@ export default defineConfig({
                 ['insightsPage', 'Insights page'],
                 ['strategyPage', 'Strategy page'],
                 ['privacyPage', 'Privacy page'],
+                ['careersPage', 'Careers page'],
               ] as const
             ).map(([type, title]) =>
               S.listItem()

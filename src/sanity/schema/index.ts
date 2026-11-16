@@ -7,6 +7,7 @@ import { focusCard } from './focusCard'
 import { testimonial } from './testimonial'
 import { lead } from './lead'
 import { siteSettings } from './siteSettings'
+import { jobPosting, jobApplication } from './jobPosting'
 import {
   ctaLink,
   headingBlock,
@@ -28,6 +29,7 @@ import {
   insightsPage,
   strategyPage,
   privacyPage,
+  careersPage,
   ctaBand,
   popupBlock,
 } from './pages'
@@ -41,6 +43,8 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   focusCard,
   testimonial,
   lead,
+  jobPosting,
+  jobApplication,
   siteSettings,
 
   // Per-page copy singletons, closing plan revision D4. The blocks are shared object
@@ -54,6 +58,7 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   insightsPage,
   strategyPage,
   privacyPage,
+  careersPage,
   ctaLink,
   headingBlock,
   heroBlock,
@@ -84,4 +89,5 @@ export const SINGLETON_TYPES = [
   'insightsPage',
   'strategyPage',
   'privacyPage',
+  'careersPage',
 ] as const
