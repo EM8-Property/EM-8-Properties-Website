@@ -15,6 +15,12 @@ export const metadata: Metadata = {
   title: 'EM8 Properties',
   description:
     'Transit-oriented multifamily and mixed-use development in suburban Chicago.',
+  // Google Search Console ownership, by HTML tag, for Hunter's URL-prefix property
+  // (https://em-8.com/). The domain's DNS is in a former employee's Wix account and
+  // cannot take a TXT record, so a tag on the page is the one method open to us. It
+  // must stay: Google re-checks it, and removing it un-verifies the property. Set in the
+  // root layout so it is on the homepage, which is where Google looks.
+  verification: { google: 'PZN6x2-bnOMFmzpQJIU_0KPGZJrHSFCq0MJzL49LqSk' },
 }
 
 /**
