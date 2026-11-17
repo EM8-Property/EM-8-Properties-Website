@@ -10,6 +10,8 @@ import {
   ApplicationSpamError,
   APPLICATION_ID_PREFIX,
   MAX_RESUME_BYTES,
+  MAX_APPLICATION_BYTES,
+  MAX_FILES_TOTAL_BYTES,
 } from '@/lib/applications'
 import { HONEYPOT_FIELD } from '@/lib/leads'
 import { JOBS } from '../../scripts/content/em8-content.mjs'
@@ -265,5 +267,27 @@ describe('cover letter', () => {
     })
     const msg = (send.mock.calls[0] as unknown as [{ attachments: { filename: string }[] }])[0]
     expect(msg.attachments.map((a) => a.filename)).toEqual(['Document.pdf', 'Cover letter - Document.pdf'])
+  })
+})
+
+describe('total upload size', () => {
+  it('stays under the 8 MiB the Netlify proxy accepts', () => {
+    expect(MAX_APPLICATION_BYTES).toBeLessThanOrEqual(8 * 1024 * 1024)
+    // Room left for the text fields and multipart framing.
+    expect(MAX_APPLICATION_BYTES - MAX_FILES_TOTAL_BYTES).toBeGreaterThan(300_000)
+  })
+
+  it('accepts a 5 MB resume alone, and refuses it with a 5 MB cover letter', async () => {
+    const big = (name: string) => file(name, PDF, 0)
+    const sized = (name: string, size: number) => {
+      const f = big(name)
+      const buf = new Uint8Array(size)
+      buf.set(PDF)
+      return { ...f, size, arrayBuffer: async () => buf.buffer }
+    }
+    await expect(parseApplication(form({ ...VALID, resume: sized('cv.pdf', 5_000_000) }))).resolves.toBeDefined()
+    await expect(
+      parseApplication(form({ ...VALID, resume: sized('cv.pdf', 5_000_000), coverLetter: sized('l.pdf', 4_000_000) })),
+    ).rejects.toThrow('together are larger than 8 MB')
   })
 })

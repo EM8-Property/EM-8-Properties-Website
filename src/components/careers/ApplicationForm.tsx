@@ -11,6 +11,8 @@ import { useTurnstile } from '@/components/forms/useTurnstile'
  * these exist only to answer a too-large file before it is uploaded.
  */
 const MAX_RESUME_BYTES = 5 * 1024 * 1024
+/* Both files together; the Netlify proxy refuses a larger request. See MAX_FILES_TOTAL_BYTES. */
+const MAX_FILES_TOTAL_BYTES = 8_000_000
 const RESUME_ACCEPT = '.pdf,.doc,.docx'
 
 /* `field-border`, not `rule`: an input's border has to meet 3:1. See LeadForm. */
@@ -45,6 +47,7 @@ export function ApplicationForm({
     setError(null)
     const data = new FormData(e.currentTarget)
 
+    let total = 0
     for (const [field, what] of [
       ['resume', 'resume'],
       ['coverLetter', 'cover letter'],
@@ -54,6 +57,15 @@ export function ApplicationForm({
         setError(`Your ${what} is larger than 5 MB. Please attach a smaller file.`)
         return
       }
+      if (file instanceof File) total += file.size
+    }
+    // Checked here, not only on the server: a request over the proxy's limit never reaches
+    // the server, and Netlify's own refusal carries no message to show.
+    if (total > MAX_FILES_TOTAL_BYTES) {
+      setError(
+        'Your resume and cover letter together are larger than 8 MB. Please attach smaller files.',
+      )
+      return
     }
 
     setStatus('sending')
@@ -140,7 +152,7 @@ export function ApplicationForm({
           className={fileClass}
         />
         <span id="cover-letter-hint" className="text-[11px] text-ink-secondary">
-          PDF or Word, up to 5 MB.
+          PDF or Word, up to 5 MB. Both files together up to 8 MB.
         </span>
       </label>
       <label className="grid min-w-0 gap-1.5">

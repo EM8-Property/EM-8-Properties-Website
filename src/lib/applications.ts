@@ -24,8 +24,23 @@ export const APPLICATION_ID_PREFIX = 'application.'
  */
 export const MAX_RESUME_BYTES = 5 * 1024 * 1024
 
-/** The whole request: both files plus a few KB of fields and multipart framing. */
-export const MAX_APPLICATION_BYTES = 2 * MAX_RESUME_BYTES + 64 * 1024
+/**
+ * The whole request, and it is not ours to choose. em-8.com reaches Railway through the
+ * Netlify proxy, which refuses any request body over 8 MiB with a bare 400 of its own, so
+ * the site never sees it and the candidate gets no useful message. Measured on 2026-11-16:
+ * 8,000,636 bytes passed and 8,388,636 were refused.
+ */
+export const MAX_APPLICATION_BYTES = 8 * 1024 * 1024
+
+/**
+ * Both files together, leaving ~380 KB under the proxy limit for the text fields and the
+ * multipart framing. Each file may still be 5 MB, so a large resume alone is fine; only a
+ * large resume plus a large cover letter is refused, with a message that says why.
+ */
+export const MAX_FILES_TOTAL_BYTES = 8_000_000
+
+export const FILES_TOO_LARGE_MESSAGE =
+  'Your resume and cover letter together are larger than 8 MB. Please attach smaller files.'
 
 /**
  * Accepted resume formats, identified by their first bytes rather than the browser's
@@ -169,6 +184,9 @@ export async function parseApplication(form: {
 
   const resume = await parseResume(form.get('resume'))
   const coverLetter = await parseCoverLetter(form.get('coverLetter'))
+  if (resume.content.byteLength + (coverLetter?.content.byteLength ?? 0) > MAX_FILES_TOTAL_BYTES) {
+    throw new LeadValidationError(FILES_TOO_LARGE_MESSAGE)
+  }
 
   return {
     jobSlug,
